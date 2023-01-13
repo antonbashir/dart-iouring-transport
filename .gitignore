@@ -68,3 +68,4 @@ terraform.tfstate.backup
 *.exe
 *.dart_tool
 _deps
+build/
