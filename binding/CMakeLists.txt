@@ -9,8 +9,7 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O3 -fPIC -sta
 include(FetchContent)
 FetchContent_Declare(
   liburing
-  GIT_REPOSITORY https://github.com/axboe/liburing
-  GIT_TAG ${LIBURING_VERSION}
+  URL "https://github.com/axboe/liburing/archive/refs/tags/${LIBURING_VERSION}.tar.gz"
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/liburing
 )
 FetchContent_MakeAvailable(liburing)
