@@ -31,3 +31,6 @@ file(GLOB sources
 add_library(binding SHARED ${sources})
 add_dependencies(binding liburing)
 target_link_libraries(binding PRIVATE ${liburing_SOURCE_DIR}/build/lib/liburing.a)
+add_custom_command(TARGET binding POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:binding> ${CMAKE_CURRENT_SOURCE_DIR}/../dart/native/libtransport.so
+)

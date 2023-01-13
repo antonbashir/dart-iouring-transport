@@ -1,5 +1,6 @@
 {
   "files.associations": {
-    "liburing.h": "c"
+    "liburing.h": "c",
+    "memory.h": "c"
   },
 }
