@@ -13,7 +13,7 @@ FetchContent_Declare(
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/liburing
 )
 FetchContent_MakeAvailable(liburing)
-include_directories(${ck_SOURCE_DIR}/src/include)
+include_directories(${liburing_SOURCE_DIR}/src/include)
 
 add_custom_target(liburing
   COMMAND ./configure
