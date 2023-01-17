@@ -1,6 +1,8 @@
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:ffi/ffi.dart';
+
 import 'bindings.dart';
 import 'lookup.dart';
 
@@ -17,5 +19,7 @@ class Transport {
     _bindings = TransportBindings(_library.library);
   }
 
-  void test() => _bindings.test();
+  void initialize() => using((Arena arena) {
+        print(_bindings.transport_initialize(arena<transport_configuration_t>()..ref.ring_size = 120));
+      });
 }

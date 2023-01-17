@@ -3,6 +3,9 @@
     "liburing.h": "c",
     "memory.h": "c",
     "stdlib.h": "c",
-    "binding_transport.h": "c"
+    "binding_transport.h": "c",
+    "binding_file.h": "c",
+    "inet.h": "c",
+    "stdbool.h": "c"
   },
 }

@@ -1,4 +1,14 @@
 #include "binding_transport.h"
+#include "dart/dart_api.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <liburing.h>
+#include <string.h>
+#include <errno.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <stdint.h>
 
 static struct io_uring* ring;
 
@@ -135,12 +145,12 @@ int32_t transport_queue_connect(int32_t socket_fd, const char *ip, int32_t port)
 
 int32_t transport_initialize(transport_configuration_t *configuration)
 {
-  struct io_uring *ring = malloc(sizeof(struct io_uring));
+  ring = malloc(sizeof(struct io_uring));
   if (!ring)
   {
     return -1;
   }
-
+  
   return io_uring_queue_init(configuration->ring_size, ring, 0);
 }
 

@@ -19,6 +19,8 @@ ffigen:
   headers:
     entry-points:
       - "../binding/binding_transport.h"
+      - "../binding/binding_file.h"
+      - "../binding/binding_socket.h"
   globals:
     exclude:
       - "_(.*)"
@@ -30,6 +32,7 @@ ffigen:
     exclude:
       - "_(.*)"
       - "ck(.*)"
+      - "io_uring_(.*)"
   macros:
     exclude:
       - "_(.*)"
@@ -45,3 +48,5 @@ ffigen:
       - "_(.*)"
       - "max_align_t"
       - "ck(.*)"
+      - "file_(.*)"
+      - "io_uring_probe"
