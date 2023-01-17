@@ -2,6 +2,7 @@
   "files.associations": {
     "liburing.h": "c",
     "memory.h": "c",
-    "stdlib.h": "c"
+    "stdlib.h": "c",
+    "binding_transport.h": "c"
   },
 }
