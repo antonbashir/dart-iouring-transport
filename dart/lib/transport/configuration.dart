@@ -12,6 +12,7 @@ class TransportChannelConfiguration {
   final int emptyCyclesMultiplier;
   final int regularSleepMillis;
   final int maxSleepMillis;
+  final int cqesSize;
 
   TransportChannelConfiguration({
     required this.initialEmptyCycles,
@@ -19,6 +20,7 @@ class TransportChannelConfiguration {
     required this.emptyCyclesMultiplier,
     required this.regularSleepMillis,
     required this.maxSleepMillis,
+    required this.cqesSize,
   });
 
   TransportChannelConfiguration copyWith({
@@ -27,6 +29,7 @@ class TransportChannelConfiguration {
     int? emptyCyclesMultiplier,
     int? regularSleepSeconds,
     int? maxSleepSeconds,
+    int? cqesSize,
   }) =>
       TransportChannelConfiguration(
         initialEmptyCycles: initialEmptyCycles ?? this.initialEmptyCycles,
@@ -34,5 +37,6 @@ class TransportChannelConfiguration {
         emptyCyclesMultiplier: emptyCyclesMultiplier ?? this.emptyCyclesMultiplier,
         regularSleepMillis: regularSleepSeconds ?? this.regularSleepMillis,
         maxSleepMillis: maxSleepSeconds ?? this.maxSleepMillis,
+        cqesSize: cqesSize ?? this.cqesSize,
       );
 }

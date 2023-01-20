@@ -10,9 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-static struct io_uring *ring;
-
-int32_t transport_submit_receive(struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
+int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
 {
   int32_t submit_result = io_uring_submit(ring);
   if (submit_result < 0)
@@ -37,14 +35,14 @@ int32_t transport_submit_receive(struct io_uring_cqe **cqes, uint32_t cqes_size,
   return (int32_t)submit_result;
 }
 
-void transport_mark_cqe(struct io_uring_cqe **cqes, uint32_t cqe_index)
+void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe **cqes, uint32_t cqe_index)
 {
   struct io_uring_cqe *cqe = cqes[cqe_index];
   free(cqe->user_data);
   io_uring_cqe_seen(ring, cqe);
 }
 
-intptr_t transport_queue_read(int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len)
+intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len)
 {
   if (io_uring_sq_space_left(ring) <= 1)
   {
@@ -71,7 +69,7 @@ intptr_t transport_queue_read(int32_t fd, void *buffer, uint32_t buffer_pos, uin
   return (intptr_t)buffer;
 }
 
-intptr_t transport_queue_write(int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len)
+intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len)
 {
   if (io_uring_sq_space_left(ring) <= 1)
   {
@@ -98,7 +96,7 @@ intptr_t transport_queue_write(int32_t fd, void *buffer, uint32_t buffer_pos, ui
   return (intptr_t)buffer;
 }
 
-int32_t transport_queue_accept(int32_t server_socket_fd)
+int32_t transport_queue_accept(struct io_uring *ring, int32_t server_socket_fd)
 {
   struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
   if (sqe == NULL)
@@ -119,7 +117,7 @@ int32_t transport_queue_accept(int32_t server_socket_fd)
   io_uring_sqe_set_data(sqe, request);
 }
 
-int32_t transport_queue_connect(int32_t socket_fd, const char *ip, int32_t port)
+int32_t transport_queue_connect(struct io_uring *ring, int32_t socket_fd, const char *ip, int32_t port)
 {
   struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
   if (sqe == NULL)
@@ -143,25 +141,26 @@ int32_t transport_queue_connect(int32_t socket_fd, const char *ip, int32_t port)
   io_uring_sqe_set_data(sqe, request);
 }
 
-int32_t transport_initialize(transport_configuration_t *configuration)
+struct io_uring *transport_initialize(transport_configuration_t *configuration)
 {
-  ring = malloc(sizeof(struct io_uring));
+  struct io_uring *ring = malloc(sizeof(struct io_uring));
   if (!ring)
   {
     return -1;
   }
 
-  return io_uring_queue_init(configuration->ring_size, ring, 0);
+  io_uring_queue_init(configuration->ring_size, ring, 0);
+  return ring;
 }
 
-void transport_close()
+void transport_close(struct io_uring *ring)
 {
   io_uring_queue_exit(ring);
   free(ring);
   ring = NULL;
 }
 
-bool transport_initialized()
+void transport_close_descriptor(int32_t fd)
 {
-  return ring != NULL;
+  close(fd);
 }

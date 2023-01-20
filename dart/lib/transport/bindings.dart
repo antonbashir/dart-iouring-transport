@@ -2072,11 +2072,13 @@ class TransportBindings {
       .asFunction<void Function(ffi.Pointer<atomic_flag>, int)>();
 
   int transport_submit_receive(
+    ffi.Pointer<io_uring> ring,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     int cqes_size,
     bool wait,
   ) {
     return _transport_submit_receive(
+      ring,
       cqes,
       cqes_size,
       wait,
@@ -2085,17 +2087,23 @@ class TransportBindings {
 
   late final _transport_submit_receivePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Pointer<ffi.Pointer<io_uring_cqe>>, ffi.Uint32,
+          ffi.Int32 Function(
+              ffi.Pointer<io_uring>,
+              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Uint32,
               ffi.Bool)>>('transport_submit_receive');
   late final _transport_submit_receive =
       _transport_submit_receivePtr.asFunction<
-          int Function(ffi.Pointer<ffi.Pointer<io_uring_cqe>>, int, bool)>();
+          int Function(ffi.Pointer<io_uring>,
+              ffi.Pointer<ffi.Pointer<io_uring_cqe>>, int, bool)>();
 
   void transport_mark_cqe(
+    ffi.Pointer<io_uring> ring,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     int cqe_index,
   ) {
     return _transport_mark_cqe(
+      ring,
       cqes,
       cqe_index,
     );
@@ -2103,18 +2111,23 @@ class TransportBindings {
 
   late final _transport_mark_cqePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+          ffi.Void Function(
+              ffi.Pointer<io_uring>,
+              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
               ffi.Uint32)>>('transport_mark_cqe');
-  late final _transport_mark_cqe = _transport_mark_cqePtr
-      .asFunction<void Function(ffi.Pointer<ffi.Pointer<io_uring_cqe>>, int)>();
+  late final _transport_mark_cqe = _transport_mark_cqePtr.asFunction<
+      void Function(ffi.Pointer<io_uring>,
+          ffi.Pointer<ffi.Pointer<io_uring_cqe>>, int)>();
 
   int transport_queue_read(
+    ffi.Pointer<io_uring> ring,
     int fd,
     ffi.Pointer<ffi.Void> buffer,
     int buffer_pos,
     int buffer_len,
   ) {
     return _transport_queue_read(
+      ring,
       fd,
       buffer,
       buffer_pos,
@@ -2124,18 +2137,25 @@ class TransportBindings {
 
   late final _transport_queue_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.IntPtr Function(ffi.Int32, ffi.Pointer<ffi.Void>, ffi.Uint32,
+          ffi.IntPtr Function(
+              ffi.Pointer<io_uring>,
+              ffi.Int32,
+              ffi.Pointer<ffi.Void>,
+              ffi.Uint32,
               ffi.Uint32)>>('transport_queue_read');
-  late final _transport_queue_read = _transport_queue_readPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Void>, int, int)>();
+  late final _transport_queue_read = _transport_queue_readPtr.asFunction<
+      int Function(
+          ffi.Pointer<io_uring>, int, ffi.Pointer<ffi.Void>, int, int)>();
 
   int transport_queue_write(
+    ffi.Pointer<io_uring> ring,
     int fd,
     ffi.Pointer<ffi.Void> buffer,
     int buffer_pos,
     int buffer_len,
   ) {
     return _transport_queue_write(
+      ring,
       fd,
       buffer,
       buffer_pos,
@@ -2145,31 +2165,41 @@ class TransportBindings {
 
   late final _transport_queue_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.IntPtr Function(ffi.Int32, ffi.Pointer<ffi.Void>, ffi.Uint32,
+          ffi.IntPtr Function(
+              ffi.Pointer<io_uring>,
+              ffi.Int32,
+              ffi.Pointer<ffi.Void>,
+              ffi.Uint32,
               ffi.Uint32)>>('transport_queue_write');
-  late final _transport_queue_write = _transport_queue_writePtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Void>, int, int)>();
+  late final _transport_queue_write = _transport_queue_writePtr.asFunction<
+      int Function(
+          ffi.Pointer<io_uring>, int, ffi.Pointer<ffi.Void>, int, int)>();
 
   int transport_queue_accept(
+    ffi.Pointer<io_uring> ring,
     int server_socket_fd,
   ) {
     return _transport_queue_accept(
+      ring,
       server_socket_fd,
     );
   }
 
-  late final _transport_queue_acceptPtr =
-      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Int32)>>(
-          'transport_queue_accept');
-  late final _transport_queue_accept =
-      _transport_queue_acceptPtr.asFunction<int Function(int)>();
+  late final _transport_queue_acceptPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(
+              ffi.Pointer<io_uring>, ffi.Int32)>>('transport_queue_accept');
+  late final _transport_queue_accept = _transport_queue_acceptPtr
+      .asFunction<int Function(ffi.Pointer<io_uring>, int)>();
 
   int transport_queue_connect(
+    ffi.Pointer<io_uring> ring,
     int socket_fd,
     ffi.Pointer<ffi.Char> ip,
     int port,
   ) {
     return _transport_queue_connect(
+      ring,
       socket_fd,
       ip,
       port,
@@ -2178,12 +2208,12 @@ class TransportBindings {
 
   late final _transport_queue_connectPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Int32, ffi.Pointer<ffi.Char>,
-              ffi.Int32)>>('transport_queue_connect');
-  late final _transport_queue_connect = _transport_queue_connectPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int)>();
+          ffi.Int32 Function(ffi.Pointer<io_uring>, ffi.Int32,
+              ffi.Pointer<ffi.Char>, ffi.Int32)>>('transport_queue_connect');
+  late final _transport_queue_connect = _transport_queue_connectPtr.asFunction<
+      int Function(ffi.Pointer<io_uring>, int, ffi.Pointer<ffi.Char>, int)>();
 
-  int transport_initialize(
+  ffi.Pointer<io_uring> transport_initialize(
     ffi.Pointer<transport_configuration_t> configuration,
   ) {
     return _transport_initialize(
@@ -2193,19 +2223,10 @@ class TransportBindings {
 
   late final _transport_initializePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int32 Function(
+          ffi.Pointer<io_uring> Function(
               ffi.Pointer<transport_configuration_t>)>>('transport_initialize');
-  late final _transport_initialize = _transport_initializePtr
-      .asFunction<int Function(ffi.Pointer<transport_configuration_t>)>();
-
-  bool transport_initialized() {
-    return _transport_initialized();
-  }
-
-  late final _transport_initializedPtr =
-      _lookup<ffi.NativeFunction<ffi.Bool Function()>>('transport_initialized');
-  late final _transport_initialized =
-      _transport_initializedPtr.asFunction<bool Function()>();
+  late final _transport_initialize = _transport_initializePtr.asFunction<
+      ffi.Pointer<io_uring> Function(ffi.Pointer<transport_configuration_t>)>();
 
   void transport_close() {
     return _transport_close();
@@ -2215,6 +2236,20 @@ class TransportBindings {
       _lookup<ffi.NativeFunction<ffi.Void Function()>>('transport_close');
   late final _transport_close =
       _transport_closePtr.asFunction<void Function()>();
+
+  void transport_close_descriptor(
+    int fd,
+  ) {
+    return _transport_close_descriptor(
+      fd,
+    );
+  }
+
+  late final _transport_close_descriptorPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>(
+          'transport_close_descriptor');
+  late final _transport_close_descriptor =
+      _transport_close_descriptorPtr.asFunction<void Function(int)>();
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
@@ -2727,38 +2762,58 @@ class _SymbolAddresses {
       get atomic_flag_clear_explicit => _library._atomic_flag_clear_explicitPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Pointer<ffi.Pointer<io_uring_cqe>>, ffi.Uint32,
+          ffi.Int32 Function(
+              ffi.Pointer<io_uring>,
+              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Uint32,
               ffi.Bool)>> get transport_submit_receive =>
       _library._transport_submit_receivePtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<ffi.Pointer<io_uring_cqe>>, ffi.Uint32)>>
-      get transport_mark_cqe => _library._transport_mark_cqePtr;
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<io_uring>,
+              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Uint32)>> get transport_mark_cqe =>
+      _library._transport_mark_cqePtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.IntPtr Function(
+              ffi.Pointer<io_uring>,
+              ffi.Int32,
+              ffi.Pointer<ffi.Void>,
+              ffi.Uint32,
+              ffi.Uint32)>> get transport_queue_read =>
+      _library._transport_queue_readPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.IntPtr Function(
+              ffi.Pointer<io_uring>,
+              ffi.Int32,
+              ffi.Pointer<ffi.Void>,
+              ffi.Uint32,
+              ffi.Uint32)>> get transport_queue_write =>
+      _library._transport_queue_writePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.IntPtr Function(
-                  ffi.Int32, ffi.Pointer<ffi.Void>, ffi.Uint32, ffi.Uint32)>>
-      get transport_queue_read => _library._transport_queue_readPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.IntPtr Function(
-                  ffi.Int32, ffi.Pointer<ffi.Void>, ffi.Uint32, ffi.Uint32)>>
-      get transport_queue_write => _library._transport_queue_writePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Int32)>>
+              ffi.Int32 Function(ffi.Pointer<io_uring>, ffi.Int32)>>
       get transport_queue_accept => _library._transport_queue_acceptPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int32 Function(ffi.Int32, ffi.Pointer<ffi.Char>, ffi.Int32)>>
-      get transport_queue_connect => _library._transport_queue_connectPtr;
+      ffi.NativeFunction<
+          ffi.Int32 Function(
+              ffi.Pointer<io_uring>,
+              ffi.Int32,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>> get transport_queue_connect =>
+      _library._transport_queue_connectPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Int32 Function(ffi.Pointer<transport_configuration_t>)>>
+              ffi.Pointer<io_uring> Function(
+                  ffi.Pointer<transport_configuration_t>)>>
       get transport_initialize => _library._transport_initializePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function()>>
-      get transport_initialized => _library._transport_initializedPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get transport_close =>
       _library._transport_closePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>
+      get transport_close_descriptor => _library._transport_close_descriptorPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function()>>

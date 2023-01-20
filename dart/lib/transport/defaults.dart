@@ -3,7 +3,7 @@ import 'package:iouring_transport/transport/configuration.dart';
 class TransportDefaults {
   TransportDefaults._();
 
-  static TransportConfiguration configuration() => TransportConfiguration(ringSize: 33554432);
+  static TransportConfiguration configuration() => TransportConfiguration(ringSize: 1024);
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
         maxSleepMillis: 1,

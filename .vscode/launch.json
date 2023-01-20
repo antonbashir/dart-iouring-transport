@@ -1,0 +1,59 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dart-debug-native",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/bin/dart",
+      "args": [
+        "${cwd}/dart/lib/iouring_transport.dart"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/dart",
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+    },
+    {
+      "name": "dart-test-debug-native",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/bin/dart",
+      "args": [
+        "${cwd}/dart/test/test.dart"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/dart",
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
+        },
+      ],
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "transport-binding-build"
+    },
+    {
+      "name": "dart-benchmark-run",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/dart/test/benchmark.exe",
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/dart",
+      "preLaunchTask": "dart-benchmark-build"
+    },
+  ]
+}

@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/channel.dart';
 import 'package:iouring_transport/transport/configuration.dart';
 
 import 'bindings.dart';
@@ -10,6 +11,8 @@ import 'lookup.dart';
 class Transport {
   late TransportBindings _bindings;
   late TransportLibrary _library;
+
+  late Pointer<io_uring> _ring;
 
   Transport({String? libraryPath}) {
     _library = libraryPath != null
@@ -23,10 +26,10 @@ class Transport {
   void initialize(TransportConfiguration configuration) => using((Arena arena) {
         final transportConfiguration = arena<transport_configuration_t>();
         transportConfiguration.ref.ring_size = configuration.ringSize;
-        _bindings.transport_initialize(transportConfiguration);
+        _ring = _bindings.transport_initialize(transportConfiguration);
       });
 
-  bool initialized() => _bindings.transport_initialized();
-
   void close() => _bindings.transport_close();
+
+  TransportChannel channel(TransportChannelConfiguration configuration) => TransportChannel(_bindings, configuration, _ring);
 }

@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cmake",
+      "label": "transport-binding-build",
+      "command": "build",
+      "targets": [
+        "binding"
+      ],
+      "group": "build",
+      "problemMatcher": [],
+    },
+    {
+      "type": "shell",
+      "label": "dart-benchmark-build",
+      "command": "/usr/bin/dart",
+      "args": [
+        "compile",
+        "exe",
+        "benchmark.dart"
+      ],
+      "options": {
+        "cwd": "${cwd}/binding/dart/test"
+      },
+      "group": "build",
+      "problemMatcher": [],
+    }
+  ]
+}
