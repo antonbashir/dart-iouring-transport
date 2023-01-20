@@ -4148,6 +4148,9 @@ class transport_message extends ffi.Struct {
   external ffi.Pointer<ffi.Void> buffer;
 
   @ffi.Int32()
+  external int size;
+
+  @ffi.Int32()
   external int fd;
 }
 

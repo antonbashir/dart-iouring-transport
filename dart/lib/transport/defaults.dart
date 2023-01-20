@@ -11,5 +11,6 @@ class TransportDefaults {
         maxEmptyCycles: 1000000,
         emptyCyclesMultiplier: 2,
         initialEmptyCycles: 1000,
+        cqesSize: 512,
       );
 }

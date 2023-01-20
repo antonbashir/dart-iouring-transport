@@ -9,10 +9,10 @@
 
 int32_t transport_file_open(const char *path)
 {
-  int32_t fd = open(path, O_RDWR | O_TRUNC);
+  int32_t fd = open(path, O_RDWR | O_APPEND);
   if (fd < 0)
   {
-    fd = open(path, O_CREAT | O_RDWR, 0666);
+    fd = open(path, O_CREAT | O_RDWR | O_APPEND, 0666);
     if (fd < 0)
     {
       return -1;

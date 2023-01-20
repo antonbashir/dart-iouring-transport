@@ -61,6 +61,7 @@ intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, u
     return NULL;
   }
   message->buffer = buffer;
+  message->size = buffer_len;
   message->fd = fd;
 
   io_uring_prep_read(sqe, fd, buffer + buffer_pos, buffer_len, 0);
@@ -88,6 +89,7 @@ intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, 
     return NULL;
   }
   message->buffer = buffer;
+  message->size = buffer_len;
   message->fd = fd;
 
   io_uring_prep_write(sqe, fd, buffer + buffer_pos, buffer_len, 0);

@@ -32,4 +32,8 @@ class Transport {
   void close() => _bindings.transport_close();
 
   TransportChannel channel(TransportChannelConfiguration configuration) => TransportChannel(_bindings, configuration, _ring);
+
+  int file(String path) => using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
+
+  void closeDescriptor(int descriptor) => _bindings.transport_close_descriptor(descriptor);
 }

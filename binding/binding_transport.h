@@ -17,6 +17,7 @@ extern "C"
   typedef struct transport_message
   {
     void *buffer;
+    int32_t size;
     int32_t fd;
   } transport_message_t;
 
