@@ -34,6 +34,7 @@ extern "C"
   int32_t transport_queue_accept(int32_t server_socket_fd);
   int32_t transport_queue_connect(int32_t socket_fd, const char *ip, int32_t port);
   int32_t transport_initialize(transport_configuration_t *configuration);
+  bool transport_initialized();
   void transport_close();
 #if defined(__cplusplus)
 }

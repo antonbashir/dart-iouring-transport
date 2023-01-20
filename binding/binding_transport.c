@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-static struct io_uring* ring;
+static struct io_uring *ring;
 
 int32_t transport_submit_receive(struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
 {
@@ -150,11 +150,18 @@ int32_t transport_initialize(transport_configuration_t *configuration)
   {
     return -1;
   }
-  
+
   return io_uring_queue_init(configuration->ring_size, ring, 0);
 }
 
 void transport_close()
 {
   io_uring_queue_exit(ring);
+  free(ring);
+  ring = NULL;
+}
+
+bool transport_initialized()
+{
+  return ring != NULL;
 }

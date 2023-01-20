@@ -2198,6 +2198,15 @@ class TransportBindings {
   late final _transport_initialize = _transport_initializePtr
       .asFunction<int Function(ffi.Pointer<transport_configuration_t>)>();
 
+  bool transport_initialized() {
+    return _transport_initialized();
+  }
+
+  late final _transport_initializedPtr =
+      _lookup<ffi.NativeFunction<ffi.Bool Function()>>('transport_initialized');
+  late final _transport_initialized =
+      _transport_initializedPtr.asFunction<bool Function()>();
+
   void transport_close() {
     return _transport_close();
   }
@@ -2746,6 +2755,8 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Int32 Function(ffi.Pointer<transport_configuration_t>)>>
       get transport_initialize => _library._transport_initializePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function()>>
+      get transport_initialized => _library._transport_initializedPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get transport_close =>
       _library._transport_closePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
