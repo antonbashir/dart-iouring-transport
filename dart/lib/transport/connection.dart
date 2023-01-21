@@ -6,7 +6,6 @@ import 'package:iouring_transport/transport/channel.dart';
 import 'package:iouring_transport/transport/listener.dart';
 
 import 'bindings.dart';
-import 'configuration.dart';
 
 class TransportConnection {
   final TransportBindings _bindings;

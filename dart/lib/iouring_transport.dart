@@ -15,6 +15,7 @@ Future<void> main(List<String> args) async {
       while (true) {
         await Future.delayed(Duration(seconds: 1));
         serverChannel.queueRead(Utf8Encoder().convert("from client").length);
+        serverChannel.queueWrite(Utf8Encoder().convert("from server"));
       }
     });
   Transport(TransportDefaults.configuration(), TransportDefaults.loop())
@@ -23,6 +24,7 @@ Future<void> main(List<String> args) async {
       clientChannel.output.listen((event) => print("client:" + Utf8Decoder().convert(event)));
       while (true) {
         await Future.delayed(Duration(seconds: 1));
+        clientChannel.queueRead(Utf8Encoder().convert("from server").length);
         clientChannel.queueWrite(Utf8Encoder().convert("from client"));
       }
     });
