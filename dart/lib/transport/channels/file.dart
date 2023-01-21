@@ -51,7 +51,7 @@ class TransportFileChannel {
     var offset = 0;
     queueRead();
     bytesOutput.listen((data) {
-      if (data.isEmpty || data.last == -1 || data.last == 0) {
+      if (data.isEmpty || data.first == -1 || data.first == 0) {
         stop();
         return;
       }
