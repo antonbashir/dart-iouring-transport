@@ -35,7 +35,7 @@ int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cq
   return (int32_t)submit_result;
 }
 
-void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe* cqe)
+void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe *cqe)
 {
   free(cqe->user_data);
   io_uring_cqe_seen(ring, cqe);
@@ -59,7 +59,8 @@ intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, u
   {
     return NULL;
   }
-  message->buffer = buffer;
+
+  message->buffer = buffer + buffer_pos;
   message->size = buffer_len;
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_READ;
@@ -88,7 +89,7 @@ intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, 
   {
     return NULL;
   }
-  message->buffer = buffer;
+  message->buffer = buffer + buffer_pos;
   message->size = buffer_len;
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_WRITE;

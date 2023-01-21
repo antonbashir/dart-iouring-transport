@@ -93,7 +93,7 @@ class TransportFileChannel {
 
   Future<void> writeString(String string) => writeBytes(_encoder.convert(string));
 
-  void queueRead({int size = 1, int position = 0, int offset = 0}) {
+  void queueRead({int size = 64, int position = 0, int offset = 0}) {
     final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * size);
     _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), position, size, offset);
   }

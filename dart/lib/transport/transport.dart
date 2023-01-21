@@ -29,12 +29,14 @@ class Transport {
     _bindings = TransportBindings(_library.library);
   }
 
-  void initialize() => using((Arena arena) {
-        final transportConfiguration = arena<transport_configuration_t>();
-        transportConfiguration.ref.ring_size = configuration.ringSize;
-        _ring = _bindings.transport_initialize(transportConfiguration);
-        _listener = TransportListener(_bindings, _ring, loopConfiguration)..start();
-      });
+  void initialize() {
+    using((Arena arena) {
+      final transportConfiguration = arena<transport_configuration_t>();
+      transportConfiguration.ref.ring_size = configuration.ringSize;
+      _ring = _bindings.transport_initialize(transportConfiguration);
+    });
+    _listener = TransportListener(_bindings, _ring, loopConfiguration)..start();
+  }
 
   void close() {
     _listener.stop();
