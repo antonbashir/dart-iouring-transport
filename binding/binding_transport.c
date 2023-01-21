@@ -35,13 +35,13 @@ int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cq
   return (int32_t)submit_result;
 }
 
-void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe *cqe)
+void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe* cqe)
 {
   free(cqe->user_data);
   io_uring_cqe_seen(ring, cqe);
 }
 
-intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len)
+intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len, uint64_t offset)
 {
   if (io_uring_sq_space_left(ring) <= 1)
   {
@@ -64,13 +64,13 @@ intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, u
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_READ;
 
-  io_uring_prep_read(sqe, fd, buffer + buffer_pos, buffer_len, 0);
+  io_uring_prep_read(sqe, fd, buffer + buffer_pos, buffer_len, offset);
   io_uring_sqe_set_data(sqe, message);
 
   return (intptr_t)buffer;
 }
 
-intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len)
+intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len, uint64_t offset)
 {
   if (io_uring_sq_space_left(ring) <= 1)
   {
@@ -93,7 +93,7 @@ intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, 
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_WRITE;
 
-  io_uring_prep_write(sqe, fd, buffer + buffer_pos, buffer_len, 0);
+  io_uring_prep_write(sqe, fd, buffer + buffer_pos, buffer_len, offset);
   io_uring_sqe_set_data(sqe, message);
 
   return (intptr_t)buffer;

@@ -36,6 +36,7 @@ class TransportSocketChannel {
   void stop() {
     _active = false;
     _subscription.cancel();
+    _output.close();
     _bindings.transport_close_descriptor(_descriptor);
   }
 
@@ -45,26 +46,16 @@ class TransportSocketChannel {
 
   Stream<String> get stringOutput => _output.stream.map(_decoder.convert);
 
-  void queueReadBytes(int size) {
+  void queueRead({int size = 64, int position = 0, int offset = 0}) {
     final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * size);
-    _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), 0, size);
+    _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), position, size, offset);
   }
 
-  void queueReadString() {
-    final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * 1024);
-    _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), 0, 1024);
-  }
-
-  void queueWriteBytes(Uint8List bytes) {
+  void queueWriteBytes(Uint8List bytes, {int position = 0, int offset = 0}) {
     final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * bytes.length);
-    buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_ring, _descriptor, buffer.cast(), 0, bytes.length);
+    buffer.asTypedList(bytes.length).setAll(position, bytes);
+    _bindings.transport_queue_write(_ring, _descriptor, buffer.cast(), position, bytes.length, offset);
   }
 
-  void queueWriteString(String string) {
-    final bytes = _encoder.convert(string);
-    final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * bytes.length);
-    buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_ring, _descriptor, buffer.cast(), 0, bytes.length);
-  }
+  void queueWriteString(String string, {int position = 0, int offset = 0}) => queueWriteBytes(_encoder.convert(string), position: position, offset: offset);
 }

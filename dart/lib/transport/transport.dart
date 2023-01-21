@@ -43,7 +43,12 @@ class Transport {
 
   TransportConnection connection() => TransportConnection(_bindings, _ring, _listener);
 
-  TransportSocketChannel channel(int descriptor) => TransportSocketChannel(_bindings, _ring, descriptor, _listener);
+  TransportSocketChannel channel(int descriptor) => TransportSocketChannel(_bindings, _ring, descriptor, _listener)..start();
 
-  TransportFileChannel file(String path) => TransportFileChannel(_bindings, _ring, using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast())), _listener);
+  TransportFileChannel file(String path) => TransportFileChannel(
+        _bindings,
+        _ring,
+        using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast())),
+        _listener,
+      )..start();
 }

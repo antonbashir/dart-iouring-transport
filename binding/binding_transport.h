@@ -42,8 +42,8 @@ extern "C"
 
   int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait);
   void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe* cqe);
-  intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len);
-  intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len);
+  intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len, uint64_t offset);
+  intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len, uint64_t offset);
   int32_t transport_queue_accept(struct io_uring *ring, int32_t server_socket_fd);
   int32_t transport_queue_connect(struct io_uring *ring, int32_t socket_fd, const char *ip, int32_t port);
   struct io_uring *transport_initialize(transport_configuration_t *configuration);

@@ -2120,6 +2120,7 @@ class TransportBindings {
     ffi.Pointer<ffi.Void> buffer,
     int buffer_pos,
     int buffer_len,
+    int offset,
   ) {
     return _transport_queue_read(
       ring,
@@ -2127,6 +2128,7 @@ class TransportBindings {
       buffer,
       buffer_pos,
       buffer_len,
+      offset,
     );
   }
 
@@ -2137,10 +2139,11 @@ class TransportBindings {
               ffi.Int32,
               ffi.Pointer<ffi.Void>,
               ffi.Uint32,
-              ffi.Uint32)>>('transport_queue_read');
+              ffi.Uint32,
+              ffi.Uint64)>>('transport_queue_read');
   late final _transport_queue_read = _transport_queue_readPtr.asFunction<
       int Function(
-          ffi.Pointer<io_uring>, int, ffi.Pointer<ffi.Void>, int, int)>();
+          ffi.Pointer<io_uring>, int, ffi.Pointer<ffi.Void>, int, int, int)>();
 
   int transport_queue_write(
     ffi.Pointer<io_uring> ring,
@@ -2148,6 +2151,7 @@ class TransportBindings {
     ffi.Pointer<ffi.Void> buffer,
     int buffer_pos,
     int buffer_len,
+    int offset,
   ) {
     return _transport_queue_write(
       ring,
@@ -2155,6 +2159,7 @@ class TransportBindings {
       buffer,
       buffer_pos,
       buffer_len,
+      offset,
     );
   }
 
@@ -2165,10 +2170,11 @@ class TransportBindings {
               ffi.Int32,
               ffi.Pointer<ffi.Void>,
               ffi.Uint32,
-              ffi.Uint32)>>('transport_queue_write');
+              ffi.Uint32,
+              ffi.Uint64)>>('transport_queue_write');
   late final _transport_queue_write = _transport_queue_writePtr.asFunction<
       int Function(
-          ffi.Pointer<io_uring>, int, ffi.Pointer<ffi.Void>, int, int)>();
+          ffi.Pointer<io_uring>, int, ffi.Pointer<ffi.Void>, int, int, int)>();
 
   int transport_queue_accept(
     ffi.Pointer<io_uring> ring,
@@ -2775,7 +2781,8 @@ class _SymbolAddresses {
               ffi.Int32,
               ffi.Pointer<ffi.Void>,
               ffi.Uint32,
-              ffi.Uint32)>> get transport_queue_read =>
+              ffi.Uint32,
+              ffi.Uint64)>> get transport_queue_read =>
       _library._transport_queue_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -2784,7 +2791,8 @@ class _SymbolAddresses {
               ffi.Int32,
               ffi.Pointer<ffi.Void>,
               ffi.Uint32,
-              ffi.Uint32)>> get transport_queue_write =>
+              ffi.Uint32,
+              ffi.Uint64)>> get transport_queue_write =>
       _library._transport_queue_writePtr;
   ffi.Pointer<
           ffi.NativeFunction<
