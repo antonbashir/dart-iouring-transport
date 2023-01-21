@@ -2,11 +2,12 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/channel.dart';
 import 'package:iouring_transport/transport/configuration.dart';
 import 'package:iouring_transport/transport/connection.dart';
 
 import 'bindings.dart';
+import 'channels/file.dart';
+import 'channels/socket.dart';
 import 'listener.dart';
 import 'lookup.dart';
 
@@ -42,11 +43,7 @@ class Transport {
 
   TransportConnection connection() => TransportConnection(_bindings, _ring, _listener);
 
-  TransportChannel channel(int descriptor) => TransportChannel(_bindings, _ring, descriptor, _listener);
+  TransportSocketChannel channel(int descriptor) => TransportSocketChannel(_bindings, _ring, descriptor, _listener);
 
-  int file(String path) => using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-
-  int socket() => using((Arena arena) => _bindings.transport_socket_create());
-
-  void closeDescriptor(int descriptor) => _bindings.transport_close_descriptor(descriptor);
+  TransportFileChannel file(String path) => TransportFileChannel(_bindings, _ring, using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast())), _listener);
 }
