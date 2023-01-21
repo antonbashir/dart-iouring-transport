@@ -47,18 +47,19 @@ class TransportFileChannel {
   Stream<String> get stringOutput => _output.stream.map(_decoder.convert);
 
   Future<Uint8List> readBytes() async {
+    Completer completer = Completer();
     final bytes = BytesBuilder();
     var offset = 0;
     queueRead();
     bytesOutput.listen((data) {
-      if (data.isEmpty || data.first == -1 || data.first == 0) {
-        stop();
+      if (data.isEmpty || data.first == 0) {
+        completer.complete();
         return;
       }
       bytes.add(data);
       queueRead(offset: offset += data.length);
     });
-    await _output.done;
+    await completer.future;
     return bytes.takeBytes();
   }
 
