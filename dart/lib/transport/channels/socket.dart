@@ -40,11 +40,11 @@ class TransportSocketChannel {
   }
 
   void stop() {
-    _active = false;
     _subscription.cancel();
     _output.close();
     _input.close();
     _bindings.transport_close_descriptor(_descriptor);
+    _active = false;
   }
 
   bool get active => _active;
