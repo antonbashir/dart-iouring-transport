@@ -8,7 +8,9 @@ import 'package:iouring_transport/transport/transport.dart';
 
 Future<void> main(List<String> args) async {
   if (!File("test.txt").existsSync()) File("test.txt").createSync();
-  File("test.txt").writeAsString("test");
+  await Transport(TransportDefaults.configuration(), TransportDefaults.loop())
+    ..initialize()
+    ..file("test.txt").writeString("test");
   await Transport(TransportDefaults.configuration(), TransportDefaults.loop())
     ..initialize()
     ..file("test.txt").readString().then(print);

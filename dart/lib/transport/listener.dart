@@ -68,14 +68,12 @@ class TransportListener {
       for (var cqeIndex = 0; cqeIndex < received; cqeIndex++) {
         final cqe = cqes[cqeIndex];
         final userData = Pointer<transport_message>.fromAddress(cqe.ref.user_data);
-        if (userData.ref.type != transport_message_type.TRANSPORT_MESSAGE_WRITE) {
-          final Pointer<io_uring_cqe> cqeCopy = calloc();
-          final Pointer<transport_message> userDataCopy = calloc();
-          cqeCopy.ref = cqe.ref;
-          userDataCopy.ref = userData.ref;
-          cqeCopy.ref.user_data = userDataCopy.address;
-          _cqes.sink.add(cqeCopy);
-        }
+        final Pointer<io_uring_cqe> cqeCopy = calloc();
+        final Pointer<transport_message> userDataCopy = calloc();
+        cqeCopy.ref = cqe.ref;
+        userDataCopy.ref = userData.ref;
+        cqeCopy.ref.user_data = userDataCopy.address;
+        _cqes.sink.add(cqeCopy);
         _bindings.transport_mark_cqe(_ring, cqe);
       }
       calloc.free(cqes);
