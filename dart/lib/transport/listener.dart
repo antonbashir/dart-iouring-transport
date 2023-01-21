@@ -32,8 +32,8 @@ class TransportListener {
     int initialEmptyCycles = _configuration.initialEmptyCycles;
     int maxEmptyCycles = _configuration.maxEmptyCycles;
     int cyclesMultiplier = _configuration.emptyCyclesMultiplier;
-    int regularSleepSeconds = _configuration.regularSleepMillis;
-    int maxSleepSeconds = _configuration.maxSleepMillis;
+    int regularSleepMillis = _configuration.regularSleepMillis;
+    int maxSleepMillis = _configuration.maxSleepMillis;
     int currentEmptyCycles = 0;
     int curentEmptyCyclesLimit = initialEmptyCycles;
 
@@ -50,13 +50,13 @@ class TransportListener {
         calloc.free(cqes);
         currentEmptyCycles++;
         if (currentEmptyCycles >= maxEmptyCycles) {
-          await Future.delayed(Duration(milliseconds: maxSleepSeconds));
+          await Future.delayed(Duration(milliseconds: maxSleepMillis));
           continue;
         }
 
         if (currentEmptyCycles >= curentEmptyCyclesLimit) {
           curentEmptyCyclesLimit *= cyclesMultiplier;
-          await Future.delayed(Duration(milliseconds: regularSleepSeconds));
+          await Future.delayed(Duration(milliseconds: regularSleepMillis));
           continue;
         }
 
