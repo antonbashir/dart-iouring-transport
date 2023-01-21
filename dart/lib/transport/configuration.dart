@@ -6,7 +6,7 @@ class TransportConfiguration {
   TransportConfiguration copyWith({int? ringSize}) => TransportConfiguration(ringSize: ringSize ?? this.ringSize);
 }
 
-class TransportChannelConfiguration {
+class TransportLoopConfiguration {
   final int initialEmptyCycles;
   final int maxEmptyCycles;
   final int emptyCyclesMultiplier;
@@ -14,7 +14,7 @@ class TransportChannelConfiguration {
   final int maxSleepMillis;
   final int cqesSize;
 
-  TransportChannelConfiguration({
+  TransportLoopConfiguration({
     required this.initialEmptyCycles,
     required this.maxEmptyCycles,
     required this.emptyCyclesMultiplier,
@@ -23,7 +23,7 @@ class TransportChannelConfiguration {
     required this.cqesSize,
   });
 
-  TransportChannelConfiguration copyWith({
+  TransportLoopConfiguration copyWith({
     int? initialEmptyCycles,
     int? maxEmptyCycles,
     int? emptyCyclesMultiplier,
@@ -31,7 +31,7 @@ class TransportChannelConfiguration {
     int? maxSleepSeconds,
     int? cqesSize,
   }) =>
-      TransportChannelConfiguration(
+      TransportLoopConfiguration(
         initialEmptyCycles: initialEmptyCycles ?? this.initialEmptyCycles,
         maxEmptyCycles: maxEmptyCycles ?? this.maxEmptyCycles,
         emptyCyclesMultiplier: emptyCyclesMultiplier ?? this.emptyCyclesMultiplier,

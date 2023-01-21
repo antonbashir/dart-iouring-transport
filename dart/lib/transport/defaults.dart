@@ -5,7 +5,7 @@ class TransportDefaults {
 
   static TransportConfiguration configuration() => TransportConfiguration(ringSize: 1024);
 
-  static TransportChannelConfiguration channel() => TransportChannelConfiguration(
+  static TransportLoopConfiguration loop() => TransportLoopConfiguration(
         maxSleepMillis: 1,
         regularSleepMillis: 0,
         maxEmptyCycles: 1000000,

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
 
@@ -12,34 +11,36 @@ import 'exception.dart';
 class TransportChannel {
   final TransportBindings _bindings;
   final Pointer<io_uring> _ring;
-  final TransportChannelConfiguration _configuration;
+  final TransportLoopConfiguration _configuration;
   final StreamController<Uint8List> _output = StreamController();
-  final utf8Encoder = Utf8Encoder();
-  final utf8Decoder = Utf8Decoder();
-  bool active = false;
+  final int _descriptor;
+  bool _active = false;
 
-  TransportChannel(this._bindings, this._configuration, this._ring);
+  TransportChannel(this._bindings, this._configuration, this._ring, this._descriptor);
 
   void start() {
-    active = true;
+    _active = true;
     _receive();
   }
 
   void stop() {
-    active = false;
+    _active = false;
   }
 
-  void writeBytes(int descriptor, Uint8List bytes) {
+  bool get active => _active;
+
+  Stream<Uint8List> get output => _output.stream;
+
+  void queueWrite(Uint8List bytes) {
     final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * bytes.length);
     buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_ring, descriptor, buffer.cast(), 0, bytes.length);
+    _bindings.transport_queue_write(_ring, _descriptor, buffer.cast(), 0, bytes.length);
   }
 
-  void writeString(int descriptor, String string) => writeBytes(descriptor, utf8Encoder.convert(string));
-
-  Stream<Uint8List> get outputBytes => _output.stream;
-
-  Stream<String> get outputString => _output.stream.map(utf8Decoder.convert);
+  void queueRead(int size) {
+    final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * size);
+    _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), 0, size);
+  }
 
   Future<void> _receive() async {
     int initialEmptyCycles = _configuration.initialEmptyCycles;
@@ -50,7 +51,7 @@ class TransportChannel {
     int currentEmptyCycles = 0;
     int curentEmptyCyclesLimit = initialEmptyCycles;
 
-    while (active) {
+    while (_active) {
       Pointer<Pointer<io_uring_cqe>> cqes = calloc(sizeOf<io_uring_cqe>() * _configuration.cqesSize);
       final received = _bindings.transport_submit_receive(_ring, cqes, _configuration.cqesSize, false);
       if (received < 0) {
@@ -86,5 +87,6 @@ class TransportChannel {
       }
       calloc.free(cqes);
     }
+    _bindings.transport_close_descriptor(_descriptor);
   }
 }
