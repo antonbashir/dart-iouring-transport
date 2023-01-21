@@ -13,17 +13,26 @@ class TransportChannel {
   final TransportListener _listener;
   final StreamController<Uint8List> _output = StreamController();
   final int _descriptor;
+  late StreamSubscription<Pointer<io_uring_cqe>> _subscription;
   bool _active = false;
 
   TransportChannel(this._bindings, this._ring, this._descriptor, this._listener);
 
   void start() {
     _active = true;
-    _receive();
+    _subscription = _listener.cqes.listen((cqe) {
+      Pointer<transport_message> userData = Pointer.fromAddress(cqe.ref.user_data);
+      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ) {
+        _output.add(userData.ref.buffer.cast<Uint8>().asTypedList(userData.ref.size));
+        calloc.free(userData);
+        calloc.free(cqe);
+      }
+    });
   }
 
   void stop() {
     _active = false;
+    _subscription.cancel();
   }
 
   bool get active => _active;
@@ -39,16 +48,5 @@ class TransportChannel {
   void queueRead(int size) {
     final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * size);
     _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), 0, size);
-  }
-
-  Future<void> _receive() async {
-    _listener.cqes.listen((cqe) {
-      Pointer<transport_message> userData = Pointer.fromAddress(cqe.ref.user_data);
-      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ) {
-        _output.add(userData.ref.buffer.cast<Uint8>().asTypedList(userData.ref.size));
-        calloc.free(userData);
-        calloc.free(cqe);
-      }
-    });
   }
 }

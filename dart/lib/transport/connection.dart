@@ -30,7 +30,7 @@ class TransportConnection {
   }
 
   Stream<TransportChannel> _acceptClient() {
-    _listener.cqes.listen((cqe) {
+    final subscription = _listener.cqes.listen((cqe) {
       Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_ACCEPT) {
         final clientDescriptor = cqe.ref.res;
@@ -39,11 +39,12 @@ class TransportConnection {
         _clientChannels.add(TransportChannel(_bindings, _ring, clientDescriptor, _listener)..start());
       }
     });
+    _clientChannels.onCancel = subscription.cancel;
     return _clientChannels.stream;
   }
 
   Stream<TransportChannel> _acceptServer() {
-    _listener.cqes.listen((cqe) {
+    final subscription = _listener.cqes.listen((cqe) {
       Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_CONNECT) {
         final serverDescriptor = userData.ref.fd;
@@ -52,6 +53,7 @@ class TransportConnection {
         _serverChannels.add(TransportChannel(_bindings, _ring, serverDescriptor, _listener)..start());
       }
     });
+    _serverChannels.onCancel = subscription.cancel;
     return _serverChannels.stream;
   }
 }
