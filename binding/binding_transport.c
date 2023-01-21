@@ -35,9 +35,8 @@ int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cq
   return (int32_t)submit_result;
 }
 
-void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe **cqes, uint32_t cqe_index)
+void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe *cqe)
 {
-  struct io_uring_cqe *cqe = cqes[cqe_index];
   free(cqe->user_data);
   io_uring_cqe_seen(ring, cqe);
 }
@@ -63,6 +62,7 @@ intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, u
   message->buffer = buffer;
   message->size = buffer_len;
   message->fd = fd;
+  message->type = TRANSPORT_MESSAGE_READ;
 
   io_uring_prep_read(sqe, fd, buffer + buffer_pos, buffer_len, 0);
   io_uring_sqe_set_data(sqe, message);
@@ -91,6 +91,7 @@ intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, 
   message->buffer = buffer;
   message->size = buffer_len;
   message->fd = fd;
+  message->type = TRANSPORT_MESSAGE_WRITE;
 
   io_uring_prep_write(sqe, fd, buffer + buffer_pos, buffer_len, 0);
   io_uring_sqe_set_data(sqe, message);
@@ -114,6 +115,7 @@ int32_t transport_queue_accept(struct io_uring *ring, int32_t server_socket_fd)
   memset(&request->client_addres, 0, sizeof(request->client_addres));
   request->client_addres_length = sizeof(request->client_addres);
   request->fd = server_socket_fd;
+  request->type = TRANSPORT_MESSAGE_ACCEPT;
 
   io_uring_prep_accept(sqe, server_socket_fd, (struct sockaddr *)&request->client_addres, &request->client_addres_length, 0);
   io_uring_sqe_set_data(sqe, request);
@@ -138,6 +140,7 @@ int32_t transport_queue_connect(struct io_uring *ring, int32_t socket_fd, const 
   request->client_addres.sin_family = AF_INET;
   request->client_addres_length = sizeof(request->client_addres);
   request->fd = socket_fd;
+  request->type = TRANSPORT_MESSAGE_CONNECT;
 
   io_uring_prep_connect(sqe, socket_fd, (struct sockaddr *)&request->client_addres, request->client_addres_length);
   io_uring_sqe_set_data(sqe, request);

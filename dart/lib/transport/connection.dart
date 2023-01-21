@@ -1,9 +1,9 @@
-import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/acceptor.dart';
+import 'dart:async';
 import 'dart:ffi';
 
+import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/channel.dart';
-import 'package:iouring_transport/transport/connector.dart';
+import 'package:iouring_transport/transport/listener.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -11,25 +11,48 @@ import 'configuration.dart';
 class TransportConnection {
   final TransportBindings _bindings;
   final Pointer<io_uring> _ring;
-  final TransportLoopConfiguration _loopConfiguration;
-  late TransportAcceptor _acceptor;
-  late TransportConnector _connector;
+  final TransportListener _listener;
+  final StreamController<TransportChannel> _serverChannels = StreamController();
+  final StreamController<TransportChannel> _clientChannels = StreamController();
 
-  TransportConnection(this._bindings, this._loopConfiguration, this._ring) {
-    _acceptor = TransportAcceptor(_bindings, _loopConfiguration, _ring);
-    _connector = TransportConnector(_bindings, _loopConfiguration, _ring);
-  }
+  TransportConnection(this._bindings, this._ring, this._listener);
 
-  Future<TransportChannel> bind(String host, int port) async {
+  Stream<TransportChannel> bind(String host, int port) {
     final socket = _bindings.transport_socket_create();
     _bindings.transport_socket_bind(socket, host.toNativeUtf8().cast(), port, 0);
     _bindings.transport_queue_accept(_ring, socket);
-    return _acceptor.accept().then((descriptor) => TransportChannel(_bindings, _loopConfiguration, _ring, descriptor)..start());
+    return _acceptClient();
   }
 
-  Future<TransportChannel> connect(String host, int port) async {
+  Stream<TransportChannel> connect(String host, int port) {
     final socket = _bindings.transport_socket_create();
     _bindings.transport_queue_connect(_ring, socket, host.toNativeUtf8().cast(), port);
-    return _connector.connect().then((descriptor) => TransportChannel(_bindings, _loopConfiguration, _ring, descriptor)..start());
+    return _acceptServer();
+  }
+
+  Stream<TransportChannel> _acceptClient() {
+    _listener.cqes.listen((cqe) {
+      Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
+      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_ACCEPT) {
+        final clientDescriptor = cqe.ref.res;
+        calloc.free(userData);
+        calloc.free(cqe);
+        _clientChannels.add(TransportChannel(_bindings, _ring, clientDescriptor, _listener)..start());
+      }
+    });
+    return _clientChannels.stream;
+  }
+
+  Stream<TransportChannel> _acceptServer() {
+    _listener.cqes.listen((cqe) {
+      Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
+      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_CONNECT) {
+        final serverDescriptor = userData.ref.fd;
+        calloc.free(userData);
+        calloc.free(cqe);
+        _serverChannels.add(TransportChannel(_bindings, _ring, serverDescriptor, _listener)..start());
+      }
+    });
+    return _serverChannels.stream;
   }
 }

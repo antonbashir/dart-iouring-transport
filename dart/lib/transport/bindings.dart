@@ -2099,25 +2099,20 @@ class TransportBindings {
 
   void transport_mark_cqe(
     ffi.Pointer<io_uring> ring,
-    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
-    int cqe_index,
+    ffi.Pointer<io_uring_cqe> cqe,
   ) {
     return _transport_mark_cqe(
       ring,
-      cqes,
-      cqe_index,
+      cqe,
     );
   }
 
   late final _transport_mark_cqePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<io_uring>,
-              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Uint32)>>('transport_mark_cqe');
+          ffi.Void Function(ffi.Pointer<io_uring>,
+              ffi.Pointer<io_uring_cqe>)>>('transport_mark_cqe');
   late final _transport_mark_cqe = _transport_mark_cqePtr.asFunction<
-      void Function(ffi.Pointer<io_uring>,
-          ffi.Pointer<ffi.Pointer<io_uring_cqe>>, int)>();
+      void Function(ffi.Pointer<io_uring>, ffi.Pointer<io_uring_cqe>)>();
 
   int transport_queue_read(
     ffi.Pointer<io_uring> ring,
@@ -2769,12 +2764,10 @@ class _SymbolAddresses {
               ffi.Bool)>> get transport_submit_receive =>
       _library._transport_submit_receivePtr;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<io_uring>,
-              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Uint32)>> get transport_mark_cqe =>
-      _library._transport_mark_cqePtr;
+          ffi.NativeFunction<
+              ffi.Void Function(
+                  ffi.Pointer<io_uring>, ffi.Pointer<io_uring_cqe>)>>
+      get transport_mark_cqe => _library._transport_mark_cqePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.IntPtr Function(
@@ -4139,29 +4132,43 @@ class statx extends ffi.Opaque {}
 
 class epoll_event extends ffi.Opaque {}
 
+abstract class transport_message_type {
+  static const int TRANSPORT_MESSAGE_READ = 0;
+  static const int TRANSPORT_MESSAGE_WRITE = 1;
+  static const int TRANSPORT_MESSAGE_ACCEPT = 2;
+  static const int TRANSPORT_MESSAGE_CONNECT = 3;
+  static const int TRANSPORT_MESSAGE_max = 4;
+}
+
 class transport_configuration extends ffi.Struct {
   @ffi.Uint32()
   external int ring_size;
 }
 
 class transport_message extends ffi.Struct {
+  @ffi.Int32()
+  external int fd;
+
+  @ffi.Int32()
+  external int type;
+
   external ffi.Pointer<ffi.Void> buffer;
 
   @ffi.Int32()
   external int size;
-
-  @ffi.Int32()
-  external int fd;
 }
 
 class transport_accept_request extends ffi.Struct {
+  @ffi.Int32()
+  external int fd;
+
+  @ffi.Int32()
+  external int type;
+
   external sockaddr_in client_addres;
 
   @socklen_t()
   external int client_addres_length;
-
-  @ffi.Int32()
-  external int fd;
 }
 
 typedef transport_configuration_t = transport_configuration;

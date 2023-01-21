@@ -9,6 +9,16 @@
 extern "C"
 {
 #endif
+
+  typedef enum transport_message_type
+  {
+    TRANSPORT_MESSAGE_READ,
+    TRANSPORT_MESSAGE_WRITE,
+    TRANSPORT_MESSAGE_ACCEPT,
+    TRANSPORT_MESSAGE_CONNECT,
+    TRANSPORT_MESSAGE_max
+  } transport_message_type_t;
+
   typedef struct transport_configuration
   {
     uint32_t ring_size;
@@ -16,20 +26,22 @@ extern "C"
 
   typedef struct transport_message
   {
+    int32_t fd;
+    transport_message_type_t type;
     void *buffer;
     int32_t size;
-    int32_t fd;
   } transport_message_t;
 
   typedef struct transport_accept_request
   {
+    int32_t fd;
+    transport_message_type_t type;
     struct sockaddr_in client_addres;
     socklen_t client_addres_length;
-    int32_t fd;
   } transport_accept_request_t;
 
   int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait);
-  void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe **cqes, uint32_t cqe_index);
+  void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe* cqe);
   intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len);
   intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len);
   int32_t transport_queue_accept(struct io_uring *ring, int32_t server_socket_fd);
