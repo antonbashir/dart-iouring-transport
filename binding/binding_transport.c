@@ -97,7 +97,8 @@ int32_t transport_queue_write(transport_context_t *context, int32_t fd, void *bu
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_WRITE;
 
-  io_uring_prep_write(sqe, fd, buffer, size, offset);
+  obuf_alloc(context->current_write_buffer, size);
+  io_uring_prep_writev(sqe, fd, &context->current_write_buffer->iov, obuf_iovcnt(context->current_write_buffer), offset);
   io_uring_sqe_set_data(sqe, message);
 
   return 0;
@@ -210,7 +211,7 @@ void transport_close_descriptor(int32_t fd)
   close(fd);
 }
 
-char *transport_begin_read(transport_context_t *context, size_t size)
+void *transport_begin_read(transport_context_t *context, size_t size)
 {
   struct ibuf *old_buffer = context->current_read_buffer;
   if (ibuf_unused(old_buffer) >= size)
@@ -222,7 +223,7 @@ char *transport_begin_read(transport_context_t *context, size_t size)
 
   if (ibuf_used(old_buffer) == context->current_read_size)
   {
-    ibuf_reserve_xc(old_buffer, size);
+    ibuf_reserve(old_buffer, size);
     return old_buffer->wpos;
   }
 
@@ -232,7 +233,7 @@ char *transport_begin_read(transport_context_t *context, size_t size)
     return NULL;
   }
 
-  ibuf_reserve_xc(new_buffer, size + context->current_read_size);
+  ibuf_reserve(new_buffer, size + context->current_read_size);
 
   old_buffer->wpos -= context->current_read_size;
   if (context->current_read_size != 0)
@@ -254,12 +255,12 @@ void transport_complete_read(transport_context_t *context, transport_message_t *
   context->current_read_size -= message->size;
 }
 
-char *transport_begin_write(transport_context_t *context)
+void *transport_begin_write(transport_context_t *context, size_t size)
 {
-
+  return obuf_reserve(context->current_write_buffer, size);
 }
 
-void transport_complete_write(transport_context_t *context, char *buffer)
+void transport_complete_write(transport_context_t *context, void *buffer)
 {
   struct obuf *previos = &context->write_buffers[context->current_write_buffer == context->write_buffers];
   if (buffer == context->current_write_buffer)

@@ -84,10 +84,10 @@ extern "C"
 
   void transport_close_descriptor(int32_t fd);
 
-  char *transport_begin_read(transport_context_t *context, size_t size);
+  void *transport_begin_read(transport_context_t *context, size_t size);
   void transport_complete_read(transport_context_t *context, transport_message_t *message);
-  char *transport_begin_write(transport_context_t *context, size_t size);
-  void transport_complete_write(transport_context_t *context, char *buffer);
+  void *transport_begin_write(transport_context_t *context, size_t size);
+  void transport_complete_write(transport_context_t *context, void *buffer);
 
   struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count);
   void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count);
