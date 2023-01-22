@@ -186,6 +186,7 @@ transport_context_t *transport_initialize(transport_configuration_t *configurati
 
   context->buffer_initial_capacity = configuration->buffer_initial_capacity;
   context->buffer_limit = configuration->buffer_limit;
+  context->current_read_size = 0;
 
   return context;
 }

@@ -36,7 +36,7 @@ class TransportFileChannel {
         return;
       }
       bytes.add(data);
-      queueRead(offset: offset += data.length);
+      queueRead(offset: offset++);
     });
     await completer.future;
     return bytes.takeBytes();
@@ -49,21 +49,21 @@ class TransportFileChannel {
     var offset = 0;
     queueWriteBytes(bytes);
     _delegate.bytesOutput.listen((data) {
-      if (data.isEmpty || data.first == 0) {
+      offset += data.length;
+      if (data.isEmpty || offset == bytes.length) {
         completer.complete();
         return;
       }
-      offset += data.length;
-      queueWriteBytes(bytes, position: offset, offset: offset);
+      queueWriteBytes(bytes, offset: offset);
     });
     await completer.future;
   }
 
   Future<void> writeString(String string) => writeBytes(_encoder.convert(string));
 
-  void queueRead({int size = 64, int position = 0, int offset = 0}) => _delegate.queueRead(size: size, position: position, offset: offset);
+  void queueRead({int size = 64, int offset = 0}) => _delegate.queueRead(size: size, offset: offset);
 
-  void queueWriteBytes(Uint8List bytes, {int position = 0, int offset = 0}) => _delegate.queueWriteBytes(bytes, position: position, offset: offset);
+  void queueWriteBytes(Uint8List bytes, {int offset = 0}) => _delegate.queueWriteBytes(bytes, offset: offset);
 
-  void queueWriteString(String string, {int position = 0, int offset = 0}) => _delegate.queueWriteString(string, position: position, offset: offset);
+  void queueWriteString(String string, {int offset = 0}) => _delegate.queueWriteString(string, offset: offset);
 }

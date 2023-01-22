@@ -61,13 +61,16 @@ class TransportChannel {
 
   Stream<String> get stringInput => _input.stream.map(_decoder.convert);
 
-  void queueRead({int size = 64, int position = 0, int offset = 0}) => _bindings.transport_queue_read(_context, _descriptor, size, offset);
+  void queueRead({int size = 64, int offset = 0}) {
+    _bindings.transport_begin_read(_context, size);
+    _bindings.transport_queue_read(_context, _descriptor, size, offset);
+  }
 
-  void queueWriteBytes(Uint8List bytes, {int position = 0, int offset = 0}) {
+  void queueWriteBytes(Uint8List bytes, {int offset = 0}) {
     final Pointer<Uint8> buffer = _bindings.transport_begin_write(_context, bytes.length).cast();
     buffer.asTypedList(bytes.length).setAll(0, bytes);
     _bindings.transport_queue_write(_context, _descriptor, buffer.cast(), bytes.length, offset);
   }
 
-  void queueWriteString(String string, {int position = 0, int offset = 0}) => queueWriteBytes(_encoder.convert(string), position: position, offset: offset);
+  void queueWriteString(String string, {int offset = 0}) => queueWriteBytes(_encoder.convert(string), offset: offset);
 }
