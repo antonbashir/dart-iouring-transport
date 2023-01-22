@@ -3,7 +3,7 @@ project(binding)
 enable_language(C)
 
 set(LIBURING_VERSION liburing-2.3)
-set(CMAKE_C_FLAGS_DEBUG  "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fPIC -static-libgcc -static-libstdc++")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fPIC -static-libgcc -static-libstdc++")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O3 -fPIC -static-libgcc -static-libstdc++")
 
 include(FetchContent)
@@ -28,9 +28,13 @@ file(GLOB sources
   *.h
 )
 
+add_subdirectory(small)
+include_directories(small/include/small)
+include_directories(small/third_party)
+
 add_library(binding SHARED ${sources})
-add_dependencies(binding liburing)
-target_link_libraries(binding PRIVATE ${liburing_SOURCE_DIR}/build/lib/liburing.a)
+add_dependencies(binding liburing small)
+target_link_libraries(binding PRIVATE ${liburing_SOURCE_DIR}/build/lib/liburing.a small)
 add_custom_command(TARGET binding POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:binding> ${CMAKE_CURRENT_SOURCE_DIR}/../dart/native/libtransport.so
 )

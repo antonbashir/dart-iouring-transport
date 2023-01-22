@@ -1,0 +1,25 @@
+Source: small
+Priority: optional
+Section: libdevel
+Maintainer: Eugine Blikh <bigbes@tarantool.org>
+Build-Depends: debhelper (>= 9), cdbs,
+               cmake (>= 2.8)
+Standards-Version: 3.9.6
+Homepage: https://github.com/tarantool/small
+Vcs-Git: git://github.com/tarantool/small.git
+Vcs-Browser: https://github.com/tarantool/small
+
+Package: libsmall1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Description: Collection of Specialized Memory ALLocators
+ Collection of Specialized Memory ALLocators for small allocations.
+
+Package: libsmall-dev
+Architecture: any
+Depends: libsmall1 (= ${binary:Version}), ${misc:Depends}
+Description: Collection of Specialized Memory ALLocators
+ Collection of Specialized Memory ALLocators for small allocations
+ .
+ This package contains development files.

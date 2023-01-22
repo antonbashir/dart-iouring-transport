@@ -10,9 +10,9 @@
 #include <unistd.h>
 #include <stdint.h>
 
-int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
+int32_t transport_submit_receive(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
 {
-  int32_t submit_result = io_uring_submit(ring);
+  int32_t submit_result = io_uring_submit(&context->ring);
   if (submit_result < 0)
   {
     if (submit_result != -EBUSY)
@@ -21,10 +21,10 @@ int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cq
     }
   }
 
-  submit_result = io_uring_peek_batch_cqe(ring, cqes, cqes_size);
+  submit_result = io_uring_peek_batch_cqe(&context->ring, cqes, cqes_size);
   if (submit_result == 0 && wait)
   {
-    submit_result = io_uring_wait_cqe(ring, cqes);
+    submit_result = io_uring_wait_cqe(&context->ring, cqes);
     if (submit_result < 0)
     {
       return -1;
@@ -35,80 +35,83 @@ int32_t transport_submit_receive(struct io_uring *ring, struct io_uring_cqe **cq
   return (int32_t)submit_result;
 }
 
-void transport_mark_cqe(struct io_uring *ring, struct io_uring_cqe *cqe)
+void transport_mark_cqe(transport_context_t *context, transport_message_type_t type, struct io_uring_cqe *cqe)
 {
-  free(cqe->user_data);
-  io_uring_cqe_seen(ring, cqe);
+  smfree(cqe->user_data, cqe->user_data, type == TRANSPORT_MESSAGE_READ || type == TRANSPORT_MESSAGE_WRITE ? sizeof(transport_message_t) : sizeof(transport_accept_request_t));
+  io_uring_cqe_seen(&context->ring, cqe);
 }
 
-intptr_t transport_queue_read(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len, uint64_t offset)
+int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t size, uint64_t offset)
 {
-  if (io_uring_sq_space_left(ring) <= 1)
+  if (io_uring_sq_space_left(&context->ring) <= 1)
   {
-    return NULL;
+    return -1;
   }
 
-  struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
-  if (sqe == NULL)
-  {
-    return NULL;
-  }
-
-  transport_message_t *message = malloc(sizeof(*message));
-  if (!message)
-  {
-    return NULL;
-  }
-
-  message->buffer = buffer + buffer_pos;
-  message->size = buffer_len;
-  message->fd = fd;
-  message->type = TRANSPORT_MESSAGE_READ;
-
-  io_uring_prep_read(sqe, fd, buffer + buffer_pos, buffer_len, offset);
-  io_uring_sqe_set_data(sqe, message);
-
-  return (intptr_t)buffer;
-}
-
-intptr_t transport_queue_write(struct io_uring *ring, int32_t fd, void *buffer, uint32_t buffer_pos, uint32_t buffer_len, uint64_t offset)
-{
-  if (io_uring_sq_space_left(ring) <= 1)
-  {
-    return NULL;
-  }
-
-  struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
-  if (sqe == NULL)
-  {
-    return NULL;
-  }
-
-  transport_message_t *message = malloc(sizeof(*message));
-  if (!message)
-  {
-    return NULL;
-  }
-  message->buffer = buffer + buffer_pos;
-  message->size = buffer_len;
-  message->fd = fd;
-  message->type = TRANSPORT_MESSAGE_WRITE;
-
-  io_uring_prep_write(sqe, fd, buffer + buffer_pos, buffer_len, offset);
-  io_uring_sqe_set_data(sqe, message);
-
-  return (intptr_t)buffer;
-}
-
-int32_t transport_queue_accept(struct io_uring *ring, int32_t server_socket_fd)
-{
-  struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
+  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
   if (sqe == NULL)
   {
     return -1;
   }
 
-  transport_accept_request_t *request = malloc(sizeof(*request));
+  transport_message_t *message = smalloc(&context->allocator, sizeof(transport_message_t));
+  if (!message)
+  {
+    return -1;
+  }
+
+  message->read_buffer = context->current_read_buffer;
+  message->size = size;
+  message->fd = fd;
+  message->type = TRANSPORT_MESSAGE_READ;
+
+  io_uring_prep_read(sqe, fd, context->current_read_buffer->wpos, ifub_unused(context->current_read_buffer), offset);
+  io_uring_sqe_set_data(sqe, message);
+
+  context->current_read_size += message->size;
+  context->current_read_buffer->wpos += message->size;
+
+  return 0;
+}
+
+int32_t transport_queue_write(transport_context_t *context, int32_t fd, void *buffer, uint32_t size, uint64_t offset)
+{
+  if (io_uring_sq_space_left(&context->ring) <= 1)
+  {
+    return -1;
+  }
+
+  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
+  if (sqe == NULL)
+  {
+    return -1;
+  }
+
+  transport_message_t *message = smalloc(&context->allocator, sizeof(transport_message_t));
+  if (!message)
+  {
+    return -1;
+  }
+  message->write_buffer = context->current_write_buffer;
+  message->size = size;
+  message->fd = fd;
+  message->type = TRANSPORT_MESSAGE_WRITE;
+
+  io_uring_prep_write(sqe, fd, buffer, size, offset);
+  io_uring_sqe_set_data(sqe, message);
+
+  return 0;
+}
+
+int32_t transport_queue_accept(transport_context_t *context, int32_t server_socket_fd)
+{
+  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
+  if (sqe == NULL)
+  {
+    return -1;
+  }
+
+  transport_accept_request_t *request = smalloc(&context->allocator, sizeof(transport_accept_request_t));
   if (!request)
   {
     return -1;
@@ -122,15 +125,15 @@ int32_t transport_queue_accept(struct io_uring *ring, int32_t server_socket_fd)
   io_uring_sqe_set_data(sqe, request);
 }
 
-int32_t transport_queue_connect(struct io_uring *ring, int32_t socket_fd, const char *ip, int32_t port)
+int32_t transport_queue_connect(transport_context_t *context, int32_t socket_fd, const char *ip, int32_t port)
 {
-  struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
+  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
   if (sqe == NULL)
   {
     return -1;
   }
 
-  transport_accept_request_t *request = malloc(sizeof(*request));
+  transport_accept_request_t *request = smalloc(&context->allocator, sizeof(transport_accept_request_t));
   if (!request)
   {
     return -1;
@@ -147,26 +150,135 @@ int32_t transport_queue_connect(struct io_uring *ring, int32_t socket_fd, const 
   io_uring_sqe_set_data(sqe, request);
 }
 
-struct io_uring *transport_initialize(transport_configuration_t *configuration)
+transport_context_t *transport_initialize(transport_configuration_t *configuration)
 {
-  struct io_uring *ring = malloc(sizeof(struct io_uring));
-  if (!ring)
+  transport_context_t *context = malloc(sizeof(transport_context_t));
+  if (!context)
   {
     return -1;
   }
 
-  io_uring_queue_init(configuration->ring_size, ring, 0);
-  return ring;
+  if (io_uring_queue_init(configuration->ring_size, &context->ring, 0) != 0)
+  {
+    free(&context->ring);
+    return -1;
+  }
+
+  quota_init(&context->quota, configuration->memory_quota);
+  slab_arena_create(&context->arena, &context->quota, 0, configuration->slab_size, MAP_PRIVATE);
+  slab_cache_create(&context->cache, &context->arena);
+  float actual_allocation_factor;
+  small_alloc_create(&context->allocator,
+                     &context->cache,
+                     configuration->slab_allocation_minimal_object_size,
+                     configuration->slab_allocation_granularity,
+                     configuration->slab_allocation_factor,
+                     &actual_allocation_factor);
+
+  ibuf_create(&context->read_buffers[0], &context->cache, configuration->buffer_initial_capacity);
+  ibuf_create(&context->read_buffers[1], &context->cache, configuration->buffer_initial_capacity);
+  context->current_read_buffer = &context->read_buffers[0];
+
+  obuf_create(&context->write_buffers[0], &context->cache, configuration->buffer_initial_capacity);
+  obuf_create(&context->write_buffers[1], &context->cache, configuration->buffer_initial_capacity);
+  context->current_write_buffer = &context->write_buffers[0];
+
+  return context;
 }
 
-void transport_close(struct io_uring *ring)
+void transport_close(transport_context_t *context)
 {
-  io_uring_queue_exit(ring);
-  free(ring);
-  ring = NULL;
+  io_uring_queue_exit(&context->ring);
+
+  ibuf_destroy(&context->read_buffers[0]);
+  ibuf_destroy(&context->read_buffers[1]);
+  context->current_read_buffer = NULL;
+
+  obuf_destroy(&context->write_buffers[0]);
+  obuf_destroy(&context->write_buffers[1]);
+  context->current_write_buffer = NULL;
+
+  small_alloc_destroy(&context->allocator);
+  slab_cache_destroy(&context->cache);
+  slab_arena_destroy(&context->arena);
+
+  free(context);
 }
 
 void transport_close_descriptor(int32_t fd)
 {
   close(fd);
+}
+
+char *transport_begin_read(transport_context_t *context, size_t size)
+{
+  struct ibuf *old_buffer = context->current_read_buffer;
+  if (ibuf_unused(old_buffer) >= size)
+  {
+    if (ibuf_used(old_buffer) == 0)
+      ibuf_reset(old_buffer);
+    return old_buffer->wpos;
+  }
+
+  if (ibuf_used(old_buffer) == context->current_read_size)
+  {
+    ibuf_reserve_xc(old_buffer, size);
+    return old_buffer->wpos;
+  }
+
+  struct ibuf *new_buffer = &context->read_buffers[context->current_read_buffer == &context->read_buffers[0]];
+  if (ibuf_used(new_buffer) != 0)
+  {
+    return NULL;
+  }
+
+  ibuf_reserve_xc(new_buffer, size + context->current_read_size);
+
+  old_buffer->wpos -= context->current_read_size;
+  if (context->current_read_size != 0)
+  {
+    memcpy(new_buffer->rpos, old_buffer->wpos, context->current_read_size);
+    new_buffer->wpos += context->current_read_size;
+    if (ibuf_used(old_buffer) == 0)
+      iproto_reset_input(old_buffer);
+  }
+
+  context->current_read_buffer = new_buffer;
+  return new_buffer->wpos;
+}
+
+void transport_complete_read(transport_context_t *context, transport_message_t *message)
+{
+  message->read_buffer->rpos += message->size;
+  message->size = 0;
+  context->current_read_size -= message->size;
+}
+
+char *transport_begin_write(transport_context_t *context)
+{
+
+}
+
+void transport_complete_write(transport_context_t *context, char *buffer)
+{
+  struct obuf *previos = &context->write_buffers[context->current_write_buffer == context->write_buffers];
+  if (buffer == context->current_write_buffer)
+  {
+    if (obuf_size(previos) != 0)
+      obuf_reset(previos);
+  }
+  if (obuf_size(context->current_write_buffer) != 0 && obuf_size(previos) == 0)
+  {
+    context->current_write_buffer = previos;
+  }
+}
+
+struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count)
+{
+  return smalloc(&context->allocator, sizeof(struct io_uring_cqe *) * count);
+}
+
+void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count)
+{
+  smfree(&context->allocator, cqes, sizeof(struct io_uring_cqe *) * count);
 }
