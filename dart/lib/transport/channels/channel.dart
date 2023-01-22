@@ -27,14 +27,17 @@ class TransportChannel {
     _subscription = _listener.cqes.listen((cqe) {
       Pointer<transport_message> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
-        _output.add(userData.ref.read_buffer.ref.rpos.cast<Uint8>().asTypedList(userData.ref.size));
+        final data = userData.ref.read_buffer.ref.rpos.cast<Uint8>().asTypedList(userData.ref.size);
+        _input.add(data);
         _bindings.transport_complete_read(_context, userData);
         calloc.free(userData);
         calloc.free(cqe);
       }
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
         final writeBuffer = _bindings.transport_copy_write_buffer(userData);
-        _output.add(writeBuffer.cast<Uint8>().asTypedList(userData.ref.size));
+        Pointer<Uint8> writeBufferCopy = calloc.allocate(sizeOf<Uint8>() * userData.ref.size);
+        final data = writeBufferCopy.asTypedList(userData.ref.size)..setAll(0, writeBuffer.cast<Uint8>().asTypedList(userData.ref.size));
+        _output.add(data);
         malloc.free(writeBuffer);
         _bindings.transport_complete_write(_context, userData);
         calloc.free(userData);
@@ -66,13 +69,14 @@ class TransportChannel {
     _bindings.transport_queue_read(_context, _descriptor, size, offset);
   }
 
-  void queueWriteBytes(Uint8List bytes, {int offset = 0}) {
-    final Pointer<Uint8> buffer = _bindings.transport_begin_write(_context, bytes.length).cast();
+  void queueWriteBytes(Uint8List bytes, {int size = 64, int offset = 0}) {
+    final Pointer<Uint8> buffer = _bindings.transport_begin_write(_context, size).cast();
+    buffer.asTypedList(size).fillRange(0, size, 0);
     buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_context, _descriptor, buffer.cast(), bytes.length, offset);
+    _bindings.transport_queue_write(_context, _descriptor, buffer.cast(), size, offset);
   }
 
-  void queueWriteString(String string, {int offset = 0}) => queueWriteBytes(_encoder.convert(string), offset: offset);
+  void queueWriteString(String string, {int size = 64, int offset = 0}) => queueWriteBytes(_encoder.convert(string), size: size, offset: offset);
 
   int readBufferUsed() => _bindings.transport_read_buffer_used(_context);
 }

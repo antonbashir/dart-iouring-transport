@@ -10,6 +10,7 @@
 #include "small/include/small/slab_cache.h"
 #include "small/include/small/slab_arena.h"
 #include "small/include/small/quota.h"
+#include "small/include/small/region.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -62,6 +63,7 @@ extern "C"
     struct slab_cache cache;
     struct small_alloc allocator;
     struct quota quota;
+    struct region region;
 
     struct ibuf read_buffers[2];
     struct ibuf *current_read_buffer;
@@ -87,7 +89,10 @@ extern "C"
 
   void transport_close_descriptor(int32_t fd);
 
-  void* transport_copy_write_buffer(transport_message_t* message);
+  void* transport_copy_write_buffer(transport_context_t *context, transport_message_t* message);
+  void* transport_copy_read_buffer(transport_context_t *context, transport_message_t* message);
+  void transport_free_region(transport_context_t *context);
+  
   size_t transport_read_buffer_used(transport_context_t *context);
 
   void *transport_begin_read(transport_context_t *context, size_t size);
@@ -95,8 +100,11 @@ extern "C"
   void *transport_begin_write(transport_context_t *context, size_t size);
   void transport_complete_write(transport_context_t *context, transport_message_t *message);
 
-  struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count);
+  struct io_uring_cqe **transport_allocate_small(transport_context_t *context, uint32_t count);
   void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count);
+ 
+  void* transport_allocate_object(transport_context_t *context, size_t size);
+  void transport_free_object(transport_context_t *context, void* object, size_t size);
 #if defined(__cplusplus)
 }
 #endif

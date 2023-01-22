@@ -184,6 +184,8 @@ transport_context_t *transport_initialize(transport_configuration_t *configurati
   obuf_create(&context->write_buffers[1], &context->cache, configuration->buffer_initial_capacity);
   context->current_write_buffer = &context->write_buffers[0];
 
+  region_create(&context->region, &context->cache);
+
   context->buffer_initial_capacity = configuration->buffer_initial_capacity;
   context->buffer_limit = configuration->buffer_limit;
   context->current_read_size = 0;
@@ -202,6 +204,8 @@ void transport_close(transport_context_t *context)
   obuf_destroy(&context->write_buffers[0]);
   obuf_destroy(&context->write_buffers[1]);
   context->current_write_buffer = NULL;
+
+  region_destroy(&context->region);
 
   small_alloc_destroy(&context->allocator);
   slab_cache_destroy(&context->cache);
@@ -298,10 +302,10 @@ void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqe
   smfree(&context->allocator, cqes, sizeof(struct io_uring_cqe *) * count);
 }
 
-void *transport_copy_write_buffer(transport_message_t *message)
+void *transport_copy_write_buffer(transport_context_t *context, transport_message_t *message)
 {
   size_t result_size = obuf_size(message->write_buffer);
-  void *result_buffer = malloc(result_size);
+  void *result_buffer = region_alloc(&context->region, result_size);
   int position = 0;
   int buffer_iov_count = obuf_iovcnt(message->write_buffer);
   for (int iov_index = 0; iov_index < buffer_iov_count; iov_index++)
@@ -312,7 +316,29 @@ void *transport_copy_write_buffer(transport_message_t *message)
   return result_buffer;
 }
 
+void *transport_copy_read_buffer(transport_context_t *context, transport_message_t *message)
+{
+  void *result_buffer = region_alloc(&context->region, message->size);
+  memcpy(message->read_buffer->rpos, result_buffer, message->size);
+  return result_buffer;
+}
+
+void transport_free_region(transport_context_t *context)
+{
+  region_free(&context->region);
+}
+
 size_t transport_read_buffer_used(transport_context_t *context) 
 {
   return ibuf_used(context->current_read_buffer);
+}
+
+void* transport_allocate_object(transport_context_t *context, size_t size)
+{
+  return smalloc(&context->allocator, size);
+}
+
+void transport_free_object(transport_context_t *context, void* object, size_t size)
+{
+  smfree(&context->allocator, object, size);
 }

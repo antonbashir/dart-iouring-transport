@@ -50,7 +50,7 @@ class TransportFileChannel {
     queueWriteBytes(bytes);
     _delegate.bytesOutput.listen((data) {
       offset += data.length;
-      if (data.isEmpty || offset == bytes.length) {
+      if (data.isEmpty || offset >= bytes.length) {
         completer.complete();
         return;
       }
