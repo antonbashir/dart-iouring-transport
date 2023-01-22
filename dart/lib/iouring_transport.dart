@@ -11,10 +11,10 @@ Future<void> main(List<String> args) async {
   final serverTransport = Transport(TransportDefaults.configuration(), TransportDefaults.loop())..initialize();
   final clientTransport = Transport(TransportDefaults.configuration(), TransportDefaults.loop())..initialize();
 
-  // if (!File("test.txt").existsSync()) File("test.txt").createSync();
-  // await fileTransport.file("test.txt").writeString("test");
-  // await fileTransport.file("test.txt").readString().then(print);
-  // File("test.txt").deleteSync();
+  if (!File("test.txt").existsSync()) File("test.txt").createSync();
+  await fileTransport.file("test.txt").writeString("test");
+  await fileTransport.file("test.txt").readString().then(print);
+  File("test.txt").deleteSync();
 
   serverTransport.connection().bind("0.0.0.0", 1234).listen((serverChannel) async {
     serverChannel.stringOutput.listen((event) => print("server: $event"));

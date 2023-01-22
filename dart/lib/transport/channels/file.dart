@@ -30,7 +30,7 @@ class TransportFileChannel {
     final bytes = BytesBuilder();
     var offset = 0;
     queueRead();
-    bytesOutput.listen((data) {
+    _delegate.bytesOutput.listen((data) {
       bytes.add(data);
       if (data.isEmpty || _delegate.readBufferUsed() == 0) {
         completer.complete();
@@ -48,7 +48,7 @@ class TransportFileChannel {
     Completer completer = Completer();
     var offset = 0;
     queueWriteBytes(bytes);
-    _delegate.bytesOutput.listen((data) {
+    _delegate.bytesInput.listen((data) {
       offset += data.length;
       if (data.isEmpty || offset >= bytes.length) {
         completer.complete();

@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <stdint.h>
 
-
 transport_context_t *transport_initialize(transport_configuration_t *configuration)
 {
   transport_context_t *context = malloc(sizeof(transport_context_t));
@@ -40,13 +39,14 @@ transport_context_t *transport_initialize(transport_configuration_t *configurati
   ibuf_create(&context->read_buffers[1], &context->cache, configuration->buffer_initial_capacity);
   context->current_read_buffer = &context->read_buffers[0];
 
-  obuf_create(&context->write_buffers[0], &context->cache, configuration->buffer_initial_capacity);
-  obuf_create(&context->write_buffers[1], &context->cache, configuration->buffer_initial_capacity);
+  ibuf_create(&context->write_buffers[0], &context->cache, configuration->buffer_initial_capacity);
+  ibuf_create(&context->write_buffers[1], &context->cache, configuration->buffer_initial_capacity);
   context->current_write_buffer = &context->write_buffers[0];
 
   context->buffer_initial_capacity = configuration->buffer_initial_capacity;
   context->buffer_limit = configuration->buffer_limit;
   context->current_read_size = 0;
+  context->current_write_size = 0;
 
   return context;
 }
@@ -59,8 +59,8 @@ void transport_close(transport_context_t *context)
   ibuf_destroy(&context->read_buffers[1]);
   context->current_read_buffer = NULL;
 
-  obuf_destroy(&context->write_buffers[0]);
-  obuf_destroy(&context->write_buffers[1]);
+  ibuf_destroy(&context->write_buffers[0]);
+  ibuf_destroy(&context->write_buffers[1]);
   context->current_write_buffer = NULL;
 
   small_alloc_destroy(&context->allocator);
@@ -69,7 +69,6 @@ void transport_close(transport_context_t *context)
 
   free(context);
 }
-
 
 int32_t transport_submit_receive(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
 {
@@ -101,7 +100,6 @@ void transport_mark_cqe(transport_context_t *context, transport_message_type_t t
   smfree(&context->allocator, (void *)cqe->user_data, type == TRANSPORT_MESSAGE_READ || type == TRANSPORT_MESSAGE_WRITE ? sizeof(transport_message_t) : sizeof(transport_accept_request_t));
   io_uring_cqe_seen(&context->ring, cqe);
 }
-
 
 int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t size, uint64_t offset)
 {
@@ -159,9 +157,11 @@ int32_t transport_queue_write(transport_context_t *context, int32_t fd, void *bu
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_WRITE;
 
-  obuf_alloc(context->current_write_buffer, size);
-  io_uring_prep_writev(sqe, fd, context->current_write_buffer->iov, obuf_iovcnt(context->current_write_buffer), offset);
+  io_uring_prep_write(sqe, fd, context->current_write_buffer->wpos, ibuf_unused(context->current_write_buffer), offset);
   io_uring_sqe_set_data(sqe, message);
+
+  context->current_write_size += message->size;
+  context->current_write_buffer->wpos += message->size;
 
   return 0;
 }
@@ -213,12 +213,10 @@ int32_t transport_queue_connect(transport_context_t *context, int32_t socket_fd,
   io_uring_sqe_set_data(sqe, request);
 }
 
-
 void transport_close_descriptor(int32_t fd)
 {
   close(fd);
 }
-
 
 void *transport_begin_read(transport_context_t *context, size_t size)
 {
@@ -276,23 +274,57 @@ void transport_complete_read(transport_context_t *context, transport_message_t *
 
 void *transport_begin_write(transport_context_t *context, size_t size)
 {
-  return obuf_reserve(context->current_write_buffer, size);
+  struct ibuf *old_buffer = context->current_write_buffer;
+  if (ibuf_unused(old_buffer) >= size)
+  {
+    if (ibuf_used(old_buffer) == 0)
+      ibuf_reset(old_buffer);
+    return old_buffer->wpos;
+  }
+
+  if (ibuf_used(old_buffer) == context->current_write_size)
+  {
+    ibuf_reserve(old_buffer, size);
+    return old_buffer->wpos;
+  }
+
+  struct ibuf *new_buffer = &context->write_buffers[context->current_write_buffer == &context->write_buffers[0]];
+  if (ibuf_used(new_buffer) != 0)
+  {
+    return NULL;
+  }
+
+  ibuf_reserve(new_buffer, size + context->current_write_size);
+
+  old_buffer->wpos -= context->current_write_size;
+  if (context->current_write_size != 0)
+  {
+    memcpy(new_buffer->rpos, old_buffer->wpos, context->current_write_size);
+    new_buffer->wpos += context->current_write_size;
+    if (ibuf_used(old_buffer) == 0)
+    {
+      if (ibuf_capacity(old_buffer) < context->buffer_limit)
+      {
+        ibuf_reset(old_buffer);
+      }
+      else
+      {
+        ibuf_destroy(old_buffer);
+        ibuf_create(old_buffer, &context->cache, context->buffer_initial_capacity);
+      }
+    }
+  }
+
+  context->current_write_buffer = new_buffer;
+  return new_buffer->wpos;
 }
 
 void transport_complete_write(transport_context_t *context, transport_message_t *message)
 {
-  struct obuf *previos = &context->write_buffers[context->current_write_buffer == context->write_buffers];
-  if (message->write_buffer == context->current_write_buffer)
-  {
-    if (obuf_size(previos) != 0)
-      obuf_reset(previos);
-  }
-  if (obuf_size(context->current_write_buffer) != 0 && obuf_size(previos) == 0)
-  {
-    context->current_write_buffer = previos;
-  }
+  message->write_buffer->rpos += message->size;
+  message->size = 0;
+  context->current_write_size -= message->size;
 }
-
 
 struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count)
 {
@@ -304,18 +336,10 @@ void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqe
   smfree(&context->allocator, cqes, sizeof(struct io_uring_cqe *) * count);
 }
 
-
 void *transport_copy_write_buffer(transport_context_t *context, transport_message_t *message)
 {
-  size_t result_size = obuf_size(message->write_buffer);
-  void *result_buffer = smalloc(&context->allocator, result_size);
-  int position = 0;
-  int buffer_iov_count = obuf_iovcnt(message->write_buffer);
-  for (int iov_index = 0; iov_index < buffer_iov_count; iov_index++)
-  {
-    memcpy(result_buffer + position, message->write_buffer->iov[iov_index].iov_base, message->write_buffer->iov[iov_index].iov_len);
-    position += message->write_buffer->iov[iov_index].iov_len;
-  }
+  void *result_buffer = smalloc(&context->allocator, message->size);
+  memcpy(result_buffer, message->write_buffer->rpos, message->size);
   return result_buffer;
 }
 
@@ -326,12 +350,10 @@ void *transport_copy_read_buffer(transport_context_t *context, transport_message
   return result_buffer;
 }
 
-
 size_t transport_read_buffer_used(transport_context_t *context)
 {
   return ibuf_used(context->current_read_buffer);
 }
-
 
 void *transport_allocate_object(transport_context_t *context, size_t size)
 {
@@ -342,7 +364,6 @@ void transport_free_object(transport_context_t *context, void *object, size_t si
 {
   smfree(&context->allocator, object, size);
 }
-
 
 transport_data_t *transport_allocate_data(transport_context_t *context, void *buffer, size_t size)
 {

@@ -42,7 +42,7 @@ extern "C"
     int32_t fd;
     transport_message_type_t type;
     struct ibuf *read_buffer;
-    struct obuf *write_buffer;
+    struct ibuf *write_buffer;
     int32_t size;
   } transport_message_t;
 
@@ -66,10 +66,11 @@ extern "C"
     struct ibuf read_buffers[2];
     struct ibuf *current_read_buffer;
 
-    struct obuf write_buffers[2];
-    struct obuf *current_write_buffer;
+    struct ibuf write_buffers[2];
+    struct ibuf *current_write_buffer;
 
     size_t current_read_size;
+    size_t current_write_size;
 
     size_t buffer_initial_capacity;
     size_t buffer_limit;
