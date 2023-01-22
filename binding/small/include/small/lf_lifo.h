@@ -34,7 +34,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <pmatomic.h>
+#include "../../third_party/pmatomic.h"
 
 #if defined(__cplusplus)
 extern "C" {

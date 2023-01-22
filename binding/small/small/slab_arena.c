@@ -38,7 +38,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <limits.h>
-#include <pmatomic.h>
+#include "../../third_party/pmatomic.h"
 #include <valgrind/valgrind.h>
 #include <valgrind/memcheck.h>
 

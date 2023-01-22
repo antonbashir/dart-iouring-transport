@@ -18,7 +18,7 @@ class Transport {
   late TransportBindings _bindings;
   late TransportLibrary _library;
   late TransportListener _listener;
-  late Pointer<io_uring> _ring;
+  late Pointer<transport_context_t> _context;
 
   Transport(this.configuration, this.loopConfiguration, {String? libraryPath}) {
     _library = libraryPath != null
@@ -33,9 +33,9 @@ class Transport {
     using((Arena arena) {
       final transportConfiguration = arena<transport_configuration_t>();
       transportConfiguration.ref.ring_size = configuration.ringSize;
-      _ring = _bindings.transport_initialize(transportConfiguration);
+      _context = _bindings.transport_initialize(transportConfiguration);
     });
-    _listener = TransportListener(_bindings, _ring, loopConfiguration)..start();
+    _listener = TransportListener(_bindings, _context, loopConfiguration)..start();
   }
 
   void close() {
@@ -43,12 +43,12 @@ class Transport {
     _bindings.transport_close();
   }
 
-  TransportConnection connection() => TransportConnection(_bindings, _ring, _listener);
+  TransportConnection connection() => TransportConnection(_bindings, _context, _listener);
 
-  TransportChannel channel(int descriptor) => TransportChannel(_bindings, _ring, descriptor, _listener)..start();
+  TransportChannel channel(int descriptor) => TransportChannel(_bindings, _context, descriptor, _listener)..start();
 
   TransportFileChannel file(String path) {
     final descriptor = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFileChannel(TransportChannel(_bindings, _ring, descriptor, _listener))..start();
+    return TransportFileChannel(TransportChannel(_bindings, _context, descriptor, _listener))..start();
   }
 }

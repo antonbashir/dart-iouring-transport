@@ -4,12 +4,12 @@
 #include <netinet/in.h>
 #include <stdint.h>
 #include <liburing.h>
-#include <ibuf.h>
-#include <obuf.h>
-#include <small.h>
-#include <slab_cache.h>
-#include <slab_arena.h>
-#include <quota.h>
+#include "small/include/small/ibuf.h"
+#include "small/include/small/obuf.h"
+#include "small/include/small/small.h"
+#include "small/include/small/slab_cache.h"
+#include "small/include/small/slab_arena.h"
+#include "small/include/small/quota.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -70,12 +70,15 @@ extern "C"
     struct obuf *current_write_buffer;
 
     size_t current_read_size;
+
+    size_t buffer_initial_capacity;
+    size_t buffer_limit;
   } transport_context_t;
 
   int32_t transport_submit_receive(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait);
   void transport_mark_cqe(transport_context_t *context, transport_message_type_t type, struct io_uring_cqe *cqe);
   int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t size, uint64_t offset);
-  int32_t transport_queue_write(transport_context_t *context, int32_t fd, void* buffer, uint32_t size, uint64_t offset);
+  int32_t transport_queue_write(transport_context_t *context, int32_t fd, void *buffer, uint32_t size, uint64_t offset);
   int32_t transport_queue_accept(transport_context_t *context, int32_t server_socket_fd);
   int32_t transport_queue_connect(transport_context_t *context, int32_t socket_fd, const char *ip, int32_t port);
 
@@ -87,7 +90,7 @@ extern "C"
   void *transport_begin_read(transport_context_t *context, size_t size);
   void transport_complete_read(transport_context_t *context, transport_message_t *message);
   void *transport_begin_write(transport_context_t *context, size_t size);
-  void transport_complete_write(transport_context_t *context, void *buffer);
+  void transport_complete_write(transport_context_t *context, transport_message_t *message);
 
   struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count);
   void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count);

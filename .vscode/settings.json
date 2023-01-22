@@ -13,6 +13,7 @@
     "quota.h": "c",
     "slab_cache.h": "c",
     "*.tcc": "c",
-    "type_traits": "c"
+    "type_traits": "c",
+    "pmatomic.h": "c"
   },
 }

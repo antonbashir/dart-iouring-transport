@@ -9,13 +9,13 @@ import 'exception.dart';
 
 class TransportListener {
   final TransportBindings _bindings;
-  final Pointer<io_uring> _ring;
+  final Pointer<transport_context_t> _context;
   final TransportLoopConfiguration _configuration;
   final StreamController<Pointer<io_uring_cqe>> _cqes = StreamController();
   late Stream<Pointer<io_uring_cqe>> _cqesBroadcast = _cqes.stream.asBroadcastStream();
   bool _active = false;
 
-  TransportListener(this._bindings, this._ring, this._configuration);
+  TransportListener(this._bindings, this._context, this._configuration);
 
   void start() {
     _active = true;
@@ -39,7 +39,7 @@ class TransportListener {
 
     while (_active) {
       Pointer<Pointer<io_uring_cqe>> cqes = calloc(sizeOf<io_uring_cqe>() * _configuration.cqesSize);
-      final received = _bindings.transport_submit_receive(_ring, cqes, _configuration.cqesSize, false);
+      final received = _bindings.transport_submit_receive(_context, cqes, _configuration.cqesSize, false);
       if (received < 0) {
         calloc.free(cqes);
         stop();
@@ -74,7 +74,7 @@ class TransportListener {
         userDataCopy.ref = userData.ref;
         cqeCopy.ref.user_data = userDataCopy.address;
         _cqes.sink.add(cqeCopy);
-        _bindings.transport_mark_cqe(_ring, cqe);
+        _bindings.transport_mark_cqe(_context, userData.ref.type, cqe);
       }
       calloc.free(cqes);
     }

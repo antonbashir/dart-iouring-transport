@@ -10,7 +10,7 @@ import '../bindings.dart';
 
 class TransportChannel {
   final TransportBindings _bindings;
-  final Pointer<io_uring> _ring;
+  final Pointer<transport_context_t> _context;
   final TransportListener _listener;
   final StreamController<Uint8List> _output = StreamController();
   final StreamController<Uint8List> _input = StreamController();
@@ -20,19 +20,21 @@ class TransportChannel {
   late StreamSubscription<Pointer<io_uring_cqe>> _subscription;
   bool _active = false;
 
-  TransportChannel(this._bindings, this._ring, this._descriptor, this._listener);
+  TransportChannel(this._bindings, this._context, this._descriptor, this._listener);
 
   void start() {
     _active = true;
     _subscription = _listener.cqes.listen((cqe) {
       Pointer<transport_message> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
-        _output.add(userData.ref.buffer.cast<Uint8>().asTypedList(userData.ref.size));
+        _output.add(userData.ref.read_buffer.ref.rpos.cast<Uint8>().asTypedList(userData.ref.size));
+        _bindings.transport_complete_read(_context, userData);
         calloc.free(userData);
         calloc.free(cqe);
       }
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
-        _input.add(userData.ref.buffer.cast<Uint8>().asTypedList(userData.ref.size));
+        //_output.add(userData.ref.write_buffer.ref..cast<Uint8>().asTypedList(userData.ref.size));
+        _bindings.transport_complete_write(_context, userData);
         calloc.free(userData);
         calloc.free(cqe);
       }
@@ -57,15 +59,12 @@ class TransportChannel {
 
   Stream<String> get stringInput => _input.stream.map(_decoder.convert);
 
-  void queueRead({int size = 64, int position = 0, int offset = 0}) {
-    final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * size);
-    _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), position, size, offset);
-  }
+  void queueRead({int size = 64, int position = 0, int offset = 0}) => _bindings.transport_queue_read(_context, _descriptor, size, offset);
 
   void queueWriteBytes(Uint8List bytes, {int position = 0, int offset = 0}) {
-    final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * bytes.length);
+    final Pointer<Uint8> buffer = _bindings.transport_begin_write(_context, bytes.length).cast();
     buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_ring, _descriptor, buffer.cast(), position, bytes.length, offset);
+    _bindings.transport_queue_write(_context, _descriptor, buffer.cast(), bytes.length, offset);
   }
 
   void queueWriteString(String string, {int position = 0, int offset = 0}) => queueWriteBytes(_encoder.convert(string), position: position, offset: offset);
