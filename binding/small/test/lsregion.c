@@ -99,7 +99,7 @@ test_basic()
 	 * Large allocation backed by malloc()
 	 */
 	++id;
-	size_t qused = quota_used(arena.quota);
+	size_t qused = quota_used(arena.arena_quota);
 	size_t aused = arena.used;
 	used = lsregion_used(&allocator);
 	total = lsregion_total(&allocator);
@@ -112,7 +112,7 @@ test_basic()
 	is(arena.used, aused, "arena used is not changed after large alloc()");
 	size_t size_quota = (size + lslab_sizeof() + QUOTA_UNIT_SIZE - 1) &
 				~(size_t)(QUOTA_UNIT_SIZE - 1);
-	is(quota_used(arena.quota), qused + size_quota,
+	is(quota_used(arena.arena_quota), qused + size_quota,
 	   "quota used after large alloc()")
 	is(lsregion_slab_count(&allocator), 2,
 	   "slab count after large alloc()");
@@ -150,7 +150,7 @@ test_basic()
 	lsregion_destroy(&allocator);
 	/* Sic: slabs are cached by arena */
 	is(arena.used, 2 * arena.slab_size, "arena used after destroy");
-	is(quota_used(arena.quota), 2 * arena.slab_size,
+	is(quota_used(arena.arena_quota), 2 * arena.slab_size,
 	   "quota used after destroy");
 	slab_arena_destroy(&arena);
 

@@ -33,7 +33,9 @@ class TransportChannel {
         calloc.free(cqe);
       }
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
-        //_output.add(userData.ref.write_buffer.ref..cast<Uint8>().asTypedList(userData.ref.size));
+        final writeBuffer = _bindings.transport_copy_write_buffer(userData);
+        _output.add(writeBuffer.cast<Uint8>().asTypedList(userData.ref.size));
+        malloc.free(writeBuffer);
         _bindings.transport_complete_write(_context, userData);
         calloc.free(userData);
         calloc.free(cqe);

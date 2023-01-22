@@ -32,7 +32,7 @@ ffigen:
     exclude:
       - "_(.*)"
       - "ck(.*)"
-      - "io_uring_(.*)"
+      - "io_uring(.*)"
   macros:
     exclude:
       - "_(.*)"

@@ -59,7 +59,7 @@ lsregion_aligned_reserve_slow(struct lsregion *lsregion, size_t size,
 	if (aligned_size + lslab_sizeof() > slab_size) {
 		/* Large allocation, use malloc() */
 		slab_size = aligned_size + lslab_sizeof();
-		struct quota *quota = arena->quota;
+		struct quota *quota = arena->arena_quota;
 		if (quota_use(quota, slab_size) < 0)
 			return NULL;
 		slab = malloc(slab_size);

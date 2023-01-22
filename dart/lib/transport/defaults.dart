@@ -3,7 +3,16 @@ import 'package:iouring_transport/transport/configuration.dart';
 class TransportDefaults {
   TransportDefaults._();
 
-  static TransportConfiguration configuration() => TransportConfiguration(ringSize: 1024);
+  static TransportConfiguration configuration() => TransportConfiguration(
+        ringSize: 1024,
+        slabSize: 16 * 1024 * 1024,
+        memoryQuota: 1 * 1024 * 1024 * 1024,
+        bufferInitialCapacity: 16320,
+        bufferLimit: 16 * 16320,
+        slabAllocationMinimalObjectSize: 16,
+        slabAllocationGranularity: 8,
+        slabAllocationFactor: 1.05,
+      );
 
   static TransportLoopConfiguration loop() => TransportLoopConfiguration(
         maxSleepMillis: 1,

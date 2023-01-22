@@ -302,7 +302,7 @@ lsregion_gc(struct lsregion *lsregion, int64_t min_id)
 		lsregion->slabs.stats.used -= slab->slab_used - lslab_sizeof();
 		if (slab->slab_size > arena_slab_size) {
 			/* Never put large slabs into cache */
-			quota_release(lsregion->arena->quota, slab->slab_size);
+			quota_release(lsregion->arena->arena_quota, slab->slab_size);
 			lsregion->slabs.stats.total -= slab->slab_size;
 			free(slab);
 		} else if (lsregion->cached != NULL) {

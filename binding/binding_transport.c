@@ -245,7 +245,7 @@ void *transport_begin_read(transport_context_t *context, size_t size)
     new_buffer->wpos += context->current_read_size;
     if (ibuf_used(old_buffer) == 0)
     {
-      if (ibuf_capacity(old_buffer) < 16 * context->buffer_initial_capacity)
+      if (ibuf_capacity(old_buffer) < context->buffer_limit)
       {
         ibuf_reset(old_buffer);
       }

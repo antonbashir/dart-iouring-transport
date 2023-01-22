@@ -1,9 +1,44 @@
 class TransportConfiguration {
   final int ringSize;
+  final int slabSize;
+  final int memoryQuota;
+  final int bufferInitialCapacity;
+  final int bufferLimit;
+  final int slabAllocationMinimalObjectSize;
+  final int slabAllocationGranularity;
+  final double slabAllocationFactor;
 
-  TransportConfiguration({required this.ringSize});
+  TransportConfiguration({
+    required this.ringSize,
+    required this.slabSize,
+    required this.memoryQuota,
+    required this.bufferInitialCapacity,
+    required this.bufferLimit,
+    required this.slabAllocationMinimalObjectSize,
+    required this.slabAllocationGranularity,
+    required this.slabAllocationFactor,
+  });
 
-  TransportConfiguration copyWith({int? ringSize}) => TransportConfiguration(ringSize: ringSize ?? this.ringSize);
+  TransportConfiguration copyWith({
+    int? ringSize,
+    int? slabSize,
+    int? memoryQuota,
+    int? bufferInitialCapacity,
+    int? bufferLimit,
+    int? slabAllocationMinimalObjectSize,
+    int? slabAllocationGranularity,
+    double? slabAllocationFactor,
+  }) =>
+      TransportConfiguration(
+        ringSize: ringSize ?? this.ringSize,
+        slabSize: slabSize ?? this.slabSize,
+        memoryQuota: memoryQuota ?? this.memoryQuota,
+        bufferInitialCapacity: bufferInitialCapacity ?? this.bufferInitialCapacity,
+        bufferLimit: bufferLimit ?? this.bufferLimit,
+        slabAllocationMinimalObjectSize: slabAllocationMinimalObjectSize ?? this.slabAllocationMinimalObjectSize,
+        slabAllocationGranularity: slabAllocationGranularity ?? this.slabAllocationGranularity,
+        slabAllocationFactor: slabAllocationFactor ?? this.slabAllocationFactor,
+      );
 }
 
 class TransportLoopConfiguration {

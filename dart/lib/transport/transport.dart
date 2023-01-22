@@ -33,6 +33,13 @@ class Transport {
     using((Arena arena) {
       final transportConfiguration = arena<transport_configuration_t>();
       transportConfiguration.ref.ring_size = configuration.ringSize;
+      transportConfiguration.ref.slab_size = configuration.slabSize;
+      transportConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
+      transportConfiguration.ref.buffer_limit = configuration.bufferLimit;
+      transportConfiguration.ref.memory_quota = configuration.memoryQuota;
+      transportConfiguration.ref.slab_allocation_granularity = configuration.slabAllocationGranularity;
+      transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
+      transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
       _context = _bindings.transport_initialize(transportConfiguration);
     });
     _listener = TransportListener(_bindings, _context, loopConfiguration)..start();

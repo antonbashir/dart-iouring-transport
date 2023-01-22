@@ -100,7 +100,7 @@ struct slab_arena {
 	 * An external quota to which we must adhere.
 	 * A quota exists to set a common limit on two arenas.
 	 */
-	struct quota *quota;
+	struct quota *arena_quota;
 	/*
 	 * Each object returned by arena_map() has this size.
 	 * The size is provided at arena initialization.

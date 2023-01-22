@@ -8832,6 +8832,23 @@ class TransportBindings {
   late final _transport_close_descriptor =
       _transport_close_descriptorPtr.asFunction<void Function(int)>();
 
+  ffi.Pointer<ffi.Void> transport_copy_write_buffer(
+    ffi.Pointer<transport_message_t> message,
+  ) {
+    return _transport_copy_write_buffer(
+      message,
+    );
+  }
+
+  late final _transport_copy_write_bufferPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Pointer<ffi.Void> Function(
+                  ffi.Pointer<transport_message_t>)>>(
+      'transport_copy_write_buffer');
+  late final _transport_copy_write_buffer =
+      _transport_copy_write_bufferPtr.asFunction<
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_message_t>)>();
+
   ffi.Pointer<ffi.Void> transport_begin_read(
     ffi.Pointer<transport_context_t> context,
     int size,
@@ -11059,6 +11076,11 @@ class _SymbolAddresses {
       get transport_close_descriptor => _library._transport_close_descriptorPtr;
   ffi.Pointer<
           ffi.NativeFunction<
+              ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_message_t>)>>
+      get transport_copy_write_buffer =>
+          _library._transport_copy_write_bufferPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
               ffi.Pointer<ffi.Void> Function(
                   ffi.Pointer<transport_context_t>, ffi.Size)>>
       get transport_begin_read => _library._transport_begin_readPtr;
@@ -12466,7 +12488,7 @@ class slab_arena extends ffi.Struct {
 
   /// An external quota to which we must adhere.
   /// A quota exists to set a common limit on two arenas.
-  external ffi.Pointer<quota> quota;
+  external ffi.Pointer<quota> arena_quota;
 
   @ffi.Uint32()
   external int slab_size;

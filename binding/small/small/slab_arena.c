@@ -188,7 +188,7 @@ slab_arena_create(struct slab_arena *arena, struct quota *quota,
 	 */
 	arena->slab_size = small_round(MAX(slab_size, SLAB_MIN_SIZE));
 
-	arena->quota = quota;
+	arena->arena_quota = quota;
 	/** Prealloc can not be greater than the quota */
 	prealloc = MIN(prealloc, quota_total(quota));
 	/** Extremely large sizes can not be aligned properly */
@@ -240,7 +240,7 @@ slab_map(struct slab_arena *arena)
 		return ptr;
 	}
 
-	if (quota_use(arena->quota, arena->slab_size) < 0)
+	if (quota_use(arena->arena_quota, arena->slab_size) < 0)
 		return NULL;
 
 	/** Need to allocate a new slab. */
@@ -256,7 +256,7 @@ slab_map(struct slab_arena *arena)
 			   arena->flags);
 	if (!ptr) {
 		__sync_sub_and_fetch(&arena->used, arena->slab_size);
-		quota_release(arena->quota, arena->slab_size);
+		quota_release(arena->arena_quota, arena->slab_size);
 	}
 
 	madvise_checked(ptr, arena->slab_size, arena->flags);

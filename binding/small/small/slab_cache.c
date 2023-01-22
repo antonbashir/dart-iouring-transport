@@ -198,7 +198,7 @@ slab_cache_destroy(struct slab_cache *cache)
 	rlist_foreach_entry_safe(slab, slabs, next_in_cache, tmp) {
 		if (slab->order == cache->order_max + 1) {
 			size_t slab_size = slab->size;
-			quota_release(cache->arena->quota, slab_size);
+			quota_release(cache->arena->arena_quota, slab_size);
 			VALGRIND_MEMPOOL_FREE(cache, slab_data(slab));
 			free(slab);
 		} else {
@@ -263,11 +263,11 @@ struct slab *
 slab_get_large(struct slab_cache *cache, size_t size)
 {
 	size += slab_sizeof();
-	if (quota_use(cache->arena->quota, size) < 0)
+	if (quota_use(cache->arena->arena_quota, size) < 0)
 		return NULL;
 	struct slab *slab = (struct slab *) malloc(size);
 	if (slab == NULL) {
-		quota_release(cache->arena->quota, size);
+		quota_release(cache->arena->arena_quota, size);
 		return NULL;
 	}
 
@@ -291,7 +291,7 @@ slab_put_large(struct slab_cache *cache, struct slab *slab)
 	size_t slab_size = slab->size;
 	slab_list_del(&cache->allocated, slab, next_in_cache);
 	cache->allocated.stats.used -= slab_size;
-	quota_release(cache->arena->quota, slab_size);
+	quota_release(cache->arena->arena_quota, slab_size);
 	slab_poison(slab);
 	VALGRIND_MEMPOOL_FREE(cache, slab_data(slab));
 	free(slab);
