@@ -29,7 +29,7 @@ class TransportChannel {
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
         final readBuffer = _bindings.transport_copy_read_buffer(_context, userData);
         final data = readBuffer.cast<Uint8>().asTypedList(userData.ref.size);
-        _input.add(TransportMessage(_bindings, _bindings.transport_allocate_data(_context, readBuffer, userData.ref.size), data));
+        _output.add(TransportMessage(_bindings, _bindings.transport_allocate_data(_context, readBuffer, userData.ref.size), data));
         _bindings.transport_complete_read(_context, userData);
         _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_message>());
         _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
@@ -37,7 +37,7 @@ class TransportChannel {
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
         final writeBuffer = _bindings.transport_copy_write_buffer(_context, userData);
         final data = writeBuffer.cast<Uint8>().asTypedList(userData.ref.size);
-        _output.add(TransportMessage(_bindings, _bindings.transport_allocate_data(_context, writeBuffer, userData.ref.size), data));
+        _input.add(TransportMessage(_bindings, _bindings.transport_allocate_data(_context, writeBuffer, userData.ref.size), data));
         _bindings.transport_complete_write(_context, userData);
         _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_message>());
         _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
