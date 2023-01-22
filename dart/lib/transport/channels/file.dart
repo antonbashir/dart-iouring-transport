@@ -1,61 +1,29 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/listener.dart';
-
-import '../bindings.dart';
+import 'package:iouring_transport/transport/channels/channel.dart';
 
 class TransportFileChannel {
-  final TransportBindings _bindings;
-  final Pointer<io_uring> _ring;
-  final TransportListener _listener;
-  final StreamController<Uint8List> _output = StreamController();
-  final StreamController<Uint8List> _input = StreamController();
-  final int _descriptor;
+  final TransportChannel _delegate;
   final _decoder = Utf8Decoder();
   final _encoder = Utf8Encoder();
-  late StreamSubscription<Pointer<io_uring_cqe>> _subscription;
-  bool _active = false;
 
-  TransportFileChannel(this._bindings, this._ring, this._descriptor, this._listener);
+  TransportFileChannel(this._delegate);
 
-  void start() {
-    _active = true;
-    _subscription = _listener.cqes.listen((cqe) {
-      Pointer<transport_message> userData = Pointer.fromAddress(cqe.ref.user_data);
-      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
-        _output.add(userData.ref.buffer.cast<Uint8>().asTypedList(userData.ref.size));
-        calloc.free(userData);
-        calloc.free(cqe);
-      }
-      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
-        _input.add(userData.ref.buffer.cast<Uint8>().asTypedList(userData.ref.size));
-        calloc.free(userData);
-        calloc.free(cqe);
-      }
-    });
-  }
+  void start() => _delegate.start();
 
-  void stop() {
-    _subscription.cancel();
-    _output.close();
-    _input.close();
-    _bindings.transport_close_descriptor(_descriptor);
-    _active = false;
-  }
+  void stop() => _delegate.stop();
 
-  bool get active => _active;
+  bool get active => _delegate.active;
 
-  Stream<Uint8List> get bytesOutput => _output.stream;
+  Stream<Uint8List> get bytesOutput => _delegate.bytesOutput;
 
-  Stream<String> get stringOutput => _output.stream.map(_decoder.convert);
+  Stream<String> get stringOutput => _delegate.stringOutput;
 
-  Stream<Uint8List> get bytesInput => _input.stream;
+  Stream<Uint8List> get bytesInput => _delegate.bytesInput;
 
-  Stream<String> get stringInput => _input.stream.map(_decoder.convert);
+  Stream<String> get stringInput => _delegate.stringInput;
 
   Future<Uint8List> readBytes() async {
     Completer completer = Completer();
@@ -80,7 +48,7 @@ class TransportFileChannel {
     Completer completer = Completer();
     var offset = 0;
     queueWriteBytes(bytes);
-    _input.stream.listen((data) {
+    _delegate.bytesOutput.listen((data) {
       if (data.isEmpty || data.first == 0) {
         completer.complete();
         return;
@@ -93,16 +61,9 @@ class TransportFileChannel {
 
   Future<void> writeString(String string) => writeBytes(_encoder.convert(string));
 
-  void queueRead({int size = 64, int position = 0, int offset = 0}) {
-    final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * size);
-    _bindings.transport_queue_read(_ring, _descriptor, buffer.cast(), position, size, offset);
-  }
+  void queueRead({int size = 64, int position = 0, int offset = 0}) => _delegate.queueRead(size: size, position: position, offset: offset);
 
-  void queueWriteBytes(Uint8List bytes, {int position = 0, int offset = 0}) {
-    final Pointer<Uint8> buffer = calloc(sizeOf<Uint8>() * bytes.length);
-    buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_ring, _descriptor, buffer.cast(), position, bytes.length, offset);
-  }
+  void queueWriteBytes(Uint8List bytes, {int position = 0, int offset = 0}) => _delegate.queueWriteBytes(bytes, position: position, offset: offset);
 
-  void queueWriteString(String string, {int position = 0, int offset = 0}) => queueWriteBytes(_encoder.convert(string), position: position, offset: offset);
+  void queueWriteString(String string, {int position = 0, int offset = 0}) => _delegate.queueWriteString(string, position: position, offset: offset);
 }

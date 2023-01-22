@@ -7,7 +7,7 @@ import 'package:iouring_transport/transport/connection.dart';
 
 import 'bindings.dart';
 import 'channels/file.dart';
-import 'channels/socket.dart';
+import 'channels/channel.dart';
 import 'listener.dart';
 import 'lookup.dart';
 
@@ -45,12 +45,10 @@ class Transport {
 
   TransportConnection connection() => TransportConnection(_bindings, _ring, _listener);
 
-  TransportSocketChannel channel(int descriptor) => TransportSocketChannel(_bindings, _ring, descriptor, _listener)..start();
+  TransportChannel channel(int descriptor) => TransportChannel(_bindings, _ring, descriptor, _listener)..start();
 
-  TransportFileChannel file(String path) => TransportFileChannel(
-        _bindings,
-        _ring,
-        using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast())),
-        _listener,
-      )..start();
+  TransportFileChannel file(String path) {
+    final descriptor = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
+    return TransportFileChannel(TransportChannel(_bindings, _ring, descriptor, _listener))..start();
+  }
 }

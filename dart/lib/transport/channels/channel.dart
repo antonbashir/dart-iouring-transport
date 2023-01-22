@@ -8,7 +8,7 @@ import 'package:iouring_transport/transport/listener.dart';
 
 import '../bindings.dart';
 
-class TransportSocketChannel {
+class TransportChannel {
   final TransportBindings _bindings;
   final Pointer<io_uring> _ring;
   final TransportListener _listener;
@@ -20,7 +20,7 @@ class TransportSocketChannel {
   late StreamSubscription<Pointer<io_uring_cqe>> _subscription;
   bool _active = false;
 
-  TransportSocketChannel(this._bindings, this._ring, this._descriptor, this._listener);
+  TransportChannel(this._bindings, this._ring, this._descriptor, this._listener);
 
   void start() {
     _active = true;
