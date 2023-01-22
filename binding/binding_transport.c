@@ -338,16 +338,18 @@ void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqe
 
 void *transport_copy_write_buffer(transport_context_t *context, transport_message_t *message)
 {
-  void *result_buffer = smalloc(&context->allocator, message->size);
-  memcpy(result_buffer, message->write_buffer->rpos, message->size);
-  return result_buffer;
+  // void *result_buffer = smalloc(&context->allocator, message->size);
+  // memcpy(result_buffer, message->write_buffer->rpos, message->size);
+  // return result_buffer;
+  return message->write_buffer->rpos;
 }
 
 void *transport_copy_read_buffer(transport_context_t *context, transport_message_t *message)
 {
-  void *result_buffer = smalloc(&context->allocator, message->size);
-  memcpy(result_buffer, message->read_buffer->rpos, message->size);
-  return result_buffer;
+  // void *result_buffer = smalloc(&context->allocator, message->size);
+  // memcpy(result_buffer, message->read_buffer->rpos, message->size);
+  // return result_buffer;
+  return message->read_buffer->rpos;
 }
 
 size_t transport_read_buffer_used(transport_context_t *context)
@@ -376,6 +378,6 @@ transport_data_t *transport_allocate_data(transport_context_t *context, void *bu
 
 void transport_free_data(transport_data_t *data)
 {
-  transport_free_object(data->context, data->buffer, data->size);
+  //transport_free_object(data->context, data->buffer, data->size);
   transport_free_object(data->context, data, sizeof(transport_data_t));
 }
