@@ -27,21 +27,20 @@ class TransportChannel {
     _subscription = _listener.cqes.listen((cqe) {
       Pointer<transport_message> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
-        final data = userData.ref.read_buffer.ref.rpos.cast<Uint8>().asTypedList(userData.ref.size);
-        _input.add(data);
+        final readBuffer = _bindings.transport_copy_read_buffer(_context, userData);
+        _input.add(readBuffer.cast<Uint8>().asTypedList(userData.ref.size));
+        _bindings.transport_free_object(_context, readBuffer, userData.ref.size);
         _bindings.transport_complete_read(_context, userData);
-        calloc.free(userData);
-        calloc.free(cqe);
+        _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_message>());
+        _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
       }
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
-        final writeBuffer = _bindings.transport_copy_write_buffer(userData);
-        Pointer<Uint8> writeBufferCopy = calloc.allocate(sizeOf<Uint8>() * userData.ref.size);
-        final data = writeBufferCopy.asTypedList(userData.ref.size)..setAll(0, writeBuffer.cast<Uint8>().asTypedList(userData.ref.size));
-        _output.add(data);
-        malloc.free(writeBuffer);
+        final writeBuffer = _bindings.transport_copy_write_buffer(_context, userData);
+        _output.add(writeBuffer.cast<Uint8>().asTypedList(userData.ref.size));
+        _bindings.transport_free_object(_context, writeBuffer, userData.ref.size);
         _bindings.transport_complete_write(_context, userData);
-        calloc.free(userData);
-        calloc.free(cqe);
+        _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_message>());
+        _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
       }
     });
   }

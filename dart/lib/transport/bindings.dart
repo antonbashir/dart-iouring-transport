@@ -10366,25 +10366,24 @@ class TransportBindings {
           void Function(ffi.Pointer<transport_context_t>,
               ffi.Pointer<transport_message_t>)>();
 
-  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_small(
+  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     ffi.Pointer<transport_context_t> context,
     int count,
   ) {
-    return _transport_allocate_small(
+    return _transport_allocate_cqes(
       context,
       count,
     );
   }
 
-  late final _transport_allocate_smallPtr = _lookup<
+  late final _transport_allocate_cqesPtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
               ffi.Pointer<transport_context_t>,
-              ffi.Uint32)>>('transport_allocate_small');
-  late final _transport_allocate_small =
-      _transport_allocate_smallPtr.asFunction<
-          ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
-              ffi.Pointer<transport_context_t>, int)>();
+              ffi.Uint32)>>('transport_allocate_cqes');
+  late final _transport_allocate_cqes = _transport_allocate_cqesPtr.asFunction<
+      ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
+          ffi.Pointer<transport_context_t>, int)>();
 
   void transport_free_cqes(
     ffi.Pointer<transport_context_t> context,
@@ -12892,7 +12891,7 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
                   ffi.Pointer<transport_context_t>, ffi.Uint32)>>
-      get transport_allocate_small => _library._transport_allocate_smallPtr;
+      get transport_allocate_cqes => _library._transport_allocate_cqesPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Void Function(

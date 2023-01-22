@@ -100,7 +100,7 @@ extern "C"
   void *transport_begin_write(transport_context_t *context, size_t size);
   void transport_complete_write(transport_context_t *context, transport_message_t *message);
 
-  struct io_uring_cqe **transport_allocate_small(transport_context_t *context, uint32_t count);
+  struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count);
   void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count);
  
   void* transport_allocate_object(transport_context_t *context, size_t size);

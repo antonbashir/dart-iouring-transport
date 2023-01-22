@@ -305,7 +305,7 @@ void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqe
 void *transport_copy_write_buffer(transport_context_t *context, transport_message_t *message)
 {
   size_t result_size = obuf_size(message->write_buffer);
-  void *result_buffer = region_alloc(&context->region, result_size);
+  void *result_buffer = smalloc(&context->allocator, result_size);
   int position = 0;
   int buffer_iov_count = obuf_iovcnt(message->write_buffer);
   for (int iov_index = 0; iov_index < buffer_iov_count; iov_index++)
@@ -318,7 +318,7 @@ void *transport_copy_write_buffer(transport_context_t *context, transport_messag
 
 void *transport_copy_read_buffer(transport_context_t *context, transport_message_t *message)
 {
-  void *result_buffer = region_alloc(&context->region, message->size);
+  void *result_buffer = smalloc(&context->allocator, message->size);
   memcpy(message->read_buffer->rpos, result_buffer, message->size);
   return result_buffer;
 }

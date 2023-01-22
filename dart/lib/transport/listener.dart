@@ -38,7 +38,7 @@ class TransportListener {
     int curentEmptyCyclesLimit = initialEmptyCycles;
 
     while (_active) {
-      Pointer<Pointer<io_uring_cqe>> cqes = calloc(sizeOf<io_uring_cqe>() * _configuration.cqesSize);
+      Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_free_cqes(context, cqes, count) calloc(sizeOf<io_uring_cqe>() * _configuration.cqesSize);
       final received = _bindings.transport_submit_receive(_context, cqes, _configuration.cqesSize, false);
       if (received < 0) {
         calloc.free(cqes);
@@ -68,8 +68,8 @@ class TransportListener {
       for (var cqeIndex = 0; cqeIndex < received; cqeIndex++) {
         final cqe = cqes[cqeIndex];
         final userData = Pointer<transport_message>.fromAddress(cqe.ref.user_data);
-        final Pointer<io_uring_cqe> cqeCopy = calloc();
-        final Pointer<transport_message> userDataCopy = calloc();
+        final Pointer<io_uring_cqe> cqeCopy = _bindings.transport_allocate_object(_context, sizeOf<io_uring_cqe>()).cast();
+        final Pointer<transport_message> userDataCopy = _bindings.transport_allocate_object(_context, sizeOf<transport_message>()).cast();
         cqeCopy.ref = cqe.ref;
         userDataCopy.ref = userData.ref;
         cqeCopy.ref.user_data = userDataCopy.address;
