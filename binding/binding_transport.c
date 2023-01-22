@@ -37,7 +37,7 @@ int32_t transport_submit_receive(transport_context_t *context, struct io_uring_c
 
 void transport_mark_cqe(transport_context_t *context, transport_message_type_t type, struct io_uring_cqe *cqe)
 {
-  smfree(&context->allocator, (void*)cqe->user_data, type == TRANSPORT_MESSAGE_READ || type == TRANSPORT_MESSAGE_WRITE ? sizeof(transport_message_t) : sizeof(transport_accept_request_t));
+  smfree(&context->allocator, (void *)cqe->user_data, type == TRANSPORT_MESSAGE_READ || type == TRANSPORT_MESSAGE_WRITE ? sizeof(transport_message_t) : sizeof(transport_accept_request_t));
   io_uring_cqe_seen(&context->ring, cqe);
 }
 
@@ -295,4 +295,18 @@ struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint
 void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count)
 {
   smfree(&context->allocator, cqes, sizeof(struct io_uring_cqe *) * count);
+}
+
+void *transport_copy_write_buffer(transport_message_t *message)
+{
+  size_t result_size = obuf_size(message->write_buffer);
+  void *result_buffer = malloc(result_size);
+  int position = 0;
+  int buffer_iov_count = obuf_iovcnt(message->write_buffer);
+  for (int iov_index = 0; iov_index < buffer_iov_count; iov_index++)
+  {
+    memcpy(result_buffer + position, message->write_buffer->iov[iov_index].iov_base, message->write_buffer->iov[iov_index].iov_len);
+    position += message->write_buffer->iov[iov_index].iov_len;
+  }
+  return result_buffer;
 }

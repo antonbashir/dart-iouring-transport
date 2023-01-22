@@ -8886,22 +8886,22 @@ class TransportBindings {
 
   void transport_complete_write(
     ffi.Pointer<transport_context_t> context,
-    ffi.Pointer<ffi.Void> buffer,
+    ffi.Pointer<transport_message_t> message,
   ) {
     return _transport_complete_write(
       context,
-      buffer,
+      message,
     );
   }
 
   late final _transport_complete_writePtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<transport_context_t>,
-              ffi.Pointer<ffi.Void>)>>('transport_complete_write');
+              ffi.Pointer<transport_message_t>)>>('transport_complete_write');
   late final _transport_complete_write =
       _transport_complete_writePtr.asFunction<
-          void Function(
-              ffi.Pointer<transport_context_t>, ffi.Pointer<ffi.Void>)>();
+          void Function(ffi.Pointer<transport_context_t>,
+              ffi.Pointer<transport_message_t>)>();
 
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     ffi.Pointer<transport_context_t> context,
@@ -11074,8 +11074,8 @@ class _SymbolAddresses {
       get transport_begin_write => _library._transport_begin_writePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_context_t>, ffi.Pointer<ffi.Void>)>>
+              ffi.Void Function(ffi.Pointer<transport_context_t>,
+                  ffi.Pointer<transport_message_t>)>>
       get transport_complete_write => _library._transport_complete_writePtr;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -13030,6 +13030,12 @@ class transport_context extends ffi.Struct {
 
   @ffi.Size()
   external int current_read_size;
+
+  @ffi.Size()
+  external int buffer_initial_capacity;
+
+  @ffi.Size()
+  external int buffer_limit;
 }
 
 typedef transport_context_t = transport_context;
