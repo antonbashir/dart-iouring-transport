@@ -31,12 +31,12 @@ class TransportFileChannel {
     var offset = 0;
     queueRead();
     bytesOutput.listen((data) {
-      if (data.isEmpty || data.first == 0) {
+      bytes.add(data);
+      if (data.isEmpty || _delegate.readBufferUsed() == 0) {
         completer.complete();
         return;
       }
-      bytes.add(data);
-      queueRead(offset: offset++);
+      queueRead(offset: offset += data.length);
     });
     await completer.future;
     return bytes.takeBytes();

@@ -73,4 +73,6 @@ class TransportChannel {
   }
 
   void queueWriteString(String string, {int offset = 0}) => queueWriteBytes(_encoder.convert(string), offset: offset);
+
+  int readBufferUsed() => _bindings.transport_read_buffer_used(_context);
 }

@@ -311,3 +311,8 @@ void *transport_copy_write_buffer(transport_message_t *message)
   }
   return result_buffer;
 }
+
+size_t transport_read_buffer_used(transport_context_t *context) 
+{
+  return ibuf_used(context->current_read_buffer);
+}

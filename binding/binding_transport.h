@@ -88,6 +88,7 @@ extern "C"
   void transport_close_descriptor(int32_t fd);
 
   void* transport_copy_write_buffer(transport_message_t* message);
+  size_t transport_read_buffer_used(transport_context_t *context);
 
   void *transport_begin_read(transport_context_t *context, size_t size);
   void transport_complete_read(transport_context_t *context, transport_message_t *message);

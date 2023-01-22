@@ -8849,6 +8849,21 @@ class TransportBindings {
       _transport_copy_write_bufferPtr.asFunction<
           ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_message_t>)>();
 
+  int transport_read_buffer_used(
+    ffi.Pointer<transport_context_t> context,
+  ) {
+    return _transport_read_buffer_used(
+      context,
+    );
+  }
+
+  late final _transport_read_buffer_usedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Size Function(
+              ffi.Pointer<transport_context_t>)>>('transport_read_buffer_used');
+  late final _transport_read_buffer_used = _transport_read_buffer_usedPtr
+      .asFunction<int Function(ffi.Pointer<transport_context_t>)>();
+
   ffi.Pointer<ffi.Void> transport_begin_read(
     ffi.Pointer<transport_context_t> context,
     int size,
@@ -11079,6 +11094,10 @@ class _SymbolAddresses {
               ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_message_t>)>>
       get transport_copy_write_buffer =>
           _library._transport_copy_write_bufferPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Size Function(ffi.Pointer<transport_context_t>)>>
+      get transport_read_buffer_used => _library._transport_read_buffer_usedPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<ffi.Void> Function(
