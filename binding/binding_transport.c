@@ -234,7 +234,7 @@ void *transport_begin_read(transport_context_t *context, size_t size)
     return old_buffer->wpos;
   }
 
-  struct ibuf *new_buffer = &context->read_buffers[context->current_read_buffer == &context->read_buffers[0]];
+  struct ibuf *new_buffer = &context->read_buffers[context->current_read_buffer == &context->read_buffers];
   if (ibuf_used(new_buffer) != 0)
   {
     return NULL;
@@ -288,7 +288,7 @@ void *transport_begin_write(transport_context_t *context, size_t size)
     return old_buffer->wpos;
   }
 
-  struct ibuf *new_buffer = &context->write_buffers[context->current_write_buffer == &context->write_buffers[0]];
+  struct ibuf *new_buffer = &context->write_buffers[context->current_write_buffer == &context->write_buffers];
   if (ibuf_used(new_buffer) != 0)
   {
     return NULL;
@@ -378,6 +378,6 @@ transport_data_t *transport_allocate_data(transport_context_t *context, void *bu
 
 void transport_free_data(transport_data_t *data)
 {
-  //transport_free_object(data->context, data->buffer, data->size);
+  // transport_free_object(data->context, data->buffer, data->size);
   transport_free_object(data->context, data, sizeof(transport_data_t));
 }
