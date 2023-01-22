@@ -34,8 +34,8 @@ class TransportConnection {
       Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_ACCEPT) {
         final clientDescriptor = cqe.ref.res;
-        calloc.free(userData);
-        calloc.free(cqe);
+        _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_accept_request>());
+        _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
         _clientChannels.add(TransportChannel(_bindings, _context, clientDescriptor, _listener)..start());
       }
     });
@@ -48,8 +48,8 @@ class TransportConnection {
       Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_CONNECT) {
         final serverDescriptor = userData.ref.fd;
-        calloc.free(userData);
-        calloc.free(cqe);
+        _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_accept_request>());
+        _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
         _serverChannels.add(TransportChannel(_bindings, _context, serverDescriptor, _listener)..start());
       }
     });

@@ -38,16 +38,16 @@ class TransportListener {
     int curentEmptyCyclesLimit = initialEmptyCycles;
 
     while (_active) {
-      Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_free_cqes(context, cqes, count) calloc(sizeOf<io_uring_cqe>() * _configuration.cqesSize);
+      Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_context, _configuration.cqesSize);
       final received = _bindings.transport_submit_receive(_context, cqes, _configuration.cqesSize, false);
       if (received < 0) {
-        calloc.free(cqes);
+        _bindings.transport_free_cqes(_context, cqes, _configuration.cqesSize);
         stop();
         throw new TransportException("Failed transport_submit_receive");
       }
 
       if (received == 0) {
-        calloc.free(cqes);
+        _bindings.transport_free_cqes(_context, cqes, _configuration.cqesSize);
         currentEmptyCycles++;
         if (currentEmptyCycles >= maxEmptyCycles) {
           await Future.delayed(Duration(milliseconds: maxSleepMillis));
@@ -69,14 +69,20 @@ class TransportListener {
         final cqe = cqes[cqeIndex];
         final userData = Pointer<transport_message>.fromAddress(cqe.ref.user_data);
         final Pointer<io_uring_cqe> cqeCopy = _bindings.transport_allocate_object(_context, sizeOf<io_uring_cqe>()).cast();
-        final Pointer<transport_message> userDataCopy = _bindings.transport_allocate_object(_context, sizeOf<transport_message>()).cast();
+        final Pointer<transport_message> userDataCopy = _bindings
+            .transport_allocate_object(
+                _context,
+                userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ || userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE
+                    ? sizeOf<transport_message>()
+                    : sizeOf<transport_accept_request>())
+            .cast();
         cqeCopy.ref = cqe.ref;
         userDataCopy.ref = userData.ref;
         cqeCopy.ref.user_data = userDataCopy.address;
         _cqes.sink.add(cqeCopy);
         _bindings.transport_mark_cqe(_context, userData.ref.type, cqe);
       }
-      calloc.free(cqes);
+      _bindings.transport_free_cqes(_context, cqes, _configuration.cqesSize);
     }
   }
 }
