@@ -10,7 +10,6 @@
 #include "small/include/small/slab_cache.h"
 #include "small/include/small/slab_arena.h"
 #include "small/include/small/quota.h"
-#include "small/include/small/region.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -63,7 +62,6 @@ extern "C"
     struct slab_cache cache;
     struct small_alloc allocator;
     struct quota quota;
-    struct region region;
 
     struct ibuf read_buffers[2];
     struct ibuf *current_read_buffer;
@@ -98,7 +96,6 @@ extern "C"
 
   void* transport_copy_write_buffer(transport_context_t *context, transport_message_t* message);
   void* transport_copy_read_buffer(transport_context_t *context, transport_message_t* message);
-  void transport_free_region(transport_context_t *context);
   
   size_t transport_read_buffer_used(transport_context_t *context);
 
