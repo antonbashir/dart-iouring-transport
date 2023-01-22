@@ -319,7 +319,7 @@ void *transport_copy_write_buffer(transport_context_t *context, transport_messag
 void *transport_copy_read_buffer(transport_context_t *context, transport_message_t *message)
 {
   void *result_buffer = smalloc(&context->allocator, message->size);
-  memcpy(message->read_buffer->rpos, result_buffer, message->size);
+  memcpy(result_buffer, message->read_buffer->rpos, message->size);
   return result_buffer;
 }
 
@@ -328,17 +328,32 @@ void transport_free_region(transport_context_t *context)
   region_free(&context->region);
 }
 
-size_t transport_read_buffer_used(transport_context_t *context) 
+size_t transport_read_buffer_used(transport_context_t *context)
 {
   return ibuf_used(context->current_read_buffer);
 }
 
-void* transport_allocate_object(transport_context_t *context, size_t size)
+void *transport_allocate_object(transport_context_t *context, size_t size)
 {
   return smalloc(&context->allocator, size);
 }
 
-void transport_free_object(transport_context_t *context, void* object, size_t size)
+void transport_free_object(transport_context_t *context, void *object, size_t size)
 {
   smfree(&context->allocator, object, size);
+}
+
+transport_data_t *transport_allocate_data(transport_context_t *context, void *buffer, size_t size)
+{
+  transport_data_t *data = smalloc(&context->allocator, sizeof(transport_data_t));
+  data->context = context;
+  data->buffer = buffer;
+  data->size = size;
+  return data;
+}
+
+void transport_free_data(transport_data_t *data)
+{
+  transport_free_object(data->context, data->buffer, data->size);
+  transport_free_object(data->context, data, sizeof(transport_data_t));
 }

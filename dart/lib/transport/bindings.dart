@@ -10446,6 +10446,42 @@ class TransportBindings {
       void Function(
           ffi.Pointer<transport_context_t>, ffi.Pointer<ffi.Void>, int)>();
 
+  ffi.Pointer<transport_data_t> transport_allocate_data(
+    ffi.Pointer<transport_context_t> context,
+    ffi.Pointer<ffi.Void> buffer,
+    int size,
+  ) {
+    return _transport_allocate_data(
+      context,
+      buffer,
+      size,
+    );
+  }
+
+  late final _transport_allocate_dataPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_data_t> Function(
+              ffi.Pointer<transport_context_t>,
+              ffi.Pointer<ffi.Void>,
+              ffi.Size)>>('transport_allocate_data');
+  late final _transport_allocate_data = _transport_allocate_dataPtr.asFunction<
+      ffi.Pointer<transport_data_t> Function(
+          ffi.Pointer<transport_context_t>, ffi.Pointer<ffi.Void>, int)>();
+
+  void transport_free_data(
+    ffi.Pointer<transport_data_t> data,
+  ) {
+    return _transport_free_data(
+      data,
+    );
+  }
+
+  late final _transport_free_dataPtr = _lookup<
+          ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_data_t>)>>(
+      'transport_free_data');
+  late final _transport_free_data = _transport_free_dataPtr
+      .asFunction<void Function(ffi.Pointer<transport_data_t>)>();
+
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
   ) {
@@ -12911,6 +12947,16 @@ class _SymbolAddresses {
               ffi.Pointer<ffi.Void>,
               ffi.Size)>> get transport_free_object =>
       _library._transport_free_objectPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_data_t> Function(
+              ffi.Pointer<transport_context_t>,
+              ffi.Pointer<ffi.Void>,
+              ffi.Size)>> get transport_allocate_data =>
+      _library._transport_allocate_dataPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_data_t>)>>
+      get transport_free_data => _library._transport_free_dataPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function()>>
@@ -14999,9 +15045,19 @@ class transport_context extends ffi.Struct {
   external int buffer_limit;
 }
 
+class transport_data extends ffi.Struct {
+  external ffi.Pointer<transport_context_t> context;
+
+  external ffi.Pointer<ffi.Void> buffer;
+
+  @ffi.Size()
+  external int size;
+}
+
 typedef transport_context_t = transport_context;
 typedef transport_configuration_t = transport_configuration;
 typedef transport_message_t = transport_message;
+typedef transport_data_t = transport_data;
 
 const int MSG_OOB = 1;
 

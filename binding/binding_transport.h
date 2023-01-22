@@ -77,6 +77,13 @@ extern "C"
     size_t buffer_limit;
   } transport_context_t;
 
+  typedef struct transport_data
+  {
+    transport_context_t* context;
+    void* buffer;
+    size_t size;
+  } transport_data_t;
+
   int32_t transport_submit_receive(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait);
   void transport_mark_cqe(transport_context_t *context, transport_message_type_t type, struct io_uring_cqe *cqe);
   int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t size, uint64_t offset);
@@ -105,6 +112,9 @@ extern "C"
  
   void* transport_allocate_object(transport_context_t *context, size_t size);
   void transport_free_object(transport_context_t *context, void* object, size_t size);
+ 
+  transport_data_t* transport_allocate_data(transport_context_t *context, void* buffer, size_t size);
+  void transport_free_data(transport_data_t* data);
 #if defined(__cplusplus)
 }
 #endif
