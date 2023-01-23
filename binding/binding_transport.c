@@ -386,17 +386,17 @@ static inline void transport_finalize_write(transport_context_t *context, transp
   context->current_write_size -= message->size;
 }
 
-void transport_finalize_payload(transport_payload_t *data)
+void transport_finalize_payload(transport_payload_t *payload)
 {
-  if (data->message->type == TRANSPORT_MESSAGE_READ)
+  if (payload->message->type == TRANSPORT_MESSAGE_READ)
   {
-    transport_finalize_read(data->context, data->message);
+    transport_finalize_read(payload->context, payload->message);
   }
-  if (data->message->type == TRANSPORT_MESSAGE_WRITE)
+  if (payload->message->type == TRANSPORT_MESSAGE_WRITE)
   {
-    transport_finalize_write(data->context, data->message);
+    transport_finalize_write(payload->context, payload->message);
   }
-  transport_free_object(data->context, data, sizeof(transport_payload_t));
+  mempool_free(&payload->context->payload_pool, payload);
 }
 
 struct io_uring_cqe *transport_allocate_cqe(transport_context_t *context)
