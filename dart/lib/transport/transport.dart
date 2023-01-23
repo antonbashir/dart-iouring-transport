@@ -47,7 +47,7 @@ class Transport {
 
   void close() {
     _listener.stop();
-    _bindings.transport_close();
+    _bindings.transport_close(_context);
   }
 
   TransportConnection connection() => TransportConnection(_bindings, _context, _listener);

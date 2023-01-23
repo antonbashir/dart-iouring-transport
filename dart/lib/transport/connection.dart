@@ -31,11 +31,11 @@ class TransportConnection {
 
   Stream<TransportChannel> _acceptClient() {
     final subscription = _listener.cqes.listen((cqe) {
-      Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
+      Pointer<transport_accept_message> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_ACCEPT) {
         final clientDescriptor = cqe.ref.res;
-        _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_accept_request>());
-        _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
+        _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
+        _bindings.transport_free_cqe(_context, cqe);
         _clientChannels.add(TransportChannel(_bindings, _context, clientDescriptor, _listener)..start());
       }
     });
@@ -45,11 +45,11 @@ class TransportConnection {
 
   Stream<TransportChannel> _acceptServer() {
     final subscription = _listener.cqes.listen((cqe) {
-      Pointer<transport_accept_request> userData = Pointer.fromAddress(cqe.ref.user_data);
+      Pointer<transport_accept_message> userData = Pointer.fromAddress(cqe.ref.user_data);
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_CONNECT) {
         final serverDescriptor = userData.ref.fd;
-        _bindings.transport_free_object(_context, userData.cast(), sizeOf<transport_accept_request>());
-        _bindings.transport_free_object(_context, cqe.cast(), sizeOf<io_uring_cqe>());
+        _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
+        _bindings.transport_free_cqe(_context, cqe);
         _serverChannels.add(TransportChannel(_bindings, _context, serverDescriptor, _listener)..start());
       }
     });

@@ -117,6 +117,12 @@ extern "C"
   void *transport_allocate_object(transport_context_t *context, size_t size);
   void transport_free_object(transport_context_t *context, void *object, size_t size);
 
+  struct io_uring_cqe *transport_allocate_cqe(transport_context_t *context);
+  void transport_free_cqe(transport_context_t *context, struct io_uring_cqe *cqe);
+
+  void *transport_allocate_message(transport_context_t *context, transport_message_type_t type);
+  void transport_free_message(transport_context_t *context, void *message, transport_message_type_t type);
+
   transport_payload_t *transport_create_payload(transport_context_t *context, void *buffer, transport_data_message_t *message);
   void transport_finalize_payload(transport_payload_t *data);
 #if defined(__cplusplus)

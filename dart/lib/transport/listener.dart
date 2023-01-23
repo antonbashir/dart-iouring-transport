@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:ffi';
 
-import 'package:ffi/ffi.dart';
-
 import 'bindings.dart';
 import 'configuration.dart';
 import 'exception.dart';
@@ -67,15 +65,9 @@ class TransportListener {
       curentEmptyCyclesLimit = initialEmptyCycles;
       for (var cqeIndex = 0; cqeIndex < received; cqeIndex++) {
         final cqe = cqes[cqeIndex];
-        final userData = Pointer<transport_message>.fromAddress(cqe.ref.user_data);
-        final Pointer<io_uring_cqe> cqeCopy = _bindings.transport_allocate_object(_context, sizeOf<io_uring_cqe>()).cast();
-        final Pointer<transport_message> userDataCopy = _bindings
-            .transport_allocate_object(
-                _context,
-                userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ || userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE
-                    ? sizeOf<transport_message>()
-                    : sizeOf<transport_accept_request>())
-            .cast();
+        final userData = Pointer<transport_data_message>.fromAddress(cqe.ref.user_data);
+        final Pointer<io_uring_cqe> cqeCopy = _bindings.transport_allocate_cqe(_context);
+        final Pointer<transport_data_message> userDataCopy = _bindings.transport_allocate_message(_context, userData.ref.type).cast();
         cqeCopy.ref = cqe.ref;
         userDataCopy.ref = userData.ref;
         cqeCopy.ref.user_data = userDataCopy.address;

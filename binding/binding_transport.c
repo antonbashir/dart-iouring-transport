@@ -398,3 +398,31 @@ void transport_finalize_payload(transport_payload_t *data)
   }
   transport_free_object(data->context, data, sizeof(transport_payload_t));
 }
+
+struct io_uring_cqe *transport_allocate_cqe(transport_context_t *context)
+{
+  return mempool_alloc(&context->cqe_pool);
+}
+
+void transport_free_cqe(transport_context_t *context, struct io_uring_cqe *cqe)
+{
+  return mempool_free(&context->cqe_pool, cqe);
+}
+
+void *transport_allocate_message(transport_context_t *context, transport_message_type_t type)
+{
+  if (type == TRANSPORT_MESSAGE_READ || type == TRANSPORT_MESSAGE_WRITE)
+  {
+    return mempool_alloc(&context->data_message_pool);
+  }
+  return mempool_alloc(&context->accept_message_pool);
+}
+
+void transport_free_message(transport_context_t *context, void *message, transport_message_type_t type)
+{
+  if (type == TRANSPORT_MESSAGE_READ || type == TRANSPORT_MESSAGE_WRITE)
+  {
+    return mempool_free(&context->data_message_pool, message);
+  }
+  return mempool_free(&context->accept_message_pool, message);
+}
