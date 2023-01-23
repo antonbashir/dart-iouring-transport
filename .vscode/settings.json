@@ -14,6 +14,11 @@
     "slab_cache.h": "c",
     "*.tcc": "c",
     "type_traits": "c",
-    "pmatomic.h": "c"
+    "pmatomic.h": "c",
+    "array": "c",
+    "string_view": "c",
+    "initializer_list": "c",
+    "ranges": "c",
+    "utility": "c"
   },
 }

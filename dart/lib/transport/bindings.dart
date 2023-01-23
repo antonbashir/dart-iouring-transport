@@ -13303,12 +13303,16 @@ class transport_payload extends ffi.Struct {
 
   external ffi.Pointer<ffi.Void> buffer;
 
-  external ffi.Pointer<transport_data_message_t> message;
+  @ffi.Int32()
+  external int type;
+
+  @ffi.Size()
+  external int size;
 }
 
 typedef transport_context_t = transport_context;
-typedef transport_data_message_t = transport_data_message;
 typedef transport_configuration_t = transport_configuration;
+typedef transport_data_message_t = transport_data_message;
 typedef transport_payload_t = transport_payload;
 
 const int MSG_OOB = 1;

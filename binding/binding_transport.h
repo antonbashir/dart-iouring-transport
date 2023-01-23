@@ -86,7 +86,8 @@ extern "C"
   {
     transport_context_t *context;
     void *buffer;
-    transport_data_message_t *message;
+    transport_message_type_t type;
+    size_t size;
   } transport_payload_t;
 
   int32_t transport_submit_receive(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait);

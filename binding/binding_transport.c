@@ -335,12 +335,16 @@ void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqe
 
 void *transport_extract_read_buffer(transport_context_t *context, transport_data_message_t *message)
 {
-  return message->read_buffer->rpos;
+  void* buffer = message->read_buffer->rpos;
+  message->read_buffer->rpos += message->size;
+  return buffer;
 }
 
 void *transport_extract_write_buffer(transport_context_t *context, transport_data_message_t *message)
 {
-  return message->write_buffer->rpos;
+  void* buffer = message->write_buffer->rpos;
+  message->write_buffer->rpos += message->size;
+  return buffer;
 }
 
 size_t transport_read_buffer_used(transport_context_t *context)
@@ -368,34 +372,21 @@ transport_payload_t *transport_create_payload(transport_context_t *context, void
   transport_payload_t *data = mempool_alloc(&context->payload_pool);
   data->context = context;
   data->buffer = buffer;
-  data->message = message;
+  data->size = message->size;
+  data->type = message->type;
   return data;
-}
-
-static inline void transport_finalize_read(transport_context_t *context, transport_data_message_t *message)
-{
-  message->read_buffer->rpos += message->size;
-  message->size = 0;
-  context->current_read_size -= message->size;
-}
-
-static inline void transport_finalize_write(transport_context_t *context, transport_data_message_t *message)
-{
-  message->write_buffer->rpos += message->size;
-  message->size = 0;
-  context->current_write_size -= message->size;
 }
 
 void transport_finalize_payload(transport_payload_t *payload)
 {
-  if (payload->message->type == TRANSPORT_MESSAGE_READ)
+  if (payload->type == TRANSPORT_MESSAGE_READ)
   {
-    transport_finalize_read(payload->context, payload->message);
+    payload->context->current_read_size -= payload->size;
   }
-  if (payload->message->type == TRANSPORT_MESSAGE_WRITE)
+  if (payload->type == TRANSPORT_MESSAGE_WRITE)
   {
-    transport_finalize_write(payload->context, payload->message);
-  }
+    payload->context->current_write_size -= payload->size;
+}
   mempool_free(&payload->context->payload_pool, payload);
 }
 
