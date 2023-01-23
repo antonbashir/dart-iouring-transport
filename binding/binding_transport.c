@@ -72,6 +72,11 @@ void transport_close(transport_context_t *context)
   slab_cache_destroy(&context->cache);
   slab_arena_destroy(&context->arena);
 
+  mempool_destroy(&context->data_message_pool);
+  mempool_destroy(&context->accept_message_pool);
+  mempool_destroy(&context->cqe_pool);
+  mempool_destroy(&context->payload_pool);
+
   free(context);
 }
 
@@ -335,14 +340,14 @@ void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqe
 
 void *transport_extract_read_buffer(transport_context_t *context, transport_data_message_t *message)
 {
-  void* buffer = message->read_buffer->rpos;
+  void *buffer = message->read_buffer->rpos;
   message->read_buffer->rpos += message->size;
   return buffer;
 }
 
 void *transport_extract_write_buffer(transport_context_t *context, transport_data_message_t *message)
 {
-  void* buffer = message->write_buffer->rpos;
+  void *buffer = message->write_buffer->rpos;
   message->write_buffer->rpos += message->size;
   return buffer;
 }
@@ -386,7 +391,7 @@ void transport_finalize_payload(transport_payload_t *payload)
   if (payload->type == TRANSPORT_MESSAGE_WRITE)
   {
     payload->context->current_write_size -= payload->size;
-}
+  }
   mempool_free(&payload->context->payload_pool, payload);
 }
 
