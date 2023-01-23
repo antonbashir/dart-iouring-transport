@@ -7,7 +7,6 @@ class TransportPayload implements Finalizable {
   final TransportBindings _bindings;
   final Pointer<transport_payload_t> _payload;
   final Uint8List bytes;
-
   late final NativeFinalizer _finalizer;
 
   TransportPayload(this._bindings, this._payload, this.bytes) {

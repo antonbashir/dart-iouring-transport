@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:iouring_transport/transport/listener.dart';
 
 import '../bindings.dart';
-import '../message.dart';
+import '../payload.dart';
 
 class TransportChannel {
   final TransportBindings _bindings;
