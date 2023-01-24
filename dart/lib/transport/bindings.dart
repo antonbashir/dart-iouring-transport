@@ -8729,14 +8729,12 @@ class TransportBindings {
   int transport_queue_write(
     ffi.Pointer<transport_context_t> context,
     int fd,
-    ffi.Pointer<ffi.Void> buffer,
     int size,
     int offset,
   ) {
     return _transport_queue_write(
       context,
       fd,
-      buffer,
       size,
       offset,
     );
@@ -8744,15 +8742,10 @@ class TransportBindings {
 
   late final _transport_queue_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int32 Function(
-              ffi.Pointer<transport_context_t>,
-              ffi.Int32,
-              ffi.Pointer<ffi.Void>,
-              ffi.Uint32,
-              ffi.Uint64)>>('transport_queue_write');
+          ffi.Int32 Function(ffi.Pointer<transport_context_t>, ffi.Int32,
+              ffi.Uint32, ffi.Uint64)>>('transport_queue_write');
   late final _transport_queue_write = _transport_queue_writePtr.asFunction<
-      int Function(ffi.Pointer<transport_context_t>, int, ffi.Pointer<ffi.Void>,
-          int, int)>();
+      int Function(ffi.Pointer<transport_context_t>, int, int, int)>();
 
   int transport_queue_accept(
     ffi.Pointer<transport_context_t> context,
@@ -11223,7 +11216,6 @@ class _SymbolAddresses {
           ffi.Int32 Function(
               ffi.Pointer<transport_context_t>,
               ffi.Int32,
-              ffi.Pointer<ffi.Void>,
               ffi.Uint32,
               ffi.Uint64)>> get transport_queue_write =>
       _library._transport_queue_writePtr;
@@ -13235,9 +13227,7 @@ class transport_data_message extends ffi.Struct {
   @ffi.Int32()
   external int type;
 
-  external ffi.Pointer<ibuf> read_buffer;
-
-  external ffi.Pointer<ibuf> write_buffer;
+  external ffi.Pointer<ibuf> buffer;
 
   @ffi.Int32()
   external int size;
@@ -13301,7 +13291,9 @@ class transport_context extends ffi.Struct {
 class transport_payload extends ffi.Struct {
   external ffi.Pointer<transport_context_t> context;
 
-  external ffi.Pointer<ffi.Void> buffer;
+  external ffi.Pointer<ffi.Void> data;
+
+  external ffi.Pointer<ibuf> buffer;
 
   @ffi.Int32()
   external int type;

@@ -24,23 +24,7 @@ class TransportChannel {
 
   void start() {
     _active = true;
-    _subscription = _listener.cqes.listen((cqe) {
-      Pointer<transport_data_message> userData = Pointer.fromAddress(cqe.ref.user_data);
-      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
-        final readBuffer = _bindings.transport_extract_read_buffer(_context, userData);
-        final data = readBuffer.cast<Uint8>().asTypedList(userData.ref.size);
-        _output.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, readBuffer, userData), data));
-        _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
-        _bindings.transport_free_cqe(_context, cqe);
-      }
-      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
-        final writeBuffer = _bindings.transport_extract_write_buffer(_context, userData);
-        final data = writeBuffer.cast<Uint8>().asTypedList(userData.ref.size);
-        _input.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, writeBuffer, userData), data));
-        _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
-        _bindings.transport_free_cqe(_context, cqe);
-      }
-    });
+    _subscription = _listener.cqes.listen(_handleCqe);
   }
 
   void stop() {
@@ -70,10 +54,32 @@ class TransportChannel {
     final Pointer<Uint8> buffer = _bindings.transport_prepare_write(_context, size).cast();
     buffer.asTypedList(size).fillRange(0, size, 0);
     buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_context, _descriptor, buffer.cast(), size, offset);
+    _bindings.transport_queue_write(_context, _descriptor, size, offset);
   }
 
   void queueWriteString(String string, {int size = 64, int offset = 0}) => queueWriteBytes(_encoder.convert(string), size: size, offset: offset);
 
-  int readBufferUsed() => _bindings.transport_read_buffer_used(_context);
+  int currentReadSize() => _context.ref.current_read_size;
+
+  int currentWriteSize() => _context.ref.current_write_size;
+
+  void _handleCqe(Pointer<io_uring_cqe> cqe) {
+    Pointer<transport_data_message> userData = Pointer.fromAddress(cqe.ref.user_data);
+    if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
+      final readBuffer = _bindings.transport_extract_read_buffer(_context, userData);
+      final size = userData.ref.size;
+      final data = readBuffer.cast<Uint8>().asTypedList(userData.ref.size);
+      _output.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, readBuffer, userData), data));
+      _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
+      _bindings.transport_free_cqe(_context, cqe);
+    }
+    if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
+      final writeBuffer = _bindings.transport_extract_write_buffer(_context, userData);
+      final size = userData.ref.size;
+      final data = writeBuffer.cast<Uint8>().asTypedList(userData.ref.size);
+      _input.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, writeBuffer, userData), data));
+      _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
+      _bindings.transport_free_cqe(_context, cqe);
+    }
+  }
 }

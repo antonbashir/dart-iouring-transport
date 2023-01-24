@@ -32,7 +32,7 @@ class TransportFileChannel {
     queueRead();
     _delegate.bytesOutput.listen((data) {
       bytes.add(data);
-      if (data.isEmpty || _delegate.readBufferUsed() == 0) {
+      if (data.isEmpty || data.any((element) => element == 0)) {
         completer.complete();
         return;
       }
@@ -63,7 +63,7 @@ class TransportFileChannel {
 
   void queueRead({int size = 64, int offset = 0}) => _delegate.queueRead(size: size, offset: offset);
 
-  void queueWriteBytes(Uint8List bytes, {int offset = 0}) => _delegate.queueWriteBytes(bytes, offset: offset);
+  void queueWriteBytes(Uint8List bytes, {int size = 64, int offset = 0}) => _delegate.queueWriteBytes(bytes, size: size, offset: offset);
 
-  void queueWriteString(String string, {int offset = 0}) => _delegate.queueWriteString(string, offset: offset);
+  void queueWriteString(String string, {int size = 64, int offset = 0}) => _delegate.queueWriteString(string, size: size, offset: offset);
 }

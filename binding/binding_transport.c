@@ -136,21 +136,20 @@ int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t 
     return -1;
   }
 
-  message->read_buffer = context->current_read_buffer;
+  message->buffer = context->current_read_buffer;
   message->size = size;
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_READ;
 
-  io_uring_prep_read(sqe, fd, context->current_read_buffer->wpos, ibuf_unused(context->current_read_buffer), offset);
+  io_uring_prep_read(sqe, fd, context->current_read_buffer->wpos, size, offset);
   io_uring_sqe_set_data(sqe, message);
 
-  context->current_read_size += message->size;
-  context->current_read_buffer->wpos += message->size;
+  context->current_read_buffer->wpos += size;
 
   return 0;
 }
 
-int32_t transport_queue_write(transport_context_t *context, int32_t fd, void *buffer, uint32_t size, uint64_t offset)
+int32_t transport_queue_write(transport_context_t *context, int32_t fd,uint32_t size, uint64_t offset)
 {
   if (io_uring_sq_space_left(&context->ring) <= 1)
   {
@@ -168,16 +167,15 @@ int32_t transport_queue_write(transport_context_t *context, int32_t fd, void *bu
   {
     return -1;
   }
-  message->write_buffer = context->current_write_buffer;
+  message->buffer = context->current_write_buffer;
   message->size = size;
   message->fd = fd;
   message->type = TRANSPORT_MESSAGE_WRITE;
 
-  io_uring_prep_write(sqe, fd, context->current_write_buffer->wpos, ibuf_unused(context->current_write_buffer), offset);
+  io_uring_prep_write(sqe, fd, context->current_write_buffer->wpos, size, offset);
   io_uring_sqe_set_data(sqe, message);
 
-  context->current_write_size += message->size;
-  context->current_write_buffer->wpos += message->size;
+  context->current_write_buffer->wpos += size;
 
   return 0;
 }
@@ -340,15 +338,15 @@ void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqe
 
 void *transport_extract_read_buffer(transport_context_t *context, transport_data_message_t *message)
 {
-  void *buffer = message->read_buffer->rpos;
-  message->read_buffer->rpos += message->size;
+  void *buffer = message->buffer->rpos + context->current_read_size;
+  context->current_read_size += message->size;
   return buffer;
 }
 
 void *transport_extract_write_buffer(transport_context_t *context, transport_data_message_t *message)
 {
-  void *buffer = message->write_buffer->rpos;
-  message->write_buffer->rpos += message->size;
+  void *buffer = message->buffer->rpos + context->current_write_size;
+  context->current_write_size += message->size;
   return buffer;
 }
 
@@ -376,7 +374,8 @@ transport_payload_t *transport_create_payload(transport_context_t *context, void
 {
   transport_payload_t *data = mempool_alloc(&context->payload_pool);
   data->context = context;
-  data->buffer = buffer;
+  data->buffer = message->buffer;
+  data->data = buffer;
   data->size = message->size;
   data->type = message->type;
   return data;
@@ -384,6 +383,7 @@ transport_payload_t *transport_create_payload(transport_context_t *context, void
 
 void transport_finalize_payload(transport_payload_t *payload)
 {
+  payload->buffer->rpos += payload->size;
   if (payload->type == TRANSPORT_MESSAGE_READ)
   {
     payload->context->current_read_size -= payload->size;

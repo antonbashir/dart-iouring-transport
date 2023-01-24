@@ -19,6 +19,11 @@
     "string_view": "c",
     "initializer_list": "c",
     "ranges": "c",
-    "utility": "c"
+    "utility": "c",
+    "memory_resource": "c",
+    "memory": "c",
+    "istream": "c",
+    "ostream": "c",
+    "streambuf": "c"
   },
 }
