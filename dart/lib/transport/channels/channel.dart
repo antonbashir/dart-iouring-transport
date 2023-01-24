@@ -67,17 +67,15 @@ class TransportChannel {
     Pointer<transport_data_message> userData = Pointer.fromAddress(cqe.ref.user_data);
     if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _descriptor) {
       final readBuffer = _bindings.transport_extract_read_buffer(_context, userData);
-      final size = userData.ref.size;
       final data = readBuffer.cast<Uint8>().asTypedList(userData.ref.size);
-      _output.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, readBuffer, userData), data));
+      _input.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, readBuffer, userData), data));
       _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
       _bindings.transport_free_cqe(_context, cqe);
     }
     if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _descriptor) {
       final writeBuffer = _bindings.transport_extract_write_buffer(_context, userData);
-      final size = userData.ref.size;
       final data = writeBuffer.cast<Uint8>().asTypedList(userData.ref.size);
-      _input.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, writeBuffer, userData), data));
+      _output.add(TransportPayload(_bindings, _bindings.transport_create_payload(_context, writeBuffer, userData), data));
       _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
       _bindings.transport_free_cqe(_context, cqe);
     }

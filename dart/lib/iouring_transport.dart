@@ -17,7 +17,7 @@ Future<void> main(List<String> args) async {
   File("test.txt").deleteSync();
 
   serverTransport.connection().bind("0.0.0.0", 1234).listen((serverChannel) async {
-    serverChannel.stringOutput.listen((event) => print("server: $event"));
+    serverChannel.stringInput.listen((event) => print("server: $event"));
     while (true) {
       await Future.delayed(Duration(seconds: 1));
       serverChannel.queueRead();
@@ -26,7 +26,7 @@ Future<void> main(List<String> args) async {
   });
 
   clientTransport.connection().connect("127.0.0.1", 1234).listen((clientChannel) async {
-    clientChannel.stringOutput.listen((event) => print("client: $event"));
+    clientChannel.stringInput.listen((event) => print("client: $event"));
     while (true) {
       await Future.delayed(Duration(seconds: 1));
       clientChannel.queueRead();
