@@ -8706,14 +8706,12 @@ class TransportBindings {
           ffi.Pointer<transport_context_t>, int, ffi.Pointer<io_uring_cqe>)>();
 
   int transport_queue_read(
-    ffi.Pointer<transport_context_t> context,
-    int fd,
+    ffi.Pointer<transport_channel_context_t> context,
     int size,
     int offset,
   ) {
     return _transport_queue_read(
       context,
-      fd,
       size,
       offset,
     );
@@ -8721,20 +8719,18 @@ class TransportBindings {
 
   late final _transport_queue_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Pointer<transport_context_t>, ffi.Int32,
+          ffi.Int32 Function(ffi.Pointer<transport_channel_context_t>,
               ffi.Uint32, ffi.Uint64)>>('transport_queue_read');
   late final _transport_queue_read = _transport_queue_readPtr.asFunction<
-      int Function(ffi.Pointer<transport_context_t>, int, int, int)>();
+      int Function(ffi.Pointer<transport_channel_context_t>, int, int)>();
 
   int transport_queue_write(
-    ffi.Pointer<transport_context_t> context,
-    int fd,
+    ffi.Pointer<transport_channel_context_t> context,
     int size,
     int offset,
   ) {
     return _transport_queue_write(
       context,
-      fd,
       size,
       offset,
     );
@@ -8742,10 +8738,10 @@ class TransportBindings {
 
   late final _transport_queue_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Pointer<transport_context_t>, ffi.Int32,
+          ffi.Int32 Function(ffi.Pointer<transport_channel_context_t>,
               ffi.Uint32, ffi.Uint64)>>('transport_queue_write');
   late final _transport_queue_write = _transport_queue_writePtr.asFunction<
-      int Function(ffi.Pointer<transport_context_t>, int, int, int)>();
+      int Function(ffi.Pointer<transport_channel_context_t>, int, int)>();
 
   int transport_queue_accept(
     ffi.Pointer<transport_context_t> context,
@@ -8817,6 +8813,46 @@ class TransportBindings {
   late final _transport_close = _transport_closePtr
       .asFunction<void Function(ffi.Pointer<transport_context_t>)>();
 
+  ffi.Pointer<transport_channel_context_t> transport_initialize_channel(
+    ffi.Pointer<transport_context_t> owner,
+    ffi.Pointer<transport_channel_configuration_t> configuration,
+    int fd,
+  ) {
+    return _transport_initialize_channel(
+      owner,
+      configuration,
+      fd,
+    );
+  }
+
+  late final _transport_initialize_channelPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_context_t> Function(
+              ffi.Pointer<transport_context_t>,
+              ffi.Pointer<transport_channel_configuration_t>,
+              ffi.Int32)>>('transport_initialize_channel');
+  late final _transport_initialize_channel =
+      _transport_initialize_channelPtr.asFunction<
+          ffi.Pointer<transport_channel_context_t> Function(
+              ffi.Pointer<transport_context_t>,
+              ffi.Pointer<transport_channel_configuration_t>,
+              int)>();
+
+  void transport_close_channel(
+    ffi.Pointer<transport_channel_context_t> context,
+  ) {
+    return _transport_close_channel(
+      context,
+    );
+  }
+
+  late final _transport_close_channelPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_channel_context_t>)>>(
+      'transport_close_channel');
+  late final _transport_close_channel = _transport_close_channelPtr
+      .asFunction<void Function(ffi.Pointer<transport_channel_context_t>)>();
+
   void transport_close_descriptor(
     int fd,
   ) {
@@ -8832,7 +8868,7 @@ class TransportBindings {
       _transport_close_descriptorPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<ffi.Void> transport_extract_write_buffer(
-    ffi.Pointer<transport_context_t> context,
+    ffi.Pointer<transport_channel_context_t> context,
     ffi.Pointer<transport_data_message_t> message,
   ) {
     return _transport_extract_write_buffer(
@@ -8843,16 +8879,18 @@ class TransportBindings {
 
   late final _transport_extract_write_bufferPtr = _lookup<
           ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+              ffi.Pointer<ffi.Void> Function(
+                  ffi.Pointer<transport_channel_context_t>,
                   ffi.Pointer<transport_data_message_t>)>>(
       'transport_extract_write_buffer');
   late final _transport_extract_write_buffer =
       _transport_extract_write_bufferPtr.asFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<transport_channel_context_t>,
               ffi.Pointer<transport_data_message_t>)>();
 
   ffi.Pointer<ffi.Void> transport_extract_read_buffer(
-    ffi.Pointer<transport_context_t> context,
+    ffi.Pointer<transport_channel_context_t> context,
     ffi.Pointer<transport_data_message_t> message,
   ) {
     return _transport_extract_read_buffer(
@@ -8863,46 +8901,18 @@ class TransportBindings {
 
   late final _transport_extract_read_bufferPtr = _lookup<
           ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+              ffi.Pointer<ffi.Void> Function(
+                  ffi.Pointer<transport_channel_context_t>,
                   ffi.Pointer<transport_data_message_t>)>>(
       'transport_extract_read_buffer');
   late final _transport_extract_read_buffer =
       _transport_extract_read_bufferPtr.asFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<transport_channel_context_t>,
               ffi.Pointer<transport_data_message_t>)>();
 
-  int transport_read_buffer_used(
-    ffi.Pointer<transport_context_t> context,
-  ) {
-    return _transport_read_buffer_used(
-      context,
-    );
-  }
-
-  late final _transport_read_buffer_usedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(
-              ffi.Pointer<transport_context_t>)>>('transport_read_buffer_used');
-  late final _transport_read_buffer_used = _transport_read_buffer_usedPtr
-      .asFunction<int Function(ffi.Pointer<transport_context_t>)>();
-
-  int transport_write_buffer_used(
-    ffi.Pointer<transport_context_t> context,
-  ) {
-    return _transport_write_buffer_used(
-      context,
-    );
-  }
-
-  late final _transport_write_buffer_usedPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Size Function(ffi.Pointer<transport_context_t>)>>(
-      'transport_write_buffer_used');
-  late final _transport_write_buffer_used = _transport_write_buffer_usedPtr
-      .asFunction<int Function(ffi.Pointer<transport_context_t>)>();
-
   ffi.Pointer<ffi.Void> transport_prepare_read(
-    ffi.Pointer<transport_context_t> context,
+    ffi.Pointer<transport_channel_context_t> context,
     int size,
   ) {
     return _transport_prepare_read(
@@ -8913,13 +8923,15 @@ class TransportBindings {
 
   late final _transport_prepare_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<transport_channel_context_t>,
               ffi.Size)>>('transport_prepare_read');
   late final _transport_prepare_read = _transport_prepare_readPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>, int)>();
+      ffi.Pointer<ffi.Void> Function(
+          ffi.Pointer<transport_channel_context_t>, int)>();
 
   ffi.Pointer<ffi.Void> transport_prepare_write(
-    ffi.Pointer<transport_context_t> context,
+    ffi.Pointer<transport_channel_context_t> context,
     int size,
   ) {
     return _transport_prepare_write(
@@ -8930,10 +8942,12 @@ class TransportBindings {
 
   late final _transport_prepare_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<transport_channel_context_t>,
               ffi.Size)>>('transport_prepare_write');
   late final _transport_prepare_write = _transport_prepare_writePtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>, int)>();
+      ffi.Pointer<ffi.Void> Function(
+          ffi.Pointer<transport_channel_context_t>, int)>();
 
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     ffi.Pointer<transport_context_t> context,
@@ -9088,7 +9102,7 @@ class TransportBindings {
           ffi.Pointer<transport_context_t>, ffi.Pointer<ffi.Void>, int)>();
 
   ffi.Pointer<transport_payload_t> transport_create_payload(
-    ffi.Pointer<transport_context_t> context,
+    ffi.Pointer<transport_channel_context_t> context,
     ffi.Pointer<ffi.Void> buffer,
     ffi.Pointer<transport_data_message_t> message,
   ) {
@@ -9102,22 +9116,22 @@ class TransportBindings {
   late final _transport_create_payloadPtr = _lookup<
           ffi.NativeFunction<
               ffi.Pointer<transport_payload_t> Function(
-                  ffi.Pointer<transport_context_t>,
+                  ffi.Pointer<transport_channel_context_t>,
                   ffi.Pointer<ffi.Void>,
                   ffi.Pointer<transport_data_message_t>)>>(
       'transport_create_payload');
   late final _transport_create_payload =
       _transport_create_payloadPtr.asFunction<
           ffi.Pointer<transport_payload_t> Function(
-              ffi.Pointer<transport_context_t>,
+              ffi.Pointer<transport_channel_context_t>,
               ffi.Pointer<ffi.Void>,
               ffi.Pointer<transport_data_message_t>)>();
 
   void transport_finalize_payload(
-    ffi.Pointer<transport_payload_t> data,
+    ffi.Pointer<transport_payload_t> payload,
   ) {
     return _transport_finalize_payload(
-      data,
+      payload,
     );
   }
 
@@ -11206,16 +11220,14 @@ class _SymbolAddresses {
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int32 Function(
-              ffi.Pointer<transport_context_t>,
-              ffi.Int32,
+              ffi.Pointer<transport_channel_context_t>,
               ffi.Uint32,
               ffi.Uint64)>> get transport_queue_read =>
       _library._transport_queue_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int32 Function(
-              ffi.Pointer<transport_context_t>,
-              ffi.Int32,
+              ffi.Pointer<transport_channel_context_t>,
               ffi.Uint32,
               ffi.Uint64)>> get transport_queue_write =>
       _library._transport_queue_writePtr;
@@ -11240,38 +11252,42 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_context_t>)>>
       get transport_close => _library._transport_closePtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_context_t> Function(
+              ffi.Pointer<transport_context_t>,
+              ffi.Pointer<transport_channel_configuration_t>,
+              ffi.Int32)>> get transport_initialize_channel =>
+      _library._transport_initialize_channelPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_channel_context_t>)>>
+      get transport_close_channel => _library._transport_close_channelPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>
       get transport_close_descriptor => _library._transport_close_descriptorPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+              ffi.Pointer<ffi.Void> Function(
+                  ffi.Pointer<transport_channel_context_t>,
                   ffi.Pointer<transport_data_message_t>)>>
       get transport_extract_write_buffer =>
           _library._transport_extract_write_bufferPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_context_t>,
+              ffi.Pointer<ffi.Void> Function(
+                  ffi.Pointer<transport_channel_context_t>,
                   ffi.Pointer<transport_data_message_t>)>>
       get transport_extract_read_buffer =>
           _library._transport_extract_read_bufferPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Size Function(ffi.Pointer<transport_context_t>)>>
-      get transport_read_buffer_used => _library._transport_read_buffer_usedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Size Function(ffi.Pointer<transport_context_t>)>>
-      get transport_write_buffer_used =>
-          _library._transport_write_buffer_usedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
               ffi.Pointer<ffi.Void> Function(
-                  ffi.Pointer<transport_context_t>, ffi.Size)>>
+                  ffi.Pointer<transport_channel_context_t>, ffi.Size)>>
       get transport_prepare_read => _library._transport_prepare_readPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<ffi.Void> Function(
-                  ffi.Pointer<transport_context_t>, ffi.Size)>>
+                  ffi.Pointer<transport_channel_context_t>, ffi.Size)>>
       get transport_prepare_write => _library._transport_prepare_writePtr;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -11322,7 +11338,7 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_payload_t> Function(
-                  ffi.Pointer<transport_context_t>,
+                  ffi.Pointer<transport_channel_context_t>,
                   ffi.Pointer<ffi.Void>,
                   ffi.Pointer<transport_data_message_t>)>>
       get transport_create_payload => _library._transport_create_payloadPtr;
@@ -13204,12 +13220,6 @@ class transport_configuration extends ffi.Struct {
   @ffi.Size()
   external int memory_quota;
 
-  @ffi.Size()
-  external int buffer_initial_capacity;
-
-  @ffi.Size()
-  external int buffer_limit;
-
   @ffi.Uint32()
   external int slab_allocation_minimal_object_size;
 
@@ -13218,6 +13228,14 @@ class transport_configuration extends ffi.Struct {
 
   @ffi.Float()
   external double slab_allocation_factor;
+}
+
+class transport_channel_configuration extends ffi.Struct {
+  @ffi.Size()
+  external int buffer_initial_capacity;
+
+  @ffi.Size()
+  external int buffer_limit;
 }
 
 class transport_data_message extends ffi.Struct {
@@ -13264,6 +13282,10 @@ class transport_context extends ffi.Struct {
   external mempool cqe_pool;
 
   external mempool payload_pool;
+}
+
+class transport_channel_context extends ffi.Struct {
+  external ffi.Pointer<transport_context> owner;
 
   @ffi.Array.multi([2])
   external ffi.Array<ibuf> read_buffers;
@@ -13286,10 +13308,13 @@ class transport_context extends ffi.Struct {
 
   @ffi.Size()
   external int buffer_limit;
+
+  @ffi.Int32()
+  external int fd;
 }
 
 class transport_payload extends ffi.Struct {
-  external ffi.Pointer<transport_context_t> context;
+  external ffi.Pointer<transport_channel_context_t> context;
 
   external ffi.Pointer<ffi.Void> data;
 
@@ -13302,8 +13327,10 @@ class transport_payload extends ffi.Struct {
   external int size;
 }
 
+typedef transport_channel_context_t = transport_channel_context;
 typedef transport_context_t = transport_context;
 typedef transport_configuration_t = transport_configuration;
+typedef transport_channel_configuration_t = transport_channel_configuration;
 typedef transport_data_message_t = transport_data_message;
 typedef transport_payload_t = transport_payload;
 

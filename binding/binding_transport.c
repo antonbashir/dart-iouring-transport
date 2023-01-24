@@ -40,33 +40,12 @@ transport_context_t *transport_initialize(transport_configuration_t *configurati
   mempool_create(&context->cqe_pool, &context->cache, sizeof(struct io_uring_cqe));
   mempool_create(&context->payload_pool, &context->cache, sizeof(transport_payload_t));
 
-  ibuf_create(&context->read_buffers[0], &context->cache, configuration->buffer_initial_capacity);
-  ibuf_create(&context->read_buffers[1], &context->cache, configuration->buffer_initial_capacity);
-  context->current_read_buffer = &context->read_buffers[0];
-
-  ibuf_create(&context->write_buffers[0], &context->cache, configuration->buffer_initial_capacity);
-  ibuf_create(&context->write_buffers[1], &context->cache, configuration->buffer_initial_capacity);
-  context->current_write_buffer = &context->write_buffers[0];
-
-  context->buffer_initial_capacity = configuration->buffer_initial_capacity;
-  context->buffer_limit = configuration->buffer_limit;
-  context->current_read_size = 0;
-  context->current_write_size = 0;
-
   return context;
 }
 
 void transport_close(transport_context_t *context)
 {
   io_uring_queue_exit(&context->ring);
-
-  ibuf_destroy(&context->read_buffers[0]);
-  ibuf_destroy(&context->read_buffers[1]);
-  context->current_read_buffer = NULL;
-
-  ibuf_destroy(&context->write_buffers[0]);
-  ibuf_destroy(&context->write_buffers[1]);
-  context->current_write_buffer = NULL;
 
   small_alloc_destroy(&context->allocator);
   slab_cache_destroy(&context->cache);
@@ -78,6 +57,51 @@ void transport_close(transport_context_t *context)
   mempool_destroy(&context->payload_pool);
 
   free(context);
+}
+
+transport_channel_context_t *transport_initialize_channel(transport_context_t *owner, transport_channel_configuration_t *configuration, int32_t fd)
+{
+  transport_channel_context_t *context = smalloc(&owner->allocator, sizeof(transport_channel_context_t));
+  if (!context)
+  {
+    return NULL;
+  }
+  context->owner = owner;
+  context->fd = fd;
+
+  ibuf_create(&context->read_buffers[0], &owner->cache, configuration->buffer_initial_capacity);
+  ibuf_create(&context->read_buffers[1], &owner->cache, configuration->buffer_initial_capacity);
+  context->current_read_buffer = &context->read_buffers[0];
+
+  ibuf_create(&context->write_buffers[0], &owner->cache, configuration->buffer_initial_capacity);
+  ibuf_create(&context->write_buffers[1], &owner->cache, configuration->buffer_initial_capacity);
+  context->current_write_buffer = &context->write_buffers[0];
+
+  context->buffer_initial_capacity = configuration->buffer_initial_capacity;
+  context->buffer_limit = configuration->buffer_limit;
+  context->current_read_size = 0;
+  context->current_write_size = 0;
+
+  return context;
+}
+
+void transport_close_channel(transport_channel_context_t *context)
+{
+  ibuf_destroy(&context->read_buffers[0]);
+  ibuf_destroy(&context->read_buffers[1]);
+  context->current_read_buffer = NULL;
+
+  ibuf_destroy(&context->write_buffers[0]);
+  ibuf_destroy(&context->write_buffers[1]);
+  context->current_write_buffer = NULL;
+
+  context->current_read_size = 0;
+  context->current_write_size = 0;
+  context->owner = NULL;
+
+  close(context->fd);
+
+  smfree(context, sizeof(transport_channel_context_t));
 }
 
 int32_t transport_submit_receive(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
@@ -117,20 +141,20 @@ void transport_mark_cqe(transport_context_t *context, transport_message_type_t t
   io_uring_cqe_seen(&context->ring, cqe);
 }
 
-int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t size, uint64_t offset)
+int32_t transport_queue_read(transport_channel_context_t *context, uint32_t size, uint64_t offset)
 {
-  if (io_uring_sq_space_left(&context->ring) <= 1)
+  if (io_uring_sq_space_left(&context->owner->ring) <= 1)
   {
     return -1;
   }
 
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
+  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->owner->ring);
   if (sqe == NULL)
   {
     return -1;
   }
 
-  transport_data_message_t *message = mempool_alloc(&context->data_message_pool);
+  transport_data_message_t *message = mempool_alloc(&context->owner->data_message_pool);
   if (!message)
   {
     return -1;
@@ -138,10 +162,10 @@ int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t 
 
   message->buffer = context->current_read_buffer;
   message->size = size;
-  message->fd = fd;
+  message->fd = context->fd;
   message->type = TRANSPORT_MESSAGE_READ;
 
-  io_uring_prep_read(sqe, fd, context->current_read_buffer->wpos, size, offset);
+  io_uring_prep_read(sqe, context->fd, context->current_read_buffer->wpos, size, offset);
   io_uring_sqe_set_data(sqe, message);
 
   context->current_read_buffer->wpos += size;
@@ -149,30 +173,30 @@ int32_t transport_queue_read(transport_context_t *context, int32_t fd, uint32_t 
   return 0;
 }
 
-int32_t transport_queue_write(transport_context_t *context, int32_t fd,uint32_t size, uint64_t offset)
+int32_t transport_queue_write(transport_channel_context_t *context, uint32_t size, uint64_t offset)
 {
-  if (io_uring_sq_space_left(&context->ring) <= 1)
+  if (io_uring_sq_space_left(&context->owner->ring) <= 1)
   {
     return -1;
   }
 
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
+  struct io_uring_sqe *sqe = io_uring_get_sqe(&context->owner->ring);
   if (sqe == NULL)
   {
     return -1;
   }
 
-  transport_data_message_t *message = mempool_alloc(&context->data_message_pool);
+  transport_data_message_t *message = mempool_alloc(&context->owner->data_message_pool);
   if (!message)
   {
     return -1;
   }
   message->buffer = context->current_write_buffer;
   message->size = size;
-  message->fd = fd;
+  message->fd = context->fd;
   message->type = TRANSPORT_MESSAGE_WRITE;
 
-  io_uring_prep_write(sqe, fd, context->current_write_buffer->wpos, size, offset);
+  io_uring_prep_write(sqe, context->fd, context->current_write_buffer->wpos, size, offset);
   io_uring_sqe_set_data(sqe, message);
 
   context->current_write_buffer->wpos += size;
@@ -232,7 +256,7 @@ void transport_close_descriptor(int32_t fd)
   close(fd);
 }
 
-void *transport_prepare_read(transport_context_t *context, size_t size)
+void *transport_prepare_read(transport_channel_context_t *context, size_t size)
 {
   struct ibuf *old_buffer = context->current_read_buffer;
   if (ibuf_unused(old_buffer) >= size)
@@ -270,7 +294,7 @@ void *transport_prepare_read(transport_context_t *context, size_t size)
       else
       {
         ibuf_destroy(old_buffer);
-        ibuf_create(old_buffer, &context->cache, context->buffer_initial_capacity);
+        ibuf_create(old_buffer, &context->owner->cache, context->buffer_initial_capacity);
       }
     }
   }
@@ -279,7 +303,7 @@ void *transport_prepare_read(transport_context_t *context, size_t size)
   return new_buffer->wpos;
 }
 
-void *transport_prepare_write(transport_context_t *context, size_t size)
+void *transport_prepare_write(transport_channel_context_t *context, size_t size)
 {
   struct ibuf *old_buffer = context->current_write_buffer;
   if (ibuf_unused(old_buffer) >= size)
@@ -317,7 +341,7 @@ void *transport_prepare_write(transport_context_t *context, size_t size)
       else
       {
         ibuf_destroy(old_buffer);
-        ibuf_create(old_buffer, &context->cache, context->buffer_initial_capacity);
+        ibuf_create(old_buffer, &context->owner->cache, context->buffer_initial_capacity);
       }
     }
   }
@@ -326,38 +350,18 @@ void *transport_prepare_write(transport_context_t *context, size_t size)
   return new_buffer->wpos;
 }
 
-struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count)
-{
-  return smalloc(&context->allocator, sizeof(struct io_uring_cqe *) * count);
-}
-
-void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count)
-{
-  smfree(&context->allocator, cqes, sizeof(struct io_uring_cqe *) * count);
-}
-
-void *transport_extract_read_buffer(transport_context_t *context, transport_data_message_t *message)
+void *transport_extract_read_buffer(transport_channel_context_t *context, transport_data_message_t *message)
 {
   void *buffer = message->buffer->rpos + context->current_read_size;
   context->current_read_size += message->size;
   return buffer;
 }
 
-void *transport_extract_write_buffer(transport_context_t *context, transport_data_message_t *message)
+void *transport_extract_write_buffer(transport_channel_context_t *context, transport_data_message_t *message)
 {
   void *buffer = message->buffer->rpos + context->current_write_size;
   context->current_write_size += message->size;
   return buffer;
-}
-
-size_t transport_read_buffer_used(transport_context_t *context)
-{
-  return ibuf_used(context->current_read_buffer);
-}
-
-size_t transport_write_buffer_used(transport_context_t *context)
-{
-  return ibuf_used(context->current_write_buffer);
 }
 
 void *transport_allocate_object(transport_context_t *context, size_t size)
@@ -370,9 +374,19 @@ void transport_free_object(transport_context_t *context, void *object, size_t si
   smfree(&context->allocator, object, size);
 }
 
-transport_payload_t *transport_create_payload(transport_context_t *context, void *buffer, transport_data_message_t *message)
+struct io_uring_cqe **transport_allocate_cqes(transport_context_t *context, uint32_t count)
 {
-  transport_payload_t *data = mempool_alloc(&context->payload_pool);
+  return smalloc(&context->allocator, sizeof(struct io_uring_cqe *) * count);
+}
+
+void transport_free_cqes(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t count)
+{
+  smfree(&context->allocator, cqes, sizeof(struct io_uring_cqe *) * count);
+}
+
+transport_payload_t *transport_create_payload(transport_channel_context_t *context, void *buffer, transport_data_message_t *message)
+{
+  transport_payload_t *data = mempool_alloc(&context->owner->payload_pool);
   data->context = context;
   data->buffer = message->buffer;
   data->data = buffer;
@@ -392,7 +406,7 @@ void transport_finalize_payload(transport_payload_t *payload)
   {
     payload->context->current_write_size -= payload->size;
   }
-  mempool_free(&payload->context->payload_pool, payload);
+  mempool_free(&payload->context->owner->payload_pool, payload);
 }
 
 struct io_uring_cqe *transport_allocate_cqe(transport_context_t *context)

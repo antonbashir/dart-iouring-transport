@@ -7,11 +7,14 @@ class TransportDefaults {
         ringSize: 1024,
         slabSize: 16 * 1024 * 1024,
         memoryQuota: 1 * 1024 * 1024 * 1024,
-        bufferInitialCapacity: 16320,
-        bufferLimit: 16 * 16320,
         slabAllocationMinimalObjectSize: 16,
         slabAllocationGranularity: 8,
         slabAllocationFactor: 1.05,
+      );
+
+  static TransportChannelConfiguration channel() => TransportChannelConfiguration(
+        bufferInitialCapacity: 16320,
+        bufferLimit: 16 * 16320,
       );
 
   static TransportLoopConfiguration loop() => TransportLoopConfiguration(

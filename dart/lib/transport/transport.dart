@@ -34,8 +34,6 @@ class Transport {
       final transportConfiguration = arena<transport_configuration_t>();
       transportConfiguration.ref.ring_size = configuration.ringSize;
       transportConfiguration.ref.slab_size = configuration.slabSize;
-      transportConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
-      transportConfiguration.ref.buffer_limit = configuration.bufferLimit;
       transportConfiguration.ref.memory_quota = configuration.memoryQuota;
       transportConfiguration.ref.slab_allocation_granularity = configuration.slabAllocationGranularity;
       transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
@@ -52,10 +50,24 @@ class Transport {
 
   TransportConnection connection() => TransportConnection(_bindings, _context, _listener);
 
-  TransportChannel channel(int descriptor) => TransportChannel(_bindings, _context, descriptor, _listener)..start();
+  TransportChannel channel(int descriptor, TransportChannelConfiguration configuration) {
+    final channel = using((Arena arena) {
+      final channelConfiguration = arena<transport_channel_configuration_t>();
+      channelConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
+      channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
+      return _bindings.transport_initialize_channel(_context, channelConfiguration, descriptor);
+    });
+    return TransportChannel(_bindings, channel, _listener);
+  }
 
-  TransportFileChannel file(String path) {
+  TransportFileChannel file(String path, TransportChannelConfiguration configuration) {
     final descriptor = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFileChannel(TransportChannel(_bindings, _context, descriptor, _listener))..start();
+    final channel = using((Arena arena) {
+      final channelConfiguration = arena<transport_channel_configuration_t>();
+      channelConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
+      channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
+      return _bindings.transport_initialize_channel(_context, channelConfiguration, descriptor);
+    });
+    return TransportFileChannel(TransportChannel(_bindings, channel, _listener))..start();
   }
 }

@@ -12,11 +12,11 @@ Future<void> main(List<String> args) async {
   final clientTransport = Transport(TransportDefaults.configuration(), TransportDefaults.loop())..initialize();
 
   if (!File("test.txt").existsSync()) File("test.txt").createSync();
-  await fileTransport.file("test.txt").writeString("test");
-  await fileTransport.file("test.txt").readString().then(print);
+  await fileTransport.file("test.txt", TransportDefaults.channel()).writeString("test");
+  await fileTransport.file("test.txt", TransportDefaults.channel()).readString().then(print);
   File("test.txt").deleteSync();
 
-  serverTransport.connection().bind("0.0.0.0", 1234).listen((serverChannel) async {
+  serverTransport.connection().bind("0.0.0.0", 1234, TransportDefaults.channel()).listen((serverChannel) async {
     serverChannel.stringInput.listen((event) => print("server: $event"));
     while (true) {
       await Future.delayed(Duration(seconds: 1));
@@ -25,7 +25,7 @@ Future<void> main(List<String> args) async {
     }
   });
 
-  clientTransport.connection().connect("127.0.0.1", 1234).listen((clientChannel) async {
+  clientTransport.connection().connect("127.0.0.1", 1234, TransportDefaults.channel()).listen((clientChannel) async {
     clientChannel.stringInput.listen((event) => print("client: $event"));
     while (true) {
       await Future.delayed(Duration(seconds: 1));

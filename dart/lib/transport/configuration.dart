@@ -2,8 +2,6 @@ class TransportConfiguration {
   final int ringSize;
   final int slabSize;
   final int memoryQuota;
-  final int bufferInitialCapacity;
-  final int bufferLimit;
   final int slabAllocationMinimalObjectSize;
   final int slabAllocationGranularity;
   final double slabAllocationFactor;
@@ -12,8 +10,6 @@ class TransportConfiguration {
     required this.ringSize,
     required this.slabSize,
     required this.memoryQuota,
-    required this.bufferInitialCapacity,
-    required this.bufferLimit,
     required this.slabAllocationMinimalObjectSize,
     required this.slabAllocationGranularity,
     required this.slabAllocationFactor,
@@ -33,11 +29,27 @@ class TransportConfiguration {
         ringSize: ringSize ?? this.ringSize,
         slabSize: slabSize ?? this.slabSize,
         memoryQuota: memoryQuota ?? this.memoryQuota,
-        bufferInitialCapacity: bufferInitialCapacity ?? this.bufferInitialCapacity,
-        bufferLimit: bufferLimit ?? this.bufferLimit,
         slabAllocationMinimalObjectSize: slabAllocationMinimalObjectSize ?? this.slabAllocationMinimalObjectSize,
         slabAllocationGranularity: slabAllocationGranularity ?? this.slabAllocationGranularity,
         slabAllocationFactor: slabAllocationFactor ?? this.slabAllocationFactor,
+      );
+}
+class TransportChannelConfiguration {
+  final int bufferInitialCapacity;
+  final int bufferLimit;
+
+  TransportChannelConfiguration({
+    required this.bufferInitialCapacity,
+    required this.bufferLimit,
+  });
+
+  TransportChannelConfiguration copyWith({
+    int? bufferInitialCapacity,
+    int? bufferLimit,
+  }) =>
+      TransportChannelConfiguration(
+        bufferInitialCapacity: bufferInitialCapacity ?? this.bufferInitialCapacity,
+        bufferLimit: bufferLimit ?? this.bufferLimit,
       );
 }
 
