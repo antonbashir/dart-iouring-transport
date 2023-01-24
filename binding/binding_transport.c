@@ -97,11 +97,10 @@ void transport_close_channel(transport_channel_context_t *context)
 
   context->current_read_size = 0;
   context->current_write_size = 0;
-  context->owner = NULL;
 
   close(context->fd);
 
-  smfree(context, sizeof(transport_channel_context_t));
+  smfree(&context->owner->allocator, context, sizeof(transport_channel_context_t));
 }
 
 int32_t transport_submit_receive(transport_context_t *context, struct io_uring_cqe **cqes, uint32_t cqes_size, bool wait)
