@@ -12,64 +12,6 @@
 #include <pthread.h>
 #include <sys/time.h>
 
-// static inline long long millis()
-// {
-//   struct timeval time_value;
-//   gettimeofday(&time_value, NULL);
-//   return (long long)(time_value.tv_usec / 1000);
-// }
-
-// inline static void //log_type(transport_message_type_t type, const char *message)
-// {
-//   time_t raw_time;
-//   struct tm *time_info;
-//   time(&raw_time);
-//   time_info = localtime(&raw_time);
-//   char print_message[256];
-//   sprintf(print_message, "%d:%d:%d.%ld ",
-//           time_info->tm_hour,
-//           time_info->tm_min,
-//           time_info->tm_sec,
-//           millis());
-//   strcpy(print_message + strlen(print_message), type == TRANSPORT_MESSAGE_READ ? "[read]: " : "[write]: ");
-//   strcpy(print_message + strlen(print_message), message);
-//   printf("%s\n", print_message);
-// }
-
-// inline static void //log_type_size(transport_message_type_t type, const char *message, size_t size)
-// {
-//   time_t raw_time;
-//   struct tm *time_info;
-//   time(&raw_time);
-//   time_info = localtime(&raw_time);
-//   char print_message[256];
-//   sprintf(print_message, "%d:%d:%d.%ld (current size=%ld) ",
-//           time_info->tm_hour,
-//           time_info->tm_min,
-//           time_info->tm_sec,
-//           millis(),
-//           size);
-//   strcpy(print_message + strlen(print_message), type == TRANSPORT_MESSAGE_READ ? "[read]: " : "[write]: ");
-//   strcpy(print_message + strlen(print_message), message);
-//   printf("%s\n", print_message);
-// }
-
-// inline static void //log_message(const char *message)
-// {
-//   time_t raw_time;
-//   struct tm *time_info;
-//   time(&raw_time);
-//   time_info = localtime(&raw_time);
-//   char print_message[256];
-//   sprintf(print_message, "%d:%d:%d.%ld ",
-//           time_info->tm_hour,
-//           time_info->tm_min,
-//           time_info->tm_sec,
-//           millis());
-//   strcpy(print_message + strlen(print_message), message);
-//   printf("%s\n", print_message);
-// }
-
 transport_context_t *transport_initialize(transport_configuration_t *configuration)
 {
   transport_context_t *context = malloc(sizeof(transport_context_t));
@@ -186,13 +128,11 @@ int32_t transport_submit_receive(transport_context_t *context, struct io_uring_c
   }
 
   if (submit_result > 0)
-    //log_message("cqe have submitted");
-  return (int32_t)submit_result;
+    return (int32_t)submit_result;
 }
 
 void transport_mark_cqe(transport_context_t *context, transport_message_type_t type, struct io_uring_cqe *cqe)
 {
-  //log_type(type, "cqe seen");
   if (type == TRANSPORT_MESSAGE_READ || type == TRANSPORT_MESSAGE_WRITE)
   {
     mempool_free(&context->data_message_pool, (void *)cqe->user_data);
@@ -231,7 +171,6 @@ int32_t transport_queue_read(transport_channel_context_t *context, uint32_t size
   io_uring_sqe_set_data(sqe, message);
 
   context->current_read_buffer->wpos += size;
-  //log_type(TRANSPORT_MESSAGE_READ, "message queued");
   return 0;
 }
 
@@ -262,7 +201,6 @@ int32_t transport_queue_write(transport_channel_context_t *context, uint32_t siz
   io_uring_sqe_set_data(sqe, message);
 
   context->current_write_buffer->wpos += size;
-  //log_type(TRANSPORT_MESSAGE_READ, "message queued");
   return 0;
 }
 
@@ -318,7 +256,6 @@ void *transport_prepare_read(transport_channel_context_t *context, size_t size)
   struct ibuf *old_buffer = context->current_read_buffer;
   if (ibuf_unused(old_buffer) >= size)
   {
-    //log_type_size(TRANSPORT_MESSAGE_READ, "old buffer has available size", context->current_read_size);
     if (ibuf_used(old_buffer) == 0)
       ibuf_reset(old_buffer);
     return old_buffer->wpos;
@@ -326,16 +263,13 @@ void *transport_prepare_read(transport_channel_context_t *context, size_t size)
 
   if (ibuf_used(old_buffer) == context->current_read_size)
   {
-    //log_type_size(TRANSPORT_MESSAGE_READ, "old buffer has current size", context->current_read_size);
     ibuf_reserve(old_buffer, size);
     return old_buffer->wpos;
   }
 
-  //log_type_size(TRANSPORT_MESSAGE_READ, "rotate buffer", context->current_read_size);
   struct ibuf *new_buffer = &context->read_buffers[context->current_read_buffer == context->read_buffers];
   if (ibuf_used(new_buffer) != 0)
   {
-    //log_type_size(TRANSPORT_MESSAGE_READ, "new buffer used", context->current_read_size);
     return NULL;
   }
 
@@ -344,12 +278,10 @@ void *transport_prepare_read(transport_channel_context_t *context, size_t size)
   old_buffer->wpos -= context->current_read_size;
   if (context->current_read_size != 0)
   {
-    //log_type_size(TRANSPORT_MESSAGE_READ, "current size not zero during rotation", context->current_read_size);
     memcpy(new_buffer->rpos, old_buffer->wpos, context->current_read_size);
     new_buffer->wpos += context->current_read_size;
     if (ibuf_used(old_buffer) == 0)
     {
-      //log_type_size(TRANSPORT_MESSAGE_READ, "old buffer is empty after rotation", context->current_read_size);
       if (ibuf_capacity(old_buffer) < context->buffer_limit)
       {
         ibuf_reset(old_buffer);
@@ -360,7 +292,6 @@ void *transport_prepare_read(transport_channel_context_t *context, size_t size)
         ibuf_create(old_buffer, &context->owner->cache, context->buffer_initial_capacity);
       }
     }
-    //log_type_size(TRANSPORT_MESSAGE_READ, "complete rotation", context->current_read_size);
   }
 
   context->current_read_buffer = new_buffer;
@@ -372,7 +303,6 @@ void *transport_prepare_write(transport_channel_context_t *context, size_t size)
   struct ibuf *old_buffer = context->current_write_buffer;
   if (ibuf_unused(old_buffer) >= size)
   {
-    //log_type_size(TRANSPORT_MESSAGE_WRITE, "old buffer has available size", context->current_write_size);
     if (ibuf_used(old_buffer) == 0)
       ibuf_reset(old_buffer);
     return old_buffer->wpos;
@@ -380,16 +310,13 @@ void *transport_prepare_write(transport_channel_context_t *context, size_t size)
 
   if (ibuf_used(old_buffer) == context->current_write_size)
   {
-    //log_type_size(TRANSPORT_MESSAGE_WRITE, "old buffer has current size", context->current_write_size);
     ibuf_reserve(old_buffer, size);
     return old_buffer->wpos;
   }
 
-  //log_type_size(TRANSPORT_MESSAGE_WRITE, "rotate buffer", context->current_write_size);
   struct ibuf *new_buffer = &context->write_buffers[context->current_write_buffer == context->write_buffers];
   if (ibuf_used(new_buffer) != 0)
   {
-    //log_type_size(TRANSPORT_MESSAGE_WRITE, "new buffer used", context->current_write_size);
     return NULL;
   }
 
@@ -398,12 +325,10 @@ void *transport_prepare_write(transport_channel_context_t *context, size_t size)
   old_buffer->wpos -= context->current_write_size;
   if (context->current_write_size != 0)
   {
-    //log_type_size(TRANSPORT_MESSAGE_WRITE, "current size not zero during rotation", context->current_write_size);
     memcpy(new_buffer->rpos, old_buffer->wpos, context->current_write_size);
     new_buffer->wpos += context->current_write_size;
     if (ibuf_used(old_buffer) == 0)
     {
-      //log_type_size(TRANSPORT_MESSAGE_WRITE, "old buffer is empty after rotation", context->current_write_size);
       if (ibuf_capacity(old_buffer) < context->buffer_limit)
       {
         ibuf_reset(old_buffer);
@@ -414,7 +339,6 @@ void *transport_prepare_write(transport_channel_context_t *context, size_t size)
         ibuf_create(old_buffer, &context->owner->cache, context->buffer_initial_capacity);
       }
     }
-    //log_type_size(TRANSPORT_MESSAGE_WRITE, "complete rotation", context->current_write_size);
   }
 
   context->current_write_buffer = new_buffer;
@@ -423,19 +347,15 @@ void *transport_prepare_write(transport_channel_context_t *context, size_t size)
 
 void *transport_extract_read_buffer(transport_channel_context_t *context, transport_data_message_t *message)
 {
-  //log_type_size(TRANSPORT_MESSAGE_READ, "start extraction", context->current_read_size);
   void *buffer = message->buffer->rpos + context->current_read_size;
   context->current_read_size += message->size;
-  //log_type_size(TRANSPORT_MESSAGE_READ, "end extraction", context->current_read_size);
   return buffer;
 }
 
 void *transport_extract_write_buffer(transport_channel_context_t *context, transport_data_message_t *message)
 {
-  //log_type_size(TRANSPORT_MESSAGE_WRITE, "start extraction", context->current_write_size);
   void *buffer = message->buffer->rpos + context->current_write_size;
   context->current_write_size += message->size;
-  //log_type_size(TRANSPORT_MESSAGE_READ, "end extraction", context->current_write_size);
   return buffer;
 }
 
@@ -472,17 +392,14 @@ transport_payload_t *transport_create_payload(transport_channel_context_t *conte
 
 void transport_finalize_payload(transport_payload_t *payload)
 {
-  //log_type(payload->type, "start finalizing");
   payload->buffer->rpos += payload->size;
   if (payload->type == TRANSPORT_MESSAGE_READ)
   {
     payload->context->current_read_size -= payload->size;
-    //log_type_size(payload->type, "end finalizing", payload->context->current_read_size);
   }
   if (payload->type == TRANSPORT_MESSAGE_WRITE)
   {
     payload->context->current_write_size -= payload->size;
-    //log_type_size(payload->type, "end finalizing", payload->context->current_write_size);
   }
   mempool_free(&payload->context->owner->payload_pool, payload);
 }
