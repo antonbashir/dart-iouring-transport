@@ -57,7 +57,7 @@ class Transport {
       channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
       return _bindings.transport_initialize_channel(_context, channelConfiguration, descriptor);
     });
-    return TransportChannel(_bindings, channel, _listener);
+    return TransportChannel(_bindings, channel, _listener, configuration)..start();
   }
 
   TransportFileChannel file(String path, TransportChannelConfiguration configuration) {
@@ -68,6 +68,6 @@ class Transport {
       channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
       return _bindings.transport_initialize_channel(_context, channelConfiguration, descriptor);
     });
-    return TransportFileChannel(TransportChannel(_bindings, channel, _listener))..start();
+    return TransportFileChannel(TransportChannel(_bindings, channel, _listener, configuration))..start();
   }
 }

@@ -43,7 +43,7 @@ class TransportConnection {
           channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
           return _bindings.transport_initialize_channel(_context, channelConfiguration, clientDescriptor);
         });
-        _clientChannels.add(TransportChannel(_bindings, channel, _listener)..start());
+        _clientChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start());
       }
     });
     _clientChannels.onCancel = subscription.cancel;
@@ -63,7 +63,7 @@ class TransportConnection {
           channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
           return _bindings.transport_initialize_channel(_context, channelConfiguration, serverDescriptor);
         });
-        _serverChannels.add(TransportChannel(_bindings, channel, _listener)..start());
+        _serverChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start());
       }
     });
     _serverChannels.onCancel = subscription.cancel;

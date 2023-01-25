@@ -37,19 +37,23 @@ class TransportConfiguration {
 class TransportChannelConfiguration {
   final int bufferInitialCapacity;
   final int bufferLimit;
+  final Duration bufferAvailableAwaitDelayed;
 
   TransportChannelConfiguration({
     required this.bufferInitialCapacity,
     required this.bufferLimit,
+    required this.bufferAvailableAwaitDelayed,
   });
 
   TransportChannelConfiguration copyWith({
     int? bufferInitialCapacity,
     int? bufferLimit,
+    Duration? bufferAvailableAwaitDelayed,
   }) =>
       TransportChannelConfiguration(
         bufferInitialCapacity: bufferInitialCapacity ?? this.bufferInitialCapacity,
         bufferLimit: bufferLimit ?? this.bufferLimit,
+        bufferAvailableAwaitDelayed: bufferAvailableAwaitDelayed ?? this.bufferAvailableAwaitDelayed,
       );
 }
 

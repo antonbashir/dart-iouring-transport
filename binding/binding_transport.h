@@ -115,8 +115,6 @@ extern "C"
   transport_channel_context_t *transport_initialize_channel(transport_context_t *owner, transport_channel_configuration_t *configuration, int32_t fd);
   void transport_close_channel(transport_channel_context_t *context);
 
-  void transport_close_descriptor(int32_t fd);
-
   void *transport_extract_write_buffer(transport_channel_context_t *context, transport_data_message_t *message);
   void *transport_extract_read_buffer(transport_channel_context_t *context, transport_data_message_t *message);
 

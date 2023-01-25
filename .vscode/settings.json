@@ -24,6 +24,8 @@
     "memory": "c",
     "istream": "c",
     "ostream": "c",
-    "streambuf": "c"
+    "streambuf": "c",
+    "pthread.h": "c",
+    "ctime": "c"
   },
 }
