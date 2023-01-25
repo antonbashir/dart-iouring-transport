@@ -19,6 +19,7 @@
           "ignoreFailures": true
         }
       ],
+      "preLaunchTask": "transport-binding-build"
     },
     {
       "name": "dart-test-debug-native",
@@ -30,12 +31,6 @@
       ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/dart",
-      "environment": [
-        {
-          "name": "PATH",
-          "value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
-        },
-      ],
       "MIMode": "gdb",
       "setupCommands": [
         {

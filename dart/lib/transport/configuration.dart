@@ -34,26 +34,31 @@ class TransportConfiguration {
         slabAllocationFactor: slabAllocationFactor ?? this.slabAllocationFactor,
       );
 }
+
 class TransportChannelConfiguration {
   final int bufferInitialCapacity;
   final int bufferLimit;
+  final int messageSize;
   final Duration bufferAvailableAwaitDelayed;
 
   TransportChannelConfiguration({
     required this.bufferInitialCapacity,
     required this.bufferLimit,
     required this.bufferAvailableAwaitDelayed,
+    required this.messageSize,
   });
 
   TransportChannelConfiguration copyWith({
     int? bufferInitialCapacity,
     int? bufferLimit,
     Duration? bufferAvailableAwaitDelayed,
+    int? messageSize,
   }) =>
       TransportChannelConfiguration(
         bufferInitialCapacity: bufferInitialCapacity ?? this.bufferInitialCapacity,
         bufferLimit: bufferLimit ?? this.bufferLimit,
         bufferAvailableAwaitDelayed: bufferAvailableAwaitDelayed ?? this.bufferAvailableAwaitDelayed,
+        messageSize: messageSize ?? this.messageSize,
       );
 }
 
@@ -61,16 +66,16 @@ class TransportLoopConfiguration {
   final int initialEmptyCycles;
   final int maxEmptyCycles;
   final int emptyCyclesMultiplier;
-  final int regularSleepMillis;
-  final int maxSleepMillis;
+  final Duration regularSleepDelay;
+  final Duration maxSleepDelay;
   final int cqesSize;
 
   TransportLoopConfiguration({
     required this.initialEmptyCycles,
     required this.maxEmptyCycles,
     required this.emptyCyclesMultiplier,
-    required this.regularSleepMillis,
-    required this.maxSleepMillis,
+    required this.regularSleepDelay,
+    required this.maxSleepDelay,
     required this.cqesSize,
   });
 
@@ -78,16 +83,16 @@ class TransportLoopConfiguration {
     int? initialEmptyCycles,
     int? maxEmptyCycles,
     int? emptyCyclesMultiplier,
-    int? regularSleepSeconds,
-    int? maxSleepSeconds,
+    Duration? regularSleepDelay,
+    Duration? maxSleepDelay,
     int? cqesSize,
   }) =>
       TransportLoopConfiguration(
         initialEmptyCycles: initialEmptyCycles ?? this.initialEmptyCycles,
         maxEmptyCycles: maxEmptyCycles ?? this.maxEmptyCycles,
         emptyCyclesMultiplier: emptyCyclesMultiplier ?? this.emptyCyclesMultiplier,
-        regularSleepMillis: regularSleepSeconds ?? this.regularSleepMillis,
-        maxSleepMillis: maxSleepSeconds ?? this.maxSleepMillis,
+        regularSleepDelay: regularSleepDelay ?? this.regularSleepDelay,
+        maxSleepDelay: maxSleepDelay ?? this.maxSleepDelay,
         cqesSize: cqesSize ?? this.cqesSize,
       );
 }

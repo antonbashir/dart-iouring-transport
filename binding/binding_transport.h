@@ -48,6 +48,7 @@ extern "C"
     transport_message_type_t type;
     struct ibuf *buffer;
     int32_t size;
+    int32_t payload_size;
   } transport_data_message_t;
 
   typedef struct transport_accept_message
@@ -105,7 +106,7 @@ extern "C"
   void transport_mark_cqe(transport_context_t *context, transport_message_type_t type, struct io_uring_cqe *cqe);
 
   int32_t transport_queue_read(transport_channel_context_t *context, uint32_t size, uint64_t offset);
-  int32_t transport_queue_write(transport_channel_context_t *context, uint32_t size, uint64_t offset);
+  int32_t transport_queue_write(transport_channel_context_t *context, uint32_t payload_size, uint32_t message_size, uint64_t offset);
   int32_t transport_queue_accept(transport_context_t *context, int32_t server_socket_fd);
   int32_t transport_queue_connect(transport_context_t *context, int32_t socket_fd, const char *ip, int32_t port);
 

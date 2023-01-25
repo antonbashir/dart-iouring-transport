@@ -48,15 +48,15 @@ transport_context_t *transport_initialize(transport_configuration_t *configurati
 void transport_close(transport_context_t *context)
 {
   io_uring_queue_exit(&context->ring);
-
-  small_alloc_destroy(&context->allocator);
-  slab_cache_destroy(&context->cache);
-  slab_arena_destroy(&context->arena);
-
+  
   mempool_destroy(&context->data_message_pool);
   mempool_destroy(&context->accept_message_pool);
   mempool_destroy(&context->cqe_pool);
   mempool_destroy(&context->payload_pool);
+
+  small_alloc_destroy(&context->allocator);
+  slab_cache_destroy(&context->cache);
+  slab_arena_destroy(&context->arena);
 
   free(context);
 }
@@ -174,7 +174,7 @@ int32_t transport_queue_read(transport_channel_context_t *context, uint32_t size
   return 0;
 }
 
-int32_t transport_queue_write(transport_channel_context_t *context, uint32_t size, uint64_t offset)
+int32_t transport_queue_write(transport_channel_context_t *context, uint32_t payload_size, uint32_t message_size, uint64_t offset)
 {
   if (io_uring_sq_space_left(&context->owner->ring) <= 1)
   {
@@ -193,14 +193,14 @@ int32_t transport_queue_write(transport_channel_context_t *context, uint32_t siz
     return -1;
   }
   message->buffer = context->current_write_buffer;
-  message->size = size;
+  message->size = message_size;
   message->fd = context->fd;
   message->type = TRANSPORT_MESSAGE_WRITE;
 
-  io_uring_prep_write(sqe, context->fd, context->current_write_buffer->wpos, size, offset);
+  io_uring_prep_write(sqe, context->fd, context->current_write_buffer->wpos, payload_size, offset);
   io_uring_sqe_set_data(sqe, message);
 
-  context->current_write_buffer->wpos += size;
+  context->current_write_buffer->wpos += message_size;
   return 0;
 }
 

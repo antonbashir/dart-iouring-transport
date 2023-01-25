@@ -33,6 +33,7 @@ class TransportConnection {
   Stream<TransportChannel> _acceptClient(TransportChannelConfiguration configuration) {
     final subscription = _listener.cqes.listen((cqe) {
       Pointer<transport_accept_message> userData = Pointer.fromAddress(cqe.ref.user_data);
+      if (userData == nullptr) return;
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_ACCEPT) {
         final clientDescriptor = cqe.ref.res;
         _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
@@ -43,7 +44,7 @@ class TransportConnection {
           channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
           return _bindings.transport_initialize_channel(_context, channelConfiguration, clientDescriptor);
         });
-        _clientChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start());
+        _clientChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start(onStop: () => _clientChannels.close()));
       }
     });
     _clientChannels.onCancel = subscription.cancel;
@@ -53,6 +54,7 @@ class TransportConnection {
   Stream<TransportChannel> _acceptServer(TransportChannelConfiguration configuration) {
     final subscription = _listener.cqes.listen((cqe) {
       Pointer<transport_accept_message> userData = Pointer.fromAddress(cqe.ref.user_data);
+      if (userData == nullptr) return;
       if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_CONNECT) {
         final serverDescriptor = userData.ref.fd;
         _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
@@ -63,7 +65,7 @@ class TransportConnection {
           channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
           return _bindings.transport_initialize_channel(_context, channelConfiguration, serverDescriptor);
         });
-        _serverChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start());
+        _serverChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start(onStop: () => _serverChannels.close()));
       }
     });
     _serverChannels.onCancel = subscription.cancel;

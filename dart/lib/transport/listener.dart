@@ -30,8 +30,8 @@ class TransportListener {
     int initialEmptyCycles = _configuration.initialEmptyCycles;
     int maxEmptyCycles = _configuration.maxEmptyCycles;
     int cyclesMultiplier = _configuration.emptyCyclesMultiplier;
-    int regularSleepMillis = _configuration.regularSleepMillis;
-    int maxSleepMillis = _configuration.maxSleepMillis;
+    Duration regularSleepDelay = _configuration.regularSleepDelay;
+    Duration maxSleepDelay = _configuration.maxSleepDelay;
     int currentEmptyCycles = 0;
     int curentEmptyCyclesLimit = initialEmptyCycles;
 
@@ -48,13 +48,13 @@ class TransportListener {
         _bindings.transport_free_cqes(_context, cqes, _configuration.cqesSize);
         currentEmptyCycles++;
         if (currentEmptyCycles >= maxEmptyCycles) {
-          await Future.delayed(Duration(milliseconds: maxSleepMillis));
+          await Future.delayed(maxSleepDelay);
           continue;
         }
 
         if (currentEmptyCycles >= curentEmptyCyclesLimit) {
           curentEmptyCyclesLimit *= cyclesMultiplier;
-          await Future.delayed(Duration(milliseconds: regularSleepMillis));
+          await Future.delayed(regularSleepDelay);
           continue;
         }
 

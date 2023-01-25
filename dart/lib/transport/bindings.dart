@@ -8726,12 +8726,14 @@ class TransportBindings {
 
   int transport_queue_write(
     ffi.Pointer<transport_channel_context_t> context,
-    int size,
+    int payload_size,
+    int message_size,
     int offset,
   ) {
     return _transport_queue_write(
       context,
-      size,
+      payload_size,
+      message_size,
       offset,
     );
   }
@@ -8739,9 +8741,9 @@ class TransportBindings {
   late final _transport_queue_writePtr = _lookup<
       ffi.NativeFunction<
           ffi.Int32 Function(ffi.Pointer<transport_channel_context_t>,
-              ffi.Uint32, ffi.Uint64)>>('transport_queue_write');
+              ffi.Uint32, ffi.Uint32, ffi.Uint64)>>('transport_queue_write');
   late final _transport_queue_write = _transport_queue_writePtr.asFunction<
-      int Function(ffi.Pointer<transport_channel_context_t>, int, int)>();
+      int Function(ffi.Pointer<transport_channel_context_t>, int, int, int)>();
 
   int transport_queue_accept(
     ffi.Pointer<transport_context_t> context,
@@ -8852,20 +8854,6 @@ class TransportBindings {
       'transport_close_channel');
   late final _transport_close_channel = _transport_close_channelPtr
       .asFunction<void Function(ffi.Pointer<transport_channel_context_t>)>();
-
-  void transport_close_descriptor(
-    int fd,
-  ) {
-    return _transport_close_descriptor(
-      fd,
-    );
-  }
-
-  late final _transport_close_descriptorPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>(
-          'transport_close_descriptor');
-  late final _transport_close_descriptor =
-      _transport_close_descriptorPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<ffi.Void> transport_extract_write_buffer(
     ffi.Pointer<transport_channel_context_t> context,
@@ -11229,6 +11217,7 @@ class _SymbolAddresses {
           ffi.Int32 Function(
               ffi.Pointer<transport_channel_context_t>,
               ffi.Uint32,
+              ffi.Uint32,
               ffi.Uint64)>> get transport_queue_write =>
       _library._transport_queue_writePtr;
   ffi.Pointer<
@@ -11263,8 +11252,6 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_channel_context_t>)>>
       get transport_close_channel => _library._transport_close_channelPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>
-      get transport_close_descriptor => _library._transport_close_descriptorPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<ffi.Void> Function(
@@ -13249,6 +13236,9 @@ class transport_data_message extends ffi.Struct {
 
   @ffi.Int32()
   external int size;
+
+  @ffi.Int32()
+  external int payload_size;
 }
 
 class transport_accept_message extends ffi.Struct {

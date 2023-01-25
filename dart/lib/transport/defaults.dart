@@ -16,11 +16,12 @@ class TransportDefaults {
         bufferInitialCapacity: 16320,
         bufferLimit: 18 * 16320,
         bufferAvailableAwaitDelayed: Duration.zero,
+        messageSize: 1024,
       );
 
   static TransportLoopConfiguration loop() => TransportLoopConfiguration(
-        maxSleepMillis: 100,
-        regularSleepMillis: 0,
+        maxSleepDelay: Duration(seconds: 1),
+        regularSleepDelay: Duration.zero,
         maxEmptyCycles: 10000000,
         emptyCyclesMultiplier: 2,
         initialEmptyCycles: 1000,
