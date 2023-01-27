@@ -32,8 +32,11 @@ add_subdirectory(small)
 include_directories(small/include/small)
 include_directories(small/third_party)
 
+add_subdirectory(salad)
+include_directories(salad)
+
 add_library(binding SHARED ${sources})
-add_dependencies(binding liburing small)
+add_dependencies(binding liburing small salad)
 target_link_libraries(binding PRIVATE ${liburing_SOURCE_DIR}/build/lib/liburing.a small)
 add_custom_command(TARGET binding POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:binding> ${CMAKE_CURRENT_SOURCE_DIR}/../dart/native/libtransport.so

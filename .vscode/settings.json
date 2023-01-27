@@ -26,6 +26,10 @@
     "ostream": "c",
     "streambuf": "c",
     "pthread.h": "c",
-    "ctime": "c"
+    "ctime": "c",
+    "binding_channel.h": "c",
+    "binding_listener.h": "c",
+    "mempool.h": "c",
+    "dart_api_dl.h": "c"
   },
 }
