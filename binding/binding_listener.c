@@ -21,7 +21,11 @@ static inline void handle_cqes(transport_listener_t *listener, int count, struct
     struct io_uring_cqe *cqe = cqes[cqe_index];
     transport_message_t *message = (transport_message_t *)(cqe->user_data);
     if (!message)
+    {
+      io_uring_cqe_seen(&listener->transport->ring, cqe);
       continue;
+    }
+
     if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
     {
       ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
@@ -82,16 +86,8 @@ void *transport_listen(void *input)
 
   while (listener->active)
   {
-    int32_t result = io_uring_submit(&listener->transport->ring);
-    if (result < 0)
-    {
-      if (result != -EBUSY)
-      {
-        continue;
-      }
-    }
     struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * listener->cqe_size);
-    result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
+    int32_t result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
     if (result == 0)
     {
       result = io_uring_wait_cqe(&listener->transport->ring, cqes);

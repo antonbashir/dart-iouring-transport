@@ -32,9 +32,9 @@ class TransportChannel {
     void Function(TransportDataPayload payload)? onWrite,
     void Function()? onStop,
   }) {
-    onRead = onRead;
-    onWrite = onWrite;
-    onStop = onStop;
+    this.onRead = onRead;
+    this.onWrite = onWrite;
+    this.onStop = onStop;
     using((Arena arena) {
       final configuration = arena<transport_channel_configuration_t>();
       configuration.ref.buffer_initial_capacity = _configuration.bufferInitialCapacity;

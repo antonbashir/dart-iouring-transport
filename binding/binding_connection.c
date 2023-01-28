@@ -60,6 +60,7 @@ int32_t transport_connection_queue_accept(transport_connection_t *connection, in
 
   io_uring_prep_accept(sqe, server_socket_fd, (struct sockaddr *)&payload->client_addres, &payload->client_addres_length, 0);
   io_uring_sqe_set_data(sqe, transport_listener_create_message(connection->listener, connection->accept_port, payload, TRANSPORT_PAYLOAD_ACCEPT));
+  io_uring_submit(&connection->transport->ring);
 }
 
 int32_t transport_connection_queue_connect(transport_connection_t *connection, int32_t socket_fd, const char *ip, int32_t port)
@@ -85,6 +86,7 @@ int32_t transport_connection_queue_connect(transport_connection_t *connection, i
 
   io_uring_prep_connect(sqe, socket_fd, (struct sockaddr *)&payload->client_addres, payload->client_addres_length);
   io_uring_sqe_set_data(sqe, transport_listener_create_message(connection->listener, connection->connect_port, payload, TRANSPORT_PAYLOAD_CONNECT));
+  io_uring_submit(&connection->transport->ring);
 }
 
 transport_accept_payload_t *transport_connection_allocate_accept_payload(transport_connection_t *connection)
