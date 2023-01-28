@@ -44,15 +44,15 @@ Future<void> main(List<String> args) async {
       clientChannel.queueWrite(encoder.convert("from client"));
     }
     clientChannel.stop();
-    done.complete();
   });
 
   await Future.delayed(Duration(seconds: seconds));
   stopChannels = true;
-  await done.future;
-  serverTransport.close();
-  clientTransport.close();
 
   print("received RPS: ${received / seconds}");
   print("sent RPS: ${sent / seconds}");
+
+  await done.future;
+  serverTransport.close();
+  clientTransport.close();
 }

@@ -42,13 +42,24 @@
       "preLaunchTask": "transport-binding-build"
     },
     {
-      "name": "dart-benchmark-run",
+      "name": "dart-benchmark-debug-native",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/dart/test/benchmark.exe",
+      "program": "/usr/bin/dart",
+      "args": [
+        "${cwd}/dart/test/benchmark.dart"
+      ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/dart",
-      "preLaunchTask": "dart-benchmark-build"
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "transport-binding-build"
     },
   ]
 }
