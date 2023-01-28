@@ -82,6 +82,7 @@ int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offs
   payload->fd = channel->fd;
   payload->offset = offset;
   payload->position = channel->current_read_buffer->wpos;
+  payload->buffer_size = channel->payload_buffer_size;
   payload->type = TRANSPORT_PAYLOAD_READ;
 
   transport_controller_send(channel->controller, transport_controller_create_message(channel->controller, channel->read_port, payload, TRANSPORT_PAYLOAD_READ));
@@ -99,6 +100,7 @@ int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t pay
   }
   payload->buffer = channel->current_write_buffer;
   payload->size = payload_size;
+  payload->buffer_size = channel->payload_buffer_size;
   payload->fd = channel->fd;
   payload->offset = offset;
   payload->position = channel->current_write_buffer->wpos;

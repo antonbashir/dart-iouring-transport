@@ -21461,6 +21461,9 @@ class transport_data_payload extends ffi.Struct {
   @ffi.Int32()
   external int size;
 
+  @ffi.Int32()
+  external int buffer_size;
+
   @ffi.Size()
   external int offset;
 

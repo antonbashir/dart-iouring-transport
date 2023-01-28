@@ -41,6 +41,12 @@
     "binding_controller.h": "c",
     "ck_cc.h": "c",
     "ck_md.h": "c",
-    "ck_pr.h": "c"
+    "ck_pr.h": "c",
+    "atomic": "c",
+    "bit": "c",
+    "algorithm": "c",
+    "random": "c",
+    "stdexcept": "c",
+    "new": "c"
   },
 }

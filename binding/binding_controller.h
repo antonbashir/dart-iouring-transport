@@ -27,6 +27,7 @@ extern "C"
     transport_payload_type_t type;
     struct ibuf *buffer;
     int32_t size;
+    int32_t buffer_size;
     size_t offset;
     void *position;
   } transport_data_payload_t;

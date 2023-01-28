@@ -57,7 +57,7 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
   free(cqes);
 }
 
-static inline void transport_controller_handle_message(transport_controller_t *controller, transport_message_t *message)
+static inline void handle_message(transport_controller_t *controller, transport_message_t *message)
 {
   struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
   if (sqe == NULL)
@@ -80,13 +80,13 @@ static inline void transport_controller_handle_message(transport_controller_t *c
   if (message->payload_type == TRANSPORT_PAYLOAD_READ)
   {
     transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_read(sqe, read_payload->fd, read_payload->position, read_payload->size, read_payload->offset);
+    io_uring_prep_read(sqe, read_payload->fd, read_payload->position, read_payload->buffer_size, read_payload->offset);
     io_uring_sqe_set_data(sqe, message);
   }
   if (message->payload_type == TRANSPORT_PAYLOAD_WRITE)
   {
     transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_write(sqe, write_payload->fd, write_payload->position, write_payload->size, write_payload->offset);
+    io_uring_prep_write(sqe, write_payload->fd, write_payload->position, write_payload->buffer_size, write_payload->offset);
     io_uring_sqe_set_data(sqe, message);
   }
 }
@@ -120,12 +120,12 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->message_ring = ring;
 
   pthread_create(&controller->thread_id, NULL, transport_controller_loop, controller);
-  pthread_mutex_lock(&controller->initialization_mutex);
-  while (!controller->initialized)
-    pthread_cond_wait(&controller->initialization_condition, &controller->initialization_mutex);
-  pthread_mutex_unlock(&controller->initialization_mutex);
-  pthread_cond_destroy(&controller->initialization_condition);
-  pthread_mutex_destroy(&controller->initialization_mutex);
+  // pthread_mutex_lock(&controller->initialization_mutex);
+  // while (!controller->initialized)
+  //   pthread_cond_wait(&controller->initialization_condition, &controller->initialization_mutex);
+  // pthread_mutex_unlock(&controller->initialization_mutex);
+  // pthread_cond_destroy(&controller->initialization_condition);
+  // pthread_mutex_destroy(&controller->initialization_mutex);
 
   return controller;
 }
@@ -133,13 +133,7 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
 void transport_controller_stop(transport_controller_t *controller)
 {
   controller->active = false;
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
-  if (sqe == NULL)
-  {
-    return;
-  }
-  io_uring_prep_nop(sqe);
-  io_uring_submit(&controller->transport->ring);
+
   pthread_mutex_lock(&controller->shutdown_mutex);
   while (controller->initialized)
     pthread_cond_wait(&controller->shutdown_condition, &controller->shutdown_mutex);
@@ -155,17 +149,17 @@ void *transport_controller_loop(void *input)
   transport_controller_t *controller = (transport_controller_t *)input;
   struct transport_controller_ring *ring = (struct transport_controller_ring *)controller->message_ring;
   controller->active = true;
-  pthread_mutex_lock(&controller->initialization_mutex);
-  controller->initialized = true;
-  pthread_cond_signal(&controller->initialization_condition);
-  pthread_mutex_unlock(&controller->initialization_mutex);
+  // pthread_mutex_lock(&controller->initialization_mutex);
+  // controller->initialized = true;
+  // pthread_cond_signal(&controller->initialization_condition);
+  // pthread_mutex_unlock(&controller->initialization_mutex);
 
   while (controller->active)
   {
     transport_message_t *message;
     if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
     {
-      transport_controller_handle_message(controller, message);
+      handle_message(controller, message);
       int32_t result = io_uring_submit(&controller->transport->ring);
       if (result < 0)
       {
@@ -182,7 +176,6 @@ void *transport_controller_loop(void *input)
         continue;
       }
       handle_cqes(controller, result, cqes);
-      sleep(1);
     }
   }
 
