@@ -14,8 +14,7 @@
 transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                   transport_listener_t *listener,
                                                   transport_channel_configuration_t *configuration,
-                                                  Dart_Port accept_port,
-                                                  Dart_Port connect_port,
+                                                  int fd,
                                                   Dart_Port read_port,
                                                   Dart_Port write_port)
 {
@@ -24,7 +23,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   {
     return NULL;
   }
-  channel->fd = -1;
+  channel->fd = fd;
   channel->listener = listener;
   channel->transport = transport;
 
@@ -44,8 +43,6 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   channel->current_read_size = 0;
   channel->current_write_size = 0;
 
-  channel->accept_port = accept_port;
-  channel->connect_port = connect_port;
   channel->read_port = read_port;
   channel->write_port = write_port;
 
@@ -66,8 +63,7 @@ void transport_close_channel(transport_channel_t *channel)
   mempool_destroy(&channel->data_payload_pool);
   mempool_destroy(&channel->accept_payload_pool);
 
-  if (channel->fd != -1)
-    close(channel->fd);
+  close(channel->fd);
 
   smfree(&channel->transport->allocator, channel, sizeof(transport_channel_t));
 }
@@ -133,57 +129,10 @@ int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t pay
   return 0;
 }
 
-int32_t transport_channel_queue_accept(transport_channel_t *channel, int32_t server_socket_fd)
-{
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&channel->transport->ring);
-  if (sqe == NULL)
-  {
-    return -1;
-  }
-
-  transport_accept_payload_t *payload = mempool_alloc(&channel->accept_payload_pool);
-  if (!payload)
-  {
-    return -1;
-  }
-  memset(&payload->client_addres, 0, sizeof(payload->client_addres));
-  payload->client_addres_length = sizeof(payload->client_addres);
-  payload->fd = server_socket_fd;
-  payload->type = TRANSPORT_PAYLOAD_ACCEPT;
-
-  io_uring_prep_accept(sqe, server_socket_fd, (struct sockaddr *)&payload->client_addres, &payload->client_addres_length, 0);
-  io_uring_sqe_set_data(sqe, transport_listener_create_message(channel->listener, channel->accept_port, payload));
-}
-
-int32_t transport_channel_queue_connect(transport_channel_t *channel, int32_t socket_fd, const char *ip, int32_t port)
-{
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&channel->transport->ring);
-  if (sqe == NULL)
-  {
-    return -1;
-  }
-
-  transport_accept_payload_t *payload = mempool_alloc(&channel->accept_payload_pool);
-  if (!payload)
-  {
-    return -1;
-  }
-  memset(&payload->client_addres, 0, sizeof(payload->client_addres));
-  payload->client_addres.sin_addr.s_addr = inet_addr(ip);
-  payload->client_addres.sin_port = htons(port);
-  payload->client_addres.sin_family = AF_INET;
-  payload->client_addres_length = sizeof(payload->client_addres);
-  payload->fd = socket_fd;
-  payload->type = TRANSPORT_PAYLOAD_CONNECT;
-
-  io_uring_prep_connect(sqe, socket_fd, (struct sockaddr *)&payload->client_addres, payload->client_addres_length);
-  io_uring_sqe_set_data(sqe, transport_listener_create_message(channel->listener, channel->connect_port, payload));
-}
-
-void *transport_channel_prepare_read(transport_channel_t *channel, size_t size)
+void *transport_channel_prepare_read(transport_channel_t *channel)
 {
   struct ibuf *old_buffer = channel->current_read_buffer;
-  if (ibuf_unused(old_buffer) >= size)
+  if (ibuf_unused(old_buffer) >= channel->payload_buffer_size)
   {
     if (ibuf_used(old_buffer) == 0)
       ibuf_reset(old_buffer);
@@ -192,7 +141,7 @@ void *transport_channel_prepare_read(transport_channel_t *channel, size_t size)
 
   if (ibuf_used(old_buffer) == channel->current_read_size)
   {
-    ibuf_reserve(old_buffer, size);
+    ibuf_reserve(old_buffer, channel->payload_buffer_size);
     return old_buffer->wpos;
   }
 
@@ -202,7 +151,7 @@ void *transport_channel_prepare_read(transport_channel_t *channel, size_t size)
     return NULL;
   }
 
-  ibuf_reserve(new_buffer, size + channel->current_read_size);
+  ibuf_reserve(new_buffer, channel->payload_buffer_size + channel->current_read_size);
 
   old_buffer->wpos -= channel->current_read_size;
   if (channel->current_read_size != 0)
@@ -227,10 +176,10 @@ void *transport_channel_prepare_read(transport_channel_t *channel, size_t size)
   return new_buffer->wpos;
 }
 
-void *transport_channel_prepare_write(transport_channel_t *channel, size_t size)
+void *transport_channel_prepare_write(transport_channel_t *channel)
 {
   struct ibuf *old_buffer = channel->current_write_buffer;
-  if (ibuf_unused(old_buffer) >= size)
+  if (ibuf_unused(old_buffer) >= channel->payload_buffer_size)
   {
     if (ibuf_used(old_buffer) == 0)
       ibuf_reset(old_buffer);
@@ -239,7 +188,7 @@ void *transport_channel_prepare_write(transport_channel_t *channel, size_t size)
 
   if (ibuf_used(old_buffer) == channel->current_write_size)
   {
-    ibuf_reserve(old_buffer, size);
+    ibuf_reserve(old_buffer, channel->payload_buffer_size);
     return old_buffer->wpos;
   }
 
@@ -249,7 +198,7 @@ void *transport_channel_prepare_write(transport_channel_t *channel, size_t size)
     return NULL;
   }
 
-  ibuf_reserve(new_buffer, size + channel->current_write_size);
+  ibuf_reserve(new_buffer, channel->payload_buffer_size + channel->current_write_size);
 
   old_buffer->wpos -= channel->current_write_size;
   if (channel->current_write_size != 0)
@@ -288,11 +237,6 @@ void *transport_channel_extract_write_buffer(transport_channel_t *channel, trans
   return buffer;
 }
 
-transport_accept_payload_t *transport_channel_allocate_accept_payload(transport_channel_t *channel)
-{
-  return (transport_accept_payload_t *)mempool_alloc(&channel->accept_payload_pool);
-}
-
 transport_data_payload_t *transport_channel_allocate_data_payload(transport_channel_t *channel)
 {
   return (transport_data_payload_t *)mempool_alloc(&channel->data_payload_pool);
@@ -310,9 +254,4 @@ void transport_channel_free_data_payload(transport_channel_t *channel, transport
     channel->current_write_size -= payload->size;
   }
   mempool_free(&channel->data_payload_pool, payload);
-}
-
-void transport_channel_free_accept_payload(transport_channel_t *channel, transport_accept_payload_t *payload)
-{
-  mempool_free(&channel->accept_payload_pool, payload);
 }

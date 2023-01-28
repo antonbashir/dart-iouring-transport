@@ -38,14 +38,14 @@ class TransportConfiguration {
 class TransportChannelConfiguration {
   final int bufferInitialCapacity;
   final int bufferLimit;
-  final int messageSize;
+  final int payloadBufferSize;
   final Duration bufferAvailableAwaitDelayed;
 
   TransportChannelConfiguration({
     required this.bufferInitialCapacity,
     required this.bufferLimit,
     required this.bufferAvailableAwaitDelayed,
-    required this.messageSize,
+    required this.payloadBufferSize,
   });
 
   TransportChannelConfiguration copyWith({
@@ -58,41 +58,27 @@ class TransportChannelConfiguration {
         bufferInitialCapacity: bufferInitialCapacity ?? this.bufferInitialCapacity,
         bufferLimit: bufferLimit ?? this.bufferLimit,
         bufferAvailableAwaitDelayed: bufferAvailableAwaitDelayed ?? this.bufferAvailableAwaitDelayed,
-        messageSize: messageSize ?? this.messageSize,
+        payloadBufferSize: messageSize ?? this.payloadBufferSize,
       );
 }
 
-class TransportLoopConfiguration {
-  final int initialEmptyCycles;
-  final int maxEmptyCycles;
-  final int emptyCyclesMultiplier;
-  final Duration regularSleepDelay;
-  final Duration maxSleepDelay;
+class TransportListenerConfiguration {
   final int cqesSize;
 
-  TransportLoopConfiguration({
-    required this.initialEmptyCycles,
-    required this.maxEmptyCycles,
-    required this.emptyCyclesMultiplier,
-    required this.regularSleepDelay,
-    required this.maxSleepDelay,
+  TransportListenerConfiguration({
     required this.cqesSize,
   });
 
-  TransportLoopConfiguration copyWith({
-    int? initialEmptyCycles,
-    int? maxEmptyCycles,
-    int? emptyCyclesMultiplier,
-    Duration? regularSleepDelay,
-    Duration? maxSleepDelay,
+  TransportListenerConfiguration copyWith({
     int? cqesSize,
   }) =>
-      TransportLoopConfiguration(
-        initialEmptyCycles: initialEmptyCycles ?? this.initialEmptyCycles,
-        maxEmptyCycles: maxEmptyCycles ?? this.maxEmptyCycles,
-        emptyCyclesMultiplier: emptyCyclesMultiplier ?? this.emptyCyclesMultiplier,
-        regularSleepDelay: regularSleepDelay ?? this.regularSleepDelay,
-        maxSleepDelay: maxSleepDelay ?? this.maxSleepDelay,
+      TransportListenerConfiguration(
         cqesSize: cqesSize ?? this.cqesSize,
       );
+}
+
+class TransportConnectionConfiguration {
+  TransportConnectionConfiguration();
+
+  TransportConnectionConfiguration copyWith() => TransportConnectionConfiguration();
 }

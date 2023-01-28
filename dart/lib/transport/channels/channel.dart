@@ -1,105 +1,105 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/configuration.dart';
-import 'package:iouring_transport/transport/listener.dart';
 
 import '../bindings.dart';
 import '../payload.dart';
 
 class TransportChannel {
   final TransportBindings _bindings;
-  final Pointer<transport_channel_context_t> _context;
-  final TransportListener _listener;
+  final Pointer<transport_t> _transport;
+  final Pointer<transport_listener_t> _listener;
   final TransportChannelConfiguration _configuration;
-  final StreamController<TransportPayload> _output = StreamController();
-  final StreamController<TransportPayload> _input = StreamController();
-  final _decoder = Utf8Decoder();
-  final _encoder = Utf8Encoder();
-  late StreamSubscription<Pointer<io_uring_cqe>> _subscription;
-  bool _active = false;
-  void Function() onStop = () {};
+  final int _descriptor;
 
-  TransportChannel(this._bindings, this._context, this._listener, this._configuration);
+  void Function(TransportDataPayload payload)? onRead;
+  void Function(TransportDataPayload payload)? onWrite;
+  void Function()? onStop;
 
-  void start({void Function()? onStop}) {
-    _active = true;
-    _subscription = _listener.cqes.listen(_handleCqe);
-    if (onStop != null) this.onStop = onStop;
+  late final Pointer<transport_channel_t> _channel;
+  late final RawReceivePort _readPort = RawReceivePort(_handleRead);
+  late final RawReceivePort _writePort = RawReceivePort(_handleWrite);
+
+  TransportChannel(this._bindings, this._configuration, this._transport, this._listener, this._descriptor);
+
+  void start({
+    void Function(TransportDataPayload payload)? onRead,
+    void Function(TransportDataPayload payload)? onWrite,
+    void Function()? onStop,
+  }) {
+    onRead = onRead;
+    onWrite = onWrite;
+    onStop = onStop;
+    using((Arena arena) {
+      final configuration = arena<transport_channel_configuration_t>();
+      configuration.ref.buffer_initial_capacity = _configuration.bufferInitialCapacity;
+      configuration.ref.buffer_limit = _configuration.bufferLimit;
+      configuration.ref.payload_buffer_size = _configuration.payloadBufferSize;
+      _channel = _bindings.transport_initialize_channel(
+        _transport,
+        _listener,
+        configuration,
+        _descriptor,
+        _readPort.sendPort.nativePort,
+        _writePort.sendPort.nativePort,
+      );
+    });
   }
 
   void stop() {
-    _subscription.cancel();
-    _output.close();
-    _input.close();
-    _bindings.transport_close_channel(_context);
-    _active = false;
-    onStop();
+    _readPort.close();
+    _writePort.close();
+    _bindings.transport_close_channel(_channel);
+    onStop?.call();
   }
-
-  bool get active => _active;
-
-  Stream<Uint8List> get bytesOutput => _output.stream.map((event) => event.bytes);
-
-  Stream<String> get stringOutput => _output.stream.map((event) {
-        final String string = _decoder.convert(event.bytes);
-        event.finalize();
-        return string;
-      });
-
-  Stream<Uint8List> get bytesInput => _input.stream.map((event) => event.bytes);
-
-  Stream<String> get stringInput => _input.stream.map((event) {
-        final String string = _decoder.convert(event.bytes);
-        event.finalize();
-        return string;
-      });
 
   Future<void> queueRead({int offset = 0}) async {
-    while (_bindings.transport_prepare_read(_context, _configuration.messageSize) == nullptr) {
+    while (_bindings.transport_channel_prepare_read(_channel) == nullptr) {
       await Future.delayed(_configuration.bufferAvailableAwaitDelayed);
     }
-    _bindings.transport_queue_read(_context, _configuration.messageSize, offset);
+    _bindings.transport_channel_queue_read(_channel, offset);
   }
 
-  Future<void> queueWriteBytes(Uint8List bytes, {int offset = 0}) async {
-    Pointer<Uint8> buffer = _bindings.transport_prepare_write(_context, _configuration.messageSize).cast();
+  Future<void> queueWrite(Uint8List bytes, {int offset = 0}) async {
+    Pointer<Uint8> buffer = _bindings.transport_channel_prepare_write(_channel).cast();
     while (buffer == nullptr) {
       await Future.delayed(_configuration.bufferAvailableAwaitDelayed);
-      buffer = _bindings.transport_prepare_write(_context, _configuration.messageSize).cast();
+      buffer = _bindings.transport_channel_prepare_write(_channel).cast();
     }
     buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_queue_write(_context, bytes.length, _configuration.messageSize, offset);
+    _bindings.transport_channel_queue_write(_channel, bytes.length, offset);
   }
 
-  void queueWriteString(String string, {int offset = 0}) => queueWriteBytes(_encoder.convert(string), offset: offset);
+  int currentReadSize() => _channel.ref.current_read_size;
 
-  int currentReadSize() => _context.ref.current_read_size;
+  int currentWriteSize() => _channel.ref.current_write_size;
 
-  int currentWriteSize() => _context.ref.current_write_size;
-
-  void _handleCqe(Pointer<io_uring_cqe> cqe) {
-    Pointer<transport_data_message> userData = Pointer.fromAddress(cqe.ref.user_data);
-    if (userData == nullptr) return;
-    if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_READ && userData.ref.fd == _context.ref.fd) {
-      final readBuffer = _bindings.transport_extract_read_buffer(_context, userData);
-      final bytes = readBuffer.cast<Uint8>().asTypedList(cqe.ref.res);
-      final payload = TransportPayload(_bindings, _bindings.transport_create_payload(_context, readBuffer, userData), bytes);
-      _input.add(payload);
-      if (!_input.hasListener) payload.finalize();
-      _bindings.transport_free_message(_context.ref.owner, userData.cast(), userData.ref.type);
-      _bindings.transport_free_cqe(_context.ref.owner, cqe);
+  void _handleRead(int payloadPointer) {
+    Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
+    if (payload == nullptr) return;
+    if (onRead == null) {
+      _bindings.transport_channel_free_data_payload(_channel, payload);
+      return;
     }
-    if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_WRITE && userData.ref.fd == _context.ref.fd) {
-      final writeBuffer = _bindings.transport_extract_write_buffer(_context, userData);
-      final bytes = writeBuffer.cast<Uint8>().asTypedList(cqe.ref.res);
-      final payload = TransportPayload(_bindings, _bindings.transport_create_payload(_context, writeBuffer, userData), bytes);
-      _output.add(payload);
-      if (!_output.hasListener) payload.finalize();
-      _bindings.transport_free_message(_context.ref.owner, userData.cast(), userData.ref.type);
-      _bindings.transport_free_cqe(_context.ref.owner, cqe);
+    final readBuffer = _bindings.transport_channel_extract_read_buffer(_channel, payload);
+    final bytes = readBuffer.cast<Uint8>().asTypedList(payload.ref.size);
+    onRead!(TransportDataPayload(_bindings, _channel, payload, bytes));
+  }
+
+  void _handleWrite(int payloadPointer) {
+    Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
+    if (payload == nullptr) return;
+    if (onWrite == null) {
+      _bindings.transport_channel_free_data_payload(_channel, payload);
+      return;
     }
+    final writeBuffer = _bindings.transport_channel_extract_write_buffer(_channel, payload);
+    final bytes = writeBuffer.cast<Uint8>().asTypedList(payload.ref.size);
+    onWrite!(TransportDataPayload(_bindings, _channel, payload, bytes));
   }
 }

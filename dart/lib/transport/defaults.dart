@@ -3,7 +3,7 @@ import 'package:iouring_transport/transport/configuration.dart';
 class TransportDefaults {
   TransportDefaults._();
 
-  static TransportConfiguration configuration() => TransportConfiguration(
+  static TransportConfiguration transport() => TransportConfiguration(
         ringSize: 1024,
         slabSize: 16 * 1024 * 1024,
         memoryQuota: 1 * 1024 * 1024 * 1024,
@@ -16,15 +16,12 @@ class TransportDefaults {
         bufferInitialCapacity: 16320,
         bufferLimit: 18 * 16320,
         bufferAvailableAwaitDelayed: Duration.zero,
-        messageSize: 1024,
+        payloadBufferSize: 1024,
       );
 
-  static TransportLoopConfiguration loop() => TransportLoopConfiguration(
-        maxSleepDelay: Duration(seconds: 1),
-        regularSleepDelay: Duration.zero,
-        maxEmptyCycles: 10000000,
-        emptyCyclesMultiplier: 2,
-        initialEmptyCycles: 1000,
+  static TransportListenerConfiguration listener() => TransportListenerConfiguration(
         cqesSize: 1024,
       );
+
+  static TransportConnectionConfiguration connection() => TransportConnectionConfiguration();
 }

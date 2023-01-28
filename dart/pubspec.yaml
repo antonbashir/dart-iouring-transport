@@ -21,6 +21,7 @@ ffigen:
       - "../binding/binding_transport.h"
       - "../binding/binding_listener.h"
       - "../binding/binding_channel.h"
+      - "../binding/binding_connection.h"
       - "../binding/binding_file.h"
       - "../binding/binding_socket.h"
   globals:

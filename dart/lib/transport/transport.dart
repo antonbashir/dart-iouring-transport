@@ -8,19 +8,19 @@ import 'package:iouring_transport/transport/connection.dart';
 import 'bindings.dart';
 import 'channels/file.dart';
 import 'channels/channel.dart';
-import 'listener.dart';
 import 'lookup.dart';
+import 'payload.dart';
 
 class Transport {
   final TransportConfiguration configuration;
-  final TransportLoopConfiguration loopConfiguration;
+  final TransportListenerConfiguration listenerConfiguration;
 
   late TransportBindings _bindings;
   late TransportLibrary _library;
-  late TransportListener _listener;
-  late Pointer<transport_context_t> _context;
+  late Pointer<transport_listener_t> _listener;
+  late Pointer<transport_t> _transport;
 
-  Transport(this.configuration, this.loopConfiguration, {String? libraryPath}) {
+  Transport(this.configuration, this.listenerConfiguration, {String? libraryPath}) {
     _library = libraryPath != null
         ? File(libraryPath).existsSync()
             ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
@@ -38,36 +38,61 @@ class Transport {
       transportConfiguration.ref.slab_allocation_granularity = configuration.slabAllocationGranularity;
       transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
       transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
-      _context = _bindings.transport_initialize(transportConfiguration);
+      _transport = _bindings.transport_initialize(transportConfiguration);
+      final listenerConfiguration = arena<transport_listener_configuration_t>();
+      listenerConfiguration.ref.cqe_size = this.listenerConfiguration.cqesSize;
+      _listener = _bindings.transport_listener_start(_transport, listenerConfiguration);
     });
-    _listener = TransportListener(_bindings, _context, loopConfiguration)..start();
   }
 
   void close() {
-    _listener.stop();
-    _bindings.transport_close(_context);
+    _bindings.transport_listener_stop(_listener);
+    _bindings.transport_close(_transport);
   }
 
-  TransportConnection connection() => TransportConnection(_bindings, _context, _listener);
+  TransportConnection connection(TransportConnectionConfiguration connectionConfiguration, TransportChannelConfiguration channelConfiguration) => TransportConnection(
+        connectionConfiguration,
+        channelConfiguration,
+        _bindings,
+        _transport,
+        _listener,
+      );
 
-  TransportChannel channel(int descriptor, TransportChannelConfiguration configuration) {
-    final channel = using((Arena arena) {
-      final channelConfiguration = arena<transport_channel_configuration_t>();
-      channelConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
-      channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
-      return _bindings.transport_initialize_channel(_context, channelConfiguration, descriptor);
-    });
-    return TransportChannel(_bindings, channel, _listener, configuration)..start();
+  TransportChannel channel(
+    int descriptor,
+    TransportChannelConfiguration configuration, {
+    void Function(TransportDataPayload payload)? onRead,
+    void Function(TransportDataPayload payload)? onWrite,
+    void Function()? onStop,
+  }) {
+    return TransportChannel(
+      _bindings,
+      configuration,
+      _transport,
+      _listener,
+      descriptor,
+    )..start(
+        onRead: onRead,
+        onWrite: onWrite,
+        onStop: onStop,
+      );
   }
 
-  TransportFileChannel file(String path, TransportChannelConfiguration configuration) {
+  TransportFileChannel file(
+    String path,
+    TransportChannelConfiguration configuration, {
+    void Function(TransportDataPayload payload)? onRead,
+    void Function(TransportDataPayload payload)? onWrite,
+    void Function()? onStop,
+  }) {
     final descriptor = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    final channel = using((Arena arena) {
-      final channelConfiguration = arena<transport_channel_configuration_t>();
-      channelConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
-      channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
-      return _bindings.transport_initialize_channel(_context, channelConfiguration, descriptor);
-    });
-    return TransportFileChannel(TransportChannel(_bindings, channel, _listener, configuration))..start();
+    return TransportFileChannel(
+      _bindings,
+      _transport,
+      _listener,
+      configuration,
+      descriptor,
+      onStop: onStop,
+    )..start();
   }
 }

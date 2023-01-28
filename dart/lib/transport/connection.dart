@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ffi';
+import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 
@@ -10,65 +11,66 @@ import 'listener.dart';
 
 class TransportConnection {
   final TransportBindings _bindings;
-  final Pointer<transport_context_t> _context;
-  final TransportListener _listener;
-  final StreamController<TransportChannel> _serverChannels = StreamController();
-  final StreamController<TransportChannel> _clientChannels = StreamController();
+  final Pointer<transport_t> _transport;
+  final Pointer<transport_listener_t> _listener;
+  final TransportConnectionConfiguration _configuration;
+  final TransportChannelConfiguration _channelConfiguration;
+  final StreamController<TransportChannel> clientChannels = StreamController();
+  final StreamController<TransportChannel> serverChannels = StreamController();
 
-  TransportConnection(this._bindings, this._context, this._listener);
+  late final Pointer<transport_connection_t> _connection;
+  late final RawReceivePort _acceptPort = RawReceivePort(_handleAccept);
+  late final RawReceivePort _connectPort = RawReceivePort(_handleConnect);
 
-  Stream<TransportChannel> bind(String host, int port, TransportChannelConfiguration configuration) {
+  TransportConnection(
+    this._configuration,
+    this._channelConfiguration,
+    this._bindings,
+    this._transport,
+    this._listener,
+  );
+
+  void initialize() {
+    using((Arena arena) {
+      final configuration = arena<transport_connection_configuration>();
+      _connection = _bindings.transport_initialize_connection(
+        _transport,
+        _listener,
+        configuration,
+        _acceptPort.sendPort.nativePort,
+        _connectPort.sendPort.nativePort,
+      );
+    });
+  }
+
+  void close() {
+    _bindings.transport_close_connection(_connection);
+  }
+
+  Stream<TransportChannel> bind(String host, int port) {
     final socket = _bindings.transport_socket_create();
     _bindings.transport_socket_bind(socket, host.toNativeUtf8().cast(), port, 0);
-    _bindings.transport_queue_accept(_context, socket);
-    return _acceptClient(configuration);
+    _bindings.transport_connection_queue_accept(_connection, socket);
+    return clientChannels.stream;
   }
 
-  Stream<TransportChannel> connect(String host, int port, TransportChannelConfiguration configuration) {
+  Stream<TransportChannel> connect(String host, int port) {
     final socket = _bindings.transport_socket_create();
-    _bindings.transport_queue_connect(_context, socket, host.toNativeUtf8().cast(), port);
-    return _acceptServer(configuration);
+    _bindings.transport_connection_queue_connect(_connection, socket, host.toNativeUtf8().cast(), port);
+    return serverChannels.stream;
   }
 
-  Stream<TransportChannel> _acceptClient(TransportChannelConfiguration configuration) {
-    final subscription = _listener.cqes.listen((cqe) {
-      Pointer<transport_accept_message> userData = Pointer.fromAddress(cqe.ref.user_data);
-      if (userData == nullptr) return;
-      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_ACCEPT) {
-        final clientDescriptor = cqe.ref.res;
-        _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
-        _bindings.transport_free_cqe(_context, cqe);
-        final channel = using((Arena arena) {
-          final channelConfiguration = arena<transport_channel_configuration_t>();
-          channelConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
-          channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
-          return _bindings.transport_initialize_channel(_context, channelConfiguration, clientDescriptor);
-        });
-        _clientChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start(onStop: () => _clientChannels.close()));
-      }
-    });
-    _clientChannels.onCancel = subscription.cancel;
-    return _clientChannels.stream;
+  void _handleAccept(int payloadPointer) {
+    Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
+    if (payload == nullptr) return;
+    clientChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd));
+    _bindings.transport_connection_free_accept_payload(_connection, payload);
   }
 
-  Stream<TransportChannel> _acceptServer(TransportChannelConfiguration configuration) {
-    final subscription = _listener.cqes.listen((cqe) {
-      Pointer<transport_accept_message> userData = Pointer.fromAddress(cqe.ref.user_data);
-      if (userData == nullptr) return;
-      if (userData.ref.type == transport_message_type.TRANSPORT_MESSAGE_CONNECT) {
-        final serverDescriptor = userData.ref.fd;
-        _bindings.transport_free_message(_context, userData.cast(), userData.ref.type);
-        _bindings.transport_free_cqe(_context, cqe);
-        final channel = using((Arena arena) {
-          final channelConfiguration = arena<transport_channel_configuration_t>();
-          channelConfiguration.ref.buffer_initial_capacity = configuration.bufferInitialCapacity;
-          channelConfiguration.ref.buffer_limit = configuration.bufferLimit;
-          return _bindings.transport_initialize_channel(_context, channelConfiguration, serverDescriptor);
-        });
-        _serverChannels.add(TransportChannel(_bindings, channel, _listener, configuration)..start(onStop: () => _serverChannels.close()));
-      }
-    });
-    _serverChannels.onCancel = subscription.cancel;
-    return _serverChannels.stream;
+  void _handleConnect(int payloadPointer) {
+    Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
+    if (payload == nullptr) return;
+    serverChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd));
+    _bindings.transport_connection_free_accept_payload(_connection, payload);
   }
 }

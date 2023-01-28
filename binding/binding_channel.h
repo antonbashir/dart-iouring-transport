@@ -19,6 +19,7 @@ extern "C"
   {
     size_t buffer_initial_capacity;
     size_t buffer_limit;
+    int32_t payload_buffer_size;
   } transport_channel_configuration_t;
 
   typedef struct transport_channel
@@ -41,8 +42,6 @@ extern "C"
     size_t buffer_initial_capacity;
     size_t buffer_limit;
 
-    Dart_Port accept_port;
-    Dart_Port connect_port;
     Dart_Port read_port;
     Dart_Port write_port;
 
@@ -54,26 +53,21 @@ extern "C"
   transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                     transport_listener_t *listener,
                                                     transport_channel_configuration_t *configuration,
-                                                    Dart_Port accept_port,
-                                                    Dart_Port connect_port,
+                                                    int fd,
                                                     Dart_Port read_port,
                                                     Dart_Port write_port);
   void transport_close_channel(transport_channel_t *channel);
 
   int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offset);
   int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t payload_size, uint64_t offset);
-  int32_t transport_channel_queue_accept(transport_channel_t *channel, int32_t server_socket_fd);
-  int32_t transport_channel_queue_connect(transport_channel_t *channel, int32_t socket_fd, const char *ip, int32_t port);
 
   void *transport_channel_extract_write_buffer(transport_channel_t *channel, transport_data_payload_t *message);
   void *transport_channel_extract_read_buffer(transport_channel_t *channel, transport_data_payload_t *message);
 
-  void *transport_channel_prepare_read(transport_channel_t *channel, size_t size);
-  void *transport_channel_prepare_write(transport_channel_t *channel, size_t size);
+  void *transport_channel_prepare_read(transport_channel_t *channel);
+  void *transport_channel_prepare_write(transport_channel_t *channel);
 
-  transport_accept_payload_t *transport_channel_allocate_accept_payload(transport_channel_t *channel);
   transport_data_payload_t *transport_channel_allocate_data_payload(transport_channel_t *channel);
-  void transport_channel_free_accept_payload(transport_channel_t *channel, transport_accept_payload_t *payload);
   void transport_channel_free_data_payload(transport_channel_t *channel, transport_data_payload_t *payload);
 #if defined(__cplusplus)
 }

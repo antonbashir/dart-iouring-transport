@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:iouring_transport/transport/defaults.dart';
@@ -6,7 +7,7 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-final Transport _transport = Transport(TransportDefaults.configuration(), TransportDefaults.loop());
+final Transport _transport = Transport(TransportDefaults.transport(), TransportDefaults.listener());
 final _data = "data";
 final _file = "file.txt";
 
@@ -48,32 +49,36 @@ Future<void> testFileWrite() async {
 
 Future<void> testClientServer() async {
   final received = Completer();
-  final server = _transport.connection().bind("127.0.0.1", 1234, TransportDefaults.channel()).listen((client) async {
-    client.queueRead();
+  final server = _transport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("127.0.0.1", 1234).listen((client) async {
     final completer = Completer<String>();
-    client.stringInput.listen((event) {
-      if (event.isEmpty) {
+    client.start(onRead: (payload) {
+      if (payload.bytes.isEmpty) {
         client.queueRead();
+        payload.finalize();
         return;
       }
-      completer.complete(event);
+      completer.complete(Utf8Decoder().convert(payload.bytes));
+      payload.finalize();
     });
+    client.queueRead();
     expect(await completer.future, _data);
-    client.queueWriteString(_data);
+    client.queueWrite(Utf8Encoder().convert(_data));
     await received.future;
     client.stop();
   }).asFuture();
-  final client = _transport.connection().connect("127.0.0.1", 1234, TransportDefaults.channel()).listen((server) async {
-    server.queueWriteString(_data);
-    server.queueRead();
+  final client = _transport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 1234).listen((server) async {
     final completer = Completer<String>();
-    server.stringInput.listen((event) {
-      if (event.isEmpty) {
+    server.start(onRead: (payload) {
+      if (payload.bytes.isEmpty) {
         server.queueRead();
+        payload.finalize();
         return;
       }
-      completer.complete(event);
+      completer.complete(Utf8Decoder().convert(payload.bytes));
+      payload.finalize();
     });
+    server.queueWrite(Utf8Encoder().convert(_data));
+    server.queueRead();
     expect(await completer.future, _data);
     received.complete();
     server.stop();
