@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:typed_data';
@@ -25,16 +24,25 @@ class TransportChannel {
   late final RawReceivePort _readPort = RawReceivePort(_handleRead);
   late final RawReceivePort _writePort = RawReceivePort(_handleWrite);
 
-  TransportChannel(this._bindings, this._configuration, this._transport, this._listener, this._descriptor);
+  TransportChannel(
+    this._bindings,
+    this._configuration,
+    this._transport,
+    this._listener,
+    this._descriptor, {
+    this.onRead,
+    this.onWrite,
+    this.onStop,
+  });
 
   void start({
     void Function(TransportDataPayload payload)? onRead,
     void Function(TransportDataPayload payload)? onWrite,
     void Function()? onStop,
   }) {
-    this.onRead = onRead;
-    this.onWrite = onWrite;
-    this.onStop = onStop;
+    if (onRead != null) this.onRead = onRead;
+    if (onWrite != null) this.onWrite = onWrite;
+    if (onStop != null) this.onStop = onStop;
     using((Arena arena) {
       final configuration = arena<transport_channel_configuration_t>();
       configuration.ref.buffer_initial_capacity = _configuration.bufferInitialCapacity;

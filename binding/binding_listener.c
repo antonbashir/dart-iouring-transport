@@ -19,11 +19,12 @@ static inline void handle_cqes(transport_listener_t *listener, int count, struct
   for (size_t cqe_index = 0; cqe_index < count; cqe_index++)
   {
     struct io_uring_cqe *cqe = cqes[cqe_index];
+
     transport_message_t *message = (transport_message_t *)(cqe->user_data);
     if (!message)
     {
       io_uring_cqe_seen(&listener->transport->ring, cqe);
-      continue;
+      break;
     }
 
     if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
@@ -65,6 +66,13 @@ transport_listener_t *transport_listener_start(transport_t *transport, transport
 void transport_listener_stop(transport_listener_t *listener)
 {
   listener->active = false;
+  struct io_uring_sqe *sqe = io_uring_get_sqe(&listener->transport->ring);
+  if (sqe == NULL)
+  {
+    return;
+  }
+  io_uring_prep_nop(sqe);
+  io_uring_submit(&listener->transport->ring);
   pthread_mutex_lock(&listener->shutdown_mutex);
   while (listener->initialized)
     pthread_cond_wait(&listener->shutdown_condition, &listener->shutdown_mutex);

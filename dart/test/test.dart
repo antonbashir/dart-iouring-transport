@@ -84,5 +84,4 @@ Future<void> testClientServer() async {
     server.stop();
   }).asFuture();
   await Future.wait([client, server]);
-  print("end");
 }

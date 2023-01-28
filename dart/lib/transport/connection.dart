@@ -62,17 +62,17 @@ class TransportConnection {
     return serverChannels.stream;
   }
 
-  void _handleAccept(int payloadPointer) {
+  void _handleAccept(dynamic payloadPointer) {
     Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
-    clientChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd));
+    clientChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd, onStop: () => clientChannels.close()));
     _bindings.transport_connection_free_accept_payload(_connection, payload);
   }
 
-  void _handleConnect(int payloadPointer) {
+  void _handleConnect(dynamic payloadPointer) {
     Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
-    serverChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd));
+    serverChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd, onStop: () => serverChannels.close()));
     _bindings.transport_connection_free_accept_payload(_connection, payload);
   }
 }
