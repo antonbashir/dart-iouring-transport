@@ -56,7 +56,7 @@ class Transport {
         _bindings,
         _transport,
         _listener,
-      );
+      )..initialize();
 
   TransportChannel channel(
     int descriptor,

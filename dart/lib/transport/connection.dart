@@ -7,7 +7,6 @@ import 'package:ffi/ffi.dart';
 import 'bindings.dart';
 import 'channels/channel.dart';
 import 'configuration.dart';
-import 'listener.dart';
 
 class TransportConnection {
   final TransportBindings _bindings;
@@ -45,6 +44,8 @@ class TransportConnection {
   }
 
   void close() {
+    _acceptPort.close();
+    _connectPort.close();
     _bindings.transport_close_connection(_connection);
   }
 

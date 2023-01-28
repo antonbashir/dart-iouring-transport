@@ -15,14 +15,14 @@ void main() {
   setUpAll(() => _transport.initialize());
   tearDownAll(() => _transport.close());
 
-  group("[files]", () {
-    test("read", testFileRead);
-    //test("write", testFileWrite);
-  });
-
-  // group("[client-server]", () {
-  //   test("ping-pong", testClientServer);
+  // group("[files]", () {
+  //   test("read", testFileRead);
+  //   test("write", testFileWrite);
   // });
+
+  group("[client-server]", () {
+    test("ping-pong", testClientServer);
+  });
 }
 
 Future<void> testFileRead() async {
