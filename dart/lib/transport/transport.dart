@@ -29,7 +29,7 @@ class Transport {
     _bindings = TransportBindings(_library.library);
   }
 
-  void initialize() {
+  Future<void> initialize() async {
     using((Arena arena) {
       final transportConfiguration = arena<transport_configuration_t>();
       transportConfiguration.ref.ring_size = configuration.ringSize;
@@ -43,6 +43,10 @@ class Transport {
       listenerConfiguration.ref.cqe_size = this.listenerConfiguration.cqesSize;
       _listener = _bindings.transport_listener_start(_transport, listenerConfiguration);
     });
+    while (true) {
+      _bindings.transport_listener_poll(_listener, false);
+      await Future.delayed(Duration.zero);
+    }
   }
 
   void close() {

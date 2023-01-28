@@ -71,6 +71,7 @@ class TransportChannel {
       await Future.delayed(_configuration.bufferAvailableAwaitDelayed);
     }
     _bindings.transport_channel_queue_read(_channel, offset);
+    _bindings.transport_listener_poll(_listener, false);
   }
 
   Future<void> queueWrite(Uint8List bytes, {int offset = 0}) async {
@@ -81,6 +82,7 @@ class TransportChannel {
     }
     buffer.asTypedList(bytes.length).setAll(0, bytes);
     _bindings.transport_channel_queue_write(_channel, bytes.length, offset);
+    _bindings.transport_listener_poll(_listener, false);
   }
 
   int currentReadSize() => _channel.ref.current_read_size;

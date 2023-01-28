@@ -20,7 +20,7 @@ class TransportDefaults {
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
-        cqesSize: 1024,
+        cqesSize: 512,
       );
 
   static TransportConnectionConfiguration connection() => TransportConnectionConfiguration();

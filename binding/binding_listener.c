@@ -52,13 +52,13 @@ transport_listener_t *transport_listener_start(transport_t *transport, transport
   listener->transport = transport;
   listener->cqe_size = configuration->cqe_size;
 
-  pthread_create(&listener->thread_id, NULL, transport_listen, listener);
-  // pthread_mutex_lock(&listener->initialization_mutex);
-  // while (!listener->initialized)
-  //   pthread_cond_wait(&listener->initialization_condition, &listener->initialization_mutex);
-  // pthread_mutex_unlock(&listener->initialization_mutex);
-  // pthread_cond_destroy(&listener->initialization_condition);
-  // pthread_mutex_destroy(&listener->initialization_mutex);
+  // pthread_create(&listener->thread_id, NULL, transport_listen, listener);
+  //  pthread_mutex_lock(&listener->initialization_mutex);
+  //  while (!listener->initialized)
+  //    pthread_cond_wait(&listener->initialization_condition, &listener->initialization_mutex);
+  //  pthread_mutex_unlock(&listener->initialization_mutex);
+  //  pthread_cond_destroy(&listener->initialization_condition);
+  //  pthread_mutex_destroy(&listener->initialization_mutex);
 
   return listener;
 }
@@ -66,27 +66,35 @@ transport_listener_t *transport_listener_start(transport_t *transport, transport
 void transport_listener_stop(transport_listener_t *listener)
 {
   listener->active = false;
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&listener->transport->ring);
-  if (sqe == NULL)
-  {
-    return;
-  }
-  io_uring_prep_nop(sqe);
-  io_uring_submit(&listener->transport->ring);
-  pthread_mutex_lock(&listener->shutdown_mutex);
-  while (listener->initialized)
-    pthread_cond_wait(&listener->shutdown_condition, &listener->shutdown_mutex);
-  pthread_mutex_unlock(&listener->shutdown_mutex);
-  pthread_cond_destroy(&listener->shutdown_condition);
-  pthread_mutex_destroy(&listener->shutdown_mutex);
+  // struct io_uring_sqe *sqe = io_uring_get_sqe(&listener->transport->ring);
+  // if (sqe == NULL)
+  // {
+  //   return;
+  // }
+  // io_uring_prep_nop(sqe);
+  // io_uring_submit(&listener->transport->ring);
+  // pthread_mutex_lock(&listener->shutdown_mutex);
+  // while (listener->initialized)
+  //   pthread_cond_wait(&listener->shutdown_condition, &listener->shutdown_mutex);
+  // pthread_mutex_unlock(&listener->shutdown_mutex);
+  // pthread_cond_destroy(&listener->shutdown_condition);
+  // pthread_mutex_destroy(&listener->shutdown_mutex);
 
   free(listener);
 }
 
 void transport_listener_poll(transport_listener_t *listener, bool wait)
 {
+  int32_t result = io_uring_submit(&listener->transport->ring);
+  if (result < 0)
+  {
+    if (result != -EBUSY)
+    {
+      return;
+    }
+  }
   struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * listener->cqe_size);
-  int result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
+  result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
   if (result == 0)
   {
     if (!wait)
@@ -109,7 +117,7 @@ void *transport_listen(void *input)
 {
   transport_listener_t *listener = (transport_listener_t *)input;
   listener->active = true;
-//  pthread_mutex_lock(&listener->initialization_mutex);
+  //  pthread_mutex_lock(&listener->initialization_mutex);
   listener->initialized = true;
   // pthread_cond_signal(&listener->initialization_condition);
   // pthread_mutex_unlock(&listener->initialization_mutex);

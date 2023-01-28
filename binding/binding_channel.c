@@ -95,7 +95,7 @@ int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offs
 
   io_uring_prep_read(sqe, channel->fd, channel->current_read_buffer->wpos, channel->payload_buffer_size, offset);
   io_uring_sqe_set_data(sqe, transport_listener_create_message(channel->listener, channel->read_port, payload, TRANSPORT_PAYLOAD_READ));
-  io_uring_submit(&channel->transport->ring);
+  //io_uring_submit(&channel->transport->ring);
 
   channel->current_read_buffer->wpos += channel->payload_buffer_size;
   return 0;
@@ -126,7 +126,7 @@ int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t pay
 
   io_uring_prep_write(sqe, channel->fd, channel->current_write_buffer->wpos, payload_size, offset);
   io_uring_sqe_set_data(sqe, transport_listener_create_message(channel->listener, channel->write_port, payload, TRANSPORT_PAYLOAD_WRITE));
-  io_uring_submit(&channel->transport->ring);
+  //io_uring_submit(&channel->transport->ring);
   channel->current_write_buffer->wpos += channel->payload_buffer_size;
   return 0;
 }
