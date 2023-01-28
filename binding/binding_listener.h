@@ -4,8 +4,6 @@
 #include <netinet/in.h>
 #include <stdint.h>
 #include <liburing.h>
-#include "small/include/small/mempool.h"
-#include "small/include/small/small.h"
 #include <pthread.h>
 #include "dart/dart_api_dl.h"
 #include "binding_transport.h"
@@ -43,9 +41,6 @@ extern "C"
   {
     transport_t *transport;
     size_t cqe_size;
-
-    struct mempool cqe_pool;
-    struct mempool message_pool;
 
     bool initialized;
     volatile bool active;

@@ -38,6 +38,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   ibuf_create(&channel->write_buffers[1], &transport->cache, configuration->buffer_initial_capacity);
   channel->current_write_buffer = &channel->write_buffers[0];
 
+  channel->payload_buffer_size = configuration->payload_buffer_size;
   channel->buffer_initial_capacity = configuration->buffer_initial_capacity;
   channel->buffer_limit = configuration->buffer_limit;
   channel->current_read_size = 0;

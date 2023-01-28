@@ -14,6 +14,7 @@ extern "C"
 
   typedef struct transport_connection_configuration
   {
+    bool verbose;
   } transport_connection_configuration_t;
 
   typedef struct transport_connection

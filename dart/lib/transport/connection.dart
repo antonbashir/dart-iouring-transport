@@ -32,7 +32,8 @@ class TransportConnection {
 
   void initialize() {
     using((Arena arena) {
-      final configuration = arena<transport_connection_configuration>();
+      final configuration = arena<transport_connection_configuration_t>();
+      configuration.ref.verbose = false;
       _connection = _bindings.transport_initialize_connection(
         _transport,
         _listener,

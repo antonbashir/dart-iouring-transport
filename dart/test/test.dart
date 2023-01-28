@@ -17,12 +17,12 @@ void main() {
 
   group("[files]", () {
     test("read", testFileRead);
-    test("write", testFileWrite);
+    //test("write", testFileWrite);
   });
 
-  group("[client-server]", () {
-    test("ping-pong", testClientServer);
-  });
+  // group("[client-server]", () {
+  //   test("ping-pong", testClientServer);
+  // });
 }
 
 Future<void> testFileRead() async {

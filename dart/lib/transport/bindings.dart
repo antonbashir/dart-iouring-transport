@@ -21551,7 +21551,10 @@ typedef transport_channel_t = transport_channel;
 typedef transport_channel_configuration_t = transport_channel_configuration;
 typedef transport_data_payload_t = transport_data_payload;
 
-class transport_connection_configuration extends ffi.Opaque {}
+class transport_connection_configuration extends ffi.Struct {
+  @ffi.Bool()
+  external bool verbose;
+}
 
 class transport_connection extends ffi.Struct {
   external ffi.Pointer<transport_t> transport;

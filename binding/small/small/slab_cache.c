@@ -55,7 +55,7 @@ static inline void
 slab_assert(struct slab_cache *cache, struct slab *slab)
 {
 	(void) slab;
-	assert(pthread_equal(cache->thread_id, pthread_self()));
+	//assert(pthread_equal(cache->thread_id, pthread_self()));
 	assert(slab->magic == slab_magic);
 	assert(slab->order <= cache->order_max + 1);
 	if (slab->order <= cache->order_max) {

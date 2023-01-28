@@ -28,11 +28,11 @@ static inline void handle_cqes(transport_listener_t *listener, int count, struct
     }
 
     dart_post_pointer(message->payload, message->port);
-    mempool_free(&listener->message_pool, message);
+    free(message);
     io_uring_cqe_seen(&listener->transport->ring, cqe);
   }
 
-  smfree(&listener->transport->allocator, cqes, sizeof(struct io_uring_cqe *) * listener->cqe_size);
+  free(cqes);
 }
 
 transport_listener_t *transport_listener_start(transport_t *transport, transport_listener_configuration_t *configuration)
@@ -41,8 +41,6 @@ transport_listener_t *transport_listener_start(transport_t *transport, transport
 
   listener->transport = transport;
   listener->cqe_size = configuration->cqe_size;
-  mempool_create(&listener->cqe_pool, &transport->cache, sizeof(struct io_uring_cqe));
-  mempool_create(&listener->message_pool, &transport->cache, sizeof(transport_message_t));
 
   pthread_create(&listener->thread_id, NULL, transport_listen, listener);
   pthread_mutex_lock(&listener->initialization_mutex);
@@ -65,17 +63,18 @@ void transport_listener_stop(transport_listener_t *listener)
   pthread_cond_destroy(&listener->shutdown_condition);
   pthread_mutex_destroy(&listener->shutdown_mutex);
 
-  mempool_destroy(&listener->cqe_pool);
-  mempool_destroy(&listener->message_pool);
-
   free(listener);
 }
 
 void *transport_listen(void *input)
 {
   transport_listener_t *listener = (transport_listener_t *)input;
+  pthread_mutex_lock(&listener->initialization_mutex);
   listener->initialized = true;
   listener->active = true;
+  pthread_cond_broadcast(&listener->initialization_condition);
+  pthread_mutex_unlock(&listener->initialization_mutex);
+
   while (listener->active)
   {
     int32_t result = io_uring_submit(&listener->transport->ring);
@@ -86,14 +85,14 @@ void *transport_listen(void *input)
         continue;
       }
     }
-    struct io_uring_cqe **cqes = smalloc(&listener->transport->allocator, sizeof(struct io_uring_cqe *) * listener->cqe_size);
+    struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * listener->cqe_size);
     result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
     if (result == 0)
     {
       result = io_uring_wait_cqe(&listener->transport->ring, cqes);
       if (result <= 0)
       {
-        smfree(&listener->transport->allocator, cqes, sizeof(struct io_uring_cqe *) * listener->cqe_size);
+        free(cqes);
         continue;
       }
     }
@@ -113,7 +112,7 @@ void *transport_listen(void *input)
 
 transport_message_t *transport_listener_create_message(transport_listener_t *listener, Dart_Port port, void *payload)
 {
-  transport_message_t *message = mempool_alloc(&listener->message_pool);
+  transport_message_t *message = malloc(sizeof(transport_message_t));
   message->port = port;
   message->payload = payload;
   return message;
