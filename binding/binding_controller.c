@@ -23,7 +23,7 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
   Dart_PostCObject(port, &dart_object);
 };
 
-static void handle_cqes(transport_controller_t *controller, int count, struct io_uring_cqe **cqes)
+static inline void handle_cqes(transport_controller_t *controller, int count, struct io_uring_cqe **cqes)
 {
   for (size_t cqe_index = 0; cqe_index < count; cqe_index++)
   {
@@ -53,8 +53,6 @@ static void handle_cqes(transport_controller_t *controller, int count, struct io
     free(message);
     io_uring_cqe_seen(&controller->transport->ring, cqe);
   }
-
-  free(cqes);
 }
 
 static inline void handle_message(transport_controller_t *controller, transport_message_t *message)
@@ -70,24 +68,28 @@ static inline void handle_message(transport_controller_t *controller, transport_
     transport_accept_payload_t *accept_payload = (transport_accept_payload_t *)message->payload;
     io_uring_prep_accept(sqe, accept_payload->fd, (struct sockaddr *)&accept_payload->client_addres, &accept_payload->client_addres_length, 0);
     io_uring_sqe_set_data(sqe, message);
+    return;
   }
   if (message->payload_type == TRANSPORT_PAYLOAD_CONNECT)
   {
     transport_accept_payload_t *connect_payload = (transport_accept_payload_t *)message->payload;
     io_uring_prep_connect(sqe, connect_payload->fd, (struct sockaddr *)&connect_payload->client_addres, connect_payload->client_addres_length);
     io_uring_sqe_set_data(sqe, message);
+    return;
   }
   if (message->payload_type == TRANSPORT_PAYLOAD_READ)
   {
     transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
     io_uring_prep_read(sqe, read_payload->fd, read_payload->position, read_payload->size, read_payload->offset);
     io_uring_sqe_set_data(sqe, message);
+    return;
   }
   if (message->payload_type == TRANSPORT_PAYLOAD_WRITE)
   {
     transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
     io_uring_prep_write(sqe, write_payload->fd, write_payload->position, write_payload->size, write_payload->offset);
     io_uring_sqe_set_data(sqe, message);
+    return;
   }
 }
 
@@ -114,7 +116,7 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
     free(controller);
     return NULL;
   }
-  ck_ring_init(&ring->transport_message_ring, configuration->cqe_size);
+  ck_ring_init(&ring->transport_message_ring, configuration->cqe_size * 2);
   ring_retry_max_count = 3;
 
   controller->message_ring = ring;
@@ -176,6 +178,7 @@ void *transport_controller_loop(void *input)
         continue;
       }
       handle_cqes(controller, result, cqes);
+      free(cqes);
     }
   }
 
