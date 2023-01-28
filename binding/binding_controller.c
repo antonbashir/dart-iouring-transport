@@ -23,7 +23,7 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
   Dart_PostCObject(port, &dart_object);
 };
 
-static inline void handle_cqes(transport_controller_t *controller, int count, struct io_uring_cqe **cqes)
+static void handle_cqes(transport_controller_t *controller, int count, struct io_uring_cqe **cqes)
 {
   for (size_t cqe_index = 0; cqe_index < count; cqe_index++)
   {
@@ -80,13 +80,13 @@ static inline void handle_message(transport_controller_t *controller, transport_
   if (message->payload_type == TRANSPORT_PAYLOAD_READ)
   {
     transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_read(sqe, read_payload->fd, read_payload->position, read_payload->buffer_size, read_payload->offset);
+    io_uring_prep_read(sqe, read_payload->fd, read_payload->position, read_payload->size, read_payload->offset);
     io_uring_sqe_set_data(sqe, message);
   }
   if (message->payload_type == TRANSPORT_PAYLOAD_WRITE)
   {
     transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_write(sqe, write_payload->fd, write_payload->position, write_payload->buffer_size, write_payload->offset);
+    io_uring_prep_write(sqe, write_payload->fd, write_payload->position, write_payload->size, write_payload->offset);
     io_uring_sqe_set_data(sqe, message);
   }
 }
