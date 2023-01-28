@@ -53,12 +53,12 @@ transport_listener_t *transport_listener_start(transport_t *transport, transport
   listener->cqe_size = configuration->cqe_size;
 
   pthread_create(&listener->thread_id, NULL, transport_listen, listener);
-  pthread_mutex_lock(&listener->initialization_mutex);
-  while (!listener->initialized)
-    pthread_cond_wait(&listener->initialization_condition, &listener->initialization_mutex);
-  pthread_mutex_unlock(&listener->initialization_mutex);
-  pthread_cond_destroy(&listener->initialization_condition);
-  pthread_mutex_destroy(&listener->initialization_mutex);
+  // pthread_mutex_lock(&listener->initialization_mutex);
+  // while (!listener->initialized)
+  //   pthread_cond_wait(&listener->initialization_condition, &listener->initialization_mutex);
+  // pthread_mutex_unlock(&listener->initialization_mutex);
+  // pthread_cond_destroy(&listener->initialization_condition);
+  // pthread_mutex_destroy(&listener->initialization_mutex);
 
   return listener;
 }
@@ -117,10 +117,10 @@ void *transport_listen(void *input)
 {
   transport_listener_t *listener = (transport_listener_t *)input;
   listener->active = true;
-  pthread_mutex_lock(&listener->initialization_mutex);
+//  pthread_mutex_lock(&listener->initialization_mutex);
   listener->initialized = true;
-  pthread_cond_broadcast(&listener->initialization_condition);
-  pthread_mutex_unlock(&listener->initialization_mutex);
+  // pthread_cond_signal(&listener->initialization_condition);
+  // pthread_mutex_unlock(&listener->initialization_mutex);
 
   while (listener->active)
   {
@@ -131,7 +131,7 @@ void *transport_listen(void *input)
   {
     pthread_mutex_lock(&listener->shutdown_mutex);
     listener->initialized = false;
-    pthread_cond_broadcast(&listener->shutdown_condition);
+    pthread_cond_signal(&listener->shutdown_condition);
     pthread_mutex_unlock(&listener->shutdown_mutex);
   }
 

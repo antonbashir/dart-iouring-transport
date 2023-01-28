@@ -42,7 +42,7 @@ extern "C"
     transport_t *transport;
     size_t cqe_size;
 
-    volatile bool initialized;
+    bool initialized;
     volatile bool active;
 
     pthread_t thread_id;

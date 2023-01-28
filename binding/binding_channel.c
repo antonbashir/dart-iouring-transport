@@ -248,14 +248,14 @@ transport_data_payload_t *transport_channel_allocate_data_payload(transport_chan
 
 void transport_channel_free_data_payload(transport_channel_t *channel, transport_data_payload_t *payload)
 {
-  payload->buffer->rpos += payload->size;
+  payload->buffer->rpos += channel->payload_buffer_size;
   if (payload->type == TRANSPORT_PAYLOAD_READ)
   {
-    channel->current_read_size -= payload->size;
+    channel->current_read_size -= channel->payload_buffer_size;
   }
   if (payload->type == TRANSPORT_PAYLOAD_WRITE)
   {
-    channel->current_write_size -= payload->size;
+    channel->current_write_size -= channel->payload_buffer_size;
   }
   mempool_free(&channel->data_payload_pool, payload);
 }
