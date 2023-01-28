@@ -1,4 +1,5 @@
 #include "binding_listener.h"
+#include <stdio.h>
 
 void *transport_listen(void *input);
 
@@ -7,7 +8,10 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
   Dart_CObject dart_object;
   dart_object.type = Dart_CObject_kInt64;
   dart_object.value.as_int64 = (int64_t)pointer;
-  Dart_PostCObject(port, &dart_object);
+  if (!Dart_PostCObject(port, &dart_object))
+  {
+    printf("failed to post dart message\n");
+  }
 };
 
 static inline void handle_cqes(transport_listener_t *listener, int count, struct io_uring_cqe **cqes)
@@ -15,16 +19,17 @@ static inline void handle_cqes(transport_listener_t *listener, int count, struct
   for (size_t cqe_index = 0; cqe_index < count; cqe_index++)
   {
     struct io_uring_cqe *cqe = cqes[cqe_index];
-    transport_message_t *message = (transport_message_t *)cqe->user_data;
-
+    transport_message_t *message = (transport_message_t *)(cqe->user_data);
+    if (!message)
+      continue;
     if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
     {
-      ((transport_accept_payload_t *)message->payload)->fd = cqe->res;
+      ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
     }
 
     if (message->payload_type == TRANSPORT_PAYLOAD_READ)
     {
-      ((transport_data_payload_t *)message->payload)->size = cqe->res;
+      ((transport_data_payload_t *)(message->payload))->size = cqe->res;
     }
 
     dart_post_pointer(message->payload, message->port);
@@ -110,10 +115,11 @@ void *transport_listen(void *input)
   return NULL;
 }
 
-transport_message_t *transport_listener_create_message(transport_listener_t *listener, Dart_Port port, void *payload)
+transport_message_t *transport_listener_create_message(transport_listener_t *listener, Dart_Port port, void *payload, transport_payload_type_t type)
 {
   transport_message_t *message = malloc(sizeof(transport_message_t));
   message->port = port;
   message->payload = payload;
+  message->payload_type = type;
   return message;
 }

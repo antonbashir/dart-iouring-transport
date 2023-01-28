@@ -66,7 +66,7 @@ extern "C"
 
   transport_listener_t *transport_listener_start(transport_t *transport, transport_listener_configuration_t *configuration);
   void transport_listener_stop(transport_listener_t *listener);
-  transport_message_t *transport_listener_create_message(transport_listener_t *listener, Dart_Port port, void *payload);
+  transport_message_t *transport_listener_create_message(transport_listener_t *listener, Dart_Port port, void *payload, transport_payload_type_t type);
 #if defined(__cplusplus)
 }
 #endif

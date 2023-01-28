@@ -79,7 +79,7 @@ class TransportChannel {
 
   int currentWriteSize() => _channel.ref.current_write_size;
 
-  void _handleRead(int payloadPointer) {
+  void _handleRead(dynamic payloadPointer) {
     Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
     if (onRead == null) {
@@ -91,7 +91,7 @@ class TransportChannel {
     onRead!(TransportDataPayload(_bindings, _channel, payload, bytes));
   }
 
-  void _handleWrite(int payloadPointer) {
+  void _handleWrite(dynamic payloadPointer) {
     Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
     if (onWrite == null) {
