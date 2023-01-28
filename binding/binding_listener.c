@@ -8,10 +8,7 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
   Dart_CObject dart_object;
   dart_object.type = Dart_CObject_kInt64;
   dart_object.value.as_int64 = (int64_t)pointer;
-  if (!Dart_PostCObject(port, &dart_object))
-  {
-    printf("failed to post dart message\n");
-  }
+  Dart_PostCObject(port, &dart_object);
 };
 
 static inline void handle_cqes(transport_listener_t *listener, int count, struct io_uring_cqe **cqes)
