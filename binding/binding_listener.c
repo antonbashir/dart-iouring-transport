@@ -17,6 +17,9 @@ static inline void handle_cqes(transport_listener_t *listener, int count, struct
   {
     struct io_uring_cqe *cqe = cqes[cqe_index];
 
+    if (!cqe)
+      continue;
+
     transport_message_t *message = (transport_message_t *)(cqe->user_data);
     if (!message)
     {
@@ -80,29 +83,48 @@ void transport_listener_stop(transport_listener_t *listener)
   free(listener);
 }
 
+void transport_listener_poll(transport_listener_t *listener, bool wait)
+{
+  int result = io_uring_submit(&listener->transport->ring);
+  if (result < 0)
+  {
+    if (result != -EBUSY)
+    {
+      return;
+    }
+  }
+  struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * listener->cqe_size);
+  result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
+  if (result == 0)
+  {
+    if (!wait)
+    {
+      free(cqes);
+      return;
+    }
+    result = io_uring_wait_cqe(&listener->transport->ring, cqes);
+    if (result < 0)
+    {
+      free(cqes);
+      return;
+    }
+    result = 1;
+  }
+  handle_cqes(listener, result, cqes);
+}
+
 void *transport_listen(void *input)
 {
   transport_listener_t *listener = (transport_listener_t *)input;
+  listener->active = true;
   pthread_mutex_lock(&listener->initialization_mutex);
   listener->initialized = true;
-  listener->active = true;
   pthread_cond_broadcast(&listener->initialization_condition);
   pthread_mutex_unlock(&listener->initialization_mutex);
 
   while (listener->active)
   {
-    struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * listener->cqe_size);
-    int32_t result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
-    if (result == 0)
-    {
-      result = io_uring_wait_cqe(&listener->transport->ring, cqes);
-      if (result <= 0)
-      {
-        free(cqes);
-        continue;
-      }
-    }
-    handle_cqes(listener, result, cqes);
+    transport_listener_poll(listener, true);
   }
 
   if (listener->initialized)

@@ -1,29 +1,25 @@
 import 'dart:async';
 import 'dart:ffi';
 
-import 'package:ffi/ffi.dart';
-
 import 'bindings.dart';
-import 'configuration.dart';
 
-class TransportListener {
+class TransportPoller {
   final TransportBindings _bindings;
-  final Pointer<transport_t> _transport;
-  final TransportListenerConfiguration _configuration;
+  final Pointer<transport_listener_t> _listener;
 
-  late Pointer<transport_listener_t> _listener;
+  TransportPoller(this._bindings, this._listener);
 
-  TransportListener(this._bindings, this._transport, this._configuration);
+  bool active = false;
 
-  void start() {
-    using((Arena arena) {
-      final configuration = arena<transport_listener_configuration>();
-      configuration.ref.cqe_size = _configuration.cqesSize;
-      _listener = _bindings.transport_listener_start(_transport, configuration);
-    });
+  Future<void> start() async {
+    // active = true;
+    // while (active) {
+    //   _bindings.transport_listener_poll(_listener, false);
+    //   await Future.delayed(Duration.zero);
+    // }
   }
 
   void stop() {
-    _bindings.transport_listener_stop(_listener);
+    active = false;
   }
 }

@@ -14923,11 +14923,13 @@ class TransportBindings {
     ffi.Pointer<transport_listener_t> listener,
     int port,
     ffi.Pointer<ffi.Void> payload,
+    int type,
   ) {
     return _transport_listener_create_message(
       listener,
       port,
       payload,
+      type,
     );
   }
 
@@ -14936,11 +14938,32 @@ class TransportBindings {
           ffi.Pointer<transport_message_t> Function(
               ffi.Pointer<transport_listener_t>,
               Dart_Port,
-              ffi.Pointer<ffi.Void>)>>('transport_listener_create_message');
+              ffi.Pointer<ffi.Void>,
+              ffi.Int32)>>('transport_listener_create_message');
   late final _transport_listener_create_message =
       _transport_listener_create_messagePtr.asFunction<
           ffi.Pointer<transport_message_t> Function(
-              ffi.Pointer<transport_listener_t>, int, ffi.Pointer<ffi.Void>)>();
+              ffi.Pointer<transport_listener_t>,
+              int,
+              ffi.Pointer<ffi.Void>,
+              int)>();
+
+  void transport_listener_poll(
+    ffi.Pointer<transport_listener_t> listener,
+    bool wait,
+  ) {
+    return _transport_listener_poll(
+      listener,
+      wait,
+    );
+  }
+
+  late final _transport_listener_pollPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_listener_t>,
+              ffi.Bool)>>('transport_listener_poll');
+  late final _transport_listener_poll = _transport_listener_pollPtr
+      .asFunction<void Function(ffi.Pointer<transport_listener_t>, bool)>();
 
   void ibuf_create(
     ffi.Pointer<ibuf> ibuf,
@@ -18489,8 +18512,13 @@ class _SymbolAddresses {
           ffi.Pointer<transport_message_t> Function(
               ffi.Pointer<transport_listener_t>,
               Dart_Port,
-              ffi.Pointer<ffi.Void>)>> get transport_listener_create_message =>
+              ffi.Pointer<ffi.Void>,
+              ffi.Int32)>> get transport_listener_create_message =>
       _library._transport_listener_create_messagePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_listener_t>, ffi.Bool)>>
+      get transport_listener_poll => _library._transport_listener_pollPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(
@@ -21400,10 +21428,6 @@ class transport_listener extends ffi.Struct {
 
   @ffi.Size()
   external int cqe_size;
-
-  external mempool cqe_pool;
-
-  external mempool message_pool;
 
   @ffi.Bool()
   external bool initialized;

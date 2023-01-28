@@ -8,6 +8,7 @@ import 'package:iouring_transport/transport/connection.dart';
 import 'bindings.dart';
 import 'channels/file.dart';
 import 'channels/channel.dart';
+import 'listener.dart';
 import 'lookup.dart';
 import 'payload.dart';
 
@@ -18,6 +19,7 @@ class Transport {
   late TransportBindings _bindings;
   late TransportLibrary _library;
   late Pointer<transport_listener_t> _listener;
+  late TransportPoller _poller;
   late Pointer<transport_t> _transport;
 
   Transport(this.configuration, this.listenerConfiguration, {String? libraryPath}) {
@@ -42,6 +44,7 @@ class Transport {
       final listenerConfiguration = arena<transport_listener_configuration_t>();
       listenerConfiguration.ref.cqe_size = this.listenerConfiguration.cqesSize;
       _listener = _bindings.transport_listener_start(_transport, listenerConfiguration);
+      _poller = TransportPoller(_bindings, _listener)..start();
     });
   }
 
