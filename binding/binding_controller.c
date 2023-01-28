@@ -68,7 +68,7 @@ static inline void transport_controller_handle_message(transport_controller_t *c
   if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
   {
     transport_accept_payload_t *accept_payload = (transport_accept_payload_t *)message->payload;
-    io_uring_prep_connect(sqe, accept_payload->fd, (struct sockaddr *)&accept_payload->client_addres, accept_payload->client_addres_length);
+    io_uring_prep_accept(sqe, accept_payload->fd, (struct sockaddr *)&accept_payload->client_addres, &accept_payload->client_addres_length, 0);
   }
   if (message->payload_type == TRANSPORT_PAYLOAD_CONNECT)
   {
