@@ -4,7 +4,7 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportConfiguration transport() => TransportConfiguration(
-        ringSize: 1024,
+        ringSize: 16536,
         slabSize: 16 * 1024 * 1024,
         memoryQuota: 1 * 1024 * 1024 * 1024,
         slabAllocationMinimalObjectSize: 16,
@@ -16,11 +16,11 @@ class TransportDefaults {
         bufferInitialCapacity: 16320,
         bufferLimit: 18 * 16320,
         bufferAvailableAwaitDelayed: Duration.zero,
-        payloadBufferSize: 1024,
+        payloadBufferSize: 64,
       );
 
-  static TransportListenerConfiguration listener() => TransportListenerConfiguration(
-        cqesSize: 512,
+  static TransportControllerConfiguration controller() => TransportControllerConfiguration(
+        cqesSize: 2048,
       );
 
   static TransportConnectionConfiguration connection() => TransportConnectionConfiguration();

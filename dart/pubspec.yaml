@@ -19,7 +19,6 @@ ffigen:
   headers:
     entry-points:
       - "../binding/binding_transport.h"
-      - "../binding/binding_listener.h"
       - "../binding/binding_channel.h"
       - "../binding/binding_connection.h"
       - "../binding/binding_file.h"
@@ -45,11 +44,9 @@ ffigen:
   typedefs:
     exclude:
       - "_(.*)"
-      - "ck(.*)"
   structs:
     exclude:
       - "_(.*)"
       - "max_align_t"
-      - "ck(.*)"
       - "file_(.*)"
       - "io_uring_probe"

@@ -36,6 +36,11 @@
     "unordered_map": "c",
     "vector": "c",
     "iosfwd": "c",
-    "tuple": "c"
+    "tuple": "c",
+    "ck_ring.h": "c",
+    "binding_controller.h": "c",
+    "ck_cc.h": "c",
+    "ck_md.h": "c",
+    "ck_pr.h": "c"
   },
 }

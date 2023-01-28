@@ -11,7 +11,7 @@ import 'configuration.dart';
 class TransportConnection {
   final TransportBindings _bindings;
   final Pointer<transport_t> _transport;
-  final Pointer<transport_listener_t> _listener;
+  final Pointer<transport_controller_t> _controller;
   final TransportConnectionConfiguration _configuration;
   final TransportChannelConfiguration _channelConfiguration;
   final StreamController<TransportChannel> clientChannels = StreamController();
@@ -26,7 +26,7 @@ class TransportConnection {
     this._channelConfiguration,
     this._bindings,
     this._transport,
-    this._listener,
+    this._controller,
   );
 
   void initialize() {
@@ -35,7 +35,7 @@ class TransportConnection {
       configuration.ref.verbose = false;
       _connection = _bindings.transport_initialize_connection(
         _transport,
-        _listener,
+        _controller,
         configuration,
         _acceptPort.sendPort.nativePort,
         _connectPort.sendPort.nativePort,
@@ -53,28 +53,26 @@ class TransportConnection {
     final socket = _bindings.transport_socket_create();
     _bindings.transport_socket_bind(socket, host.toNativeUtf8().cast(), port, 0);
     _bindings.transport_connection_queue_accept(_connection, socket);
-    _bindings.transport_listener_poll(_listener, false);
     return clientChannels.stream;
   }
 
   Stream<TransportChannel> connect(String host, int port) {
     final socket = _bindings.transport_socket_create();
     _bindings.transport_connection_queue_connect(_connection, socket, host.toNativeUtf8().cast(), port);
-    _bindings.transport_listener_poll(_listener, false);
     return serverChannels.stream;
   }
 
   void _handleAccept(dynamic payloadPointer) {
     Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
-    clientChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd, onStop: () => clientChannels.close()));
+    clientChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _controller, payload.ref.fd, onStop: () => clientChannels.close()));
     _bindings.transport_connection_free_accept_payload(_connection, payload);
   }
 
   void _handleConnect(dynamic payloadPointer) {
     Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
-    serverChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _listener, payload.ref.fd, onStop: () => serverChannels.close()));
+    serverChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _controller, payload.ref.fd, onStop: () => serverChannels.close()));
     _bindings.transport_connection_free_accept_payload(_connection, payload);
   }
 }

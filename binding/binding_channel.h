@@ -8,7 +8,7 @@
 #include "small/include/small/obuf.h"
 #include "small/include/small/small.h"
 #include "binding_transport.h"
-#include "binding_listener.h"
+#include "binding_controller.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -25,7 +25,7 @@ extern "C"
   typedef struct transport_channel
   {
     transport_t *transport;
-    transport_listener_t *listener;
+    transport_controller_t *controller;
 
     struct mempool data_payload_pool;
     struct mempool accept_payload_pool;
@@ -51,7 +51,7 @@ extern "C"
   } transport_channel_t;
 
   transport_channel_t *transport_initialize_channel(transport_t *transport,
-                                                    transport_listener_t *listener,
+                                                    transport_controller_t *controller,
                                                     transport_channel_configuration_t *configuration,
                                                     int fd,
                                                     Dart_Port read_port,

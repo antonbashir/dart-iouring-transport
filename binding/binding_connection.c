@@ -12,7 +12,7 @@
 #include "binding_connection.h"
 
 transport_connection_t *transport_initialize_connection(transport_t *transport,
-                                                        transport_listener_t *listener,
+                                                        transport_controller_t *controller,
                                                         transport_connection_configuration_t *configuration,
                                                         Dart_Port accept_port,
                                                         Dart_Port connect_port)
@@ -22,7 +22,7 @@ transport_connection_t *transport_initialize_connection(transport_t *transport,
   {
     return NULL;
   }
-  connection->listener = listener;
+  connection->controller = controller;
   connection->transport = transport;
 
   mempool_create(&connection->accept_payload_pool, &transport->cache, sizeof(transport_accept_payload_t));
@@ -42,12 +42,6 @@ void transport_close_connection(transport_connection_t *connection)
 
 int32_t transport_connection_queue_accept(transport_connection_t *connection, int32_t server_socket_fd)
 {
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&connection->transport->ring);
-  if (sqe == NULL)
-  {
-    return -1;
-  }
-
   transport_accept_payload_t *payload = mempool_alloc(&connection->accept_payload_pool);
   if (!payload)
   {
@@ -58,18 +52,11 @@ int32_t transport_connection_queue_accept(transport_connection_t *connection, in
   payload->fd = server_socket_fd;
   payload->type = TRANSPORT_PAYLOAD_ACCEPT;
 
-  io_uring_prep_accept(sqe, server_socket_fd, (struct sockaddr *)&payload->client_addres, &payload->client_addres_length, 0);
-  io_uring_sqe_set_data(sqe, transport_listener_create_message(connection->listener, connection->accept_port, payload, TRANSPORT_PAYLOAD_ACCEPT));
-  //io_uring_submit(&connection->transport->ring);
+  transport_controller_send(connection->controller, transport_controller_create_message(connection->controller, connection->accept_port, payload, TRANSPORT_PAYLOAD_ACCEPT));
 }
 
 int32_t transport_connection_queue_connect(transport_connection_t *connection, int32_t socket_fd, const char *ip, int32_t port)
 {
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&connection->transport->ring);
-  if (sqe == NULL)
-  {
-    return -1;
-  }
 
   transport_accept_payload_t *payload = mempool_alloc(&connection->accept_payload_pool);
   if (!payload)
@@ -84,9 +71,8 @@ int32_t transport_connection_queue_connect(transport_connection_t *connection, i
   payload->fd = socket_fd;
   payload->type = TRANSPORT_PAYLOAD_CONNECT;
 
-  io_uring_prep_connect(sqe, socket_fd, (struct sockaddr *)&payload->client_addres, payload->client_addres_length);
-  io_uring_sqe_set_data(sqe, transport_listener_create_message(connection->listener, connection->connect_port, payload, TRANSPORT_PAYLOAD_CONNECT));
-  //io_uring_submit(&connection->transport->ring);
+
+  transport_controller_send(connection->controller, transport_controller_create_message(connection->controller, connection->connect_port, payload, TRANSPORT_PAYLOAD_CONNECT));
 }
 
 transport_accept_payload_t *transport_connection_allocate_accept_payload(transport_connection_t *connection)

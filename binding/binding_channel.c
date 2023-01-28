@@ -12,7 +12,7 @@
 #include <sys/time.h>
 
 transport_channel_t *transport_initialize_channel(transport_t *transport,
-                                                  transport_listener_t *listener,
+                                                  transport_controller_t *controller,
                                                   transport_channel_configuration_t *configuration,
                                                   int fd,
                                                   Dart_Port read_port,
@@ -24,7 +24,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
     return NULL;
   }
   channel->fd = fd;
-  channel->listener = listener;
+  channel->controller = controller;
   channel->transport = transport;
 
   mempool_create(&channel->data_payload_pool, &transport->cache, sizeof(transport_data_payload_t));
@@ -71,17 +71,6 @@ void transport_close_channel(transport_channel_t *channel)
 
 int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offset)
 {
-  if (io_uring_sq_space_left(&channel->transport->ring) <= 1)
-  {
-    return -1;
-  }
-
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&channel->transport->ring);
-  if (sqe == NULL)
-  {
-    return -1;
-  }
-
   transport_data_payload_t *payload = mempool_alloc(&channel->data_payload_pool);
   if (!payload)
   {
@@ -91,11 +80,11 @@ int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offs
   payload->buffer = channel->current_read_buffer;
   payload->size = channel->payload_buffer_size;
   payload->fd = channel->fd;
+  payload->offset = offset;
+  payload->position = channel->current_read_buffer->wpos;
   payload->type = TRANSPORT_PAYLOAD_READ;
 
-  io_uring_prep_read(sqe, channel->fd, channel->current_read_buffer->wpos, channel->payload_buffer_size, offset);
-  io_uring_sqe_set_data(sqe, transport_listener_create_message(channel->listener, channel->read_port, payload, TRANSPORT_PAYLOAD_READ));
-  //io_uring_submit(&channel->transport->ring);
+  transport_controller_send(channel->controller, transport_controller_create_message(channel->controller, channel->read_port, payload, TRANSPORT_PAYLOAD_READ));
 
   channel->current_read_buffer->wpos += channel->payload_buffer_size;
   return 0;
@@ -103,30 +92,20 @@ int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offs
 
 int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t payload_size, uint64_t offset)
 {
-  if (io_uring_sq_space_left(&channel->transport->ring) <= 1)
-  {
-    return -1;
-  }
-
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&channel->transport->ring);
-  if (sqe == NULL)
-  {
-    return -1;
-  }
-
   transport_data_payload_t *payload = mempool_alloc(&channel->data_payload_pool);
   if (!payload)
   {
     return -1;
   }
   payload->buffer = channel->current_write_buffer;
-  payload->size = channel->payload_buffer_size;
+  payload->size = payload_size;
   payload->fd = channel->fd;
+  payload->offset = offset;
+  payload->position = channel->current_write_buffer->wpos;
   payload->type = TRANSPORT_PAYLOAD_WRITE;
 
-  io_uring_prep_write(sqe, channel->fd, channel->current_write_buffer->wpos, payload_size, offset);
-  io_uring_sqe_set_data(sqe, transport_listener_create_message(channel->listener, channel->write_port, payload, TRANSPORT_PAYLOAD_WRITE));
-  //io_uring_submit(&channel->transport->ring);
+  transport_controller_send(channel->controller, transport_controller_create_message(channel->controller, channel->write_port, payload, TRANSPORT_PAYLOAD_WRITE));
+
   channel->current_write_buffer->wpos += channel->payload_buffer_size;
   return 0;
 }

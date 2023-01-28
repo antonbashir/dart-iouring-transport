@@ -12,7 +12,7 @@ import '../payload.dart';
 class TransportChannel {
   final TransportBindings _bindings;
   final Pointer<transport_t> _transport;
-  final Pointer<transport_listener_t> _listener;
+  final Pointer<transport_controller_t> _controller;
   final TransportChannelConfiguration _configuration;
   final int _descriptor;
 
@@ -28,7 +28,7 @@ class TransportChannel {
     this._bindings,
     this._configuration,
     this._transport,
-    this._listener,
+    this._controller,
     this._descriptor, {
     this.onRead,
     this.onWrite,
@@ -50,7 +50,7 @@ class TransportChannel {
       configuration.ref.payload_buffer_size = _configuration.payloadBufferSize;
       _channel = _bindings.transport_initialize_channel(
         _transport,
-        _listener,
+        _controller,
         configuration,
         _descriptor,
         _readPort.sendPort.nativePort,
@@ -71,7 +71,6 @@ class TransportChannel {
       await Future.delayed(_configuration.bufferAvailableAwaitDelayed);
     }
     _bindings.transport_channel_queue_read(_channel, offset);
-    _bindings.transport_listener_poll(_listener, false);
   }
 
   Future<void> queueWrite(Uint8List bytes, {int offset = 0}) async {
@@ -82,7 +81,6 @@ class TransportChannel {
     }
     buffer.asTypedList(bytes.length).setAll(0, bytes);
     _bindings.transport_channel_queue_write(_channel, bytes.length, offset);
-    _bindings.transport_listener_poll(_listener, false);
   }
 
   int currentReadSize() => _channel.ref.current_read_size;
@@ -92,11 +90,11 @@ class TransportChannel {
   void _handleRead(dynamic payloadPointer) {
     Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
+    final readBuffer = _bindings.transport_channel_extract_read_buffer(_channel, payload);
     if (onRead == null) {
       _bindings.transport_channel_free_data_payload(_channel, payload);
       return;
     }
-    final readBuffer = _bindings.transport_channel_extract_read_buffer(_channel, payload);
     final bytes = readBuffer.cast<Uint8>().asTypedList(payload.ref.size);
     onRead!(TransportDataPayload(_bindings, _channel, payload, bytes));
   }
@@ -104,11 +102,11 @@ class TransportChannel {
   void _handleWrite(dynamic payloadPointer) {
     Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
+    final writeBuffer = _bindings.transport_channel_extract_write_buffer(_channel, payload);
     if (onWrite == null) {
       _bindings.transport_channel_free_data_payload(_channel, payload);
       return;
     }
-    final writeBuffer = _bindings.transport_channel_extract_write_buffer(_channel, payload);
     final bytes = writeBuffer.cast<Uint8>().asTypedList(payload.ref.size);
     onWrite!(TransportDataPayload(_bindings, _channel, payload, bytes));
   }

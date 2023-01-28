@@ -7,7 +7,7 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-final Transport _transport = Transport(TransportDefaults.transport(), TransportDefaults.listener());
+final Transport _transport = Transport(TransportDefaults.transport(), TransportDefaults.controller());
 final _data = "data";
 final _file = "file.txt";
 

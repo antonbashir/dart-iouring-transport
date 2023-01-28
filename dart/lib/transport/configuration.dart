@@ -62,17 +62,17 @@ class TransportChannelConfiguration {
       );
 }
 
-class TransportListenerConfiguration {
+class TransportControllerConfiguration {
   final int cqesSize;
 
-  TransportListenerConfiguration({
+  TransportControllerConfiguration({
     required this.cqesSize,
   });
 
-  TransportListenerConfiguration copyWith({
+  TransportControllerConfiguration copyWith({
     int? cqesSize,
   }) =>
-      TransportListenerConfiguration(
+      TransportControllerConfiguration(
         cqesSize: cqesSize ?? this.cqesSize,
       );
 }

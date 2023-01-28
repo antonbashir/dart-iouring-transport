@@ -8521,6 +8521,174 @@ class TransportBindings {
   late final _transport_close =
       _transport_closePtr.asFunction<void Function(ffi.Pointer<transport_t>)>();
 
+  void ibuf_create(
+    ffi.Pointer<ibuf> ibuf,
+    ffi.Pointer<slab_cache> slabc,
+    int start_capacity,
+  ) {
+    return _ibuf_create(
+      ibuf,
+      slabc,
+      start_capacity,
+    );
+  }
+
+  late final _ibuf_createPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>,
+              ffi.Size)>>('ibuf_create');
+  late final _ibuf_create = _ibuf_createPtr.asFunction<
+      void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, int)>();
+
+  void ibuf_destroy(
+    ffi.Pointer<ibuf> ibuf,
+  ) {
+    return _ibuf_destroy(
+      ibuf,
+    );
+  }
+
+  late final _ibuf_destroyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
+          'ibuf_destroy');
+  late final _ibuf_destroy =
+      _ibuf_destroyPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
+
+  void ibuf_reinit(
+    ffi.Pointer<ibuf> ibuf,
+  ) {
+    return _ibuf_reinit(
+      ibuf,
+    );
+  }
+
+  late final _ibuf_reinitPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
+          'ibuf_reinit');
+  late final _ibuf_reinit =
+      _ibuf_reinitPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
+
+  ffi.Pointer<ffi.Void> ibuf_reserve_slow(
+    ffi.Pointer<ibuf> ibuf,
+    int size,
+  ) {
+    return _ibuf_reserve_slow(
+      ibuf,
+      size,
+    );
+  }
+
+  late final _ibuf_reserve_slowPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<ibuf>, ffi.Size)>>('ibuf_reserve_slow');
+  late final _ibuf_reserve_slow = _ibuf_reserve_slowPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, int)>();
+
+  void obuf_create(
+    ffi.Pointer<obuf> buf,
+    ffi.Pointer<slab_cache> slabc,
+    int start_capacity,
+  ) {
+    return _obuf_create(
+      buf,
+      slabc,
+      start_capacity,
+    );
+  }
+
+  late final _obuf_createPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>,
+              ffi.Size)>>('obuf_create');
+  late final _obuf_create = _obuf_createPtr.asFunction<
+      void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, int)>();
+
+  void obuf_destroy(
+    ffi.Pointer<obuf> buf,
+  ) {
+    return _obuf_destroy(
+      buf,
+    );
+  }
+
+  late final _obuf_destroyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
+          'obuf_destroy');
+  late final _obuf_destroy =
+      _obuf_destroyPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
+
+  void obuf_reset(
+    ffi.Pointer<obuf> buf,
+  ) {
+    return _obuf_reset(
+      buf,
+    );
+  }
+
+  late final _obuf_resetPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
+          'obuf_reset');
+  late final _obuf_reset =
+      _obuf_resetPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
+
+  /// Slow path of obuf_reserve(), which actually reallocates
+  /// memory and moves data if necessary.
+  ffi.Pointer<ffi.Void> obuf_reserve_slow(
+    ffi.Pointer<obuf> buf,
+    int size,
+  ) {
+    return _obuf_reserve_slow(
+      buf,
+      size,
+    );
+  }
+
+  late final _obuf_reserve_slowPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<obuf>, ffi.Size)>>('obuf_reserve_slow');
+  late final _obuf_reserve_slow = _obuf_reserve_slowPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, int)>();
+
+  /// Append data to the output buffer.
+  int obuf_dup(
+    ffi.Pointer<obuf> buf,
+    ffi.Pointer<ffi.Void> data,
+    int size,
+  ) {
+    return _obuf_dup(
+      buf,
+      data,
+      size,
+    );
+  }
+
+  late final _obuf_dupPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Size Function(
+              ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>('obuf_dup');
+  late final _obuf_dup = _obuf_dupPtr.asFunction<
+      int Function(ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, int)>();
+
+  /// Forget anything added to output buffer after the savepoint.
+  void obuf_rollback_to_svp(
+    ffi.Pointer<obuf> buf,
+    ffi.Pointer<obuf_svp> svp,
+  ) {
+    return _obuf_rollback_to_svp(
+      buf,
+      svp,
+    );
+  }
+
+  late final _obuf_rollback_to_svpPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<obuf>,
+              ffi.Pointer<obuf_svp>)>>('obuf_rollback_to_svp');
+  late final _obuf_rollback_to_svp = _obuf_rollback_to_svpPtr
+      .asFunction<void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>();
+
   /// Is this an error handle?
   ///
   /// Requires there to be a current isolate.
@@ -14883,259 +15051,93 @@ class TransportBindings {
   set Dart_ExitScope_DL(Dart_ExitScope_Type value) =>
       _Dart_ExitScope_DL.value = value;
 
-  ffi.Pointer<transport_listener_t> transport_listener_start(
+  ffi.Pointer<transport_controller_t> transport_controller_start(
     ffi.Pointer<transport_t> transport,
-    ffi.Pointer<transport_listener_configuration_t> configuration,
+    ffi.Pointer<transport_controller_configuration_t> configuration,
   ) {
-    return _transport_listener_start(
+    return _transport_controller_start(
       transport,
       configuration,
     );
   }
 
-  late final _transport_listener_startPtr = _lookup<
+  late final _transport_controller_startPtr = _lookup<
           ffi.NativeFunction<
-              ffi.Pointer<transport_listener_t> Function(
+              ffi.Pointer<transport_controller_t> Function(
                   ffi.Pointer<transport_t>,
-                  ffi.Pointer<transport_listener_configuration_t>)>>(
-      'transport_listener_start');
-  late final _transport_listener_start =
-      _transport_listener_startPtr.asFunction<
-          ffi.Pointer<transport_listener_t> Function(ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_listener_configuration_t>)>();
+                  ffi.Pointer<transport_controller_configuration_t>)>>(
+      'transport_controller_start');
+  late final _transport_controller_start =
+      _transport_controller_startPtr.asFunction<
+          ffi.Pointer<transport_controller_t> Function(ffi.Pointer<transport_t>,
+              ffi.Pointer<transport_controller_configuration_t>)>();
 
-  void transport_listener_stop(
-    ffi.Pointer<transport_listener_t> listener,
+  void transport_controller_stop(
+    ffi.Pointer<transport_controller_t> controller,
   ) {
-    return _transport_listener_stop(
-      listener,
+    return _transport_controller_stop(
+      controller,
     );
   }
 
-  late final _transport_listener_stopPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_listener_t>)>>('transport_listener_stop');
-  late final _transport_listener_stop = _transport_listener_stopPtr
-      .asFunction<void Function(ffi.Pointer<transport_listener_t>)>();
+  late final _transport_controller_stopPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_controller_t>)>>(
+      'transport_controller_stop');
+  late final _transport_controller_stop = _transport_controller_stopPtr
+      .asFunction<void Function(ffi.Pointer<transport_controller_t>)>();
 
-  ffi.Pointer<transport_message_t> transport_listener_create_message(
-    ffi.Pointer<transport_listener_t> listener,
+  ffi.Pointer<transport_message_t> transport_controller_create_message(
+    ffi.Pointer<transport_controller_t> controller,
     int port,
     ffi.Pointer<ffi.Void> payload,
     int type,
   ) {
-    return _transport_listener_create_message(
-      listener,
+    return _transport_controller_create_message(
+      controller,
       port,
       payload,
       type,
     );
   }
 
-  late final _transport_listener_create_messagePtr = _lookup<
+  late final _transport_controller_create_messagePtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<transport_message_t> Function(
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               Dart_Port,
               ffi.Pointer<ffi.Void>,
-              ffi.Int32)>>('transport_listener_create_message');
-  late final _transport_listener_create_message =
-      _transport_listener_create_messagePtr.asFunction<
+              ffi.Int32)>>('transport_controller_create_message');
+  late final _transport_controller_create_message =
+      _transport_controller_create_messagePtr.asFunction<
           ffi.Pointer<transport_message_t> Function(
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               int,
               ffi.Pointer<ffi.Void>,
               int)>();
 
-  void transport_listener_poll(
-    ffi.Pointer<transport_listener_t> listener,
-    bool wait,
+  bool transport_controller_send(
+    ffi.Pointer<transport_controller_t> controller,
+    ffi.Pointer<transport_message_t> message,
   ) {
-    return _transport_listener_poll(
-      listener,
-      wait,
+    return _transport_controller_send(
+      controller,
+      message,
     );
   }
 
-  late final _transport_listener_pollPtr = _lookup<
+  late final _transport_controller_sendPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_listener_t>,
-              ffi.Bool)>>('transport_listener_poll');
-  late final _transport_listener_poll = _transport_listener_pollPtr
-      .asFunction<void Function(ffi.Pointer<transport_listener_t>, bool)>();
-
-  void ibuf_create(
-    ffi.Pointer<ibuf> ibuf,
-    ffi.Pointer<slab_cache> slabc,
-    int start_capacity,
-  ) {
-    return _ibuf_create(
-      ibuf,
-      slabc,
-      start_capacity,
-    );
-  }
-
-  late final _ibuf_createPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>,
-              ffi.Size)>>('ibuf_create');
-  late final _ibuf_create = _ibuf_createPtr.asFunction<
-      void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, int)>();
-
-  void ibuf_destroy(
-    ffi.Pointer<ibuf> ibuf,
-  ) {
-    return _ibuf_destroy(
-      ibuf,
-    );
-  }
-
-  late final _ibuf_destroyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
-          'ibuf_destroy');
-  late final _ibuf_destroy =
-      _ibuf_destroyPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
-
-  void ibuf_reinit(
-    ffi.Pointer<ibuf> ibuf,
-  ) {
-    return _ibuf_reinit(
-      ibuf,
-    );
-  }
-
-  late final _ibuf_reinitPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
-          'ibuf_reinit');
-  late final _ibuf_reinit =
-      _ibuf_reinitPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
-
-  ffi.Pointer<ffi.Void> ibuf_reserve_slow(
-    ffi.Pointer<ibuf> ibuf,
-    int size,
-  ) {
-    return _ibuf_reserve_slow(
-      ibuf,
-      size,
-    );
-  }
-
-  late final _ibuf_reserve_slowPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ibuf>, ffi.Size)>>('ibuf_reserve_slow');
-  late final _ibuf_reserve_slow = _ibuf_reserve_slowPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, int)>();
-
-  void obuf_create(
-    ffi.Pointer<obuf> buf,
-    ffi.Pointer<slab_cache> slabc,
-    int start_capacity,
-  ) {
-    return _obuf_create(
-      buf,
-      slabc,
-      start_capacity,
-    );
-  }
-
-  late final _obuf_createPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>,
-              ffi.Size)>>('obuf_create');
-  late final _obuf_create = _obuf_createPtr.asFunction<
-      void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, int)>();
-
-  void obuf_destroy(
-    ffi.Pointer<obuf> buf,
-  ) {
-    return _obuf_destroy(
-      buf,
-    );
-  }
-
-  late final _obuf_destroyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
-          'obuf_destroy');
-  late final _obuf_destroy =
-      _obuf_destroyPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
-
-  void obuf_reset(
-    ffi.Pointer<obuf> buf,
-  ) {
-    return _obuf_reset(
-      buf,
-    );
-  }
-
-  late final _obuf_resetPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
-          'obuf_reset');
-  late final _obuf_reset =
-      _obuf_resetPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
-
-  /// Slow path of obuf_reserve(), which actually reallocates
-  /// memory and moves data if necessary.
-  ffi.Pointer<ffi.Void> obuf_reserve_slow(
-    ffi.Pointer<obuf> buf,
-    int size,
-  ) {
-    return _obuf_reserve_slow(
-      buf,
-      size,
-    );
-  }
-
-  late final _obuf_reserve_slowPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<obuf>, ffi.Size)>>('obuf_reserve_slow');
-  late final _obuf_reserve_slow = _obuf_reserve_slowPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, int)>();
-
-  /// Append data to the output buffer.
-  int obuf_dup(
-    ffi.Pointer<obuf> buf,
-    ffi.Pointer<ffi.Void> data,
-    int size,
-  ) {
-    return _obuf_dup(
-      buf,
-      data,
-      size,
-    );
-  }
-
-  late final _obuf_dupPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(
-              ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>('obuf_dup');
-  late final _obuf_dup = _obuf_dupPtr.asFunction<
-      int Function(ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, int)>();
-
-  /// Forget anything added to output buffer after the savepoint.
-  void obuf_rollback_to_svp(
-    ffi.Pointer<obuf> buf,
-    ffi.Pointer<obuf_svp> svp,
-  ) {
-    return _obuf_rollback_to_svp(
-      buf,
-      svp,
-    );
-  }
-
-  late final _obuf_rollback_to_svpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<obuf>,
-              ffi.Pointer<obuf_svp>)>>('obuf_rollback_to_svp');
-  late final _obuf_rollback_to_svp = _obuf_rollback_to_svpPtr
-      .asFunction<void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>();
+          ffi.Bool Function(ffi.Pointer<transport_controller_t>,
+              ffi.Pointer<transport_message_t>)>>('transport_controller_send');
+  late final _transport_controller_send =
+      _transport_controller_sendPtr.asFunction<
+          bool Function(ffi.Pointer<transport_controller_t>,
+              ffi.Pointer<transport_message_t>)>();
 
   ffi.Pointer<transport_channel_t> transport_initialize_channel(
     ffi.Pointer<transport_t> transport,
-    ffi.Pointer<transport_listener_t> listener,
+    ffi.Pointer<transport_controller_t> controller,
     ffi.Pointer<transport_channel_configuration_t> configuration,
     int fd,
     int read_port,
@@ -15143,7 +15145,7 @@ class TransportBindings {
   ) {
     return _transport_initialize_channel(
       transport,
-      listener,
+      controller,
       configuration,
       fd,
       read_port,
@@ -15155,7 +15157,7 @@ class TransportBindings {
       ffi.NativeFunction<
           ffi.Pointer<transport_channel_t> Function(
               ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_channel_configuration_t>,
               ffi.Int,
               Dart_Port,
@@ -15164,7 +15166,7 @@ class TransportBindings {
       _transport_initialize_channelPtr.asFunction<
           ffi.Pointer<transport_channel_t> Function(
               ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_channel_configuration_t>,
               int,
               int,
@@ -15335,14 +15337,14 @@ class TransportBindings {
 
   ffi.Pointer<transport_connection_t> transport_initialize_connection(
     ffi.Pointer<transport_t> transport,
-    ffi.Pointer<transport_listener_t> listener,
+    ffi.Pointer<transport_controller_t> controller,
     ffi.Pointer<transport_connection_configuration_t> configuration,
     int accept_port,
     int connect_port,
   ) {
     return _transport_initialize_connection(
       transport,
-      listener,
+      controller,
       configuration,
       accept_port,
       connect_port,
@@ -15353,7 +15355,7 @@ class TransportBindings {
       ffi.NativeFunction<
           ffi.Pointer<transport_connection_t> Function(
               ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_connection_configuration_t>,
               Dart_Port,
               Dart_Port)>>('transport_initialize_connection');
@@ -15361,7 +15363,7 @@ class TransportBindings {
       _transport_initialize_connectionPtr.asFunction<
           ffi.Pointer<transport_connection_t> Function(
               ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_connection_configuration_t>,
               int,
               int)>();
@@ -17498,6 +17500,41 @@ class _SymbolAddresses {
       get transport_initialize => _library._transport_initializePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
       get transport_close => _library._transport_closePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(
+                  ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
+      get ibuf_create => _library._ibuf_createPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
+      get ibuf_destroy => _library._ibuf_destroyPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
+      get ibuf_reinit => _library._ibuf_reinitPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, ffi.Size)>>
+      get ibuf_reserve_slow => _library._ibuf_reserve_slowPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(
+                  ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
+      get obuf_create => _library._obuf_createPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
+      get obuf_destroy => _library._obuf_destroyPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
+      get obuf_reset => _library._obuf_resetPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, ffi.Size)>>
+      get obuf_reserve_slow => _library._obuf_reserve_slowPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Size Function(
+                  ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>
+      get obuf_dup => _library._obuf_dupPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>>
+      get obuf_rollback_to_svp => _library._obuf_rollback_to_svpPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Handle)>>
       get Dart_IsError => _library._Dart_IsErrorPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Handle)>>
@@ -18499,66 +18536,32 @@ class _SymbolAddresses {
       _library._Dart_ExitScope_DL;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Pointer<transport_listener_t> Function(
+              ffi.Pointer<transport_controller_t> Function(
                   ffi.Pointer<transport_t>,
-                  ffi.Pointer<transport_listener_configuration_t>)>>
-      get transport_listener_start => _library._transport_listener_startPtr;
+                  ffi.Pointer<transport_controller_configuration_t>)>>
+      get transport_controller_start => _library._transport_controller_startPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_t>)>>
-      get transport_listener_stop => _library._transport_listener_stopPtr;
+              ffi.Void Function(ffi.Pointer<transport_controller_t>)>>
+      get transport_controller_stop => _library._transport_controller_stopPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_message_t> Function(
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               Dart_Port,
               ffi.Pointer<ffi.Void>,
-              ffi.Int32)>> get transport_listener_create_message =>
-      _library._transport_listener_create_messagePtr;
+              ffi.Int32)>> get transport_controller_create_message =>
+      _library._transport_controller_create_messagePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_t>, ffi.Bool)>>
-      get transport_listener_poll => _library._transport_listener_pollPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
-      get ibuf_create => _library._ibuf_createPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
-      get ibuf_destroy => _library._ibuf_destroyPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
-      get ibuf_reinit => _library._ibuf_reinitPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, ffi.Size)>>
-      get ibuf_reserve_slow => _library._ibuf_reserve_slowPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
-      get obuf_create => _library._obuf_createPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
-      get obuf_destroy => _library._obuf_destroyPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
-      get obuf_reset => _library._obuf_resetPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, ffi.Size)>>
-      get obuf_reserve_slow => _library._obuf_reserve_slowPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Size Function(
-                  ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>
-      get obuf_dup => _library._obuf_dupPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>>
-      get obuf_rollback_to_svp => _library._obuf_rollback_to_svpPtr;
+              ffi.Bool Function(ffi.Pointer<transport_controller_t>,
+                  ffi.Pointer<transport_message_t>)>>
+      get transport_controller_send => _library._transport_controller_sendPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_channel_t> Function(
               ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_channel_configuration_t>,
               ffi.Int,
               Dart_Port,
@@ -18617,7 +18620,7 @@ class _SymbolAddresses {
       ffi.NativeFunction<
           ffi.Pointer<transport_connection_t> Function(
               ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_listener_t>,
+              ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_connection_configuration_t>,
               Dart_Port,
               Dart_Port)>> get transport_initialize_connection =>
@@ -20475,6 +20478,73 @@ class transport extends ffi.Struct {
 
 typedef transport_t = transport;
 typedef transport_configuration_t = transport_configuration;
+
+class ibuf extends ffi.Struct {
+  external ffi.Pointer<slab_cache> slabc;
+
+  external ffi.Pointer<ffi.Char> buf;
+
+  /// Start of input.
+  external ffi.Pointer<ffi.Char> rpos;
+
+  /// End of useful input
+  external ffi.Pointer<ffi.Char> wpos;
+
+  /// End of buffer.
+  external ffi.Pointer<ffi.Char> end;
+
+  @ffi.Size()
+  external int start_capacity;
+}
+
+/// Output buffer savepoint. It's possible to
+/// save the current buffer state in a savepoint
+/// and roll back to the saved state at any time
+/// before obuf_reset()
+class obuf_svp extends ffi.Struct {
+  @ffi.Size()
+  external int pos;
+
+  @ffi.Size()
+  external int iov_len;
+
+  @ffi.Size()
+  external int used;
+}
+
+/// An output buffer is a vector of struct iovec
+/// for writev().
+/// Each iovec buffer is allocated using slab allocator.
+/// Buffer size grows by a factor of 2. With this growth factor,
+/// the number of used buffers is unlikely to ever exceed the
+/// hard limit of SMALL_OBUF_IOV_MAX. If it does, an exception is
+/// raised.
+class obuf extends ffi.Struct {
+  external ffi.Pointer<slab_cache> slabc;
+
+  /// Position of the "current" iovec.
+  @ffi.Int()
+  external int pos;
+
+  @ffi.Int()
+  external int n_iov;
+
+  @ffi.Size()
+  external int used;
+
+  /// iov[0] size (allocations are normally a multiple of this number),
+  /// but can be larger if a large chunk is requested by
+  /// obuf_reserve().
+  @ffi.Size()
+  external int start_capacity;
+
+  @ffi.Array.multi([32])
+  external ffi.Array<ffi.Size> capacity;
+
+  @ffi.Array.multi([32])
+  external ffi.Array<iovec> iov;
+}
+
 typedef Dart_WeakPersistentHandle = ffi.Pointer<_Dart_WeakPersistentHandle>;
 
 class _Dart_WeakPersistentHandle extends ffi.Opaque {}
@@ -21390,24 +21460,11 @@ class transport_data_payload extends ffi.Struct {
 
   @ffi.Int32()
   external int size;
-}
-
-class ibuf extends ffi.Struct {
-  external ffi.Pointer<slab_cache> slabc;
-
-  external ffi.Pointer<ffi.Char> buf;
-
-  /// Start of input.
-  external ffi.Pointer<ffi.Char> rpos;
-
-  /// End of useful input
-  external ffi.Pointer<ffi.Char> wpos;
-
-  /// End of buffer.
-  external ffi.Pointer<ffi.Char> end;
 
   @ffi.Size()
-  external int start_capacity;
+  external int offset;
+
+  external ffi.Pointer<ffi.Void> position;
 }
 
 class transport_accept_payload extends ffi.Struct {
@@ -21423,7 +21480,7 @@ class transport_accept_payload extends ffi.Struct {
   external int client_addres_length;
 }
 
-class transport_listener extends ffi.Struct {
+class transport_controller extends ffi.Struct {
   external ffi.Pointer<transport_t> transport;
 
   @ffi.Size()
@@ -21434,6 +21491,8 @@ class transport_listener extends ffi.Struct {
 
   @ffi.Bool()
   external bool active;
+
+  external ffi.Pointer<ffi.Void> message_ring;
 
   @pthread_t()
   external int thread_id;
@@ -21447,7 +21506,7 @@ class transport_listener extends ffi.Struct {
   external pthread_cond_t shutdown_condition;
 }
 
-class transport_listener_configuration extends ffi.Struct {
+class transport_controller_configuration extends ffi.Struct {
   @ffi.Size()
   external int cqe_size;
 }
@@ -21462,59 +21521,10 @@ class transport_message extends ffi.Struct {
   external int payload_type;
 }
 
-typedef transport_listener_t = transport_listener;
-typedef transport_listener_configuration_t = transport_listener_configuration;
+typedef transport_controller_t = transport_controller;
+typedef transport_controller_configuration_t
+    = transport_controller_configuration;
 typedef transport_message_t = transport_message;
-
-/// Output buffer savepoint. It's possible to
-/// save the current buffer state in a savepoint
-/// and roll back to the saved state at any time
-/// before obuf_reset()
-class obuf_svp extends ffi.Struct {
-  @ffi.Size()
-  external int pos;
-
-  @ffi.Size()
-  external int iov_len;
-
-  @ffi.Size()
-  external int used;
-}
-
-/// An output buffer is a vector of struct iovec
-/// for writev().
-/// Each iovec buffer is allocated using slab allocator.
-/// Buffer size grows by a factor of 2. With this growth factor,
-/// the number of used buffers is unlikely to ever exceed the
-/// hard limit of SMALL_OBUF_IOV_MAX. If it does, an exception is
-/// raised.
-class obuf extends ffi.Struct {
-  external ffi.Pointer<slab_cache> slabc;
-
-  /// Position of the "current" iovec.
-  @ffi.Int()
-  external int pos;
-
-  @ffi.Int()
-  external int n_iov;
-
-  @ffi.Size()
-  external int used;
-
-  /// iov[0] size (allocations are normally a multiple of this number),
-  /// but can be larger if a large chunk is requested by
-  /// obuf_reserve().
-  @ffi.Size()
-  external int start_capacity;
-
-  @ffi.Array.multi([32])
-  external ffi.Array<ffi.Size> capacity;
-
-  @ffi.Array.multi([32])
-  external ffi.Array<iovec> iov;
-}
-
-class _Dart_Handle extends ffi.Opaque {}
 
 class transport_channel_configuration extends ffi.Struct {
   @ffi.Size()
@@ -21530,7 +21540,7 @@ class transport_channel_configuration extends ffi.Struct {
 class transport_channel extends ffi.Struct {
   external ffi.Pointer<transport_t> transport;
 
-  external ffi.Pointer<transport_listener_t> listener;
+  external ffi.Pointer<transport_controller_t> controller;
 
   external mempool data_payload_pool;
 
@@ -21575,6 +21585,8 @@ typedef transport_channel_t = transport_channel;
 typedef transport_channel_configuration_t = transport_channel_configuration;
 typedef transport_data_payload_t = transport_data_payload;
 
+class _Dart_Handle extends ffi.Opaque {}
+
 class transport_connection_configuration extends ffi.Struct {
   @ffi.Bool()
   external bool verbose;
@@ -21583,7 +21595,7 @@ class transport_connection_configuration extends ffi.Struct {
 class transport_connection extends ffi.Struct {
   external ffi.Pointer<transport_t> transport;
 
-  external ffi.Pointer<transport_listener_t> listener;
+  external ffi.Pointer<transport_controller_t> controller;
 
   external mempool accept_payload_pool;
 
@@ -22649,6 +22661,8 @@ const int _CS_V6_ENV = 1148;
 
 const int _CS_V7_ENV = 1149;
 
+const int SMALL_OBUF_IOV_MAX = 31;
+
 const int kNativeArgNumberPos = 0;
 
 const int kNativeArgNumberSize = 8;
@@ -22656,8 +22670,6 @@ const int kNativeArgNumberSize = 8;
 const int kNativeArgTypePos = 8;
 
 const int kNativeArgTypeSize = 8;
-
-const int SMALL_OBUF_IOV_MAX = 31;
 
 const int LITTLE_ENDIAN = 1234;
 

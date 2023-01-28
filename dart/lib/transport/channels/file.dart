@@ -15,7 +15,7 @@ class TransportFileChannel {
 
   final TransportBindings _bindings;
   final Pointer<transport_t> _transport;
-  final Pointer<transport_listener_t> _listener;
+  final Pointer<transport_controller_t> _controller;
   final TransportChannelConfiguration _configuration;
   final int _descriptor;
 
@@ -28,7 +28,7 @@ class TransportFileChannel {
   TransportFileChannel(
     this._bindings,
     this._transport,
-    this._listener,
+    this._controller,
     this._configuration,
     this._descriptor, {
     this.onRead,
@@ -39,7 +39,7 @@ class TransportFileChannel {
       _bindings,
       _configuration,
       _transport,
-      _listener,
+      _controller,
       _descriptor,
     );
   }

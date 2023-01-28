@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 
@@ -13,14 +14,14 @@ import 'payload.dart';
 
 class Transport {
   final TransportConfiguration configuration;
-  final TransportListenerConfiguration listenerConfiguration;
+  final TransportControllerConfiguration controllerConfiguration;
 
   late TransportBindings _bindings;
   late TransportLibrary _library;
-  late Pointer<transport_listener_t> _listener;
+  late Pointer<transport_controller_t> _controller;
   late Pointer<transport_t> _transport;
 
-  Transport(this.configuration, this.listenerConfiguration, {String? libraryPath}) {
+  Transport(this.configuration, this.controllerConfiguration, {String? libraryPath}) {
     _library = libraryPath != null
         ? File(libraryPath).existsSync()
             ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
@@ -39,18 +40,14 @@ class Transport {
       transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
       transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
       _transport = _bindings.transport_initialize(transportConfiguration);
-      final listenerConfiguration = arena<transport_listener_configuration_t>();
-      listenerConfiguration.ref.cqe_size = this.listenerConfiguration.cqesSize;
-      _listener = _bindings.transport_listener_start(_transport, listenerConfiguration);
+      final controllerConfiguration = arena<transport_controller_configuration_t>();
+      controllerConfiguration.ref.cqe_size = this.controllerConfiguration.cqesSize;
+      _controller = _bindings.transport_controller_start(_transport, controllerConfiguration);
     });
-    while (true) {
-      _bindings.transport_listener_poll(_listener, false);
-      await Future.delayed(Duration.zero);
-    }
   }
 
   void close() {
-    _bindings.transport_listener_stop(_listener);
+    _bindings.transport_controller_stop(_controller);
     _bindings.transport_close(_transport);
   }
 
@@ -59,7 +56,7 @@ class Transport {
         channelConfiguration,
         _bindings,
         _transport,
-        _listener,
+        _controller,
       )..initialize();
 
   TransportChannel channel(
@@ -73,7 +70,7 @@ class Transport {
       _bindings,
       configuration,
       _transport,
-      _listener,
+      _controller,
       descriptor,
     )..start(
         onRead: onRead,
@@ -93,7 +90,7 @@ class Transport {
     return TransportFileChannel(
       _bindings,
       _transport,
-      _listener,
+      _controller,
       configuration,
       descriptor,
       onStop: onStop,

@@ -8,8 +8,8 @@ import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 
 Future<void> main(List<String> args) async {
-  final serverTransport = Transport(TransportDefaults.transport(), TransportDefaults.listener())..initialize();
-  final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.listener())..initialize();
+  final serverTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
+  final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
   final done = Completer();
 
   var received = 0;

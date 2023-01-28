@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <liburing.h>
 #include "binding_transport.h"
-#include "binding_listener.h"
+#include "binding_controller.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -20,14 +20,14 @@ extern "C"
   typedef struct transport_connection
   {
     transport_t *transport;
-    transport_listener_t *listener;
+    transport_controller_t *controller;
     struct mempool accept_payload_pool;
     Dart_Port accept_port;
     Dart_Port connect_port;
   } transport_connection_t;
 
   transport_connection_t *transport_initialize_connection(transport_t *transport,
-                                                          transport_listener_t *listener,
+                                                          transport_controller_t *controller,
                                                           transport_connection_configuration_t *configuration,
                                                           Dart_Port accept_port,
                                                           Dart_Port connect_port);
