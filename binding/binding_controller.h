@@ -14,11 +14,11 @@ extern "C"
 #endif
   typedef enum transport_payload_type
   {
-    TRANSPORT_PAYLOAD_READ = 0,
-    TRANSPORT_PAYLOAD_WRITE = 1,
-    TRANSPORT_PAYLOAD_ACCEPT = 2,
-    TRANSPORT_PAYLOAD_CONNECT = 3,
-    TRANSPORT_PAYLOAD_max = 4
+    TRANSPORT_PAYLOAD_READ,
+    TRANSPORT_PAYLOAD_WRITE,
+    TRANSPORT_PAYLOAD_ACCEPT,
+    TRANSPORT_PAYLOAD_CONNECT,
+    TRANSPORT_PAYLOAD_max4
   } transport_payload_type_t;
 
   typedef struct transport_data_payload
@@ -26,10 +26,10 @@ extern "C"
     int32_t fd;
     transport_payload_type_t type;
     struct ibuf *buffer;
+    char *position;
     int32_t size;
     int32_t buffer_size;
     size_t offset;
-    void *position;
   } transport_data_payload_t;
 
   typedef struct transport_accept_payload

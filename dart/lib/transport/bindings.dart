@@ -21446,7 +21446,7 @@ abstract class transport_payload_type {
   static const int TRANSPORT_PAYLOAD_WRITE = 1;
   static const int TRANSPORT_PAYLOAD_ACCEPT = 2;
   static const int TRANSPORT_PAYLOAD_CONNECT = 3;
-  static const int TRANSPORT_PAYLOAD_max = 4;
+  static const int TRANSPORT_PAYLOAD_max4 = 4;
 }
 
 class transport_data_payload extends ffi.Struct {
@@ -21458,6 +21458,8 @@ class transport_data_payload extends ffi.Struct {
 
   external ffi.Pointer<ibuf> buffer;
 
+  external ffi.Pointer<ffi.Char> position;
+
   @ffi.Int32()
   external int size;
 
@@ -21466,8 +21468,6 @@ class transport_data_payload extends ffi.Struct {
 
   @ffi.Size()
   external int offset;
-
-  external ffi.Pointer<ffi.Void> position;
 }
 
 class transport_accept_payload extends ffi.Struct {

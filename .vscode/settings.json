@@ -47,6 +47,7 @@
     "algorithm": "c",
     "random": "c",
     "stdexcept": "c",
-    "new": "c"
+    "new": "c",
+    "functional": "c"
   },
 }

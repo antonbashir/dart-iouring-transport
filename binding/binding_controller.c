@@ -34,7 +34,7 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
 
     transport_message_t *message = (transport_message_t *)(cqe->user_data);
     printf("handle type: %d\n", message->payload_type);
-    if (!message)
+    if (!message || cqe->res < 0)
     {
       io_uring_cqe_seen(&controller->transport->ring, cqe);
       break;
@@ -81,14 +81,14 @@ static inline void handle_message(transport_controller_t *controller, transport_
   if (message->payload_type == TRANSPORT_PAYLOAD_READ)
   {
     transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_read(sqe, read_payload->fd, read_payload->position, read_payload->size, read_payload->offset);
+    io_uring_prep_read(sqe, read_payload->fd, (void *)read_payload->position, read_payload->size, read_payload->offset);
     io_uring_sqe_set_data(sqe, message);
     return;
   }
   if (message->payload_type == TRANSPORT_PAYLOAD_WRITE)
   {
     transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_write(sqe, write_payload->fd, write_payload->position, write_payload->size, write_payload->offset);
+    io_uring_prep_write(sqe, write_payload->fd, (void *)write_payload->position, write_payload->size, write_payload->offset);
     io_uring_sqe_set_data(sqe, message);
     return;
   }
