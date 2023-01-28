@@ -19,7 +19,7 @@ Future<void> main(List<String> args) async {
 
   final encoder = Utf8Encoder();
 
-  serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("0.0.0.0", 5678).listen((serverChannel) async {
+  serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("0.0.0.0", 9090).listen((serverChannel) async {
     serverChannel.start(onRead: (payload) {
       received++;
       payload.finalize();
@@ -33,7 +33,7 @@ Future<void> main(List<String> args) async {
     done.complete();
   });
 
-  clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 5678).listen((clientChannel) async {
+  clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9090).listen((clientChannel) async {
     clientChannel.start(onWrite: (payload) {
       sent++;
       payload.finalize();

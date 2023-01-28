@@ -85,16 +85,8 @@ void transport_listener_stop(transport_listener_t *listener)
 
 void transport_listener_poll(transport_listener_t *listener, bool wait)
 {
-  int result = io_uring_submit(&listener->transport->ring);
-  if (result < 0)
-  {
-    if (result != -EBUSY)
-    {
-      return;
-    }
-  }
   struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * listener->cqe_size);
-  result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
+  int result = io_uring_peek_batch_cqe(&listener->transport->ring, cqes, listener->cqe_size);
   if (result == 0)
   {
     if (!wait)
