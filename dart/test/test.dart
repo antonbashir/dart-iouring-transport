@@ -15,10 +15,10 @@ void main() {
   setUpAll(() => _transport.initialize());
   tearDownAll(() => _transport.close());
 
-  // group("[files]", () {
-  //   test("read", testFileRead);
-  //   test("write", testFileWrite);
-  // });
+  group("[files]", () {
+    test("read", testFileRead);
+    test("write", testFileWrite);
+  });
 
   group("[client-server]", () {
     test("ping-pong", testClientServer);
@@ -49,7 +49,8 @@ Future<void> testFileWrite() async {
 
 Future<void> testClientServer() async {
   final received = Completer();
-  final server = _transport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("127.0.0.1", 5678).listen((client) async {
+  final connection = _transport.connection(TransportDefaults.connection(), TransportDefaults.channel());
+  final server = connection.bind("127.0.0.1", 5678).listen((client) async {
     final completer = Completer<String>();
     client.start(onRead: (payload) {
       if (payload.bytes.isEmpty) {
@@ -66,7 +67,7 @@ Future<void> testClientServer() async {
     await received.future;
     client.stop();
   }).asFuture();
-  final client = _transport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 5678).listen((server) async {
+  final client = connection.connect("127.0.0.1", 5678).listen((server) async {
     final completer = Completer<String>();
     server.start(onRead: (payload) {
       if (payload.bytes.isEmpty) {
@@ -84,4 +85,5 @@ Future<void> testClientServer() async {
     server.stop();
   }).asFuture();
   await Future.wait([client, server]);
+  connection.close();
 }
