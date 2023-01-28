@@ -42,6 +42,8 @@ class Transport {
       _transport = _bindings.transport_initialize(transportConfiguration);
       final controllerConfiguration = arena<transport_controller_configuration_t>();
       controllerConfiguration.ref.cqe_size = this.controllerConfiguration.cqesSize;
+      controllerConfiguration.ref.batch_message_limit = this.controllerConfiguration.batchMessageLimit;
+      controllerConfiguration.ref.internal_ring_size = this.controllerConfiguration.internalRingSize;
       _controller = _bindings.transport_controller_start(_transport, controllerConfiguration);
     });
   }

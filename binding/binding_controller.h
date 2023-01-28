@@ -44,6 +44,8 @@ extern "C"
   {
     transport_t *transport;
     size_t cqe_size;
+    size_t internal_ring_size;
+    size_t batch_message_limit;
 
     bool initialized;
     volatile bool active;
@@ -60,6 +62,8 @@ extern "C"
   typedef struct transport_controller_configuration
   {
     size_t cqe_size;
+    size_t internal_ring_size;
+    size_t batch_message_limit;
   } transport_controller_configuration_t;
 
   typedef struct transport_message

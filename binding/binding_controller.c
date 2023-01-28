@@ -33,6 +33,7 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
       continue;
 
     transport_message_t *message = (transport_message_t *)(cqe->user_data);
+    printf("handle type: %d\n", message->payload_type);
     if (!message)
     {
       io_uring_cqe_seen(&controller->transport->ring, cqe);
@@ -109,14 +110,14 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->transport = transport;
   controller->cqe_size = configuration->cqe_size;
   struct transport_controller_ring *ring = malloc(sizeof(struct transport_controller_ring));
-  ring->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->cqe_size * 2);
+  ring->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);
   if (ring->transport_message_buffer == NULL)
   {
     free(ring);
     free(controller);
     return NULL;
   }
-  ck_ring_init(&ring->transport_message_ring, configuration->cqe_size * 2);
+  ck_ring_init(&ring->transport_message_ring, configuration->internal_ring_size);
   ring_retry_max_count = 3;
 
   controller->message_ring = ring;
@@ -136,12 +137,12 @@ void transport_controller_stop(transport_controller_t *controller)
 {
   controller->active = false;
 
-  pthread_mutex_lock(&controller->shutdown_mutex);
-  while (controller->initialized)
-    pthread_cond_wait(&controller->shutdown_condition, &controller->shutdown_mutex);
-  pthread_mutex_unlock(&controller->shutdown_mutex);
-  pthread_cond_destroy(&controller->shutdown_condition);
-  pthread_mutex_destroy(&controller->shutdown_mutex);
+  // pthread_mutex_lock(&controller->shutdown_mutex);
+  // while (controller->initialized)
+  //   pthread_cond_wait(&controller->shutdown_condition, &controller->shutdown_mutex);
+  // pthread_mutex_unlock(&controller->shutdown_mutex);
+  // pthread_cond_destroy(&controller->shutdown_condition);
+  // pthread_mutex_destroy(&controller->shutdown_mutex);
 
   free(controller);
 }
@@ -159,36 +160,37 @@ void *transport_controller_loop(void *input)
   while (controller->active)
   {
     transport_message_t *message;
-    if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
+    int counter = 0;
+    while (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message) && counter++ <= controller->batch_message_limit)
     {
       handle_message(controller, message);
-      int32_t result = io_uring_submit(&controller->transport->ring);
-      if (result < 0)
+    }
+    int32_t result = io_uring_submit(&controller->transport->ring);
+    if (result < 0)
+    {
+      if (result != -EBUSY)
       {
-        if (result != -EBUSY)
-        {
-          continue;
-        }
-      }
-      struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * controller->cqe_size);
-      result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
-      if (result == 0)
-      {
-        free(cqes);
         continue;
       }
-      handle_cqes(controller, result, cqes);
-      free(cqes);
     }
+    struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * controller->cqe_size);
+    result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
+    if (result == 0)
+    {
+      free(cqes);
+      continue;
+    }
+    handle_cqes(controller, result, cqes);
+    free(cqes);
   }
 
-  if (controller->initialized)
-  {
-    pthread_mutex_lock(&controller->shutdown_mutex);
-    controller->initialized = false;
-    pthread_cond_signal(&controller->shutdown_condition);
-    pthread_mutex_unlock(&controller->shutdown_mutex);
-  }
+  // if (controller->initialized)
+  // {
+  //   pthread_mutex_lock(&controller->shutdown_mutex);
+  //   controller->initialized = false;
+  //   pthread_cond_signal(&controller->shutdown_condition);
+  //   pthread_mutex_unlock(&controller->shutdown_mutex);
+  // }
 
   return NULL;
 }

@@ -64,16 +64,24 @@ class TransportChannelConfiguration {
 
 class TransportControllerConfiguration {
   final int cqesSize;
+  final int internalRingSize;
+  final int batchMessageLimit;
 
   TransportControllerConfiguration({
     required this.cqesSize,
+    required this.internalRingSize,
+    required this.batchMessageLimit,
   });
 
   TransportControllerConfiguration copyWith({
     int? cqesSize,
+    int? internalRingSize,
+    int? batchMessageLimit,
   }) =>
       TransportControllerConfiguration(
         cqesSize: cqesSize ?? this.cqesSize,
+        internalRingSize: internalRingSize ?? this.internalRingSize,
+        batchMessageLimit: batchMessageLimit ?? this.batchMessageLimit,
       );
 }
 

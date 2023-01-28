@@ -21489,6 +21489,12 @@ class transport_controller extends ffi.Struct {
   @ffi.Size()
   external int cqe_size;
 
+  @ffi.Size()
+  external int internal_ring_size;
+
+  @ffi.Size()
+  external int batch_message_limit;
+
   @ffi.Bool()
   external bool initialized;
 
@@ -21512,6 +21518,12 @@ class transport_controller extends ffi.Struct {
 class transport_controller_configuration extends ffi.Struct {
   @ffi.Size()
   external int cqe_size;
+
+  @ffi.Size()
+  external int internal_ring_size;
+
+  @ffi.Size()
+  external int batch_message_limit;
 }
 
 class transport_message extends ffi.Struct {
