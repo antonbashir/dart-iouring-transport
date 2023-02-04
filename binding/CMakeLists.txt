@@ -31,6 +31,7 @@ add_custom_target(ck
   LDFLAGS=${DEPENDENCY_LDFLAGS}
   --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ck/build && make && make install
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ck
+  BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/ck/build/lib/libck.a
 )
 
 FetchContent_Declare(
@@ -45,6 +46,7 @@ add_custom_target(liburing
   COMMAND ./configure
   --prefix=${liburing_SOURCE_DIR}/build && make && make install
   WORKING_DIRECTORY ${liburing_SOURCE_DIR}
+  BYPRODUCTS ${liburing_SOURCE_DIR}/build/lib/liburing.a
 )
 
 file(GLOB sources

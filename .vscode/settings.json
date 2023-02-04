@@ -48,6 +48,8 @@
     "random": "c",
     "stdexcept": "c",
     "new": "c",
-    "functional": "c"
+    "functional": "c",
+    "binding_log.h": "c",
+    "binding_connection.h": "c"
   },
 }

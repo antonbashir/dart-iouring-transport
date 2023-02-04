@@ -27,8 +27,8 @@ extern "C"
     transport_payload_type_t type;
     struct ibuf *buffer;
     char *position;
-    int32_t size;
-    int32_t buffer_size;
+    uint32_t size;
+    uint32_t buffer_size;
     size_t offset;
   } transport_data_payload_t;
 
@@ -47,7 +47,7 @@ extern "C"
     size_t internal_ring_size;
     size_t batch_message_limit;
 
-    bool initialized;
+    volatile bool initialized;
     volatile bool active;
 
     void *message_ring;
@@ -57,6 +57,8 @@ extern "C"
     pthread_cond_t initialization_condition;
     pthread_mutex_t shutdown_mutex;
     pthread_cond_t shutdown_condition;
+    pthread_mutex_t submit_mutex;
+    pthread_cond_t submit_condition;
   } transport_controller_t;
 
   typedef struct transport_controller_configuration

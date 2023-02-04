@@ -49,8 +49,11 @@ Future<void> testFileWrite() async {
 
 Future<void> testClientServer() async {
   final received = Completer();
-  final connection = _transport.connection(TransportDefaults.connection(), TransportDefaults.channel());
-  final server = connection.bind("127.0.0.1", 5678).listen((client) async {
+  final serverTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
+  final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
+  final serverConnection = serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel());
+  final clientConnection = clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel());
+  final server = serverConnection.bind("127.0.0.1", 5678).listen((client) async {
     final completer = Completer<String>();
     client.start(onRead: (payload) {
       if (payload.bytes.isEmpty) {
@@ -67,7 +70,7 @@ Future<void> testClientServer() async {
     await received.future;
     client.stop();
   }).asFuture();
-  final client = connection.connect("127.0.0.1", 5678).listen((server) async {
+  final client = clientConnection.connect("127.0.0.1", 5678).listen((server) async {
     final completer = Completer<String>();
     server.start(onRead: (payload) {
       if (payload.bytes.isEmpty) {
@@ -85,5 +88,6 @@ Future<void> testClientServer() async {
     server.stop();
   }).asFuture();
   await Future.wait([client, server]);
-  connection.close();
+  serverConnection.close();
+  clientConnection.close();
 }

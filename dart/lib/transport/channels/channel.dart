@@ -101,7 +101,7 @@ class TransportChannel {
   }
 
   void _handleWrite(dynamic payloadPointer) {
-    Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
+    Pointer<transport_data_payload_t> payload = Pointer.fromAddress(payloadPointer);
     if (payload == nullptr) return;
     final writeBuffer = _bindings.transport_channel_extract_write_buffer(_channel, payload);
     if (onWrite == null) {

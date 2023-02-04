@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include "binding_log.h"
 
 transport_t *transport_initialize(transport_configuration_t *configuration)
 {
@@ -37,7 +38,7 @@ transport_t *transport_initialize(transport_configuration_t *configuration)
                      configuration->slab_allocation_factor,
                      &actual_allocation_factor);
 
-
+  log_info("transport initialized");
   return transport;
 }
 
@@ -49,5 +50,6 @@ void transport_close(transport_t *transport)
   slab_cache_destroy(&transport->cache);
   slab_arena_destroy(&transport->arena);
 
+  log_info("transport closed");
   free(transport);
 }
