@@ -15,13 +15,13 @@ class TransportDefaults {
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
         bufferInitialCapacity: 16320,
         bufferLimit: 18 * 16320,
-        bufferAvailableAwaitDelayed: Duration(seconds: 5),
+        bufferAvailableAwaitDelayed: Duration.zero,
         payloadBufferSize: 32,
       );
 
   static TransportControllerConfiguration controller() => TransportControllerConfiguration(
-        cqesSize: 4096,
-        batchMessageLimit: 2048,
+        cqesSize: 8192,
+        batchMessageLimit: 1,
         internalRingSize: 33554432,
       );
 

@@ -53,7 +53,7 @@ int32_t transport_connection_queue_accept(transport_connection_t *connection, in
   payload->fd = server_socket_fd;
   payload->type = TRANSPORT_PAYLOAD_ACCEPT;
 
-  log_info("queue accept message");
+  //log_info("queue accept message");
   transport_controller_send(connection->controller, transport_controller_create_message(connection->controller, connection->accept_port, payload, TRANSPORT_PAYLOAD_ACCEPT));
 }
 
@@ -73,7 +73,7 @@ int32_t transport_connection_queue_connect(transport_connection_t *connection, i
   payload->fd = socket_fd;
   payload->type = TRANSPORT_PAYLOAD_CONNECT;
 
-  log_info("queue connect message");
+  //log_info("queue connect message");
   transport_controller_send(connection->controller, transport_controller_create_message(connection->controller, connection->connect_port, payload, TRANSPORT_PAYLOAD_CONNECT));
 }
 
@@ -84,6 +84,6 @@ transport_accept_payload_t *transport_connection_allocate_accept_payload(transpo
 
 void transport_connection_free_accept_payload(transport_connection_t *connection, transport_accept_payload_t *payload)
 {
-  log_info("free accept message");
+  //log_info("free accept message");
   mempool_free(&connection->accept_payload_pool, payload);
 }

@@ -86,7 +86,7 @@ int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offs
   payload->buffer_size = channel->payload_buffer_size;
   payload->type = TRANSPORT_PAYLOAD_READ;
 
-  log_info("queue read message");
+  //log_info("queue read message");
   transport_controller_send(channel->controller, transport_controller_create_message(channel->controller, channel->read_port, payload, TRANSPORT_PAYLOAD_READ));
 
   channel->current_read_buffer->wpos += channel->payload_buffer_size;
@@ -108,7 +108,7 @@ int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t pay
   payload->position = channel->current_write_buffer->wpos;
   payload->type = TRANSPORT_PAYLOAD_WRITE;
 
-  log_info("queue write message");
+  //log_info("queue write message");
   transport_controller_send(channel->controller, transport_controller_create_message(channel->controller, channel->write_port, payload, TRANSPORT_PAYLOAD_WRITE));
 
   channel->current_write_buffer->wpos += channel->payload_buffer_size;
@@ -122,13 +122,13 @@ void *transport_channel_prepare_read(transport_channel_t *channel)
   {
     if (ibuf_used(old_buffer) == 0)
       ibuf_reset(old_buffer);
-    log_info("reuse read buffer, current_read_size=%d", channel->current_read_size);
+    //log_info("reuse read buffer, current_read_size=%d", channel->current_read_size);
     return old_buffer->wpos;
   }
 
   if (ibuf_used(old_buffer) == channel->current_read_size)
   {
-    log_info("reserve read buffer, current_read_size=%d", channel->current_read_size);
+    //log_info("reserve read buffer, current_read_size=%d", channel->current_read_size);
     ibuf_reserve(old_buffer, channel->payload_buffer_size);
     return old_buffer->wpos;
   }
@@ -140,7 +140,7 @@ void *transport_channel_prepare_read(transport_channel_t *channel)
     return NULL;
   }
 
-  log_info("rotate read buffer, current_read_size=%d", channel->current_read_size);
+  //log_info("rotate read buffer, current_read_size=%d", channel->current_read_size);
   ibuf_reserve(new_buffer, channel->payload_buffer_size + channel->current_read_size);
 
   old_buffer->wpos -= channel->current_read_size;
@@ -173,14 +173,14 @@ void *transport_channel_prepare_write(transport_channel_t *channel)
   {
     if (ibuf_used(old_buffer) == 0)
       ibuf_reset(old_buffer);
-    log_info("reuse write buffer, current_write_size=%d", channel->current_write_size);
+    //log_info("reuse write buffer, current_write_size=%d", channel->current_write_size);
     return old_buffer->wpos;
   }
 
   if (ibuf_used(old_buffer) == channel->current_write_size)
   {
     ibuf_reserve(old_buffer, channel->payload_buffer_size);
-    log_info("reserve write buffer, current_write_size=%d", channel->current_write_size);
+    //log_info("reserve write buffer, current_write_size=%d", channel->current_write_size);
     return old_buffer->wpos;
   }
 
@@ -191,7 +191,7 @@ void *transport_channel_prepare_write(transport_channel_t *channel)
     return NULL;
   }
 
-  log_info("rotate write buffer, current_write_size=%d", channel->current_write_size);
+  //log_info("rotate write buffer, current_write_size=%d", channel->current_write_size);
   ibuf_reserve(new_buffer, channel->payload_buffer_size + channel->current_write_size);
 
   old_buffer->wpos -= channel->current_write_size;
@@ -220,18 +220,18 @@ void *transport_channel_prepare_write(transport_channel_t *channel)
 void *transport_channel_extract_read_buffer(transport_channel_t *channel, transport_data_payload_t *message)
 {
   void *buffer = message->buffer->rpos + channel->current_read_size;
-  log_info("before extract read buffer, current_read_size=%d", channel->current_read_size);
+  //log_info("before extract read buffer, current_read_size=%d", channel->current_read_size);
   channel->current_read_size += channel->payload_buffer_size;
-  log_info("after extract read buffer, current_read_size=%d", channel->current_read_size);
+  //log_info("after extract read buffer, current_read_size=%d", channel->current_read_size);
   return buffer;
 }
 
 void *transport_channel_extract_write_buffer(transport_channel_t *channel, transport_data_payload_t *message)
 {
   void *buffer = message->buffer->rpos + channel->current_write_size;
-  log_info("before extract write buffer, current_write_size=%d", channel->current_write_size);
+  //log_info("before extract write buffer, current_write_size=%d", channel->current_write_size);
   channel->current_write_size += channel->payload_buffer_size;
-  log_info("after extract write buffer, current_write_size=%d", channel->current_write_size);
+  //log_info("after extract write buffer, current_write_size=%d", channel->current_write_size);
   return buffer;
 }
 
@@ -245,15 +245,15 @@ void transport_channel_free_data_payload(transport_channel_t *channel, transport
   payload->buffer->rpos += channel->payload_buffer_size;
   if (payload->type == TRANSPORT_PAYLOAD_READ)
   {
-    log_info("before free data read payload, current_read_size=%d", channel->current_read_size);
+    //log_info("before free data read payload, current_read_size=%d", channel->current_read_size);
     channel->current_read_size -= channel->payload_buffer_size;
-    log_info("after free data read payload, current_read_size=%d", channel->current_read_size);
+    //log_info("after free data read payload, current_read_size=%d", channel->current_read_size);
   }
   if (payload->type == TRANSPORT_PAYLOAD_WRITE)
   {
-    log_info("before free data write payload, current_write_size=%d", channel->current_write_size);
+    //log_info("before free data write payload, current_write_size=%d", channel->current_write_size);
     channel->current_write_size -= channel->payload_buffer_size;
-    log_info("after free data write payload, current_write_size=%d", channel->current_write_size);
+    //log_info("after free data write payload, current_write_size=%d", channel->current_write_size);
   }
   mempool_free(&channel->data_payload_pool, payload);
 }
