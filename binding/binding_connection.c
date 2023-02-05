@@ -12,6 +12,15 @@
 #include "binding_connection.h"
 #include "binding_common.h"
 
+static inline transport_message_t *transport_controller_create_message(transport_controller_t *controller, Dart_Port port, void *payload, transport_payload_type_t type)
+{
+  transport_message_t *message = malloc(sizeof(transport_message_t));
+  message->port = port;
+  message->payload = payload;
+  message->payload_type = type;
+  return message;
+}
+
 transport_connection_t *transport_initialize_connection(transport_t *transport,
                                                         transport_controller_t *controller,
                                                         transport_connection_configuration_t *configuration,
@@ -44,7 +53,7 @@ void transport_close_connection(transport_connection_t *connection)
 int32_t transport_connection_queue_accept(transport_connection_t *connection, int32_t server_socket_fd)
 {
   transport_accept_payload_t *payload = mempool_alloc(&connection->accept_payload_pool);
-  if (!payload)
+  if (unlikely(!payload))
   {
     return -1;
   }
@@ -53,15 +62,16 @@ int32_t transport_connection_queue_accept(transport_connection_t *connection, in
   payload->fd = server_socket_fd;
   payload->type = TRANSPORT_PAYLOAD_ACCEPT;
 
-  //log_info("queue accept message");
-  transport_controller_send(connection->controller, transport_controller_create_message(connection->controller, connection->accept_port, payload, TRANSPORT_PAYLOAD_ACCEPT));
+  // log_info("queue accept message");
+  transport_message_t *message = transport_controller_create_message(connection->controller, connection->accept_port, payload, TRANSPORT_PAYLOAD_ACCEPT);
+  transport_controller_send(connection->controller, message);
 }
 
 int32_t transport_connection_queue_connect(transport_connection_t *connection, int32_t socket_fd, const char *ip, int32_t port)
 {
 
   transport_accept_payload_t *payload = mempool_alloc(&connection->accept_payload_pool);
-  if (!payload)
+  if (unlikely(!payload))
   {
     return -1;
   }
@@ -73,8 +83,9 @@ int32_t transport_connection_queue_connect(transport_connection_t *connection, i
   payload->fd = socket_fd;
   payload->type = TRANSPORT_PAYLOAD_CONNECT;
 
-  //log_info("queue connect message");
-  transport_controller_send(connection->controller, transport_controller_create_message(connection->controller, connection->connect_port, payload, TRANSPORT_PAYLOAD_CONNECT));
+  // log_info("queue connect message");
+  transport_message_t *message = transport_controller_create_message(connection->controller, connection->connect_port, payload, TRANSPORT_PAYLOAD_CONNECT);
+  transport_controller_send(connection->controller, message);
 }
 
 transport_accept_payload_t *transport_connection_allocate_accept_payload(transport_connection_t *connection)
@@ -84,6 +95,6 @@ transport_accept_payload_t *transport_connection_allocate_accept_payload(transpo
 
 void transport_connection_free_accept_payload(transport_connection_t *connection, transport_accept_payload_t *payload)
 {
-  //log_info("free accept message");
+  // log_info("free accept message");
   mempool_free(&connection->accept_payload_pool, payload);
 }

@@ -16,7 +16,7 @@ class TransportDefaults {
         bufferInitialCapacity: 16320,
         bufferLimit: 18 * 16320,
         bufferAvailableAwaitDelayed: Duration.zero,
-        payloadBufferSize: 32,
+        payloadBufferSize: 1024,
       );
 
   static TransportControllerConfiguration controller() => TransportControllerConfiguration(
@@ -25,5 +25,5 @@ class TransportDefaults {
         internalRingSize: 33554432,
       );
 
-  static TransportConnectionConfiguration connection() => TransportConnectionConfiguration();
+  static TransportConnectionConfiguration connection() => TransportConnectionConfiguration(1024);
 }

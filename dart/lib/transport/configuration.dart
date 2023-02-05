@@ -86,7 +86,9 @@ class TransportControllerConfiguration {
 }
 
 class TransportConnectionConfiguration {
-  TransportConnectionConfiguration();
+  final int backlog;
 
-  TransportConnectionConfiguration copyWith() => TransportConnectionConfiguration();
+  TransportConnectionConfiguration(this.backlog);
+
+  TransportConnectionConfiguration copyWith({int? backlog}) => TransportConnectionConfiguration(backlog ?? this.backlog);
 }

@@ -51,7 +51,7 @@ class TransportConnection {
 
   Stream<TransportChannel> bind(String host, int port) {
     final socket = _bindings.transport_socket_create();
-    _bindings.transport_socket_bind(socket, host.toNativeUtf8().cast(), port, 0);
+    _bindings.transport_socket_bind(socket, host.toNativeUtf8().cast(), port, _configuration.backlog);
     _bindings.transport_connection_queue_accept(_connection, socket);
     return clientChannels.stream;
   }

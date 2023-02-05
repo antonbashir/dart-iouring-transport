@@ -20,35 +20,48 @@ Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
 
   serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("0.0.0.0", 9999).listen((serverChannel) async {
-    serverChannel.start(onRead: (payload) async {
-      received++;
-      payload.finalize();
-      if (!stopChannels) {
-        serverChannel.queueWrite(encoder.convert("from server"));
+    serverChannel.start(
+      onWrite: (payload) {
+        payload.finalize();
         serverChannel.queueRead();
-        return;
-      }
-      serverChannel.stop();
-      done.complete();
-    });
+        //print("onWrite");
+      },
+      onRead: (payload) {
+        received++;
+        payload.finalize();
+        //print("onRead");
+        if (!stopChannels) {
+          serverChannel.queueWrite(encoder.convert("from server"));
+          return;
+        }
+        serverChannel.stop();
+        done.complete();
+      },
+    );
+    //print("onAccept");
     serverChannel.queueRead();
   });
 
   clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
-    clientChannel.start(onWrite: (payload) async {
-      sent++;
-      payload.finalize();
-    }, onRead: (payload) async {
-      payload.finalize();
-      if (!stopChannels) {
-        clientChannel.queueWrite(encoder.convert("from client"));
+    clientChannel.start(
+      onWrite: (payload) {
+        sent++;
+        payload.finalize();
         clientChannel.queueRead();
-        return;
-      }
-      clientChannel.stop();
-    });
+        //print("onWrite");
+      },
+      onRead: (payload) {
+        payload.finalize();
+        //print("onRead");
+        if (!stopChannels) {
+          clientChannel.queueWrite(encoder.convert("from client"));
+          return;
+        }
+        clientChannel.stop();
+      },
+    );
+    //print("onConnect");
     clientChannel.queueWrite(encoder.convert("from client"));
-    clientChannel.queueRead();
   });
 
   await Future.delayed(Duration(seconds: seconds));

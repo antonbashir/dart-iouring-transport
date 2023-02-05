@@ -31,7 +31,7 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
   for (size_t cqe_index = 0; cqe_index < count; cqe_index++)
   {
     struct io_uring_cqe *cqe = cqes[cqe_index];
-    //log_info("ring cqe %d result %d", cqe_index, cqe->res);
+    // log_info("ring cqe %d result %d", cqe_index, cqe->res);
 
     if (unlikely(cqe->res < 0))
     {
@@ -50,7 +50,7 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
     }
 
     transport_message_t *message = (transport_message_t *)(cqe->user_data);
-    //log_info("ring cqe %d message type %d", cqe_index, message->payload_type);
+    // log_info("ring cqe %d message type %d", cqe_index, message->payload_type);
     if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
     {
       ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
@@ -70,12 +70,12 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
 static inline void handle_message(transport_controller_t *controller, transport_message_t *message)
 {
   struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
-  if (sqe == NULL)
+  if (unlikely(sqe == NULL))
   {
     return;
   }
 
-  //log_info("handle message with type %d", message->payload_type);
+  // log_info("handle message with type %d", message->payload_type);
   if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
   {
     transport_accept_payload_t *accept_payload = (transport_accept_payload_t *)message->payload;
@@ -104,15 +104,6 @@ static inline void handle_message(transport_controller_t *controller, transport_
     io_uring_sqe_set_data(sqe, message);
     return;
   }
-}
-
-transport_message_t *transport_controller_create_message(transport_controller_t *controller, Dart_Port port, void *payload, transport_payload_type_t type)
-{
-  transport_message_t *message = malloc(sizeof(transport_message_t));
-  message->port = port;
-  message->payload = payload;
-  message->payload_type = type;
-  return message;
 }
 
 transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration)
@@ -145,20 +136,20 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   ring_retry_max_count = 3;
   controller->message_ring = ring;
 
-  //log_info("controller loop lock mutex [main]");
-  pthread_mutex_lock(&controller->initialization_mutex);
-  //log_info("controller is starting");
+  // //log_info("controller loop lock mutex [main]");
+  // pthread_mutex_lock(&controller->initialization_mutex);
+  // //log_info("controller is starting");
   pthread_create(&controller->thread_id, NULL, transport_controller_loop, controller);
-  while (!controller->initialized)
-  {
-    //log_info("controller loop wait");
-    pthread_cond_wait(&controller->initialization_condition, &controller->initialization_mutex);
-  }
-  //log_info("controller loop unlock mutex [main]");
-  pthread_mutex_unlock(&controller->initialization_mutex);
-  //log_info("controller loop destroy cond [main]");
-  pthread_cond_destroy(&controller->initialization_condition);
-  //log_info("controller initialized");
+  // while (!controller->initialized)
+  // {
+  //   //log_info("controller loop wait");
+  //   pthread_cond_wait(&controller->initialization_condition, &controller->initialization_mutex);
+  // }
+  // //log_info("controller loop unlock mutex [main]");
+  // pthread_mutex_unlock(&controller->initialization_mutex);
+  // //log_info("controller loop destroy cond [main]");
+  // pthread_cond_destroy(&controller->initialization_condition);
+  // //log_info("controller initialized");
 
   return controller;
 }
@@ -167,7 +158,7 @@ void transport_controller_stop(transport_controller_t *controller)
 {
   pthread_mutex_lock(&controller->submit_mutex);
   controller->active = false;
-  //log_info("controller is stopping");
+  // log_info("controller is stopping");
   pthread_cond_signal(&controller->submit_condition);
   pthread_mutex_unlock(&controller->submit_mutex);
 
@@ -179,35 +170,37 @@ void transport_controller_stop(transport_controller_t *controller)
   pthread_mutex_destroy(&controller->shutdown_mutex);
 
   free(controller);
-  //log_info("controller is closed");
+  // log_info("controller is closed");
 }
 
 void *transport_controller_loop(void *input)
 {
-  //log_info("controller loop started");
+  // log_info("controller loop started");
   transport_controller_t *controller = (transport_controller_t *)input;
   struct transport_controller_ring *ring = (struct transport_controller_ring *)controller->message_ring;
   controller->active = true;
-  //log_info("controller loop lock mutex [worker]");
-  pthread_mutex_lock(&controller->initialization_mutex);
+  // //log_info("controller loop lock mutex [worker]");
+  // pthread_mutex_lock(&controller->initialization_mutex);
   controller->initialized = true;
-  //log_info("controller loop signal [worker]");
-  pthread_cond_signal(&controller->initialization_condition);
-  //log_info("controller loop unlock mutex  [worker]");
-  pthread_mutex_unlock(&controller->initialization_mutex);
+  // //log_info("controller loop signal [worker]");
+  // pthread_cond_signal(&controller->initialization_condition);
+  // //log_info("controller loop unlock mutex  [worker]");
+  // pthread_mutex_unlock(&controller->initialization_mutex);
 
-  //log_info("controller loop is active");
+  // log_info("controller loop is active");
   while (likely(controller->active))
   {
     transport_message_t *message;
-    while (unlikely(!ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message)))
+    if (likely(ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message)))
     {
-      ck_spinlock_cas_lock_eb(&ring->submit_lock);
+      handle_message(controller, message);
     }
-    handle_message(controller, message);
 
     int32_t submit_result = io_uring_submit(&controller->transport->ring);
-    //log_info("ring submit result: %d", submit_result);
+    if (unlikely(submit_result == 0))
+    {
+      continue;
+    }
     if (unlikely(submit_result < 0))
     {
       if (submit_result != -EBUSY)
@@ -215,19 +208,17 @@ void *transport_controller_loop(void *input)
         continue;
       }
     }
+    // log_info("ring submit result: %d", submit_result);
 
-    struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * controller->cqe_size);
+    struct io_uring_cqe *cqes[controller->cqe_size];
     int32_t receive_result = io_uring_wait_cqe(&controller->transport->ring, cqes);
-    //log_info("ring cqe wait result: %d", receive_result);
+    // log_info("ring cqe wait result: %d", receive_result);
     if (likely(receive_result == 0))
     {
       receive_result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
-      //log_info("ring cqe batch peek result: %d", receive_result);
+      // log_info("ring cqe batch peek result: %d", receive_result);
       handle_cqes(controller, receive_result, cqes);
-      free(cqes);
-      continue;
     }
-    free(cqes);
   }
 
   if (controller->initialized)
@@ -252,7 +243,7 @@ bool transport_controller_send(transport_controller_t *controller, transport_mes
   {
     return false;
   }
-  //log_info("sending message with type %d", message->payload_type);
+  // log_info("sending message with type %d", message->payload_type);
   struct transport_controller_ring *ring = (struct transport_controller_ring *)controller->message_ring;
   int count = 0;
 
@@ -265,7 +256,6 @@ bool transport_controller_send(transport_controller_t *controller, transport_mes
       return false;
     }
   }
-  ck_spinlock_cas_unlock(&ring->submit_lock);
   ring->ring_send_backoff = CK_BACKOFF_INITIALIZER;
   return true;
 }

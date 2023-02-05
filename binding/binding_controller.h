@@ -18,7 +18,7 @@ extern "C"
     TRANSPORT_PAYLOAD_WRITE,
     TRANSPORT_PAYLOAD_ACCEPT,
     TRANSPORT_PAYLOAD_CONNECT,
-    TRANSPORT_PAYLOAD_max4
+    TRANSPORT_PAYLOAD_max
   } transport_payload_type_t;
 
   typedef struct transport_data_payload
@@ -77,7 +77,6 @@ extern "C"
 
   transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration);
   void transport_controller_stop(transport_controller_t *controller);
-  transport_message_t *transport_controller_create_message(transport_controller_t *controller, Dart_Port port, void *payload, transport_payload_type_t type);
   bool transport_controller_send(transport_controller_t *controller, transport_message_t *message);
 #if defined(__cplusplus)
 }

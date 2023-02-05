@@ -4,8 +4,8 @@ enable_language(C)
 
 set(LIBURING_VERSION liburing-2.3)
 set(CK_VERSION 0.6.0)
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fPIC -static-libgcc -static-libstdc++ -pg")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O3 -fPIC -static-libgcc -static-libstdc++ -pg")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fPIC -static-libgcc -static-libstdc++")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O2 -fPIC -static-libgcc -static-libstdc++")
 
 include(FetchContent)
 
