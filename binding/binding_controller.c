@@ -4,6 +4,7 @@
 
 #include "ck_ring.h"
 #include "ck_backoff.h"
+#include "ck_spinlock.h"
 
 static int ring_retry_max_count = 3;
 
@@ -14,6 +15,7 @@ struct transport_controller_ring
   ck_ring_buffer_t *transport_message_buffer;
   ck_ring_t transport_message_ring;
   ck_backoff_t ring_send_backoff;
+  ck_spinlock_cas_t submit_lock;
 };
 
 static inline void dart_post_pointer(void *pointer, Dart_Port port)
@@ -32,7 +34,7 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
 
     if (!cqe)
     {
-      log_info("ring cqe with index %d is null", cqe_index);
+      log_error("ring cqe with index %d is null", cqe_index);
       continue;
     }
 
@@ -48,7 +50,7 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
 
     if (!message)
     {
-      log_info("ring cqe %d message is null", cqe_index);
+      log_error("ring cqe %d message is null", cqe_index);
       io_uring_cqe_seen(&controller->transport->ring, cqe);
       continue;
     }
@@ -128,6 +130,7 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->internal_ring_size = configuration->internal_ring_size;
   struct transport_controller_ring *ring = malloc(sizeof(struct transport_controller_ring));
   ring->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);
+  ck_spinlock_cas_init(&ring->submit_lock);
   if (ring->transport_message_buffer == NULL)
   {
     free(ring);
@@ -219,9 +222,7 @@ void *transport_controller_loop(void *input)
 
     if (submit_result == 0)
     {
-      pthread_mutex_lock(&controller->submit_mutex);
-      pthread_cond_wait(&controller->submit_condition, &controller->submit_mutex);
-      pthread_mutex_unlock(&controller->submit_mutex);
+      ck_spinlock_cas_lock_eb(&ring->submit_lock);
       continue;
     }
 
@@ -263,7 +264,7 @@ bool transport_controller_send(transport_controller_t *controller, transport_mes
   log_info("sending message with type %d", message->payload_type);
   struct transport_controller_ring *ring = (struct transport_controller_ring *)controller->message_ring;
   int count = 0;
-  pthread_mutex_lock(&controller->submit_mutex);
+
   while (!ck_ring_enqueue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, message))
   {
     ck_backoff_eb(&ring->ring_send_backoff);
@@ -273,8 +274,7 @@ bool transport_controller_send(transport_controller_t *controller, transport_mes
       return false;
     }
   }
-  pthread_cond_signal(&controller->submit_condition);
-  pthread_mutex_unlock(&controller->submit_mutex);
+  ck_spinlock_cas_unlock(&ring->submit_lock);
   ring->ring_send_backoff = CK_BACKOFF_INITIALIZER;
   return true;
 }

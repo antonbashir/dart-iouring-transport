@@ -15,7 +15,7 @@ class TransportDefaults {
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
         bufferInitialCapacity: 16320,
         bufferLimit: 18 * 16320,
-        bufferAvailableAwaitDelayed: Duration.zero,
+        bufferAvailableAwaitDelayed: Duration(seconds: 5),
         payloadBufferSize: 32,
       );
 

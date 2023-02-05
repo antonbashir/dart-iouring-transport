@@ -50,6 +50,7 @@
     "new": "c",
     "functional": "c",
     "binding_log.h": "c",
-    "binding_connection.h": "c"
+    "binding_connection.h": "c",
+    "ck_backoff.h": "c"
   },
 }

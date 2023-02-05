@@ -20,30 +20,36 @@ Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
 
   serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("0.0.0.0", 9999).listen((serverChannel) async {
-    serverChannel.start(onRead: (payload) {
+    serverChannel.start(onRead: (payload) async {
       received++;
       payload.finalize();
+      if (!stopChannels) {
+        serverChannel.queueWrite(encoder.convert("from server"));
+        serverChannel.queueRead();
+        return;
+      }
+      serverChannel.stop();
+      done.complete();
     });
-    while (!stopChannels) {
-      await Future.delayed(Duration.zero);
-      serverChannel.queueRead();
-      serverChannel.queueWrite(encoder.convert("from server"));
-    }
-    //serverChannel.stop();
-    done.complete();
+    serverChannel.queueWrite(encoder.convert("from server"));
+    serverChannel.queueRead();
   });
 
   clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
-    clientChannel.start(onWrite: (payload) {
+    clientChannel.start(onWrite: (payload) async {
       sent++;
       payload.finalize();
+    }, onRead: (payload) async {
+      payload.finalize();
+      if (!stopChannels) {
+        clientChannel.queueWrite(encoder.convert("from client"));
+        clientChannel.queueRead();
+        return;
+      }
+      clientChannel.stop();
     });
-    while (!stopChannels) {
-      await Future.delayed(Duration.zero);
-      clientChannel.queueRead();
-      clientChannel.queueWrite(encoder.convert("from client"));
-    }
-    //clientChannel.stop();
+    clientChannel.queueWrite(encoder.convert("from client"));
+    clientChannel.queueRead();
   });
 
   await Future.delayed(Duration(seconds: seconds));
