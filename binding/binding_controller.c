@@ -31,30 +31,25 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
   for (size_t cqe_index = 0; cqe_index < count; cqe_index++)
   {
     struct io_uring_cqe *cqe = cqes[cqe_index];
-
-    if (!cqe)
-    {
-      log_error("ring cqe with index %d is null", cqe_index);
-      continue;
-    }
-
-    transport_message_t *message = (transport_message_t *)(cqe->user_data);
     // log_info("ring cqe %d result %d", cqe_index, cqe->res);
 
     if (cqe->res < 0)
     {
-      transport_controller_send(controller, message);
+      if (cqe->user_data)
+      {
+        free((void *)cqe->user_data);
+      }
       io_uring_cqe_seen(&controller->transport->ring, cqe);
       continue;
     }
 
-    if (!message)
+    if (!cqe->user_data)
     {
-      log_error("ring cqe %d message is null", cqe_index);
       io_uring_cqe_seen(&controller->transport->ring, cqe);
       continue;
     }
 
+    transport_message_t *message = (transport_message_t *)(cqe->user_data);
     // log_info("ring cqe %d message type %d", cqe_index, message->payload_type);
     if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
     {
@@ -170,12 +165,11 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
 
 void transport_controller_stop(transport_controller_t *controller)
 {
-  // pthread_mutex_lock(&controller->submit_mutex);
+  pthread_mutex_lock(&controller->submit_mutex);
   controller->active = false;
-  ck_spinlock_cas_unlock(&((struct transport_controller_ring *)controller->message_ring)->submit_lock);
   // log_info("controller is stopping");
-  // pthread_cond_signal(&controller->submit_condition);
-  // pthread_mutex_unlock(&controller->submit_mutex);
+  pthread_cond_signal(&controller->submit_condition);
+  pthread_mutex_unlock(&controller->submit_mutex);
 
   pthread_mutex_lock(&controller->shutdown_mutex);
   while (controller->initialized)
@@ -206,19 +200,11 @@ void *transport_controller_loop(void *input)
   while (controller->active)
   {
     transport_message_t *message;
-    //    size_t count = 0;
-    if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
+    while (!ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
     {
-      handle_message(controller, message);
-      // if (message->payload_type != TRANSPORT_PAYLOAD_READ && message->payload_type != TRANSPORT_PAYLOAD_WRITE)
-      // {
-      //   break;
-      // }
-      // if (count++ > controller->batch_message_limit)
-      // {
-      //   break;
-      // }
+      ck_spinlock_cas_lock_eb(&ring->submit_lock);
     }
+    handle_message(controller, message);
 
     int32_t submit_result = io_uring_submit(&controller->transport->ring);
     // log_info("ring submit result: %d", submit_result);
@@ -228,12 +214,6 @@ void *transport_controller_loop(void *input)
       {
         continue;
       }
-    }
-
-    if (submit_result == 0)
-    {
-      ck_spinlock_cas_lock_eb(&ring->submit_lock);
-      continue;
     }
 
     struct io_uring_cqe **cqes = malloc(sizeof(struct io_uring_cqe *) * controller->cqe_size);

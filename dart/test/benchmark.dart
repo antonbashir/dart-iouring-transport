@@ -14,7 +14,8 @@ Future<void> main(List<String> args) async {
 
   var received = 0;
   var sent = 0;
-  var seconds = 30;
+  var seconds = 10;
+  var batch = 1000;
   var stopChannels = false;
 
   final encoder = Utf8Encoder();
