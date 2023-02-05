@@ -20,7 +20,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "binding_log.h"
+#include "binding_common.h"
 
 #define MAX_CALLBACKS 32
 

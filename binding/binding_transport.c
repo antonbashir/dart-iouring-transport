@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <sys/time.h>
-#include "binding_log.h"
+#include "binding_common.h"
 
 transport_t *transport_initialize(transport_configuration_t *configuration)
 {

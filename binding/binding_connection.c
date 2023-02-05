@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include "binding_connection.h"
-#include "binding_log.h"
+#include "binding_common.h"
 
 transport_connection_t *transport_initialize_connection(transport_t *transport,
                                                         transport_controller_t *controller,

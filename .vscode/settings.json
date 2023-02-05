@@ -52,6 +52,7 @@
     "binding_log.h": "c",
     "binding_connection.h": "c",
     "ck_backoff.h": "c",
-    "system_error": "c"
+    "system_error": "c",
+    "binding_common.h": "c"
   },
 }

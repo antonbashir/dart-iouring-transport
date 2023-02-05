@@ -70,3 +70,7 @@ terraform.tfstate.backup
 _deps
 build/
 examples/
+out.perf-folded
+perf.data.old
+perf.data
+perf.svg

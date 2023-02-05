@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/time.h>
-#include "binding_log.h"
+#include "binding_common.h"
 
 transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                   transport_controller_t *controller,
