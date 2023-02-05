@@ -15,7 +15,6 @@ Future<void> main(List<String> args) async {
   var received = 0;
   var sent = 0;
   var seconds = 10;
-  var batch = 1000;
   var stopChannels = false;
 
   final encoder = Utf8Encoder();
@@ -25,15 +24,17 @@ Future<void> main(List<String> args) async {
       received++;
       payload.finalize();
       if (!stopChannels) {
-        serverChannel.queueWrite(encoder.convert("from server"));
         serverChannel.queueRead();
         return;
       }
       serverChannel.stop();
       done.complete();
     });
-    serverChannel.queueWrite(encoder.convert("from server"));
     serverChannel.queueRead();
+    while (!stopChannels) {
+      await serverChannel.queueWrite(encoder.convert("from server"));
+      await Future.delayed(Duration.zero);
+    }
   });
 
   clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
@@ -43,14 +44,16 @@ Future<void> main(List<String> args) async {
     }, onRead: (payload) async {
       payload.finalize();
       if (!stopChannels) {
-        clientChannel.queueWrite(encoder.convert("from client"));
         clientChannel.queueRead();
         return;
       }
       clientChannel.stop();
     });
-    clientChannel.queueWrite(encoder.convert("from client"));
     clientChannel.queueRead();
+    while (!stopChannels) {
+      await clientChannel.queueWrite(encoder.convert("from client"));
+      await Future.delayed(Duration.zero);
+    }
   });
 
   await Future.delayed(Duration(seconds: seconds));

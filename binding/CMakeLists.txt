@@ -9,12 +9,12 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O3 -fPIC -sta
 
 include(FetchContent)
 
-# FetchContent_Declare(
-#   ck
-#   URL http://concurrencykit.org/releases/ck-${CK_VERSION}.tar.gz
-#   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ck
-# )
-# FetchContent_MakeAvailable(ck)
+FetchContent_Declare(
+  ck
+  URL https://github.com/concurrencykit/ck/archive/refs/tags/${CK_VERSION}.tar.gz
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ck
+)
+FetchContent_MakeAvailable(ck)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ck/include)
 
 set(DEPENDENCY_CFLAGS "-fPIC -O2")
@@ -31,7 +31,6 @@ add_custom_target(ck
   LDFLAGS=${DEPENDENCY_LDFLAGS}
   --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ck/build && make && make install
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ck
-  BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/ck/build/lib/libck.a
 )
 
 FetchContent_Declare(
@@ -46,7 +45,6 @@ add_custom_target(liburing
   COMMAND ./configure
   --prefix=${liburing_SOURCE_DIR}/build && make && make install
   WORKING_DIRECTORY ${liburing_SOURCE_DIR}
-  BYPRODUCTS ${liburing_SOURCE_DIR}/build/lib/liburing.a
 )
 
 file(GLOB sources
