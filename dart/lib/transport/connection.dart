@@ -21,6 +21,8 @@ class TransportConnection {
   late final RawReceivePort _acceptPort = RawReceivePort(_handleAccept);
   late final RawReceivePort _connectPort = RawReceivePort(_handleConnect);
 
+  late int _socket;
+
   TransportConnection(
     this._configuration,
     this._channelConfiguration,
@@ -40,6 +42,7 @@ class TransportConnection {
         _acceptPort.sendPort.nativePort,
         _connectPort.sendPort.nativePort,
       );
+      _socket = _bindings.transport_socket_create();
     });
   }
 
@@ -50,15 +53,13 @@ class TransportConnection {
   }
 
   Stream<TransportChannel> bind(String host, int port) {
-    final socket = _bindings.transport_socket_create();
-    _bindings.transport_socket_bind(socket, host.toNativeUtf8().cast(), port, _configuration.backlog);
-    _bindings.transport_connection_queue_accept(_connection, socket);
+    _bindings.transport_socket_bind(_socket, host.toNativeUtf8().cast(), port, _configuration.backlog);
+    _bindings.transport_connection_queue_accept(_connection, _socket);
     return clientChannels.stream;
   }
 
   Stream<TransportChannel> connect(String host, int port) {
-    final socket = _bindings.transport_socket_create();
-    _bindings.transport_connection_queue_connect(_connection, socket, host.toNativeUtf8().cast(), port);
+    _bindings.transport_connection_queue_connect(_connection, _socket, host.toNativeUtf8().cast(), port);
     return serverChannels.stream;
   }
 
@@ -67,6 +68,7 @@ class TransportConnection {
     if (payload == nullptr) return;
     clientChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _controller, payload.ref.fd, onStop: () => clientChannels.close()));
     _bindings.transport_connection_free_accept_payload(_connection, payload);
+    _bindings.transport_connection_queue_accept(_connection, _socket);
   }
 
   void _handleConnect(dynamic payloadPointer) {

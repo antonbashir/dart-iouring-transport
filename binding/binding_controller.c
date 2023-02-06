@@ -51,14 +51,14 @@ static inline void handle_cqes(transport_controller_t *controller, int count, st
 
     transport_message_t *message = (transport_message_t *)(cqe->user_data);
     // log_info("ring cqe %d message type %d", cqe_index, message->payload_type);
-    if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
-    {
-      ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
-    }
-
-    if (message->payload_type == TRANSPORT_PAYLOAD_READ)
+    if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
     {
       ((transport_data_payload_t *)(message->payload))->size = cqe->res;
+    }
+
+    if (unlikely(message->payload_type == TRANSPORT_PAYLOAD_ACCEPT))
+    {
+      ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
     }
 
     dart_post_pointer(message->payload, message->port);
@@ -75,7 +75,20 @@ static inline void handle_message(transport_controller_t *controller, transport_
     return;
   }
 
-  // log_info("handle message with type %d", message->payload_type);
+  if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
+  {
+    transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
+    io_uring_prep_read(sqe, read_payload->fd, (void *)read_payload->position, read_payload->buffer_size, read_payload->offset);
+    io_uring_sqe_set_data(sqe, message);
+    return;
+  }
+  if (likely(message->payload_type == TRANSPORT_PAYLOAD_WRITE))
+  {
+    transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
+    io_uring_prep_write(sqe, write_payload->fd, (void *)write_payload->position, write_payload->size, write_payload->offset);
+    io_uring_sqe_set_data(sqe, message);
+    return;
+  }
   if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
   {
     transport_accept_payload_t *accept_payload = (transport_accept_payload_t *)message->payload;
@@ -87,20 +100,6 @@ static inline void handle_message(transport_controller_t *controller, transport_
   {
     transport_accept_payload_t *connect_payload = (transport_accept_payload_t *)message->payload;
     io_uring_prep_connect(sqe, connect_payload->fd, (struct sockaddr *)&connect_payload->client_addres, connect_payload->client_addres_length);
-    io_uring_sqe_set_data(sqe, message);
-    return;
-  }
-  if (message->payload_type == TRANSPORT_PAYLOAD_READ)
-  {
-    transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_read(sqe, read_payload->fd, (void *)read_payload->position, read_payload->buffer_size, read_payload->offset);
-    io_uring_sqe_set_data(sqe, message);
-    return;
-  }
-  if (message->payload_type == TRANSPORT_PAYLOAD_WRITE)
-  {
-    transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_write(sqe, write_payload->fd, (void *)write_payload->position, write_payload->size, write_payload->offset);
     io_uring_sqe_set_data(sqe, message);
     return;
   }
@@ -116,12 +115,10 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->internal_ring_size = configuration->internal_ring_size;
   controller->initialized = false;
   controller->active = false;
-  controller->initialization_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-  controller->initialization_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+  controller->suspended_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+  controller->suspended_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
   controller->shutdown_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   controller->shutdown_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-  controller->submit_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-  controller->submit_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 
   struct transport_controller_ring *ring = malloc(sizeof(struct transport_controller_ring));
   ring->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);
@@ -135,88 +132,64 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   ck_ring_init(&ring->transport_message_ring, configuration->internal_ring_size);
   ring_retry_max_count = 3;
   controller->message_ring = ring;
-
-  // //log_info("controller loop lock mutex [main]");
-  // pthread_mutex_lock(&controller->initialization_mutex);
-  // //log_info("controller is starting");
   pthread_create(&controller->thread_id, NULL, transport_controller_loop, controller);
-  // while (!controller->initialized)
-  // {
-  //   //log_info("controller loop wait");
-  //   pthread_cond_wait(&controller->initialization_condition, &controller->initialization_mutex);
-  // }
-  // //log_info("controller loop unlock mutex [main]");
-  // pthread_mutex_unlock(&controller->initialization_mutex);
-  // //log_info("controller loop destroy cond [main]");
-  // pthread_cond_destroy(&controller->initialization_condition);
-  // //log_info("controller initialized");
-
   return controller;
 }
 
 void transport_controller_stop(transport_controller_t *controller)
 {
-  pthread_mutex_lock(&controller->submit_mutex);
-  controller->active = false;
-  // log_info("controller is stopping");
-  pthread_cond_signal(&controller->submit_condition);
-  pthread_mutex_unlock(&controller->submit_mutex);
-
   pthread_mutex_lock(&controller->shutdown_mutex);
+  log_info("controller is stopping");
+  controller->active = false;
   while (controller->initialized)
     pthread_cond_wait(&controller->shutdown_condition, &controller->shutdown_mutex);
   pthread_mutex_unlock(&controller->shutdown_mutex);
   pthread_cond_destroy(&controller->shutdown_condition);
   pthread_mutex_destroy(&controller->shutdown_mutex);
-
   free(controller);
-  // log_info("controller is closed");
+  log_info("controller is stopped");
 }
 
 void *transport_controller_loop(void *input)
 {
-  // log_info("controller loop started");
   transport_controller_t *controller = (transport_controller_t *)input;
   struct transport_controller_ring *ring = (struct transport_controller_ring *)controller->message_ring;
   controller->active = true;
-  // //log_info("controller loop lock mutex [worker]");
-  // pthread_mutex_lock(&controller->initialization_mutex);
   controller->initialized = true;
-  // //log_info("controller loop signal [worker]");
-  // pthread_cond_signal(&controller->initialization_condition);
-  // //log_info("controller loop unlock mutex  [worker]");
-  // pthread_mutex_unlock(&controller->initialization_mutex);
 
-  // log_info("controller loop is active");
   while (likely(controller->active))
   {
-    transport_message_t *message;
-    if (likely(ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message)))
+    struct io_uring_cqe *cqes[controller->cqe_size];
+    int32_t receive_result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
+    if (receive_result > 0)
     {
-      handle_message(controller, message);
+      handle_cqes(controller, receive_result, cqes);
     }
 
-    int32_t submit_result = io_uring_submit(&controller->transport->ring);
-    if (unlikely(submit_result == 0))
+    transport_message_t *message;
+    if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
     {
-      continue;
-    }
-    if (unlikely(submit_result < 0))
-    {
-      if (submit_result != -EBUSY)
+      handle_message(controller, message);
+
+      int32_t submit_result = io_uring_submit(&controller->transport->ring);
+
+      if (submit_result == 0)
       {
         continue;
       }
-    }
-    // log_info("ring submit result: %d", submit_result);
 
-    struct io_uring_cqe *cqes[controller->cqe_size];
-    int32_t receive_result = io_uring_wait_cqe(&controller->transport->ring, cqes);
-    // log_info("ring cqe wait result: %d", receive_result);
-    if (likely(receive_result == 0))
+      if (unlikely(submit_result < 0))
+      {
+        if (submit_result != -EBUSY)
+        {
+          continue;
+        }
+      }
+    }
+
+    receive_result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
+    if (receive_result > 0)
     {
-      receive_result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
-      // log_info("ring cqe batch peek result: %d", receive_result);
       handle_cqes(controller, receive_result, cqes);
     }
   }

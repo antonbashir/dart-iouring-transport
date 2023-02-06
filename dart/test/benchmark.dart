@@ -9,7 +9,7 @@ import 'package:iouring_transport/transport/transport.dart';
 
 Future<void> main(List<String> args) async {
   final serverTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
-  final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
+  //final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
   final done = Completer();
 
   var received = 0;
@@ -18,53 +18,48 @@ Future<void> main(List<String> args) async {
   var stopChannels = false;
 
   final encoder = Utf8Encoder();
+  final fromServer = encoder.convert("from server");
+  final fromClient = encoder.convert("from client");
 
   serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("0.0.0.0", 9999).listen((serverChannel) async {
     serverChannel.start(
-      onWrite: (payload) {
+      onWrite: (payload) async {
         payload.finalize();
         serverChannel.queueRead();
-        //print("onWrite");
       },
-      onRead: (payload) {
-        received++;
+      onRead: (payload) async {
         payload.finalize();
-        //print("onRead");
-        if (!stopChannels) {
-          serverChannel.queueWrite(encoder.convert("from server"));
-          return;
-        }
-        serverChannel.stop();
-        done.complete();
+        serverChannel.queueWrite(fromServer);
       },
     );
-    //print("onAccept");
     serverChannel.queueRead();
   });
 
-  clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
-    clientChannel.start(
-      onWrite: (payload) {
-        sent++;
-        payload.finalize();
-        clientChannel.queueRead();
-        //print("onWrite");
-      },
-      onRead: (payload) {
-        payload.finalize();
-        //print("onRead");
-        if (!stopChannels) {
-          clientChannel.queueWrite(encoder.convert("from client"));
-          return;
-        }
-        clientChannel.stop();
-      },
-    );
-    //print("onConnect");
-    clientChannel.queueWrite(encoder.convert("from client"));
-  });
+  // clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
+  //   clientChannel.start(
+  //     onWrite: (payload) {
+  //       sent++;
+  //       payload.finalize();
+  //       clientChannel.queueRead();
+  //       //print("onWrite");
+  //     },
+  //     onRead: (payload) {
+  //       payload.finalize();
+  //       //print("onRead");
+  //       if (!stopChannels) {
+  //         clientChannel.queueWrite(fromClient);
+  //         return;
+  //       }
+  //       clientChannel.stop();
+  //     },
+  //   );
+  //   //print("onConnect");
+  //   clientChannel.queueWrite(fromClient);
+  // });
 
-  await Future.delayed(Duration(seconds: seconds));
+  while (true) {
+    await Future.delayed(Duration.zero);
+  }
   stopChannels = true;
 
   print("received RPS: ${received / seconds}");
@@ -72,5 +67,5 @@ Future<void> main(List<String> args) async {
 
   await done.future;
   serverTransport.close();
-  clientTransport.close();
+  //clientTransport.close();
 }

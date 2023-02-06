@@ -21,6 +21,11 @@ static inline transport_message_t *transport_controller_create_message(transport
   return message;
 }
 
+static inline transport_accept_payload_t *transport_connection_allocate_accept_payload(transport_connection_t *connection)
+{
+  return (transport_accept_payload_t *)mempool_alloc(&connection->accept_payload_pool);
+}
+
 transport_connection_t *transport_initialize_connection(transport_t *transport,
                                                         transport_controller_t *controller,
                                                         transport_connection_configuration_t *configuration,
@@ -86,11 +91,6 @@ int32_t transport_connection_queue_connect(transport_connection_t *connection, i
   // log_info("queue connect message");
   transport_message_t *message = transport_controller_create_message(connection->controller, connection->connect_port, payload, TRANSPORT_PAYLOAD_CONNECT);
   transport_controller_send(connection->controller, message);
-}
-
-transport_accept_payload_t *transport_connection_allocate_accept_payload(transport_connection_t *connection)
-{
-  return (transport_accept_payload_t *)mempool_alloc(&connection->accept_payload_pool);
 }
 
 void transport_connection_free_accept_payload(transport_connection_t *connection, transport_accept_payload_t *payload)

@@ -21,6 +21,11 @@ static inline transport_message_t *transport_controller_create_message(transport
   return message;
 }
 
+static inline transport_data_payload_t *transport_channel_allocate_data_payload(transport_channel_t *channel)
+{
+  return (transport_data_payload_t *)mempool_alloc(&channel->data_payload_pool);
+}
+
 transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                   transport_controller_t *controller,
                                                   transport_channel_configuration_t *configuration,
@@ -96,7 +101,7 @@ int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offs
   payload->type = TRANSPORT_PAYLOAD_READ;
 
   // log_info("queue read message");
-  transport_message_t* message = transport_controller_create_message(channel->controller, channel->read_port, payload, TRANSPORT_PAYLOAD_READ);
+  transport_message_t *message = transport_controller_create_message(channel->controller, channel->read_port, payload, TRANSPORT_PAYLOAD_READ);
   transport_controller_send(channel->controller, message);
 
   channel->current_read_buffer->wpos += channel->payload_buffer_size;
@@ -119,7 +124,7 @@ int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t pay
   payload->type = TRANSPORT_PAYLOAD_WRITE;
 
   // log_info("queue write message");
-  transport_message_t* message = transport_controller_create_message(channel->controller, channel->write_port, payload, TRANSPORT_PAYLOAD_WRITE);
+  transport_message_t *message = transport_controller_create_message(channel->controller, channel->write_port, payload, TRANSPORT_PAYLOAD_WRITE);
   transport_controller_send(channel->controller, message);
 
   channel->current_write_buffer->wpos += channel->payload_buffer_size;
@@ -244,11 +249,6 @@ void *transport_channel_extract_write_buffer(transport_channel_t *channel, trans
   channel->current_write_size += channel->payload_buffer_size;
   // log_info("after extract write buffer, current_write_size=%d", channel->current_write_size);
   return buffer;
-}
-
-transport_data_payload_t *transport_channel_allocate_data_payload(transport_channel_t *channel)
-{
-  return (transport_data_payload_t *)mempool_alloc(&channel->data_payload_pool);
 }
 
 void transport_channel_free_data_payload(transport_channel_t *channel, transport_data_payload_t *payload)

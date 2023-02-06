@@ -67,7 +67,6 @@ extern "C"
   void *transport_channel_prepare_read(transport_channel_t *channel);
   void *transport_channel_prepare_write(transport_channel_t *channel);
 
-  transport_data_payload_t *transport_channel_allocate_data_payload(transport_channel_t *channel);
   void transport_channel_free_data_payload(transport_channel_t *channel, transport_data_payload_t *payload);
 #if defined(__cplusplus)
 }

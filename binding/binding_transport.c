@@ -21,8 +21,12 @@ transport_t *transport_initialize(transport_configuration_t *configuration)
     return NULL;
   }
 
-  if (io_uring_queue_init(configuration->ring_size, &transport->ring, 0) != 0)
+  struct io_uring_params params;
+  memset(&params, 0, sizeof(params));
+  int32_t status = io_uring_queue_init_params(configuration->ring_size, &transport->ring, &params);
+  if (status)
   {
+    fprintf(stderr, "io_urig init error: %d", status);
     free(&transport->ring);
     return NULL;
   }
@@ -38,7 +42,7 @@ transport_t *transport_initialize(transport_configuration_t *configuration)
                      configuration->slab_allocation_factor,
                      &actual_allocation_factor);
 
-  //log_info("transport initialized");
+  // log_info("transport initialized");
   return transport;
 }
 
@@ -50,6 +54,6 @@ void transport_close(transport_t *transport)
   slab_cache_destroy(&transport->cache);
   slab_arena_destroy(&transport->arena);
 
-  //log_info("transport closed");
+  // log_info("transport closed");
   free(transport);
 }

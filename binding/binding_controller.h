@@ -48,17 +48,16 @@ extern "C"
     size_t batch_message_limit;
 
     volatile bool initialized;
+    volatile bool suspended;
     volatile bool active;
 
     void *message_ring;
 
     pthread_t thread_id;
-    pthread_mutex_t initialization_mutex;
-    pthread_cond_t initialization_condition;
+    pthread_mutex_t suspended_mutex;
+    pthread_cond_t suspended_condition;
     pthread_mutex_t shutdown_mutex;
     pthread_cond_t shutdown_condition;
-    pthread_mutex_t submit_mutex;
-    pthread_cond_t submit_condition;
   } transport_controller_t;
 
   typedef struct transport_controller_configuration

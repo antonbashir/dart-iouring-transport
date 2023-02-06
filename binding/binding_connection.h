@@ -36,7 +36,6 @@ extern "C"
   int32_t transport_connection_queue_accept(transport_connection_t *connection, int32_t server_socket_fd);
   int32_t transport_connection_queue_connect(transport_connection_t *connection, int32_t socket_fd, const char *ip, int32_t port);
 
-  transport_accept_payload_t *transport_connection_allocate_accept_payload(transport_connection_t *connection);
   void transport_connection_free_accept_payload(transport_connection_t *connection, transport_accept_payload_t *payload);
 #if defined(__cplusplus)
 }

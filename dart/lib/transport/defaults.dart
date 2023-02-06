@@ -16,12 +16,12 @@ class TransportDefaults {
         bufferInitialCapacity: 16320,
         bufferLimit: 18 * 16320,
         bufferAvailableAwaitDelayed: Duration.zero,
-        payloadBufferSize: 1024,
+        payloadBufferSize: 32,
       );
 
   static TransportControllerConfiguration controller() => TransportControllerConfiguration(
         cqesSize: 8192,
-        batchMessageLimit: 1,
+        batchMessageLimit: 128,
         internalRingSize: 33554432,
       );
 
