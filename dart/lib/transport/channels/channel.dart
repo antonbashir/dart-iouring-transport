@@ -94,8 +94,7 @@ class TransportChannel {
       _bindings.transport_channel_free_data_payload(_channel, payload);
       return;
     }
-    final bytes = readBuffer.cast<Uint8>().asTypedList(payload.ref.size);
-    onRead!(TransportDataPayload(_bindings, _channel, payload, bytes));
+    onRead!(TransportDataPayload(_bindings, _channel, payload, readBuffer.cast<Uint8>().asTypedList(payload.ref.size)));
   }
 
   void _handleWrite(dynamic payloadPointer) {
@@ -105,7 +104,6 @@ class TransportChannel {
       _bindings.transport_channel_free_data_payload(_channel, payload);
       return;
     }
-    final bytes = writeBuffer.cast<Uint8>().asTypedList(payload.ref.size);
-    onWrite!(TransportDataPayload(_bindings, _channel, payload, bytes));
+    onWrite!(TransportDataPayload(_bindings, _channel, payload, writeBuffer.cast<Uint8>().asTypedList(payload.ref.size)));
   }
 }
