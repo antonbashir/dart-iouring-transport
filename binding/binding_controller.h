@@ -50,6 +50,7 @@ extern "C"
     volatile bool initialized;
     volatile bool suspended;
     volatile bool active;
+    volatile bool connected;
 
     void *message_ring;
 

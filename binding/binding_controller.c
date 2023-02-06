@@ -194,7 +194,7 @@ void *transport_controller_loop(void *input)
         transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
         io_uring_prep_read(sqe, read_payload->fd, (void *)read_payload->position, read_payload->buffer_size, read_payload->offset);
         io_uring_sqe_set_data(sqe, message);
-        io_uring_submit_and_wait(&controller->transport->ring, 1);
+        io_uring_submit(&controller->transport->ring);
         continue;
       }
       if (message->payload_type == TRANSPORT_PAYLOAD_WRITE)
@@ -202,7 +202,7 @@ void *transport_controller_loop(void *input)
         transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
         io_uring_prep_write(sqe, write_payload->fd, (void *)write_payload->position, write_payload->size, write_payload->offset);
         io_uring_sqe_set_data(sqe, message);
-        io_uring_submit_and_wait(&controller->transport->ring, 1);
+        io_uring_submit(&controller->transport->ring);
         continue;
       }
       if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
