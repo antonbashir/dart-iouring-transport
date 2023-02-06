@@ -180,12 +180,12 @@ void *transport_controller_loop(void *input)
       }
 
       transport_message_t *message = (transport_message_t *)(cqe->user_data);
-      if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
+      if (message->payload_type == TRANSPORT_PAYLOAD_READ)
       {
         ((transport_data_payload_t *)(message->payload))->size = cqe->res;
       }
 
-      if (unlikely(message->payload_type == TRANSPORT_PAYLOAD_ACCEPT))
+      if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
       {
         ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
       }
@@ -195,14 +195,14 @@ void *transport_controller_loop(void *input)
     }
     io_uring_cq_advance(&controller->transport->ring, count);
     transport_message_t *message;
-    if (likely(ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message)))
+    if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
     {
       struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
       if (unlikely(sqe == NULL))
       {
         continue;
       }
-      if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
+      if (message->payload_type == TRANSPORT_PAYLOAD_READ)
       {
         transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
         io_uring_prep_read(sqe, read_payload->fd, (void *)read_payload->position, read_payload->buffer_size, read_payload->offset);
@@ -210,7 +210,7 @@ void *transport_controller_loop(void *input)
         io_uring_submit_and_wait(&controller->transport->ring, 1);
         continue;
       }
-      if (likely(message->payload_type == TRANSPORT_PAYLOAD_WRITE))
+      if (message->payload_type == TRANSPORT_PAYLOAD_WRITE)
       {
         transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
         io_uring_prep_write(sqe, write_payload->fd, (void *)write_payload->position, write_payload->size, write_payload->offset);
@@ -259,7 +259,7 @@ bool transport_controller_send(transport_controller_t *controller, transport_mes
   {
     return false;
   }
-  // log_info("sending message with type %d", message->payload_type);
+
   struct transport_controller_ring *ring = (struct transport_controller_ring *)controller->message_ring;
   int count = 0;
 
