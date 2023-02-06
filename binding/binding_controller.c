@@ -159,38 +159,81 @@ void *transport_controller_loop(void *input)
 
   while (likely(controller->active))
   {
-    struct io_uring_cqe *cqes[controller->cqe_size];
-    int32_t receive_result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
-    if (receive_result > 0)
+    unsigned head;
+    unsigned count = 0;
+    struct io_uring_cqe *cqe;
+    io_uring_for_each_cqe(&controller->transport->ring, head, cqe)
     {
-      handle_cqes(controller, receive_result, cqes);
-    }
+      ++count;
+      if (unlikely(cqe->res < 0))
+      {
+        if (cqe->user_data)
+        {
+          free((void *)cqe->user_data);
+        }
+        continue;
+      }
 
-    transport_message_t *message;
-    if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
-    {
-      handle_message(controller, message);
-
-      int32_t submit_result = io_uring_submit(&controller->transport->ring);
-
-      if (submit_result == 0)
+      if (unlikely(!cqe->user_data))
       {
         continue;
       }
 
-      if (unlikely(submit_result < 0))
+      transport_message_t *message = (transport_message_t *)(cqe->user_data);
+      if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
       {
-        if (submit_result != -EBUSY)
-        {
-          continue;
-        }
+        ((transport_data_payload_t *)(message->payload))->size = cqe->res;
       }
-    }
 
-    receive_result = io_uring_peek_batch_cqe(&controller->transport->ring, cqes, controller->cqe_size);
-    if (receive_result > 0)
+      if (unlikely(message->payload_type == TRANSPORT_PAYLOAD_ACCEPT))
+      {
+        ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
+      }
+
+      dart_post_pointer(message->payload, message->port);
+      free(message);
+    }
+    io_uring_cq_advance(&controller->transport->ring, count);
+    transport_message_t *message;
+    if (likely(ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message)))
     {
-      handle_cqes(controller, receive_result, cqes);
+      struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
+      if (unlikely(sqe == NULL))
+      {
+        continue;
+      }
+      if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
+      {
+        transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
+        io_uring_prep_read(sqe, read_payload->fd, (void *)read_payload->position, read_payload->buffer_size, read_payload->offset);
+        io_uring_sqe_set_data(sqe, message);
+        io_uring_submit_and_wait(&controller->transport->ring, 1);
+        continue;
+      }
+      if (likely(message->payload_type == TRANSPORT_PAYLOAD_WRITE))
+      {
+        transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
+        io_uring_prep_write(sqe, write_payload->fd, (void *)write_payload->position, write_payload->size, write_payload->offset);
+        io_uring_sqe_set_data(sqe, message);
+        io_uring_submit_and_wait(&controller->transport->ring, 1);
+        continue;
+      }
+      if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
+      {
+        transport_accept_payload_t *accept_payload = (transport_accept_payload_t *)message->payload;
+        io_uring_prep_accept(sqe, accept_payload->fd, (struct sockaddr *)&accept_payload->client_addres, &accept_payload->client_addres_length, 0);
+        io_uring_sqe_set_data(sqe, message);
+        io_uring_submit(&controller->transport->ring);
+        continue;
+      }
+      if (message->payload_type == TRANSPORT_PAYLOAD_CONNECT)
+      {
+        transport_accept_payload_t *connect_payload = (transport_accept_payload_t *)message->payload;
+        io_uring_prep_connect(sqe, connect_payload->fd, (struct sockaddr *)&connect_payload->client_addres, connect_payload->client_addres_length);
+        io_uring_sqe_set_data(sqe, message);
+        io_uring_submit(&controller->transport->ring);
+        continue;
+      }
     }
   }
 
