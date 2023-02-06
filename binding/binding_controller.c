@@ -164,7 +164,7 @@ void *transport_controller_loop(void *input)
     io_uring_for_each_cqe(&controller->transport->ring, head, cqe)
     {
       ++count;
-      if (unlikely(cqe->res < 0))
+      if (unlikely(cqe->res < 0 || !cqe->user_data))
       {
         if (cqe->user_data)
         {
@@ -172,29 +172,21 @@ void *transport_controller_loop(void *input)
         }
         continue;
       }
-
-      if (unlikely(!cqe->user_data))
-      {
-        continue;
-      }
-
       transport_message_t *message = (transport_message_t *)(cqe->user_data);
       if (message->payload_type == TRANSPORT_PAYLOAD_READ)
       {
         ((transport_data_payload_t *)(message->payload))->size = cqe->res;
       }
-
       if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
       {
         ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
       }
-
       dart_post_pointer(message->payload, message->port);
       free(message);
     }
     io_uring_cq_advance(&controller->transport->ring, count);
     transport_message_t *message;
-    if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
+    while (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
     {
       struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
       if (message->payload_type == TRANSPORT_PAYLOAD_READ)
