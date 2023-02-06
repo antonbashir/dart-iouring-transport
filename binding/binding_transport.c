@@ -21,9 +21,7 @@ transport_t *transport_initialize(transport_configuration_t *configuration)
     return NULL;
   }
 
-  struct io_uring_params params;
-  memset(&params, 0, sizeof(params));
-  int32_t status = io_uring_queue_init_params(configuration->ring_size, &transport->ring, &params);
+  int32_t status = io_uring_queue_init(configuration->ring_size, &transport->ring, 0);
   if (status)
   {
     fprintf(stderr, "io_urig init error: %d", status);

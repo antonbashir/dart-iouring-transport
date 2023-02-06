@@ -23,11 +23,11 @@ Future<void> main(List<String> args) async {
 
   serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("0.0.0.0", 9999).listen((serverChannel) async {
     serverChannel.start(
-      onWrite: (payload) async {
+      onWrite: (payload) {
         payload.finalize();
         serverChannel.queueRead();
       },
-      onRead: (payload) async {
+      onRead: (payload) {
         payload.finalize();
         serverChannel.queueWrite(fromServer);
       },
@@ -57,9 +57,7 @@ Future<void> main(List<String> args) async {
   //   clientChannel.queueWrite(fromClient);
   // });
 
-  while (true) {
-    await Future.delayed(Duration.zero);
-  }
+  await Future.delayed(Duration(days: 1));
   stopChannels = true;
 
   print("received RPS: ${received / seconds}");

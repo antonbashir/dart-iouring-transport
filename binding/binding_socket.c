@@ -12,7 +12,7 @@
 int32_t transport_socket_create() {
     int32_t val = 1;
 
-    int32_t fd = socket(PF_INET, SOCK_STREAM, 0);
+    int32_t fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1) {
         return -1;
     }

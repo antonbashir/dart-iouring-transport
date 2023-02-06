@@ -4,7 +4,7 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportConfiguration transport() => TransportConfiguration(
-        ringSize: 32768,
+        ringSize: 8192,
         slabSize: 16 * 1024 * 1024,
         memoryQuota: 2 * 1024 * 1024 * 1024,
         slabAllocationMinimalObjectSize: 8,
@@ -20,10 +20,10 @@ class TransportDefaults {
       );
 
   static TransportControllerConfiguration controller() => TransportControllerConfiguration(
-        cqesSize: 8192,
+        cqesSize: 2048,
         batchMessageLimit: 128,
         internalRingSize: 33554432,
       );
 
-  static TransportConnectionConfiguration connection() => TransportConnectionConfiguration(1024);
+  static TransportConnectionConfiguration connection() => TransportConnectionConfiguration(512);
 }

@@ -156,7 +156,6 @@ void *transport_controller_loop(void *input)
   struct transport_controller_ring *ring = (struct transport_controller_ring *)controller->message_ring;
   controller->active = true;
   controller->initialized = true;
-
   while (likely(controller->active))
   {
     unsigned head;
@@ -198,10 +197,6 @@ void *transport_controller_loop(void *input)
     if (ck_ring_dequeue_mpsc(&ring->transport_message_ring, ring->transport_message_buffer, &message))
     {
       struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
-      if (unlikely(sqe == NULL))
-      {
-        continue;
-      }
       if (message->payload_type == TRANSPORT_PAYLOAD_READ)
       {
         transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
