@@ -4,9 +4,9 @@
 #include <netinet/in.h>
 #include <stdint.h>
 #include <liburing.h>
-#include "small/ibuf.h"
-#include "small/obuf.h"
-#include "small/small.h"
+#include "small/include/small/ibuf.h"
+#include "small/include/small/obuf.h"
+#include "small/include/small/small.h"
 #include "binding_transport.h"
 #include "binding_controller.h"
 

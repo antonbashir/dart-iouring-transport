@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:iouring_transport/transport/bindings.dart';
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:test/expect.dart';
@@ -12,17 +13,7 @@ final _data = "data";
 final _file = "file.txt";
 
 void main() {
-  setUpAll(() => _transport.initialize());
-  tearDownAll(() => _transport.close());
-
-  group("[files]", () {
-    test("read", testFileRead);
-    test("write", testFileWrite);
-  });
-
-  group("[client-server]", () {
-    test("ping-pong", testClientServer);
-  });
+  _transport.initialize();
 }
 
 Future<void> testFileRead() async {

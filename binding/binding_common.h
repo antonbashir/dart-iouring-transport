@@ -13,8 +13,7 @@
 #include <stdbool.h>
 #include <time.h>
 
-#define likely(x) __builtin_expect((x), 1)
-#define unlikely(x) __builtin_expect((x), 0)
+#include "trivia/util.h"
 
 #define LOG_VERSION "0.1.0"
 #define LOG_USE_COLOR 1

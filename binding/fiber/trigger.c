@@ -182,7 +182,7 @@ trigger_fiber_run(struct rlist *list, void *event, double timeout)
 	struct trigger *trigger;
 	unsigned trigger_count = 0;
 	struct region *region = &fiber()->gc;
-	RegionGuard guard(region);
+	size_t used = region_used(region);
 
 	/* Calculating the total number of triggers. */
 	rlist_foreach_entry(trigger, list, link)
@@ -192,13 +192,15 @@ trigger_fiber_run(struct rlist *list, void *event, double timeout)
 	struct fiber **fibers = (struct fiber **)
 		region_alloc_array(region, struct fiber *, trigger_count, &sz);
 	if (fibers == NULL) {
-		return -1;
+		region_truncate(region, used);
+    return -1;
 	}
 
 	RLIST_HEAD(run_list);
 	rlist_foreach_entry(trigger, list, link) {
 		if (run_list_put_trigger(&run_list, trigger) != 0) {
 			run_list_clear(&run_list);
+      region_truncate(region, used);
 			return -1;
 		}
 	}
@@ -229,15 +231,17 @@ trigger_fiber_run(struct rlist *list, void *event, double timeout)
 		} else {
 			ev_timer_stop(loop(), &timer);
 			run_list_clear(&run_list);
+      region_truncate(region, used);
 			return -1;
 		}
+    region_truncate(region, used);
 	}
 
 	/*
 	 * Waiting for all triggers completion.
 	 */
 	for (unsigned int i = 0; i < current_fiber && ! expired; i++) {
-		fiber_join_timeout(fibers[i], timeout) != 0
+		fiber_join_timeout(fibers[i], timeout);
 	}
 	if (expired) {
 		return -1;

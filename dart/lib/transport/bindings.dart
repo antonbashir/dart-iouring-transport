@@ -8521,6 +8521,14 @@ class TransportBindings {
   late final _transport_close =
       _transport_closePtr.asFunction<void Function(ffi.Pointer<transport_t>)>();
 
+  void test_func() {
+    return _test_func();
+  }
+
+  late final _test_funcPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('test_func');
+  late final _test_func = _test_funcPtr.asFunction<void Function()>();
+
   void ibuf_create(
     ffi.Pointer<ibuf> ibuf,
     ffi.Pointer<slab_cache> slabc,
@@ -15087,35 +15095,6 @@ class TransportBindings {
   late final _transport_controller_stop = _transport_controller_stopPtr
       .asFunction<void Function(ffi.Pointer<transport_controller_t>)>();
 
-  ffi.Pointer<transport_message_t> transport_controller_create_message(
-    ffi.Pointer<transport_controller_t> controller,
-    int port,
-    ffi.Pointer<ffi.Void> payload,
-    int type,
-  ) {
-    return _transport_controller_create_message(
-      controller,
-      port,
-      payload,
-      type,
-    );
-  }
-
-  late final _transport_controller_create_messagePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_message_t> Function(
-              ffi.Pointer<transport_controller_t>,
-              Dart_Port,
-              ffi.Pointer<ffi.Void>,
-              ffi.Int32)>>('transport_controller_create_message');
-  late final _transport_controller_create_message =
-      _transport_controller_create_messagePtr.asFunction<
-          ffi.Pointer<transport_message_t> Function(
-              ffi.Pointer<transport_controller_t>,
-              int,
-              ffi.Pointer<ffi.Void>,
-              int)>();
-
   bool transport_controller_send(
     ffi.Pointer<transport_controller_t> controller,
     ffi.Pointer<transport_message_t> message,
@@ -15297,24 +15276,6 @@ class TransportBindings {
       _transport_channel_prepare_writePtr.asFunction<
           ffi.Pointer<ffi.Void> Function(ffi.Pointer<transport_channel_t>)>();
 
-  ffi.Pointer<transport_data_payload_t> transport_channel_allocate_data_payload(
-    ffi.Pointer<transport_channel_t> channel,
-  ) {
-    return _transport_channel_allocate_data_payload(
-      channel,
-    );
-  }
-
-  late final _transport_channel_allocate_data_payloadPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_data_payload_t> Function(
-                  ffi.Pointer<transport_channel_t>)>>(
-      'transport_channel_allocate_data_payload');
-  late final _transport_channel_allocate_data_payload =
-      _transport_channel_allocate_data_payloadPtr.asFunction<
-          ffi.Pointer<transport_data_payload_t> Function(
-              ffi.Pointer<transport_channel_t>)>();
-
   void transport_channel_free_data_payload(
     ffi.Pointer<transport_channel_t> channel,
     ffi.Pointer<transport_data_payload_t> payload,
@@ -15426,25 +15387,6 @@ class TransportBindings {
       _transport_connection_queue_connectPtr.asFunction<
           int Function(ffi.Pointer<transport_connection_t>, int,
               ffi.Pointer<ffi.Char>, int)>();
-
-  ffi.Pointer<transport_accept_payload_t>
-      transport_connection_allocate_accept_payload(
-    ffi.Pointer<transport_connection_t> connection,
-  ) {
-    return _transport_connection_allocate_accept_payload(
-      connection,
-    );
-  }
-
-  late final _transport_connection_allocate_accept_payloadPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_accept_payload_t> Function(
-                  ffi.Pointer<transport_connection_t>)>>(
-      'transport_connection_allocate_accept_payload');
-  late final _transport_connection_allocate_accept_payload =
-      _transport_connection_allocate_accept_payloadPtr.asFunction<
-          ffi.Pointer<transport_accept_payload_t> Function(
-              ffi.Pointer<transport_connection_t>)>();
 
   void transport_connection_free_accept_payload(
     ffi.Pointer<transport_connection_t> connection,
@@ -17500,6 +17442,8 @@ class _SymbolAddresses {
       get transport_initialize => _library._transport_initializePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
       get transport_close => _library._transport_closePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get test_func =>
+      _library._test_funcPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(
@@ -18545,14 +18489,6 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_controller_t>)>>
       get transport_controller_stop => _library._transport_controller_stopPtr;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_message_t> Function(
-              ffi.Pointer<transport_controller_t>,
-              Dart_Port,
-              ffi.Pointer<ffi.Void>,
-              ffi.Int32)>> get transport_controller_create_message =>
-      _library._transport_controller_create_messagePtr;
-  ffi.Pointer<
           ffi.NativeFunction<
               ffi.Bool Function(ffi.Pointer<transport_controller_t>,
                   ffi.Pointer<transport_message_t>)>>
@@ -18606,12 +18542,6 @@ class _SymbolAddresses {
           _library._transport_channel_prepare_writePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Pointer<transport_data_payload_t> Function(
-                  ffi.Pointer<transport_channel_t>)>>
-      get transport_channel_allocate_data_payload =>
-          _library._transport_channel_allocate_data_payloadPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_channel_t>,
                   ffi.Pointer<transport_data_payload_t>)>>
       get transport_channel_free_data_payload =>
@@ -18643,12 +18573,6 @@ class _SymbolAddresses {
               ffi.Pointer<ffi.Char>,
               ffi.Int32)>> get transport_connection_queue_connect =>
       _library._transport_connection_queue_connectPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_accept_payload_t> Function(
-                  ffi.Pointer<transport_connection_t>)>>
-      get transport_connection_allocate_accept_payload =>
-          _library._transport_connection_allocate_accept_payloadPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_connection_t>,
@@ -21446,7 +21370,7 @@ abstract class transport_payload_type {
   static const int TRANSPORT_PAYLOAD_WRITE = 1;
   static const int TRANSPORT_PAYLOAD_ACCEPT = 2;
   static const int TRANSPORT_PAYLOAD_CONNECT = 3;
-  static const int TRANSPORT_PAYLOAD_max4 = 4;
+  static const int TRANSPORT_PAYLOAD_max = 4;
 }
 
 class transport_data_payload extends ffi.Struct {
@@ -21460,10 +21384,10 @@ class transport_data_payload extends ffi.Struct {
 
   external ffi.Pointer<ffi.Char> position;
 
-  @ffi.Int32()
+  @ffi.Uint32()
   external int size;
 
-  @ffi.Int32()
+  @ffi.Uint32()
   external int buffer_size;
 
   @ffi.Size()
@@ -21499,16 +21423,22 @@ class transport_controller extends ffi.Struct {
   external bool initialized;
 
   @ffi.Bool()
+  external bool suspended;
+
+  @ffi.Bool()
   external bool active;
+
+  @ffi.Bool()
+  external bool connected;
 
   external ffi.Pointer<ffi.Void> message_ring;
 
   @pthread_t()
   external int thread_id;
 
-  external pthread_mutex_t initialization_mutex;
+  external pthread_mutex_t suspended_mutex;
 
-  external pthread_cond_t initialization_condition;
+  external pthread_cond_t suspended_condition;
 
   external pthread_mutex_t shutdown_mutex;
 

@@ -5,6 +5,8 @@
 #include "ck_ring.h"
 #include "ck_backoff.h"
 #include "ck_spinlock.h"
+#include "fiber.h"
+#include "fiber_channel.h"
 
 static int ring_retry_max_count = 3;
 

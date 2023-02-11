@@ -165,14 +165,7 @@ trigger_free_in_thread(void);
 #if defined(__cplusplus)
 } /* extern "C" */
 
-#include "diag.h"
 
-static inline void
-trigger_run_xc(struct rlist *list, void *event)
-{
-	if (trigger_run(list, event) != 0)
-		diag_raise();
-}
 
 #endif /* defined(__cplusplus) */
 

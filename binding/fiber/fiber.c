@@ -44,7 +44,7 @@
 #include "errinj.h"
 #include "clock.h"
 
-extern void cord_on_yield(void);
+void cord_on_yield(void){};
 
 #if ENABLE_FIBER_TOP
 
@@ -350,12 +350,12 @@ void fiber_on_stop(struct fiber *f)
   if (rlist_empty(&f->on_stop))
     return;
   trigger_run(&f->on_stop, f);
-      /*
-       * All on_stop triggers are supposed to remove themselves.
-       * So as no to waste time on that here, and to make them
-       * all work uniformly.
-       */
-      assert(rlist_empty(&f->on_stop));
+  /*
+   * All on_stop triggers are supposed to remove themselves.
+   * So as no to waste time on that here, and to make them
+   * all work uniformly.
+   */
+  assert(rlist_empty(&f->on_stop));
 }
 
 static void

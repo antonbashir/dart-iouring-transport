@@ -71,6 +71,7 @@
     "string.h": "c",
     "errinj.h": "c",
     "epoll.h": "c",
-    "ev.h": "c"
+    "ev.h": "c",
+    "obuf.h": "c"
   },
 }
