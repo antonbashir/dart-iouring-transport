@@ -4,10 +4,10 @@
 #include <netinet/in.h>
 #include <stdint.h>
 #include <liburing.h>
-#include "small/include/small/small.h"
-#include "small/include/small/slab_cache.h"
-#include "small/include/small/slab_arena.h"
-#include "small/include/small/quota.h"
+#include "small/small.h"
+#include "small/slab_cache.h"
+#include "small/slab_arena.h"
+#include "small/quota.h"
 
 #if defined(__cplusplus)
 extern "C"

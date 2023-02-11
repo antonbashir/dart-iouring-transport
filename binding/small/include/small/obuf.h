@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_SMALL_OBUF_H_INCLUDED
-#define TARANTOOL_SMALL_OBUF_H_INCLUDED
+#ifndef BINDING_SMALL_OBUF_H_INCLUDED
+#define BINDING_SMALL_OBUF_H_INCLUDED
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -273,4 +273,4 @@ obuf_dup_xc(struct obuf *buf, const void *data, size_t size)
 
 #endif /* defined(__cplusplus) */
 
-#endif /* TARANTOOL_SMALL_OBUF_H_INCLUDED */
+#endif /* BINDING_SMALL_OBUF_H_INCLUDED */

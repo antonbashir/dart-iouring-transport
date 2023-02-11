@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_SMALL_STATIC_H_INCLUDED
-#define TARANTOOL_SMALL_STATIC_H_INCLUDED
+#ifndef BINDING_SMALL_STATIC_H_INCLUDED
+#define BINDING_SMALL_STATIC_H_INCLUDED
 /*
  * Copyright 2010-2019, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -130,4 +130,4 @@ static_aligned_alloc(size_t size, size_t alignment)
 	return res;
 }
 
-#endif /* TARANTOOL_SMALL_STATIC_H_INCLUDED */
+#endif /* BINDING_SMALL_STATIC_H_INCLUDED */

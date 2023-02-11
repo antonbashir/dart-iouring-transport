@@ -45,7 +45,7 @@
 static void
 madvise_checked(void *ptr, size_t size, int flags)
 {
-#ifdef TARANTOOL_SMALL_USE_MADVISE
+#ifdef BINDING_SMALL_USE_MADVISE
 	if (!ptr)
 		return;
 

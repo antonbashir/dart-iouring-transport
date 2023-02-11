@@ -1,5 +1,5 @@
-#ifndef INCLUDES_TARANTOOL_LF_LIFO_H
-#define INCLUDES_TARANTOOL_LF_LIFO_H
+#ifndef INCLUDES_BINDING_LF_LIFO_H
+#define INCLUDES_BINDING_LF_LIFO_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -121,4 +121,4 @@ lf_lifo_is_empty(struct lf_lifo *head)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* INCLUDES_TARANTOOL_LF_LIFO_H */
+#endif /* INCLUDES_BINDING_LF_LIFO_H */

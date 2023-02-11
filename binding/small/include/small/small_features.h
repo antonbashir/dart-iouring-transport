@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_SMALL_FEATURES_H_INCLUDED
-#define TARANTOOL_SMALL_FEATURES_H_INCLUDED
+#ifndef BINDING_SMALL_FEATURES_H_INCLUDED
+#define BINDING_SMALL_FEATURES_H_INCLUDED
 /*
  * Copyright 2010-2019, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -57,4 +57,4 @@ small_test_feature(unsigned int feature);
 } /* extern "C" */
 #endif
 
-#endif /* TARANTOOL_SMALL_FEATURES_H_INCLUDED */
+#endif /* BINDING_SMALL_FEATURES_H_INCLUDED */

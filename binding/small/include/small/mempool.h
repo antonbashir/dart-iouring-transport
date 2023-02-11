@@ -1,5 +1,5 @@
-#ifndef INCLUDES_TARANTOOL_SMALL_MEMPOOL_H
-#define INCLUDES_TARANTOOL_SMALL_MEMPOOL_H
+#ifndef INCLUDES_BINDING_SMALL_MEMPOOL_H
+#define INCLUDES_BINDING_SMALL_MEMPOOL_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -316,4 +316,4 @@ mempool_alloc0_xc(struct mempool *pool)
 
 #endif /* defined(__cplusplus) */
 
-#endif /* INCLUDES_TARANTOOL_SMALL_MEMPOOL_H */
+#endif /* INCLUDES_BINDING_SMALL_MEMPOOL_H */

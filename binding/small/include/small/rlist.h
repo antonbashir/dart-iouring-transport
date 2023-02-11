@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_RLIST_H_INCLUDED
-#define TARANTOOL_RLIST_H_INCLUDED
+#ifndef BINDING_RLIST_H_INCLUDED
+#define BINDING_RLIST_H_INCLUDED
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -401,4 +401,4 @@ delete from one list and add_tail as another's head
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* TARANTOOL_RLIST_H_INCLUDED */
+#endif /* BINDING_RLIST_H_INCLUDED */

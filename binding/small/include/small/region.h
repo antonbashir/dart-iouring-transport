@@ -1,5 +1,5 @@
-#ifndef INCLUDES_TARANTOOL_SMALL_REGION_H
-#define INCLUDES_TARANTOOL_SMALL_REGION_H
+#ifndef INCLUDES_BINDING_SMALL_REGION_H
+#define INCLUDES_BINDING_SMALL_REGION_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -397,4 +397,4 @@ struct RegionGuard {
 	(T *)region_aligned_alloc((region), _tmp_, alignof(T));			\
 })
 
-#endif /* INCLUDES_TARANTOOL_SMALL_REGION_H */
+#endif /* INCLUDES_BINDING_SMALL_REGION_H */

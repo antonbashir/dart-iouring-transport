@@ -47,12 +47,12 @@ typedef bool (*rt_helper_t)(void);
 
 /* The mask carries bits for compiled in features */
 static uint64_t builtin_mask =
-#ifdef TARANTOOL_SMALL_USE_MADVISE
+#ifdef BINDING_SMALL_USE_MADVISE
 	SMALL_FEATURE_MASK(SMALL_FEATURE_DONTDUMP)	|
 #endif
 	0;
 
-#ifdef TARANTOOL_SMALL_USE_MADVISE
+#ifdef BINDING_SMALL_USE_MADVISE
 static bool
 test_dontdump(void)
 {

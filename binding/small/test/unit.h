@@ -1,5 +1,5 @@
-#ifndef INCLUDES_TARANTOOL_TEST_UNIT_H
-#define INCLUDES_TARANTOOL_TEST_UNIT_H
+#ifndef INCLUDES_BINDING_TEST_UNIT_H
+#define INCLUDES_BINDING_TEST_UNIT_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -140,4 +140,4 @@ int check_plan(void);
 }
 #endif /* defined(__cplusplus) */
 
-#endif /* INCLUDES_TARANTOOL_TEST_UNIT_H */
+#endif /* INCLUDES_BINDING_TEST_UNIT_H */

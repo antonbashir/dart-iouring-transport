@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_SMALL_IBUF_H_INCLUDED
-#define TARANTOOL_SMALL_IBUF_H_INCLUDED
+#ifndef BINDING_SMALL_IBUF_H_INCLUDED
+#define BINDING_SMALL_IBUF_H_INCLUDED
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -203,4 +203,4 @@ ibuf_alloc_xc_cb(void *ctx, size_t size)
 
 #endif /* defined(__cplusplus) */
 
-#endif /* TARANTOOL_SMALL_IBUF_H_INCLUDED */
+#endif /* BINDING_SMALL_IBUF_H_INCLUDED */
