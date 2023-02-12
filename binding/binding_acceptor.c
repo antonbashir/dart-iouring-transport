@@ -110,8 +110,8 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   struct transport_acceptor_context *context = smalloc(&transport->allocator, sizeof(struct transport_acceptor_context));
 
   memset(&context->client_addres, 0, sizeof(context->client_addres));
-  context->client_addres.sin_addr.s_addr = inet_addr(acceptor->client_ip);
-  context->client_addres.sin_port = htons(acceptor->client_port);
+  context->client_addres.sin_addr.s_addr = inet_addr(acceptor->server_ip);
+  context->client_addres.sin_port = htons(acceptor->server_port);
   context->client_addres.sin_family = AF_INET;
   context->client_addres_length = sizeof(context->client_addres);
   context->fd = transport_socket_create();

@@ -23,8 +23,8 @@ extern "C"
     transport_t *transport;
     transport_controller_t *controller;
     void *context;
-    const char *client_ip;
-    int32_t client_port;
+    const char *server_ip;
+    int32_t server_port;
     Dart_Port dart_port;
     bool active;
   } transport_acceptor_t;

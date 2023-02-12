@@ -2,17 +2,17 @@
 
 static transport_channel_t *transport_round_robbin_balancer_next(struct transport_balancer *balancer)
 {
-  if (!balancer->next)
+  if (!balancer->next_channel)
   {
-    balancer->next = balancer->channels;
-    return balancer->next;
+    balancer->next_channel = balancer->channels;
+    return balancer->next_channel;
   }
-  if (balancer->next = rlist_next(balancer->next))
+  if (balancer->next_channel = rlist_next(balancer->next_channel))
   {
-    return balancer->next;
+    return balancer->next_channel;
   }
-  balancer->next = balancer->channels;
-  return balancer->next;
+  balancer->next_channel = balancer->channels;
+  return balancer->next_channel;
 }
 
 static void transport_round_robbin_balancer_add(struct transport_balancer *balancer, transport_channel_t *channel)

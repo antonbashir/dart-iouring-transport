@@ -21,15 +21,11 @@ extern "C"
     int ring_retry_max_count;
 
     volatile bool initialized;
-    volatile bool suspended;
     volatile bool active;
-    volatile bool connected;
 
     void *context;
 
     pthread_t thread_id;
-    pthread_mutex_t suspended_mutex;
-    pthread_cond_t suspended_condition;
     pthread_mutex_t shutdown_mutex;
     pthread_cond_t shutdown_condition;
   } transport_controller_t;

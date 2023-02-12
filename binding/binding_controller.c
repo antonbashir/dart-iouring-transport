@@ -24,7 +24,6 @@ struct transport_controller_context
   ck_ring_buffer_t *transport_message_buffer;
   ck_ring_t transport_message_ring;
   ck_backoff_t ring_send_backoff;
-  ck_spinlock_cas_t submit_lock;
 };
 
 int transport_controller_loop(va_list input)
@@ -38,7 +37,7 @@ int transport_controller_loop(va_list input)
     struct transport_message *message;
     while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
-      while (unlikely(!fiber_channel_put(message->channel, message->data)))
+      while (unlikely(fiber_channel_put(message->channel, message->data) != 0))
       {
         fiber_sleep(0);
       }
@@ -57,6 +56,9 @@ int transport_controller_loop(va_list input)
 
 void *transport_controller_run(void *input)
 {
+  memory_init();
+  cbus_init();
+  fiber_init(fiber_c_invoke);
   fiber_start(fiber_new(CONTROLLER_FIBER, transport_controller_loop), input);
   fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), input);
   fiber_start(fiber_new(CONNECTOR_FIBER, transport_connector_loop), input);
@@ -74,14 +76,11 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->internal_ring_size = configuration->internal_ring_size;
   controller->initialized = false;
   controller->active = false;
-  controller->suspended_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-  controller->suspended_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
   controller->shutdown_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   controller->shutdown_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 
   struct transport_controller_context *context = malloc(sizeof(struct transport_controller_context));
   context->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);
-  ck_spinlock_cas_init(&context->submit_lock);
   if (context->transport_message_buffer == NULL)
   {
     free(context);

@@ -22,7 +22,7 @@ extern "C"
   struct transport_balancer
   {
     struct rlist *channels;
-    struct rlist *next;
+    struct rlist *next_channel;
     size_t count;
     struct transport_channel *(*next)(struct transport_balancer *);
     void (*add)(struct transport_balancer *, struct transport_channel *);

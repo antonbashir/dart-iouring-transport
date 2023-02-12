@@ -22717,22 +22717,12 @@ class transport_controller extends ffi.Struct {
   external bool initialized;
 
   @ffi.Bool()
-  external bool suspended;
-
-  @ffi.Bool()
   external bool active;
-
-  @ffi.Bool()
-  external bool connected;
 
   external ffi.Pointer<ffi.Void> context;
 
   @pthread_t()
   external int thread_id;
-
-  external pthread_mutex_t suspended_mutex;
-
-  external pthread_cond_t suspended_condition;
 
   external pthread_mutex_t shutdown_mutex;
 
@@ -22883,8 +22873,6 @@ class transport_channel_configuration extends ffi.Struct {
 }
 
 class transport_channel extends ffi.Struct {
-  external io_uring ring;
-
   external ffi.Pointer<transport_t> transport;
 
   external ffi.Pointer<transport_controller_t> controller;
@@ -22905,6 +22893,8 @@ class transport_channel extends ffi.Struct {
 
   @ffi.Bool()
   external bool active;
+
+  external rlist balancer_link;
 }
 
 class transport_payload extends ffi.Struct {
