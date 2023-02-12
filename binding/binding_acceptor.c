@@ -82,8 +82,7 @@ int transport_acceptor_loop(va_list input)
         fiber_sleep(0);
       }
       struct transport_channel *channel = context->balancer->next();
-      io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, sizeof(fd), fd, 0);
-      io_uring_sqe_set_data(sqe, 1);
+      io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, TRANSPORT_PAYLOAD_ACCEPT, 0);
       io_uring_submit(&context->ring);
     }
     io_uring_cq_advance(&context->ring, count);

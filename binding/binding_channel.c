@@ -68,7 +68,6 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
 transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                   transport_controller_t *controller,
                                                   transport_channel_configuration_t *configuration,
-                                                  int fd,
                                                   Dart_Port read_port,
                                                   Dart_Port write_port)
 {
@@ -136,13 +135,6 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   memset(&context->message_header, 0, sizeof(context->message_header));
   context->message_header.msg_namelen = sizeof(struct sockaddr_storage);
   context->message_header.msg_controllen = 0;
-
-  if (io_uring_register_files(&context->ring, &fd, 1))
-  {
-    return NULL;
-  }
-
-  context->balancer->add(channel);
 
   return channel;
 }
@@ -235,8 +227,23 @@ int transport_channel_loop(va_list input)
     io_uring_for_each_cqe(&context->ring, head, cqe)
     {
       ++count;
-      if (unlikely(cqe->res < 0 || !cqe->user_data))
+      if (unlikely(cqe->res < 0))
       {
+        continue;
+      }
+
+      if (cqe->user_data & TRANSPORT_PAYLOAD_CONNECT)
+      {
+        io_uring_register_files(&context->ring, cqe->res, 1);
+        context->balancer->add(channel);
+        continue;
+      }
+
+      if (cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT)
+      {
+        io_uring_register_files(&context->ring, cqe->res, 1);
+        transport_channel_queue_read(context, cqe->res);
+        context->balancer->add(channel);
         continue;
       }
 
@@ -262,11 +269,18 @@ int transport_channel_loop(va_list input)
         memcpy(output, payload, length);
         dart_post_pointer(channel->read_port, output);
         transport_channel_queue_read(context, cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
+        continue;
       }
 
       if (cqe->user_data & TRANSPORT_PAYLOAD_WRITE)
       {
+        void *payload = io_uring_recvmsg_payload(message_out, &context->message_header);
+        uint32_t length = io_uring_recvmsg_payload_length(message_out, cqe->res, &context->message_header);
+        void *output = malloc(length);
+        memcpy(output, payload, length);
+        dart_post_pointer(channel->write_port, output);
         transport_recycle_buffer(context, buffer_id);
+        continue;
       }
     }
     io_uring_cq_advance(&context->ring, count);
