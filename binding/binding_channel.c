@@ -161,7 +161,6 @@ static inline int transport_channel_select_buffer(struct transport_channel *chan
 
   io_uring_prep_recv_multishot(sqe, fd, NULL, transport_buffer_size(context), 0);
   io_uring_sqe_set_data(sqe, (void *)(intptr_t)(fd | TRANSPORT_PAYLOAD_READ));
-  sqe->flags |= IOSQE_FIXED_FILE;
   sqe->flags |= IOSQE_BUFFER_SELECT;
   sqe->buf_group = 0;
   io_uring_submit(&channel->ring);
@@ -246,7 +245,6 @@ int transport_channel_loop(va_list input)
             memcpy(buffer, channel_message->data, channel_message->size);
             io_uring_prep_sendmsg_zc(sqe, channel_message->fd, buffer, 0);
             io_uring_sqe_set_data(sqe, (void *)(intptr_t)((intptr_t)message | TRANSPORT_PAYLOAD_WRITE));
-            sqe->flags |= IOSQE_FIXED_FILE;
             io_uring_submit(&channel->ring);
             log_info("channel send data to ring, data size = %d", channel_message->size);
           }

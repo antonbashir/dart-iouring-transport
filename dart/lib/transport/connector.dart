@@ -1,10 +1,8 @@
-import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
-import 'channels/channel.dart';
 import 'configuration.dart';
 
 class TransportConnector {
@@ -22,7 +20,11 @@ class TransportConnector {
     this._controller,
   );
 
-  void initialize(String host, int port) {
+  void close() {
+    _bindings.transport_close_connector(_connector);
+  }
+
+  void connect(String host, int port) {
     using((Arena arena) {
       final configuration = arena<transport_connector_configuration>();
       _connector = _bindings.transport_initialize_connector(
@@ -33,13 +35,6 @@ class TransportConnector {
         port,
       );
     });
-  }
-
-  void close() {
-    _bindings.transport_close_connector(_connector);
-  }
-
-  void connect() {
     _bindings.transport_connector_connect(_connector);
   }
 }

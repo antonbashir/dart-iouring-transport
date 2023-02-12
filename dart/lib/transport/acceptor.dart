@@ -1,10 +1,8 @@
-import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
-import 'channels/channel.dart';
 import 'configuration.dart';
 
 class TransportAcceptor {
@@ -22,7 +20,11 @@ class TransportAcceptor {
     this._controller,
   );
 
-  void initialize(String host, int port) {
+  void close() {
+    _bindings.transport_close_acceptor(_acceptor);
+  }
+
+  void accept(String host, int port) {
     using((Arena arena) {
       final configuration = arena<transport_acceptor_configuration>();
       configuration.ref.backlog = _configuration.backlog;
@@ -34,13 +36,6 @@ class TransportAcceptor {
         port,
       );
     });
-  }
-
-  void close() {
-    _bindings.transport_close_acceptor(_acceptor);
-  }
-
-  void accept() {
     _bindings.transport_acceptor_accept(_acceptor);
   }
 }

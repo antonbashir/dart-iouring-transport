@@ -21,19 +21,11 @@ Future<void> main(List<String> args) async {
   final fromServer = encoder.convert("from server");
   final fromClient = encoder.convert("from client");
 
-  serverTransport.connection(TransportDefaults.acceptor(), TransportDefaults.channel()).bind("0.0.0.0", 9999).listen((serverChannel) async {
-    serverChannel.start(
-      onWrite: (payload) {
-        payload.finalize();
-        serverChannel.queueRead();
-      },
-      onRead: (payload) {
-        payload.finalize();
-        serverChannel.queueWrite(fromServer);
-      },
-    );
-    serverChannel.queueRead();
-  });
+  serverTransport.channels(
+    TransportDefaults.channel(),
+    count: 1,
+  );
+  serverTransport.acceptor(TransportDefaults.acceptor()).accept("0.0.0.0", 9999);
 
   // clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
   //   clientChannel.start(

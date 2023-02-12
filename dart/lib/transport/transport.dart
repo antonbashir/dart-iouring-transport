@@ -45,6 +45,8 @@ class Transport {
       final controllerConfiguration = arena<transport_controller_configuration_t>();
       controllerConfiguration.ref.ring_retry_max_count = this.controllerConfiguration.retryMaxCount;
       controllerConfiguration.ref.internal_ring_size = this.controllerConfiguration.internalRingSize;
+      controllerConfiguration.ref.balancer_configuration = arena<transport_balancer_configuration>();
+      controllerConfiguration.ref.balancer_configuration.ref.type = transport_balancer_type.TRANSPORT_BALANCER_ROUND_ROBBIN;
       _controller = _bindings.transport_controller_start(_transport, controllerConfiguration);
     });
   }
@@ -84,6 +86,20 @@ class Transport {
         onWrite: onWrite,
         onStop: onStop,
       );
+  }
+
+  List<TransportChannel> channels(
+    TransportChannelConfiguration configuration, {
+    int count = 1,
+    void Function(TransportDataPayload payload)? onRead,
+    void Function(TransportDataPayload payload)? onWrite,
+    void Function()? onStop,
+  }) {
+    List<TransportChannel> channels = [];
+    for (var index = 0; index < count; index++) {
+      channels.add(channel(configuration, onRead: onRead, onWrite: onWrite, onStop: onStop));
+    }
+    return channels;
   }
 
   TransportFileChannel file(

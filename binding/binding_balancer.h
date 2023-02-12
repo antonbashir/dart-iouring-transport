@@ -10,7 +10,7 @@ extern "C"
 
   struct transport_balancer
   {
-    struct rlist *channels;
+    struct rlist channels;
     struct rlist *next_channel;
     size_t count;
     struct transport_channel *(*next)(struct transport_balancer *);
