@@ -17,8 +17,6 @@ extern "C"
 
   typedef struct transport_channel_configuration
   {
-    size_t buffer_initial_capacity;
-    size_t buffer_limit;
     size_t buffers_count;
     int32_t buffer_size;
     uint32_t ring_size;
@@ -31,16 +29,10 @@ extern "C"
     transport_t *transport;
     transport_controller_t *controller;
 
-    size_t buffer_initial_capacity;
-    size_t buffer_limit;
-    size_t buffers_count;
-
     Dart_Port read_port;
     Dart_Port write_port;
 
-    void* context;
-
-    int32_t payload_buffer_size;
+    void *context;
   } transport_channel_t;
 
   transport_channel_t *transport_initialize_channel(transport_t *transport,
@@ -54,9 +46,6 @@ extern "C"
 
   int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offset);
   int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t payload_size, uint64_t offset);
-
-  void *transport_channel_extract_write_buffer(transport_channel_t *channel, transport_data_payload_t *message);
-  void *transport_channel_extract_read_buffer(transport_channel_t *channel, transport_data_payload_t *message);
 
   void *transport_channel_prepare_read(transport_channel_t *channel);
   void *transport_channel_prepare_write(transport_channel_t *channel);
