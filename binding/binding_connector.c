@@ -32,6 +32,7 @@ int transport_connector_loop(va_list input)
   struct transport_connector *connector = va_arg(input, struct transport_connector *);
   struct transport_connector_context *context = (struct transport_connector_context *)connector->context;
   log_info("connector fiber started");
+  connector->active = true;
   while (connector->active)
   {
     if (!fiber_channel_is_empty(context->channel))
@@ -49,7 +50,7 @@ int transport_connector_loop(va_list input)
           sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_connect(sqe, (int)fd, (struct sockaddr *)&context->client_addres, context->client_addres_length);
-        io_uring_sqe_set_data(sqe, (void *)TRANSPORT_PAYLOAD_CONNECT);
+        io_uring_sqe_set_data(sqe, (void *)(uint64_t)TRANSPORT_PAYLOAD_CONNECT);
         io_uring_submit(&context->ring);
       }
     }
@@ -64,7 +65,7 @@ int transport_connector_loop(va_list input)
       {
         continue;
       }
-      if (likely(cqe->user_data & TRANSPORT_PAYLOAD_CONNECT))
+      if (likely((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_CONNECT)))
       {
         int fd = cqe->res;
         struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
@@ -74,7 +75,7 @@ int transport_connector_loop(va_list input)
         }
         log_info("send connect to channel");
         struct transport_channel *channel = context->balancer->next(context->balancer);
-        io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, TRANSPORT_PAYLOAD_CONNECT, 0);
+        io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, (uint64_t)TRANSPORT_PAYLOAD_CONNECT, 0);
         io_uring_submit(&context->ring);
       }
     }

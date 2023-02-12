@@ -47,6 +47,7 @@ class TransportChannel {
       final configuration = arena<transport_channel_configuration_t>();
       configuration.ref.buffer_size = _configuration.bufferSize;
       configuration.ref.buffers_count = _configuration.buffersCount;
+      configuration.ref.buffer_shift = _configuration.bufferShift;
       configuration.ref.ring_size = _configuration.ringSize;
       _channel = _bindings.transport_initialize_channel(
         _transport,
@@ -81,7 +82,7 @@ class TransportChannel {
       malloc.free(payload);
       return;
     }
-    onRead!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size)));
+    onRead!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
   }
 
   void _handleWrite(dynamic payloadPointer) {
@@ -91,6 +92,6 @@ class TransportChannel {
       malloc.free(payload);
       return;
     }
-    onWrite!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size)));
+    onWrite!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
   }
 }

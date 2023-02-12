@@ -23165,6 +23165,9 @@ class transport_channel_configuration extends ffi.Struct {
 
   @ffi.Uint32()
   external int ring_size;
+
+  @ffi.Uint32()
+  external int buffer_shift;
 }
 
 class transport_channel extends ffi.Struct {

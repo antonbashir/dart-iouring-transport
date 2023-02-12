@@ -29,8 +29,8 @@ struct transport_channel_context
   struct fiber_channel *channel;
   struct transport_balancer *balancer;
   struct io_uring_buf_ring *buffer_ring;
-  size_t buffer_count;
-  int buffer_shift;
+  size_t buffers_count;
+  uint32_t buffer_shift;
   unsigned char *buffer_base;
 };
 
@@ -51,7 +51,7 @@ static inline void transport_channel_recycle_buffer(struct transport_channel_con
                         transport_get_buffer(context, id),
                         transport_buffer_size(context),
                         id,
-                        io_uring_buf_ring_mask(context->buffer_count),
+                        io_uring_buf_ring_mask(context->buffers_count),
                         0);
   io_uring_buf_ring_advance(context->buffer_ring, 1);
 }
@@ -73,6 +73,7 @@ static inline void transport_channel_setup_buffers(transport_channel_configurati
     return;
   }
   context->buffer_ring = (struct io_uring_buf_ring *)buffer_memory;
+  context->buffer_shift = configuration->buffer_shift;
   io_uring_buf_ring_init(context->buffer_ring);
 
   struct io_uring_buf_reg buffer_request = {
@@ -165,9 +166,10 @@ static inline int transport_channel_select_buffer(struct transport_channel *chan
     sqe = io_uring_get_sqe(&channel->ring);
   }
 
-  io_uring_prep_recv_multishot(sqe, fd, NULL, transport_buffer_size(context), 0);
-  io_uring_sqe_set_data(sqe, (void *)(intptr_t)(fd | TRANSPORT_PAYLOAD_READ));
+  io_uring_prep_recv(sqe, fd, NULL, transport_buffer_size(context), 0);
+  io_uring_sqe_set_data(sqe, (void *)(uint64_t)(fd | TRANSPORT_PAYLOAD_READ));
   sqe->flags |= IOSQE_BUFFER_SELECT;
+  sqe->flags |= IOSQE_FIXED_FILE;
   sqe->buf_group = 0;
   io_uring_submit(&channel->ring);
   log_info("channel select buffers");
@@ -193,6 +195,7 @@ int transport_channel_loop(va_list input)
   struct transport_channel *channel = va_arg(input, struct transport_channel *);
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   log_info("channel fiber started");
+  channel->active = true;
   while (channel->active)
   {
     int count = 0;
@@ -206,7 +209,7 @@ int transport_channel_loop(va_list input)
         continue;
       }
 
-      if (cqe->user_data & (TRANSPORT_PAYLOAD_ACCEPT | TRANSPORT_PAYLOAD_CONNECT))
+      if ((uint64_t)(cqe->user_data & (TRANSPORT_PAYLOAD_ACCEPT | TRANSPORT_PAYLOAD_CONNECT)))
       {
         log_info("channel register socket");
         io_uring_register_files(&channel->ring, &cqe->res, 1);
@@ -216,7 +219,7 @@ int transport_channel_loop(va_list input)
 
       int buffer_id = cqe->flags >> 16;
 
-      if (cqe->user_data & TRANSPORT_PAYLOAD_READ)
+      if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
       {
         int fd = cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS;
         void *payload = transport_get_buffer(context, buffer_id);
@@ -251,7 +254,8 @@ int transport_channel_loop(va_list input)
             void *buffer = transport_get_buffer(context, buffer_id);
             memcpy(buffer, channel_message->data, channel_message->size);
             io_uring_prep_sendmsg_zc(sqe, channel_message->fd, buffer, 0);
-            io_uring_sqe_set_data(sqe, (void *)(intptr_t)((intptr_t)message | TRANSPORT_PAYLOAD_WRITE));
+            io_uring_sqe_set_data(sqe, (void *)(uint64_t)((intptr_t)message | TRANSPORT_PAYLOAD_WRITE));
+            sqe->flags |= IOSQE_FIXED_FILE;
             io_uring_submit(&channel->ring);
             log_info("channel send data to ring, data size = %d", channel_message->size);
           }
@@ -262,7 +266,7 @@ int transport_channel_loop(va_list input)
         continue;
       }
 
-      if (cqe->user_data & TRANSPORT_PAYLOAD_WRITE)
+      if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
       {
         struct transport_channel_message *channel_message = (struct transport_channel_message *)(cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
         void *payload = transport_get_buffer(context, buffer_id);

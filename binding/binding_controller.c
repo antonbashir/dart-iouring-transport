@@ -58,7 +58,7 @@ int transport_controller_loop(va_list input)
       }
 
       log_info("put message");
-      while (unlikely(fiber_channel_put(message->channel, message->data) != 0))
+      while (unlikely(fiber_channel_put(message->channel, message) != 0))
       {
         fiber_sleep(0);
       }

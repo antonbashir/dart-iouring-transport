@@ -77,6 +77,8 @@
     "binding_message.h": "c",
     "binding_balancer.h": "c",
     "binding_connector.h": "c",
-    "limits": "c"
+    "limits": "c",
+    "cstdint": "c",
+    "numeric": "c"
   },
 }

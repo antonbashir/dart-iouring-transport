@@ -47,10 +47,12 @@ class TransportChannelConfiguration {
   final int bufferSize;
   final int buffersCount;
   final int ringSize;
+  final int bufferShift;
 
   TransportChannelConfiguration({
     required this.bufferSize,
     required this.buffersCount,
+    required this.bufferShift,
     required this.ringSize,
   });
 
@@ -58,11 +60,13 @@ class TransportChannelConfiguration {
     int? bufferSize,
     int? buffersCount,
     int? ringSize,
+    int? bufferShift,
   }) =>
       TransportChannelConfiguration(
         bufferSize: bufferSize ?? this.bufferSize,
         buffersCount: buffersCount ?? this.buffersCount,
         ringSize: ringSize ?? this.ringSize,
+        bufferShift: bufferShift ?? this.bufferShift,
       );
 }
 

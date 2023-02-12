@@ -22,6 +22,7 @@ extern "C"
     size_t buffers_count;
     int32_t buffer_size;
     uint32_t ring_size;
+    uint32_t buffer_shift;
   } transport_channel_configuration_t;
 
   typedef struct transport_channel
