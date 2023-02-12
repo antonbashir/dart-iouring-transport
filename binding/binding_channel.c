@@ -21,7 +21,6 @@ struct transport_channel_message
   void *data;
   size_t size;
   int fd;
-  int buffer_id;
 };
 
 struct transport_channel_context
@@ -66,7 +65,7 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
 
 static inline void transport_channel_setup_buffers(transport_channel_configuration_t *configuration, struct transport_channel *channel, struct transport_channel_context *context)
 {
-  size_t buffer_ring_size = (sizeof(struct io_uring_buf) + configuration->buffer_size) * configuration->buffers_count;
+  size_t buffer_ring_size = (sizeof(struct io_uring_buf) + transport_buffer_size(context)) * configuration->buffers_count;
   void *buffer_memory = mmap(NULL, buffer_ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
   if (buffer_memory == MAP_FAILED)
   {
@@ -74,7 +73,7 @@ static inline void transport_channel_setup_buffers(transport_channel_configurati
   }
   context->buffer_ring = (struct io_uring_buf_ring *)buffer_memory;
   context->buffer_shift = configuration->buffer_shift;
-  context->buffer_base = (unsigned char *)context->buffer_ring + sizeof(struct io_uring_buf) * configuration->buffers_count;
+  context->buffer_base = (unsigned char *)(context->buffer_ring + sizeof(struct io_uring_buf) * configuration->buffers_count);
 
   struct io_uring_buf_reg buffer_request = {
       .ring_addr = (unsigned long)context->buffer_ring,
@@ -95,8 +94,8 @@ static inline void transport_channel_setup_buffers(transport_channel_configurati
   {
     io_uring_buf_ring_add(context->buffer_ring,
                           transport_get_buffer(context, buffer_index),
-                          configuration->buffer_size,
-                          buffer_index,
+                          transport_buffer_size(context),
+                          buffer_index + 1,
                           io_uring_buf_ring_mask(configuration->buffers_count),
                           buffer_index);
   }
@@ -167,11 +166,11 @@ static inline int transport_channel_select_buffer(struct transport_channel *chan
     fiber_sleep(0);
     sqe = io_uring_get_sqe(&channel->ring);
   }
-
-  io_uring_prep_recv_multishot(sqe, fd, NULL, transport_buffer_size(context), 0);
+  size_t size = transport_buffer_size(context);
+  io_uring_prep_read(sqe, fd, NULL, size, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)(fd | TRANSPORT_PAYLOAD_READ));
   sqe->flags |= IOSQE_BUFFER_SELECT;
-  sqe->flags |= IOSQE_FIXED_FILE;
+  sqe->flags |= IOSQE_ASYNC;
   sqe->buf_group = 0;
   io_uring_submit(&channel->ring);
   log_info("channel select buffers");
@@ -200,6 +199,26 @@ int transport_channel_loop(va_list input)
   channel->active = true;
   while (channel->active)
   {
+    if (!fiber_channel_is_empty(context->channel))
+    {
+      void *message;
+      if (likely(fiber_channel_get(context->channel, &message) == 0))
+      {
+        struct transport_channel_message *channel_message = (struct transport_channel_message *)((struct transport_message *)message)->data;
+        free(message);
+        struct io_uring_sqe *sqe = io_uring_get_sqe(&channel->ring);
+        while (unlikely(sqe == NULL))
+        {
+          io_uring_submit(&channel->ring);
+          fiber_sleep(0);
+          sqe = io_uring_get_sqe(&channel->ring);
+        }
+        io_uring_prep_send(sqe, channel_message->fd, channel_message->data, channel_message->size, 0);
+        io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)message | TRANSPORT_PAYLOAD_WRITE));
+        io_uring_submit(&channel->ring);
+        log_info("channel send data to ring, data size = %d", channel_message->size);
+      }
+    }
     int count = 0;
     unsigned int head;
     struct io_uring_cqe *cqe;
@@ -207,11 +226,6 @@ int transport_channel_loop(va_list input)
     {
       log_info("channel process cqe with result %d and user_data %d", cqe->res, cqe->user_data);
       ++count;
-      if (unlikely(cqe->res < 0))
-      {
-        continue;
-      }
-
       if ((uint64_t)(cqe->user_data & (TRANSPORT_PAYLOAD_ACCEPT | TRANSPORT_PAYLOAD_CONNECT)))
       {
         log_info("channel register socket");
@@ -224,59 +238,36 @@ int transport_channel_loop(va_list input)
         continue;
       }
 
-      int buffer_id = cqe->flags >> 16;
-
-      if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
+      if (cqe->flags & IORING_CQE_F_BUFFER)
       {
-        int fd = cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS;
-        void *payload = transport_get_buffer(context, buffer_id);
-        if (payload)
-        {
-          transport_payload_t *payload = malloc(sizeof(transport_payload_t));
-          uint32_t size = cqe->res;
-          void *output = malloc(size);
-          memcpy(output, payload, size);
-          payload->data = output;
-          payload->size = size;
-          payload->fd = fd;
-          log_info("channel send read data to dart, data size = %d", size);
-          dart_post_pointer(payload, channel->read_port);
-        }
+        int buffer_id = cqe->flags >> 16;
 
-        if (!fiber_channel_is_empty(context->channel))
+        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
         {
-          void *message;
-          if (likely(fiber_channel_get(context->channel, &message) == 0))
+          int fd = cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS;
+          void *payload = transport_get_buffer(context, buffer_id);
+          if (payload)
           {
-            struct transport_channel_message *channel_message = (struct transport_channel_message *)((struct transport_message *)message)->data;
-            free(message);
-            struct io_uring_sqe *sqe = io_uring_get_sqe(&channel->ring);
-            while (unlikely(sqe == NULL))
-            {
-              io_uring_submit(&channel->ring);
-              fiber_sleep(0);
-              sqe = io_uring_get_sqe(&channel->ring);
-            }
-            channel_message->buffer_id = buffer_id;
-            void *buffer = transport_get_buffer(context, buffer_id);
-            memcpy(buffer, channel_message->data, channel_message->size);
-            io_uring_prep_sendmsg_zc(sqe, channel_message->fd, buffer, 0);
-            io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)message | TRANSPORT_PAYLOAD_WRITE));
-            sqe->flags |= IOSQE_FIXED_FILE;
-            io_uring_submit(&channel->ring);
-            log_info("channel send data to ring, data size = %d", channel_message->size);
+            transport_payload_t *payload = malloc(sizeof(transport_payload_t));
+            uint32_t size = cqe->res;
+            void *output = malloc(size);
+            memcpy(output, payload, size);
+            payload->data = output;
+            payload->size = size;
+            payload->fd = fd;
+            log_info("channel send read data to dart, data size = %d", size);
+            dart_post_pointer(payload, channel->read_port);
           }
+          transport_channel_recycle_buffer(context, buffer_id);
+          transport_channel_select_buffer(channel, context, cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
         }
-
-        transport_channel_select_buffer(channel, context, cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
-
         continue;
       }
 
       if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
       {
-        struct transport_channel_message *channel_message = (struct transport_channel_message *)(cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
-        void *payload = transport_get_buffer(context, buffer_id);
+        struct transport_channel_message *channel_message = (struct transport_channel_message *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
+        void *payload = channel_message->data;
         if (payload)
         {
           transport_payload_t *payload = malloc(sizeof(transport_payload_t));
@@ -289,9 +280,9 @@ int transport_channel_loop(va_list input)
           log_info("channel send write data to dart, data size = %d", size);
           dart_post_pointer(payload, channel->read_port);
         }
-        transport_channel_recycle_buffer(context, buffer_id);
         free(channel_message->data);
         free(channel_message);
+        transport_channel_select_buffer(channel, context, cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
         continue;
       }
     }

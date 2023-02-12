@@ -71,8 +71,9 @@ class TransportChannel {
   }
 
   void write(Uint8List bytes, int fd) {
-    Pointer<Void> data = calloc(bytes.length);
-    _bindings.transport_channel_send(_channel, data, bytes.length, fd);
+    Pointer<Uint8> data = calloc.allocate(bytes.length).cast();
+    data.asTypedList(bytes.length).setAll(0, bytes);
+    _bindings.transport_channel_send(_channel, data.cast(), bytes.length, fd);
   }
 
   void _handleRead(dynamic payloadPointer) {
