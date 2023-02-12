@@ -4,7 +4,8 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/configuration.dart';
-import 'package:iouring_transport/transport/connection.dart';
+import 'package:iouring_transport/transport/connector.dart';
+import 'package:iouring_transport/transport/acceptor.dart';
 
 import 'bindings.dart';
 import 'channels/file.dart';
@@ -33,7 +34,8 @@ class Transport {
   Future<void> initialize() async {
     using((Arena arena) {
       final transportConfiguration = arena<transport_configuration_t>();
-      transportConfiguration.ref.ring_size = configuration.ringSize;
+      transportConfiguration.ref.log_level = configuration.logLevel;
+      transportConfiguration.ref.log_colored = configuration.logColored;
       transportConfiguration.ref.slab_size = configuration.slabSize;
       transportConfiguration.ref.memory_quota = configuration.memoryQuota;
       transportConfiguration.ref.slab_allocation_granularity = configuration.slabAllocationGranularity;
@@ -41,8 +43,7 @@ class Transport {
       transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
       _transport = _bindings.transport_initialize(transportConfiguration);
       final controllerConfiguration = arena<transport_controller_configuration_t>();
-      controllerConfiguration.ref.cqe_size = this.controllerConfiguration.cqesSize;
-      controllerConfiguration.ref.batch_message_limit = this.controllerConfiguration.batchMessageLimit;
+      controllerConfiguration.ref.ring_retry_max_count = this.controllerConfiguration.retryMaxCount;
       controllerConfiguration.ref.internal_ring_size = this.controllerConfiguration.internalRingSize;
       _controller = _bindings.transport_controller_start(_transport, controllerConfiguration);
     });
@@ -53,16 +54,21 @@ class Transport {
     _bindings.transport_close(_transport);
   }
 
-  TransportConnection connection(TransportConnectionConfiguration connectionConfiguration, TransportChannelConfiguration channelConfiguration) => TransportConnection(
-        connectionConfiguration,
-        channelConfiguration,
+  TransportConnector connector(TransportConnectorConfiguration configuration) => TransportConnector(
+        configuration,
         _bindings,
         _transport,
         _controller,
-      )..initialize();
+      );
+
+  TransportAcceptor acceptor(TransportAcceptorConfiguration configuration) => TransportAcceptor(
+        configuration,
+        _bindings,
+        _transport,
+        _controller,
+      );
 
   TransportChannel channel(
-    int descriptor,
     TransportChannelConfiguration configuration, {
     void Function(TransportDataPayload payload)? onRead,
     void Function(TransportDataPayload payload)? onWrite,
@@ -73,7 +79,6 @@ class Transport {
       configuration,
       _transport,
       _controller,
-      descriptor,
     )..start(
         onRead: onRead,
         onWrite: onWrite,
@@ -88,13 +93,11 @@ class Transport {
     void Function(TransportDataPayload payload)? onWrite,
     void Function()? onStop,
   }) {
-    final descriptor = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
     return TransportFileChannel(
       _bindings,
       _transport,
       _controller,
       configuration,
-      descriptor,
       onStop: onStop,
     )..start();
   }

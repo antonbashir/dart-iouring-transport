@@ -16610,7 +16610,6 @@ class TransportBindings {
     ffi.Pointer<transport_connector_configuration_t> configuration,
     ffi.Pointer<ffi.Char> ip,
     int port,
-    int dart_port,
   ) {
     return _transport_initialize_connector(
       transport,
@@ -16618,7 +16617,6 @@ class TransportBindings {
       configuration,
       ip,
       port,
-      dart_port,
     );
   }
 
@@ -16629,8 +16627,7 @@ class TransportBindings {
               ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_connector_configuration_t>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int32,
-              Dart_Port)>>('transport_initialize_connector');
+              ffi.Int32)>>('transport_initialize_connector');
   late final _transport_initialize_connector =
       _transport_initialize_connectorPtr.asFunction<
           ffi.Pointer<transport_connector_t> Function(
@@ -16638,7 +16635,6 @@ class TransportBindings {
               ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_connector_configuration_t>,
               ffi.Pointer<ffi.Char>,
-              int,
               int)>();
 
   void transport_close_connector(
@@ -20095,8 +20091,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_connector_configuration_t>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int32,
-              Dart_Port)>> get transport_initialize_connector =>
+              ffi.Int32)>> get transport_initialize_connector =>
       _library._transport_initialize_connectorPtr;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -22941,13 +22936,7 @@ class transport_controller extends ffi.Struct {
   external ffi.Pointer<ffi.Void> balancer;
 
   @ffi.Size()
-  external int cqe_size;
-
-  @ffi.Size()
   external int internal_ring_size;
-
-  @ffi.Size()
-  external int batch_message_limit;
 
   @ffi.Int()
   external int ring_retry_max_count;
@@ -22969,17 +22958,11 @@ class transport_controller extends ffi.Struct {
 }
 
 class transport_controller_configuration extends ffi.Struct {
-  @ffi.Size()
-  external int cqe_size;
+  @ffi.Int()
+  external int ring_retry_max_count;
 
   @ffi.Size()
   external int internal_ring_size;
-
-  @ffi.Size()
-  external int batch_message_limit;
-
-  @ffi.Int()
-  external int ring_retry_max_count;
 
   external ffi.Pointer<transport_balancer_configuration_t>
       balancer_configuration;

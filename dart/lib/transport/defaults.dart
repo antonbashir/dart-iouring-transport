@@ -10,20 +10,22 @@ class TransportDefaults {
         slabAllocationMinimalObjectSize: 8,
         slabAllocationGranularity: 8,
         slabAllocationFactor: 1.05,
+        logColored: true,
+        logLevel: 5,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        bufferInitialCapacity: 16320,
-        bufferLimit: 18 * 16320,
-        bufferAvailableAwaitDelayed: Duration.zero,
-        payloadBufferSize: 32,
+        bufferSize: 16320,
+        buffersCount: 18 * 16320,
+        ringSize: 8192,
       );
 
   static TransportControllerConfiguration controller() => TransportControllerConfiguration(
-        cqesSize: 2048,
-        batchMessageLimit: 128,
+        retryMaxCount: 5,
         internalRingSize: 33554432,
       );
 
-  static TransportConnectionConfiguration connection() => TransportConnectionConfiguration(512);
+  static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(512);
+
+  static TransportConnectorConfiguration connector() => TransportConnectorConfiguration();
 }

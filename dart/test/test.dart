@@ -42,8 +42,8 @@ Future<void> testClientServer() async {
   final received = Completer();
   final serverTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
   final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
-  final serverConnection = serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel());
-  final clientConnection = clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel());
+  final serverConnection = serverTransport.connection(TransportDefaults.acceptor(), TransportDefaults.channel());
+  final clientConnection = clientTransport.connection(TransportDefaults.acceptor(), TransportDefaults.channel());
   final server = serverConnection.bind("127.0.0.1", 5678).listen((client) async {
     final completer = Completer<String>();
     client.start(onRead: (payload) {

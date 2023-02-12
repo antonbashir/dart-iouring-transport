@@ -14,7 +14,6 @@ class TransportChannel {
   final Pointer<transport_t> _transport;
   final Pointer<transport_controller_t> _controller;
   final TransportChannelConfiguration _configuration;
-  final int _descriptor;
 
   void Function(TransportDataPayload payload)? onRead;
   void Function(TransportDataPayload payload)? onWrite;
@@ -23,13 +22,14 @@ class TransportChannel {
   late final Pointer<transport_channel_t> _channel;
   late final RawReceivePort _readPort = RawReceivePort(_handleRead);
   late final RawReceivePort _writePort = RawReceivePort(_handleWrite);
+  late final RawReceivePort _acceptPort = RawReceivePort();
+  late final RawReceivePort _connectPort = RawReceivePort();
 
   TransportChannel(
     this._bindings,
     this._configuration,
     this._transport,
-    this._controller,
-    this._descriptor, {
+    this._controller, {
     this.onRead,
     this.onWrite,
     this.onStop,
@@ -45,16 +45,17 @@ class TransportChannel {
     if (onStop != null) this.onStop = onStop;
     using((Arena arena) {
       final configuration = arena<transport_channel_configuration_t>();
-      configuration.ref.buffer_initial_capacity = _configuration.bufferInitialCapacity;
-      configuration.ref.buffer_limit = _configuration.bufferLimit;
-      configuration.ref.payload_buffer_size = _configuration.payloadBufferSize;
+      configuration.ref.buffer_size = _configuration.bufferSize;
+      configuration.ref.buffers_count = _configuration.buffersCount;
+      configuration.ref.ring_size = _configuration.ringSize;
       _channel = _bindings.transport_initialize_channel(
         _transport,
         _controller,
         configuration,
-        _descriptor,
         _readPort.sendPort.nativePort,
         _writePort.sendPort.nativePort,
+        _acceptPort.sendPort.nativePort,
+        _connectPort.sendPort.nativePort,
       );
     });
   }
@@ -62,48 +63,34 @@ class TransportChannel {
   void stop() {
     _readPort.close();
     _writePort.close();
+    _acceptPort.close();
+    _connectPort.close();
     _bindings.transport_close_channel(_channel);
     onStop?.call();
   }
 
-  Future<void> queueRead({int offset = 0}) async {
-    while (_bindings.transport_channel_prepare_read(_channel) == nullptr) {
-      await Future.delayed(_configuration.bufferAvailableAwaitDelayed);
-    }
-    _bindings.transport_channel_queue_read(_channel, offset);
+  void write(Uint8List bytes, int fd) {
+    Pointer<Void> data = calloc(bytes.length);
+    _bindings.transport_channel_send(_channel, data, bytes.length, fd);
   }
-
-  Future<void> queueWrite(Uint8List bytes, {int offset = 0}) async {
-    Pointer<Uint8> buffer = _bindings.transport_channel_prepare_write(_channel).cast();
-    while (buffer == nullptr) {
-      await Future.delayed(_configuration.bufferAvailableAwaitDelayed);
-      buffer = _bindings.transport_channel_prepare_write(_channel).cast();
-    }
-    buffer.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_channel_queue_write(_channel, bytes.length, offset);
-  }
-
-  int currentReadSize() => _channel.ref.current_read_size;
-
-  int currentWriteSize() => _channel.ref.current_write_size;
 
   void _handleRead(dynamic payloadPointer) {
-    Pointer<transport_data_payload> payload = Pointer.fromAddress(payloadPointer);
-    final readBuffer = _bindings.transport_channel_extract_read_buffer(_channel, payload);
+    Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onRead == null) {
-      _bindings.transport_channel_free_data_payload(_channel, payload);
+      malloc.free(payload.ref.data);
+      malloc.free(payload);
       return;
     }
-    onRead!(TransportDataPayload(_bindings, _channel, payload, readBuffer.cast<Uint8>().asTypedList(payload.ref.size)));
+    onRead!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size)));
   }
 
   void _handleWrite(dynamic payloadPointer) {
-    Pointer<transport_data_payload_t> payload = Pointer.fromAddress(payloadPointer);
-    final writeBuffer = _bindings.transport_channel_extract_write_buffer(_channel, payload);
+    Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onWrite == null) {
-      _bindings.transport_channel_free_data_payload(_channel, payload);
+      malloc.free(payload.ref.data);
+      malloc.free(payload);
       return;
     }
-    onWrite!(TransportDataPayload(_bindings, _channel, payload, writeBuffer.cast<Uint8>().asTypedList(payload.ref.size)));
+    onWrite!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size)));
   }
 }

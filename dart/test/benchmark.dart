@@ -21,7 +21,7 @@ Future<void> main(List<String> args) async {
   final fromServer = encoder.convert("from server");
   final fromClient = encoder.convert("from client");
 
-  serverTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).bind("0.0.0.0", 9999).listen((serverChannel) async {
+  serverTransport.connection(TransportDefaults.acceptor(), TransportDefaults.channel()).bind("0.0.0.0", 9999).listen((serverChannel) async {
     serverChannel.start(
       onWrite: (payload) {
         payload.finalize();

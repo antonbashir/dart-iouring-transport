@@ -28,9 +28,7 @@ extern "C"
   {
     transport_t *transport;
     void *balancer;
-    size_t cqe_size;
     size_t internal_ring_size;
-    size_t batch_message_limit;
     int ring_retry_max_count;
 
     volatile bool initialized;
@@ -45,10 +43,8 @@ extern "C"
 
   typedef struct transport_controller_configuration
   {
-    size_t cqe_size;
-    size_t internal_ring_size;
-    size_t batch_message_limit;
     int ring_retry_max_count;
+    size_t internal_ring_size;
     transport_balancer_configuration_t *balancer_configuration;
   } transport_controller_configuration_t;
 

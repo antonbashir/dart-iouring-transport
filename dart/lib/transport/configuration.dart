@@ -44,59 +44,57 @@ class TransportConfiguration {
 }
 
 class TransportChannelConfiguration {
-  final int bufferInitialCapacity;
-  final int bufferLimit;
-  final int payloadBufferSize;
-  final Duration bufferAvailableAwaitDelayed;
+  final int bufferSize;
+  final int buffersCount;
+  final int ringSize;
 
   TransportChannelConfiguration({
-    required this.bufferInitialCapacity,
-    required this.bufferLimit,
-    required this.bufferAvailableAwaitDelayed,
-    required this.payloadBufferSize,
+    required this.bufferSize,
+    required this.buffersCount,
+    required this.ringSize,
   });
 
   TransportChannelConfiguration copyWith({
-    int? bufferInitialCapacity,
-    int? bufferLimit,
-    Duration? bufferAvailableAwaitDelayed,
-    int? messageSize,
+    int? bufferSize,
+    int? buffersCount,
+    int? ringSize,
   }) =>
       TransportChannelConfiguration(
-        bufferInitialCapacity: bufferInitialCapacity ?? this.bufferInitialCapacity,
-        bufferLimit: bufferLimit ?? this.bufferLimit,
-        bufferAvailableAwaitDelayed: bufferAvailableAwaitDelayed ?? this.bufferAvailableAwaitDelayed,
-        payloadBufferSize: messageSize ?? this.payloadBufferSize,
+        bufferSize: bufferSize ?? this.bufferSize,
+        buffersCount: buffersCount ?? this.buffersCount,
+        ringSize: ringSize ?? this.ringSize,
       );
 }
 
 class TransportControllerConfiguration {
-  final int cqesSize;
+  final int retryMaxCount;
   final int internalRingSize;
-  final int batchMessageLimit;
 
   TransportControllerConfiguration({
-    required this.cqesSize,
+    required this.retryMaxCount,
     required this.internalRingSize,
-    required this.batchMessageLimit,
   });
 
   TransportControllerConfiguration copyWith({
-    int? cqesSize,
+    int? retryMaxCount,
     int? internalRingSize,
-    int? batchMessageLimit,
   }) =>
       TransportControllerConfiguration(
-        cqesSize: cqesSize ?? this.cqesSize,
+        retryMaxCount: retryMaxCount ?? this.retryMaxCount,
         internalRingSize: internalRingSize ?? this.internalRingSize,
-        batchMessageLimit: batchMessageLimit ?? this.batchMessageLimit,
       );
 }
 
-class TransportConnectionConfiguration {
+class TransportAcceptorConfiguration {
   final int backlog;
 
-  TransportConnectionConfiguration(this.backlog);
+  TransportAcceptorConfiguration(this.backlog);
 
-  TransportConnectionConfiguration copyWith({int? backlog}) => TransportConnectionConfiguration(backlog ?? this.backlog);
+  TransportAcceptorConfiguration copyWith({int? backlog}) => TransportAcceptorConfiguration(backlog ?? this.backlog);
+}
+
+class TransportConnectorConfiguration {
+  TransportConnectorConfiguration();
+
+  TransportConnectorConfiguration copyWith() => TransportConnectorConfiguration();
 }

@@ -17,7 +17,6 @@ class TransportFileChannel {
   final Pointer<transport_t> _transport;
   final Pointer<transport_controller_t> _controller;
   final TransportChannelConfiguration _configuration;
-  final int _descriptor;
 
   void Function(TransportDataPayload payload)? onRead;
   void Function(TransportDataPayload payload)? onWrite;
@@ -29,8 +28,7 @@ class TransportFileChannel {
     this._bindings,
     this._transport,
     this._controller,
-    this._configuration,
-    this._descriptor, {
+    this._configuration, {
     this.onRead,
     this.onWrite,
     this.onStop,
@@ -40,7 +38,6 @@ class TransportFileChannel {
       _configuration,
       _transport,
       _controller,
-      _descriptor,
     );
   }
 
@@ -93,7 +90,7 @@ class TransportFileChannel {
 
   Future<void> writeString(String string) => writeBytes(_encoder.convert(string));
 
-  void queueRead({int offset = 0}) => _delegate.queueRead(offset: offset);
+  void queueRead({int offset = 0}) => throw Error();
 
-  void queueWrite(Uint8List bytes, {int offset = 0}) => _delegate.queueWrite(bytes, offset: offset);
+  void queueWrite(Uint8List bytes, {int offset = 0}) => throw Error();
 }

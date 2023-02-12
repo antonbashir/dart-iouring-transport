@@ -75,8 +75,6 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   transport_controller_t *controller = malloc(sizeof(transport_controller_t));
 
   controller->transport = transport;
-  controller->cqe_size = configuration->cqe_size;
-  controller->batch_message_limit = configuration->batch_message_limit;
   controller->internal_ring_size = configuration->internal_ring_size;
   controller->initialized = false;
   controller->active = false;
