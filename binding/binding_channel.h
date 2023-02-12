@@ -20,7 +20,7 @@ extern "C"
     size_t buffer_initial_capacity;
     size_t buffer_limit;
     size_t buffers_count;
-    int32_t payload_buffer_size;
+    int32_t buffer_size;
     uint32_t ring_size;
   } transport_channel_configuration_t;
 
@@ -34,9 +34,11 @@ extern "C"
     size_t buffer_initial_capacity;
     size_t buffer_limit;
     size_t buffers_count;
-    
+
     Dart_Port read_port;
     Dart_Port write_port;
+
+    void* context;
 
     int32_t payload_buffer_size;
   } transport_channel_t;

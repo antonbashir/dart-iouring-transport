@@ -125,7 +125,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
 
   acceptor->context = context;
 
-  int32_t status = io_uring_queue_init(configuration->ring_size, &context->ring, IORING_SETUP_SQPOLL);
+  int32_t status = io_uring_queue_init(configuration->ring_size, &context->ring, IORING_SETUP_SUBMIT_ALL | IORING_SETUP_COOP_TASKRUN | IORING_SETUP_CQSIZE);
   if (status)
   {
     log_error("io_urig init error: %d", status);
