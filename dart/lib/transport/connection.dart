@@ -17,9 +17,8 @@ class TransportConnection {
   final StreamController<TransportChannel> clientChannels = StreamController();
   final StreamController<TransportChannel> serverChannels = StreamController();
 
-  late final Pointer<transport_connection_t> _connection;
-  late final RawReceivePort _acceptPort = RawReceivePort(_handleAccept);
-  late final RawReceivePort _connectPort = RawReceivePort(_handleConnect);
+  late final Pointer<transport_acceptor_t> _acceptor;
+  late final Pointer<transport_connector_t> _connector;
 
   late int _socket;
 
@@ -61,20 +60,5 @@ class TransportConnection {
   Stream<TransportChannel> connect(String host, int port) {
     _bindings.transport_connection_queue_connect(_connection, _socket, host.toNativeUtf8().cast(), port);
     return serverChannels.stream;
-  }
-
-  void _handleAccept(dynamic payloadPointer) {
-    Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
-    if (payload == nullptr) return;
-    clientChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _controller, payload.ref.fd, onStop: () => clientChannels.close()));
-    _bindings.transport_connection_free_accept_payload(_connection, payload);
-    _bindings.transport_connection_queue_accept(_connection, _socket);
-  }
-
-  void _handleConnect(dynamic payloadPointer) {
-    Pointer<transport_accept_payload> payload = Pointer.fromAddress(payloadPointer);
-    if (payload == nullptr) return;
-    serverChannels.add(TransportChannel(_bindings, _channelConfiguration, _transport, _controller, payload.ref.fd, onStop: () => serverChannels.close()));
-    _bindings.transport_connection_free_accept_payload(_connection, payload);
   }
 }

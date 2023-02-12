@@ -5,6 +5,8 @@ class TransportConfiguration {
   final int slabAllocationMinimalObjectSize;
   final int slabAllocationGranularity;
   final double slabAllocationFactor;
+  final int logLevel;
+  final bool logColored;
 
   TransportConfiguration({
     required this.ringSize,
@@ -13,6 +15,8 @@ class TransportConfiguration {
     required this.slabAllocationMinimalObjectSize,
     required this.slabAllocationGranularity,
     required this.slabAllocationFactor,
+    required this.logLevel,
+    required this.logColored,
   });
 
   TransportConfiguration copyWith({
@@ -24,6 +28,8 @@ class TransportConfiguration {
     int? slabAllocationMinimalObjectSize,
     int? slabAllocationGranularity,
     double? slabAllocationFactor,
+    int? logLevel,
+    bool? logColored,
   }) =>
       TransportConfiguration(
         ringSize: ringSize ?? this.ringSize,
@@ -32,6 +38,8 @@ class TransportConfiguration {
         slabAllocationMinimalObjectSize: slabAllocationMinimalObjectSize ?? this.slabAllocationMinimalObjectSize,
         slabAllocationGranularity: slabAllocationGranularity ?? this.slabAllocationGranularity,
         slabAllocationFactor: slabAllocationFactor ?? this.slabAllocationFactor,
+        logColored: logColored ?? this.logColored,
+        logLevel: logLevel ?? this.logLevel,
       );
 }
 

@@ -49,7 +49,7 @@ int transport_acceptor_loop(va_list input)
           sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_multishot_accept(sqe, (int)fd, (struct sockaddr *)&context->client_addres, &context->client_addres_length, 0);
-        io_uring_sqe_set_data(sqe, TRANSPORT_PAYLOAD_ACCEPT);
+        io_uring_sqe_set_data(sqe, (void*)TRANSPORT_PAYLOAD_ACCEPT);
         io_uring_submit(&context->ring);
       }
     }
@@ -109,7 +109,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   context->client_addres.sin_port = htons(acceptor->server_port);
   context->client_addres.sin_family = AF_INET;
   context->client_addres_length = sizeof(context->client_addres);
-  context->balancer = controller->balancer;
+  context->balancer = (struct transport_balancer*)controller->balancer;
   context->fd = transport_socket_create();
   if (!transport_socket_bind(context->fd, ip, port, configuration->backlog))
   {

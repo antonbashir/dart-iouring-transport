@@ -138,7 +138,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   transport_channel_setup_buffers(configuration, channel, context);
 
   context->channel = fiber_channel_new(configuration->ring_size);
-  context->balancer = controller->balancer;
+  context->balancer = (struct transport_balancer*)controller->balancer;
   context->balancer->add(context->balancer, channel);
 
   return channel;

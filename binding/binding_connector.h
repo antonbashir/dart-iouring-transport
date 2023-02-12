@@ -6,6 +6,7 @@
 #include <liburing.h>
 #include "binding_transport.h"
 #include "binding_controller.h"
+#include <stdio.h>
 
 #if defined(__cplusplus)
 extern "C"
@@ -32,8 +33,7 @@ extern "C"
                                                         transport_controller_t *controller,
                                                         transport_connector_configuration_t *configuration,
                                                         const char *ip,
-                                                        int32_t port,
-                                                        Dart_Port dart_port);
+                                                        int32_t port);
 
   void transport_close_connector(transport_connector_t *connector);
 

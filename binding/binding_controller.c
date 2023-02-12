@@ -6,6 +6,7 @@
 #include "binding_acceptor.h"
 #include "binding_connector.h"
 #include "binding_channel.h"
+#include "binding_balancer.h"
 #include "ck_ring.h"
 #include "ck_backoff.h"
 #include "ck_spinlock.h"
@@ -81,7 +82,7 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->active = false;
   controller->shutdown_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   controller->shutdown_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-  controller->balancer = transport_initialize_balancer(configuration->balancer_configuration, transport);
+  controller->balancer = (void*)transport_initialize_balancer(configuration->balancer_configuration, transport);
 
   struct transport_controller_context *context = malloc(sizeof(struct transport_controller_context));
   context->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);

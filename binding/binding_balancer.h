@@ -7,17 +7,6 @@
 extern "C"
 {
 #endif
-  typedef enum
-  {
-    TRANSPORT_BALANCER_ROUND_ROBBIN,
-    TRANSPORT_BALANCER_LEAST_CONNECTIONS,
-    TRANSPORT_BALANCER_max
-  } transport_balancer_type;
-
-  typedef struct transport_balancer_configuration
-  {
-    transport_balancer_type type;
-  } transport_balancer_configuration_t;
 
   struct transport_balancer
   {

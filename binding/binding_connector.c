@@ -49,7 +49,7 @@ int transport_connector_loop(va_list input)
           sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_connect(sqe, (int)fd, (struct sockaddr *)&context->client_addres, context->client_addres_length);
-        io_uring_sqe_set_data(sqe, TRANSPORT_PAYLOAD_CONNECT);
+        io_uring_sqe_set_data(sqe, (void*)TRANSPORT_PAYLOAD_CONNECT);
         io_uring_submit(&context->ring);
       }
     }
@@ -107,7 +107,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   context->client_addres.sin_family = AF_INET;
   context->client_addres_length = sizeof(context->client_addres);
   context->fd = transport_socket_create();
-  context->balancer = controller->balancer;
+  context->balancer = (struct transport_balancer*)controller->balancer;
   connector->context = context;
 
   int32_t status = io_uring_queue_init(configuration->ring_size, &context->ring, IORING_SETUP_SUBMIT_ALL | IORING_SETUP_COOP_TASKRUN | IORING_SETUP_CQSIZE);
