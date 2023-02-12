@@ -130,7 +130,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
 
   context->channel = fiber_channel_new(configuration->ring_size);
 
-  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  struct transport_message *message = malloc(sizeof(struct transport_message));
   message->action = TRANSPORT_ACTION_ADD_ACCEPTOR;
   message->data = (void *)acceptor;
   transport_controller_send(acceptor->controller, message);
@@ -149,7 +149,7 @@ void transport_close_acceptor(transport_acceptor_t *acceptor)
 int32_t transport_acceptor_accept(transport_acceptor_t *acceptor)
 {
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
-  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  struct transport_message *message = malloc(sizeof(struct transport_message));
   message->action = TRANSPORT_ACTION_SEND;
   message->channel = context->channel;
   message->data = (void *)(intptr_t)context->fd;

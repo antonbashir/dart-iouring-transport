@@ -123,7 +123,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
 
   context->channel = fiber_channel_new(configuration->ring_size);
 
-  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  struct transport_message *message = malloc(sizeof(struct transport_message));
   message->action = TRANSPORT_ACTION_ADD_CONNECTOR;
   message->data = (void *)connector;
   transport_controller_send(connector->controller, message);
@@ -141,7 +141,7 @@ void transport_close_connector(transport_connector_t *connector)
 int32_t transport_connector_connect(transport_connector_t *connector)
 {
   struct transport_connector_context *context = (struct transport_connector_context *)connector->context;
-  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  struct transport_message *message = malloc(sizeof(struct transport_message));
   message->channel = context->channel;
   message->action = TRANSPORT_ACTION_SEND;
   message->data = (void *)(intptr_t)context->fd;

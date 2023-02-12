@@ -32,7 +32,7 @@ class TransportConnector {
         _transport,
         _controller,
         configuration,
-        host.toNativeUtf8().cast(),
+        host.toNativeUtf8(allocator: arena).cast(),
         port,
       );
     });

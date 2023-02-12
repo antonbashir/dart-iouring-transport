@@ -141,11 +141,12 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   context->balancer = (struct transport_balancer *)controller->balancer;
   context->balancer->add(context->balancer, channel);
 
-  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  struct transport_message *message = malloc(sizeof(struct transport_message));
   message->action = TRANSPORT_ACTION_ADD_CHANNEL;
   message->data = (void *)channel;
   transport_controller_send(channel->controller, message);
 
+  log_info("channel initialized");
   return channel;
 }
 
@@ -176,7 +177,7 @@ static inline int transport_channel_select_buffer(struct transport_channel *chan
 int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t size, int fd)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  struct transport_message *message = malloc(sizeof(struct transport_message));
   message->action = TRANSPORT_ACTION_SEND;
   message->channel = context->channel;
   struct transport_channel_message *channel_message = malloc(sizeof(struct transport_channel_message));
