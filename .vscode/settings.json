@@ -79,6 +79,7 @@
     "binding_connector.h": "c",
     "limits": "c",
     "cstdint": "c",
-    "numeric": "c"
+    "numeric": "c",
+    "errno-base.h": "c"
   },
 }

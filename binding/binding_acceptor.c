@@ -50,7 +50,7 @@ int transport_acceptor_loop(va_list input)
           sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_multishot_accept(sqe, (int)fd, (struct sockaddr *)&context->client_addres, &context->client_addres_length, 0);
-        io_uring_sqe_set_data(sqe, (void *)(uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
+        io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
         io_uring_submit(&context->ring);
       }
     }

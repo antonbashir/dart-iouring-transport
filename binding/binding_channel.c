@@ -167,7 +167,7 @@ static inline int transport_channel_select_buffer(struct transport_channel *chan
   }
 
   io_uring_prep_recv(sqe, fd, NULL, transport_buffer_size(context), 0);
-  io_uring_sqe_set_data(sqe, (void *)(uint64_t)(fd | TRANSPORT_PAYLOAD_READ));
+  io_uring_sqe_set_data64(sqe, (uint64_t)(fd | TRANSPORT_PAYLOAD_READ));
   sqe->flags |= IOSQE_BUFFER_SELECT;
   sqe->flags |= IOSQE_FIXED_FILE;
   sqe->buf_group = 0;
@@ -203,6 +203,7 @@ int transport_channel_loop(va_list input)
     struct io_uring_cqe *cqe;
     io_uring_for_each_cqe(&channel->ring, head, cqe)
     {
+      log_info("channel process cqe with result %d and user_data %d", cqe->res, cqe->user_data);
       ++count;
       if (unlikely(cqe->res < 0))
       {
@@ -254,7 +255,7 @@ int transport_channel_loop(va_list input)
             void *buffer = transport_get_buffer(context, buffer_id);
             memcpy(buffer, channel_message->data, channel_message->size);
             io_uring_prep_sendmsg_zc(sqe, channel_message->fd, buffer, 0);
-            io_uring_sqe_set_data(sqe, (void *)(uint64_t)((intptr_t)message | TRANSPORT_PAYLOAD_WRITE));
+            io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)message | TRANSPORT_PAYLOAD_WRITE));
             sqe->flags |= IOSQE_FIXED_FILE;
             io_uring_submit(&channel->ring);
             log_info("channel send data to ring, data size = %d", channel_message->size);
