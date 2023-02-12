@@ -33,6 +33,8 @@ extern "C"
     Dart_Port write_port;
 
     void *context;
+
+    bool active;
   } transport_channel_t;
 
   transport_channel_t *transport_initialize_channel(transport_t *transport,
@@ -45,11 +47,7 @@ extern "C"
 
   void transport_close_channel(transport_channel_t *channel);
 
-  int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offset);
-  int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t payload_size, uint64_t offset);
-
-  void *transport_channel_prepare_read(transport_channel_t *channel);
-  void *transport_channel_prepare_write(transport_channel_t *channel);
+  int32_t transport_channel_send(transport_channel_t *channel, const char *address, size_t address_length, void *data, size_t size, int fd);
 #if defined(__cplusplus)
 }
 #endif
