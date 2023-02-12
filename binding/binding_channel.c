@@ -215,7 +215,11 @@ int transport_channel_loop(va_list input)
       if ((uint64_t)(cqe->user_data & (TRANSPORT_PAYLOAD_ACCEPT | TRANSPORT_PAYLOAD_CONNECT)))
       {
         log_info("channel register socket");
-        io_uring_register_files(&channel->ring, &cqe->res, 1);
+        if (io_uring_register_files(&channel->ring, &cqe->res, 1))
+        {
+          log_error("channel unable to register socket");
+          continue;
+        }
         transport_channel_select_buffer(channel, context, cqe->res);
         continue;
       }
