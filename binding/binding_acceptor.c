@@ -43,10 +43,10 @@ int transport_acceptor_loop(va_list input)
   {
     if (!fiber_channel_is_empty(context->channel))
     {
-      struct transport_message *message;
+      void *message;
       if (likely(fiber_channel_get(context->channel, &message) == 0))
       {
-        int fd = (int)message->data;
+        intptr_t fd = (intptr_t)((struct transport_message *)message)->data;
         free(message);
         struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
         while (unlikely(sqe == NULL))
@@ -55,8 +55,8 @@ int transport_acceptor_loop(va_list input)
           fiber_sleep(0);
           sqe = io_uring_get_sqe(&context->ring);
         }
-        io_uring_prep_multishot_accept(sqe, fd, (struct sockaddr *)&context->client_addres, &context->client_addres_length, 0);
-        io_uring_sqe_set_data(sqe, fd);
+        io_uring_prep_multishot_accept(sqe, (int)fd, (struct sockaddr *)&context->client_addres, &context->client_addres_length, 0);
+        io_uring_sqe_set_data(sqe, (void *)fd);
         io_uring_submit(&context->ring);
       }
     }
@@ -148,6 +148,6 @@ int32_t transport_acceptor_accept(transport_acceptor_t *acceptor)
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
   struct transport_message *message = malloc(sizeof(struct transport_message *));
   message->channel = context->channel;
-  message->data = context->fd;
+  message->data = (void*)(intptr_t)context->fd;
   return transport_controller_send(acceptor->controller, message) ? 0 : -1;
 }

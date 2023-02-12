@@ -22873,6 +22873,8 @@ class transport_channel_configuration extends ffi.Struct {
 }
 
 class transport_channel extends ffi.Struct {
+  external io_uring ring;
+
   external ffi.Pointer<transport_t> transport;
 
   external ffi.Pointer<transport_controller_t> controller;
