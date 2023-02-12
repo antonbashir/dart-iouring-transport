@@ -60,8 +60,8 @@ int transport_controller_loop(va_list input)
 void *transport_controller_run(void *input)
 {
   memory_init();
-  cbus_init();
   fiber_init(fiber_c_invoke);
+  cbus_init();
   fiber_start(fiber_new(CONTROLLER_FIBER, transport_controller_loop), input);
   fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), input);
   fiber_start(fiber_new(CONNECTOR_FIBER, transport_connector_loop), input);

@@ -28,6 +28,7 @@ class TransportAcceptor {
     using((Arena arena) {
       final configuration = arena<transport_acceptor_configuration>();
       configuration.ref.backlog = _configuration.backlog;
+      configuration.ref.ring_size = _configuration.ringSize;
       _acceptor = _bindings.transport_initialize_acceptor(
         _transport,
         _controller,

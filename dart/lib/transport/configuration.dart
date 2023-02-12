@@ -87,14 +87,29 @@ class TransportControllerConfiguration {
 
 class TransportAcceptorConfiguration {
   final int backlog;
+  final int ringSize;
 
-  TransportAcceptorConfiguration(this.backlog);
+  TransportAcceptorConfiguration({
+    required this.backlog,
+    required this.ringSize,
+  });
 
-  TransportAcceptorConfiguration copyWith({int? backlog}) => TransportAcceptorConfiguration(backlog ?? this.backlog);
+  TransportAcceptorConfiguration copyWith({
+    int? backlog,
+    int? ringSize,
+  }) =>
+      TransportAcceptorConfiguration(backlog: backlog ?? this.backlog, ringSize: ringSize ?? this.ringSize);
 }
 
 class TransportConnectorConfiguration {
-  TransportConnectorConfiguration();
+  final int ringSize;
 
-  TransportConnectorConfiguration copyWith() => TransportConnectorConfiguration();
+  TransportConnectorConfiguration({
+    required this.ringSize,
+  });
+
+  TransportConnectorConfiguration copyWith({
+    int? ringSize,
+  }) =>
+      TransportConnectorConfiguration(ringSize: ringSize ?? this.ringSize);
 }

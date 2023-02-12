@@ -25,7 +25,12 @@ class TransportDefaults {
         internalRingSize: 33554432,
       );
 
-  static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(512);
+  static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
+        backlog: 512,
+        ringSize: 2048,
+      );
 
-  static TransportConnectorConfiguration connector() => TransportConnectorConfiguration();
+  static TransportConnectorConfiguration connector() => TransportConnectorConfiguration(
+        ringSize: 2048,
+      );
 }

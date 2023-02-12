@@ -27,6 +27,7 @@ class TransportConnector {
   void connect(String host, int port) {
     using((Arena arena) {
       final configuration = arena<transport_connector_configuration>();
+      configuration.ref.ring_size = _configuration.ringSize;
       _connector = _bindings.transport_initialize_connector(
         _transport,
         _controller,
