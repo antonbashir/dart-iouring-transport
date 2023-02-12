@@ -80,6 +80,9 @@
     "limits": "c",
     "cstdint": "c",
     "numeric": "c",
-    "errno-base.h": "c"
+    "errno-base.h": "c",
+    "compare": "c",
+    "optional": "c",
+    "cmath": "c"
   },
 }

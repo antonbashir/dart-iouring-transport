@@ -74,20 +74,22 @@ static inline void transport_channel_setup_buffers(transport_channel_configurati
   }
   context->buffer_ring = (struct io_uring_buf_ring *)buffer_memory;
   context->buffer_shift = configuration->buffer_shift;
-  io_uring_buf_ring_init(context->buffer_ring);
+  context->buffer_base = (unsigned char *)context->buffer_ring + sizeof(struct io_uring_buf) * configuration->buffers_count;
 
   struct io_uring_buf_reg buffer_request = {
       .ring_addr = (unsigned long)context->buffer_ring,
       .ring_entries = configuration->buffers_count,
       .bgid = 0,
   };
-  unsigned char *buffer_base = (unsigned char *)context->buffer_ring + sizeof(struct io_uring_buf) * configuration->buffers_count;
 
-  if (!io_uring_register_buf_ring(&channel->ring, &buffer_request, 0))
+  int result = io_uring_register_buf_ring(&channel->ring, &buffer_request, 0);
+  if (result)
   {
+    log_error("ring register buffer failed: %d", result);
     return;
   }
 
+  io_uring_buf_ring_init(context->buffer_ring);
   int buffer_index;
   for (buffer_index = 0; buffer_index < configuration->buffers_count; buffer_index++)
   {
@@ -166,7 +168,7 @@ static inline int transport_channel_select_buffer(struct transport_channel *chan
     sqe = io_uring_get_sqe(&channel->ring);
   }
 
-  io_uring_prep_recv(sqe, fd, NULL, transport_buffer_size(context), 0);
+  io_uring_prep_recv_multishot(sqe, fd, NULL, transport_buffer_size(context), 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)(fd | TRANSPORT_PAYLOAD_READ));
   sqe->flags |= IOSQE_BUFFER_SELECT;
   sqe->flags |= IOSQE_FIXED_FILE;

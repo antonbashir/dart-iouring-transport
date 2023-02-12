@@ -77,13 +77,10 @@ int transport_acceptor_loop(va_list input)
         struct transport_channel *channel = context->balancer->next(context->balancer);
         io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT, 0);
         io_uring_submit(&context->ring);
+        transport_acceptor_accept(acceptor);
       }
     }
     io_uring_cq_advance(&context->ring, count);
-    if (count)
-    {
-      transport_acceptor_accept(acceptor);
-    }
     fiber_sleep(0);
   }
   return 0;
