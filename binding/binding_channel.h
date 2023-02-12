@@ -38,6 +38,7 @@ extern "C"
   transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                     transport_controller_t *controller,
                                                     transport_channel_configuration_t *configuration,
+                                                    int fd,
                                                     Dart_Port read_port,
                                                     Dart_Port write_port);
   int transport_channel_loop(va_list input);

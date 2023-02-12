@@ -173,6 +173,7 @@ int transport_channel_loop(va_list input)
         {
           io_uring_submit(&context->ring);
           fiber_sleep(0);
+          sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_recvmsg_multishot(sqe, id, &ctx->msg, MSG_TRUNC);
         sqe->flags |= IOSQE_FIXED_FILE;

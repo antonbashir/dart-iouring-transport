@@ -51,7 +51,9 @@ int transport_connector_loop(va_list input)
         struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
         while (unlikely(sqe == NULL))
         {
+          io_uring_submit(&context->ring);
           fiber_sleep(0);
+          sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_connect(sqe, fd, (struct sockaddr *)&context->client_addres, &context->client_addres_length);
         io_uring_sqe_set_data(sqe, fd);
