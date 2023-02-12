@@ -95,8 +95,7 @@ static int setup_context(struct ctx *ctx)
 
 	memset(&params, 0, sizeof(params));
 	params.cq_entries = QD * 8;
-	params.flags = IORING_SETUP_SUBMIT_ALL | IORING_SETUP_COOP_TASKRUN |
-		       IORING_SETUP_CQSIZE;
+	params.flags = IORING_SETUP_SUBMIT_ALL | IORING_SETUP_COOP_TASKRUN | IORING_SETUP_CQSIZE;
 
 	ret = io_uring_queue_init_params(QD, &ctx->ring, &params);
 	if (ret < 0) {
@@ -200,7 +199,6 @@ static int add_recv(struct ctx *ctx, int idx)
 
 	io_uring_prep_recvmsg_multishot(sqe, idx, &ctx->msg, MSG_TRUNC);
 	sqe->flags |= IOSQE_FIXED_FILE;
-
 	sqe->flags |= IOSQE_BUFFER_SELECT;
 	sqe->buf_group = 0;
 	io_uring_sqe_set_data64(sqe, BUFFERS + 1);
@@ -209,8 +207,7 @@ static int add_recv(struct ctx *ctx, int idx)
 
 static void recycle_buffer(struct ctx *ctx, int idx)
 {
-	io_uring_buf_ring_add(ctx->buf_ring, get_buffer(ctx, idx), buffer_size(ctx), idx,
-			      io_uring_buf_ring_mask(BUFFERS), 0);
+	io_uring_buf_ring_add(ctx->buf_ring, get_buffer(ctx, idx), buffer_size(ctx), idx, io_uring_buf_ring_mask(BUFFERS), 0);
 	io_uring_buf_ring_advance(ctx->buf_ring, 1);
 }
 
@@ -249,8 +246,7 @@ static int process_cqe_recv(struct ctx *ctx, struct io_uring_cqe *cqe,
 	}
 	idx = cqe->flags >> 16;
 
-	o = io_uring_recvmsg_validate(get_buffer(ctx, cqe->flags >> 16),
-				      cqe->res, &ctx->msg);
+	o = io_uring_recvmsg_validate(get_buffer(ctx, cqe->flags >> 16), cqe->res, &ctx->msg);
 	if (!o) {
 		fprintf(stderr, "bad recvmsg\n");
 		return -1;
@@ -264,8 +260,7 @@ static int process_cqe_recv(struct ctx *ctx, struct io_uring_cqe *cqe,
 		unsigned int r;
 
 		r = io_uring_recvmsg_payload_length(o, cqe->res, &ctx->msg);
-		fprintf(stderr, "truncated msg need %u received %u\n",
-				o->payloadlen, r);
+		fprintf(stderr, "truncated msg need %u received %u\n", o->payloadlen, r);
 		recycle_buffer(ctx, idx);
 		return 0;
 	}
@@ -288,9 +283,9 @@ static int process_cqe_recv(struct ctx *ctx, struct io_uring_cqe *cqe,
 
 	ctx->send[idx].iov = (struct iovec) {
 		.iov_base = io_uring_recvmsg_payload(o, &ctx->msg),
-		.iov_len =
-			io_uring_recvmsg_payload_length(o, cqe->res, &ctx->msg)
+		.iov_len = io_uring_recvmsg_payload_length(o, cqe->res, &ctx->msg)
 	};
+  
 	ctx->send[idx].msg = (struct msghdr) {
 		.msg_namelen = o->namelen,
 		.msg_name = io_uring_recvmsg_name(o),

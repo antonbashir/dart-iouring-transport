@@ -131,8 +131,47 @@ int32_t transport_channel_queue_write(transport_channel_t *channel, uint32_t pay
   return 0;
 }
 
-void *transport_channel_prepare_read(transport_channel_t *channel)
+static int setup_buffer_pool(struct ctx *ctx)
 {
+	int ret, i;
+	void *mapped;
+	struct io_uring_buf_reg reg = { .ring_addr = 0,
+					.ring_entries = BUFFERS,
+					.bgid = 0 };
+
+	ctx->buf_ring_size = (sizeof(struct io_uring_buf) + buffer_size(ctx)) * BUFFERS;
+	mapped = mmap(NULL, ctx->buf_ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+	if (mapped == MAP_FAILED) {
+		fprintf(stderr, "buf_ring mmap: %s\n", strerror(errno));
+		return -1;
+	}
+	ctx->buf_ring = (struct io_uring_buf_ring *)mapped;
+
+	io_uring_buf_ring_init(ctx->buf_ring);
+
+	reg = (struct io_uring_buf_reg) {
+		.ring_addr = (unsigned long)ctx->buf_ring,
+		.ring_entries = BUFFERS,
+		.bgid = 0
+	};
+	ctx->buffer_base = (unsigned char *)ctx->buf_ring + sizeof(struct io_uring_buf) * BUFFERS;
+
+	ret = io_uring_register_buf_ring(&ctx->ring, &reg, 0);
+	if (ret) {
+		fprintf(stderr, "buf_ring init failed: %s\n" "NB This requires a kernel version >= 6.0\n",  strerror(-ret));
+		return ret;
+	}
+
+	for (i = 0; i < BUFFERS; i++) {
+		io_uring_buf_ring_add(ctx->buf_ring, get_buffer(ctx, i), buffer_size(ctx), i, io_uring_buf_ring_mask(BUFFERS), i);
+	}
+	io_uring_buf_ring_advance(ctx->buf_ring, BUFFERS);
+
+	return 0;
+}
+
+void *transport_channel_prepare_read(transport_channel_t *channel)
+{  
   struct ibuf *old_buffer = channel->current_read_buffer;
   if (ibuf_unused(old_buffer) >= channel->payload_buffer_size)
   {

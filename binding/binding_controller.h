@@ -32,14 +32,6 @@ extern "C"
     size_t offset;
   } transport_data_payload_t;
 
-  typedef struct transport_accept_payload
-  {
-    int32_t fd;
-    transport_payload_type_t type;
-    struct sockaddr_in client_addres;
-    socklen_t client_addres_length;
-  } transport_accept_payload_t;
-
   typedef struct transport_controller
   {
     transport_t *transport;
@@ -52,7 +44,7 @@ extern "C"
     volatile bool active;
     volatile bool connected;
 
-    void *message_ring;
+    void *context;
 
     pthread_t thread_id;
     pthread_mutex_t suspended_mutex;
@@ -68,16 +60,9 @@ extern "C"
     size_t batch_message_limit;
   } transport_controller_configuration_t;
 
-  typedef struct transport_message
-  {
-    Dart_Port port;
-    void *payload;
-    transport_payload_type_t payload_type;
-  } transport_message_t;
-
   transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration);
   void transport_controller_stop(transport_controller_t *controller);
-  bool transport_controller_send(transport_controller_t *controller, transport_message_t *message);
+  bool transport_controller_send(transport_controller_t *controller, void *message);
 #if defined(__cplusplus)
 }
 #endif

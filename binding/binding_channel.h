@@ -20,10 +20,13 @@ extern "C"
     size_t buffer_initial_capacity;
     size_t buffer_limit;
     int32_t payload_buffer_size;
+    uint32_t ring_size;
   } transport_channel_configuration_t;
 
   typedef struct transport_channel
   {
+    struct io_uring ring;
+
     transport_t *transport;
     transport_controller_t *controller;
 

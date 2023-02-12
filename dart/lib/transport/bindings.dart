@@ -8521,14 +8521,6 @@ class TransportBindings {
   late final _transport_close =
       _transport_closePtr.asFunction<void Function(ffi.Pointer<transport_t>)>();
 
-  void test_func() {
-    return _test_func();
-  }
-
-  late final _test_funcPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('test_func');
-  late final _test_func = _test_funcPtr.asFunction<void Function()>();
-
   void ibuf_create(
     ffi.Pointer<ibuf> ibuf,
     ffi.Pointer<slab_cache> slabc,
@@ -17442,8 +17434,6 @@ class _SymbolAddresses {
       get transport_initialize => _library._transport_initializePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
       get transport_close => _library._transport_closePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get test_func =>
-      _library._test_funcPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(
@@ -20370,9 +20360,6 @@ typedef mempool_stats_cb = ffi.Pointer<
 
 class transport_configuration extends ffi.Struct {
   @ffi.Uint32()
-  external int ring_size;
-
-  @ffi.Uint32()
   external int slab_size;
 
   @ffi.Size()
@@ -20386,11 +20373,15 @@ class transport_configuration extends ffi.Struct {
 
   @ffi.Float()
   external double slab_allocation_factor;
+
+  @ffi.Int()
+  external int log_level;
+
+  @ffi.Bool()
+  external bool log_colored;
 }
 
 class transport extends ffi.Struct {
-  external io_uring ring;
-
   external slab_arena arena;
 
   external slab_cache cache;
@@ -21398,14 +21389,10 @@ class transport_accept_payload extends ffi.Struct {
   @ffi.Int32()
   external int fd;
 
-  @ffi.Int32()
-  external int type;
-
-  external sockaddr_in client_addres;
-
-  @socklen_t()
-  external int client_addres_length;
+  external ffi.Pointer<fiber_channel> channel;
 }
+
+class fiber_channel extends ffi.Opaque {}
 
 class transport_controller extends ffi.Struct {
   external ffi.Pointer<transport_t> transport;
@@ -21431,7 +21418,7 @@ class transport_controller extends ffi.Struct {
   @ffi.Bool()
   external bool connected;
 
-  external ffi.Pointer<ffi.Void> message_ring;
+  external ffi.Pointer<ffi.Void> context;
 
   @pthread_t()
   external int thread_id;
@@ -21480,9 +21467,14 @@ class transport_channel_configuration extends ffi.Struct {
 
   @ffi.Int32()
   external int payload_buffer_size;
+
+  @ffi.Uint32()
+  external int ring_size;
 }
 
 class transport_channel extends ffi.Struct {
+  external io_uring ring;
+
   external ffi.Pointer<transport_t> transport;
 
   external ffi.Pointer<transport_controller_t> controller;
@@ -21533,11 +21525,16 @@ typedef transport_data_payload_t = transport_data_payload;
 class _Dart_Handle extends ffi.Opaque {}
 
 class transport_connection_configuration extends ffi.Struct {
+  @ffi.Uint32()
+  external int ring_size;
+
   @ffi.Bool()
   external bool verbose;
 }
 
 class transport_connection extends ffi.Struct {
+  external io_uring ring;
+
   external ffi.Pointer<transport_t> transport;
 
   external ffi.Pointer<transport_controller_t> controller;

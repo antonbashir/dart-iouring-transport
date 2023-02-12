@@ -16,18 +16,17 @@ extern "C"
 
   typedef struct transport_configuration
   {
-    uint32_t ring_size;
     uint32_t slab_size;
     size_t memory_quota;
     uint32_t slab_allocation_minimal_object_size;
     size_t slab_allocation_granularity;
     float slab_allocation_factor;
+    int log_level;
+    bool log_colored;
   } transport_configuration_t;
 
   typedef struct transport
   {
-    struct io_uring ring;
-
     struct slab_arena arena;
     struct slab_cache cache;
     struct small_alloc allocator;
@@ -36,7 +35,6 @@ extern "C"
 
   transport_t *transport_initialize(transport_configuration_t *configuration);
   void transport_close(transport_t *transport);
-  void test_func();
 #if defined(__cplusplus)
 }
 #endif

@@ -72,6 +72,9 @@
     "errinj.h": "c",
     "epoll.h": "c",
     "ev.h": "c",
-    "obuf.h": "c"
+    "obuf.h": "c",
+    "binding_logger.h": "c",
+    "binding_message.h": "c",
+    "binding_balancer.h": "c"
   },
 }

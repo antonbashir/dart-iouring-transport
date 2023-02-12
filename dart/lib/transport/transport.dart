@@ -31,22 +31,21 @@ class Transport {
   }
 
   Future<void> initialize() async {
-    // using((Arena arena) {
-    //   final transportConfiguration = arena<transport_configuration_t>();
-    //   transportConfiguration.ref.ring_size = configuration.ringSize;
-    //   transportConfiguration.ref.slab_size = configuration.slabSize;
-    //   transportConfiguration.ref.memory_quota = configuration.memoryQuota;
-    //   transportConfiguration.ref.slab_allocation_granularity = configuration.slabAllocationGranularity;
-    //   transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
-    //   transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
-    //   _transport = _bindings.transport_initialize(transportConfiguration);
-    //   final controllerConfiguration = arena<transport_controller_configuration_t>();
-    //   controllerConfiguration.ref.cqe_size = this.controllerConfiguration.cqesSize;
-    //   controllerConfiguration.ref.batch_message_limit = this.controllerConfiguration.batchMessageLimit;
-    //   controllerConfiguration.ref.internal_ring_size = this.controllerConfiguration.internalRingSize;
-    //   _controller = _bindings.transport_controller_start(_transport, controllerConfiguration);
-    // });
-    _bindings.test_func();
+    using((Arena arena) {
+      final transportConfiguration = arena<transport_configuration_t>();
+      transportConfiguration.ref.ring_size = configuration.ringSize;
+      transportConfiguration.ref.slab_size = configuration.slabSize;
+      transportConfiguration.ref.memory_quota = configuration.memoryQuota;
+      transportConfiguration.ref.slab_allocation_granularity = configuration.slabAllocationGranularity;
+      transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
+      transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
+      _transport = _bindings.transport_initialize(transportConfiguration);
+      final controllerConfiguration = arena<transport_controller_configuration_t>();
+      controllerConfiguration.ref.cqe_size = this.controllerConfiguration.cqesSize;
+      controllerConfiguration.ref.batch_message_limit = this.controllerConfiguration.batchMessageLimit;
+      controllerConfiguration.ref.internal_ring_size = this.controllerConfiguration.internalRingSize;
+      _controller = _bindings.transport_controller_start(_transport, controllerConfiguration);
+    });
   }
 
   void close() {
