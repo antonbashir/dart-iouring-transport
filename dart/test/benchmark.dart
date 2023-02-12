@@ -21,10 +21,7 @@ Future<void> main(List<String> args) async {
   final fromServer = encoder.convert("from server");
   final fromClient = encoder.convert("from client");
 
-  serverTransport.channels(
-    TransportDefaults.channel(),
-    count: 1,
-  );
+  serverTransport.channels(TransportDefaults.channel(), count: 1);
   serverTransport.acceptor(TransportDefaults.acceptor()).accept("0.0.0.0", 9999);
 
   // clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {

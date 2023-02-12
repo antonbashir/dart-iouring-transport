@@ -76,6 +76,7 @@
     "binding_logger.h": "c",
     "binding_message.h": "c",
     "binding_balancer.h": "c",
-    "binding_connector.h": "c"
+    "binding_connector.h": "c",
+    "limits": "c"
   },
 }

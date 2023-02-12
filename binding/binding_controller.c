@@ -82,6 +82,7 @@ void *transport_controller_run(void *input)
   cbus_init();
   fiber_start(fiber_new(CONTROLLER_FIBER, transport_controller_loop), input);
   log_info("all fibers started");
+  ev_run(loop(), 0);
   return NULL;
 }
 
@@ -127,11 +128,6 @@ void transport_controller_stop(transport_controller_t *controller)
 
 bool transport_controller_send(transport_controller_t *controller, void *message)
 {
-  if (unlikely(!controller->active))
-  {
-    return false;
-  }
-
   struct transport_controller_context *context = (struct transport_controller_context *)controller->context;
   int count = 0;
 
