@@ -44,7 +44,7 @@ int transport_acceptor_loop(va_list input)
     if (!fiber_channel_is_empty(context->channel))
     {
       struct transport_message *message;
-      if (likely(fiber_channel_get(context->channel, &message)))
+      if (likely(fiber_channel_get(context->channel, &message) == 0))
       {
         int fd = (int)message->data;
         free(message);

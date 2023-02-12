@@ -33,8 +33,6 @@ struct transport_channel_context
   size_t buffer_count;
   int buffer_shift;
   unsigned char *buffer_base;
-  struct msghdr message_header;
-  struct transport_controller_message *messages;
 };
 
 static inline size_t transport_buffer_size(struct transport_channel_context *context)
@@ -47,7 +45,7 @@ static inline unsigned char *transport_get_buffer(struct transport_channel_conte
   return context->buffer_base + (id << context->buffer_shift);
 }
 
-static inline void transport_recycle_buffer(struct transport_channel_context *context, int id)
+static inline void transport_channel_recycle_buffer(struct transport_channel_context *context, int id)
 {
   io_uring_buf_ring_add(context->buffer_ring,
                         transport_get_buffer(context, id),
@@ -65,6 +63,43 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
   dart_object.value.as_int64 = (int64_t)pointer;
   Dart_PostCObject(port, &dart_object);
 };
+
+static inline void transport_channel_setup_buffers(transport_channel_configuration_t *configuration, struct transport_channel_context *context)
+{
+  size_t buffer_ring_size = (sizeof(struct io_uring_buf) + configuration->buffer_size) * configuration->buffers_count;
+  void *buffer_memory = mmap(NULL, buffer_ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+  if (buffer_memory == MAP_FAILED)
+  {
+    return NULL;
+  }
+  context->buffer_ring = (struct io_uring_buf_ring *)buffer_memory;
+  io_uring_buf_ring_init(context->buffer_ring);
+
+  struct io_uring_buf_reg buffer_request = {
+      .ring_addr = (unsigned long)context->buffer_ring,
+      .ring_entries = configuration->buffers_count,
+      .bgid = 0,
+  };
+  unsigned char *buffer_base = (unsigned char *)context->buffer_ring + sizeof(struct io_uring_buf) * configuration->buffers_count;
+
+  if (!io_uring_register_buf_ring(&context->ring, &buffer_request, 0))
+  {
+    return NULL;
+  }
+
+  int buffer_index;
+  for (buffer_index = 0; buffer_index < configuration->buffers_count; buffer_index++)
+  {
+    io_uring_buf_ring_add(context->buffer_ring,
+                          transport_get_buffer(context, buffer_index),
+                          configuration->buffer_size,
+                          buffer_index,
+                          io_uring_buf_ring_mask(configuration->buffers_count),
+                          buffer_index);
+  }
+
+  io_uring_buf_ring_advance(context->buffer_ring, configuration->buffers_count);
+}
 
 transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                   transport_controller_t *controller,
@@ -102,44 +137,9 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
   context->channel = fiber_channel_new(configuration->ring_size);
 
-  size_t buffer_ring_size = (sizeof(struct io_uring_buf) + configuration->buffer_size) * configuration->buffers_count;
-  void *buffer_memory = mmap(NULL, buffer_ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
-  if (buffer_memory == MAP_FAILED)
-  {
-    return NULL;
-  }
-  context->buffer_ring = (struct io_uring_buf_ring *)buffer_memory;
-  io_uring_buf_ring_init(context->buffer_ring);
+  transport_channel_setup_buffers(configuration, context);
 
-  struct io_uring_buf_reg buffer_request = {
-      .ring_addr = (unsigned long)context->buffer_ring,
-      .ring_entries = configuration->buffers_count,
-      .bgid = 0,
-  };
-  unsigned char *buffer_base = (unsigned char *)context->buffer_ring + sizeof(struct io_uring_buf) * configuration->buffers_count;
-
-  if (!io_uring_register_buf_ring(&context->ring, &buffer_request, 0))
-  {
-    return NULL;
-  }
-
-  int buffer_index;
-  for (buffer_index = 0; buffer_index < configuration->buffers_count; buffer_index++)
-  {
-    io_uring_buf_ring_add(context->buffer_ring,
-                          transport_get_buffer(context, buffer_index),
-                          configuration->buffer_size,
-                          buffer_index,
-                          io_uring_buf_ring_mask(configuration->buffers_count),
-                          buffer_index);
-  }
-
-  io_uring_buf_ring_advance(context->buffer_ring, configuration->buffers_count);
-
-  context->messages = sizeof(struct transport_controller_message *) * configuration->buffers_count;
-  memset(&context->message_header, 0, sizeof(context->message_header));
-  context->message_header.msg_namelen = sizeof(struct sockaddr_storage);
-  context->message_header.msg_controllen = 0;
+  context->balancer->add(channel);
 
   return channel;
 }
@@ -149,7 +149,7 @@ void transport_close_channel(transport_channel_t *channel)
   smfree(&channel->transport->allocator, channel, sizeof(transport_channel_t));
 }
 
-static inline int transport_channel_queue_read(struct transport_channel_context *context, int fd)
+static inline int transport_channel_select_buffer(struct transport_channel_context *context, int fd)
 {
   struct io_uring_sqe *sqe;
 
@@ -200,18 +200,10 @@ int transport_channel_loop(va_list input)
         continue;
       }
 
-      if (cqe->user_data & TRANSPORT_PAYLOAD_CONNECT)
+      if (cqe->user_data & (TRANSPORT_PAYLOAD_ACCEPT | TRANSPORT_PAYLOAD_CONNECT))
       {
         io_uring_register_files(&context->ring, cqe->res, 1);
-        context->balancer->add(channel);
-        continue;
-      }
-
-      if (cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT)
-      {
-        io_uring_register_files(&context->ring, cqe->res, 1);
-        transport_channel_queue_read(context, cqe->res);
-        context->balancer->add(channel);
+        transport_channel_select_buffer(context, cqe->res);
         continue;
       }
 
@@ -231,7 +223,7 @@ int transport_channel_loop(va_list input)
         if (!fiber_channel_is_empty(context->channel))
         {
           struct transport_message *message;
-          if (likely(fiber_channel_get(context->channel, &message)))
+          if (likely(fiber_channel_get(context->channel, &message) == 0))
           {
             struct transport_channel_message *data = (struct transport_channel_message *)message->data;
             free(message);
@@ -245,14 +237,14 @@ int transport_channel_loop(va_list input)
             data->buffer_id = buffer_id;
             void *buffer = transport_get_buffer(context, buffer_id);
             memcpy(buffer, data->data, data->size);
-            io_uring_prep_sendmsg(sqe, data->fd, buffer, 0);
+            io_uring_prep_sendmsg_zc(sqe, data->fd, buffer, 0);
             io_uring_sqe_set_data(sqe, (intptr_t)message | TRANSPORT_PAYLOAD_WRITE);
             sqe->flags |= IOSQE_FIXED_FILE;
             io_uring_submit(&context->ring);
           }
         }
 
-        transport_channel_queue_read(context, cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
+        transport_channel_select_buffer(context, cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
 
         continue;
       }
@@ -261,11 +253,14 @@ int transport_channel_loop(va_list input)
       {
         struct transport_channel_message *data = (struct transport_channel_message *)(cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
         void *payload = transport_get_buffer(context, buffer_id);
-        uint32_t length = cqe->res;
-        void *output = malloc(length);
-        memcpy(output, payload, length);
-        dart_post_pointer(channel->read_port, output);
-        transport_recycle_buffer(context, buffer_id);
+        if (payload)
+        {
+          uint32_t length = cqe->res;
+          void *output = malloc(length);
+          memcpy(output, payload, length);
+          dart_post_pointer(channel->read_port, output);
+        }
+        transport_channel_recycle_buffer(context, buffer_id);
         free(data->data);
         free(data);
         continue;
