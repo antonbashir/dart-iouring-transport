@@ -29,7 +29,7 @@ struct transport_controller_context
 
 int transport_controller_loop(va_list input)
 {
-  transport_controller_t *controller = (transport_controller_t *)input;
+  transport_controller_t *controller = va_arg(input, transport_controller_t *);
   struct transport_controller_context *context = controller->context;
   controller->active = true;
   controller->initialized = true;
@@ -39,6 +39,24 @@ int transport_controller_loop(va_list input)
     struct transport_message *message;
     while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
+      if (message->action & TRANSPORT_ACTION_ADD_ACCEPTOR)
+      {
+        fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), message->data);
+        continue;
+      }
+
+      if (message->action & TRANSPORT_ACTION_ADD_CONNECTOR)
+      {
+        fiber_start(fiber_new(CONNECTOR_FIBER, transport_connector_loop), message->data);
+        continue;
+      }
+
+      if (message->action & TRANSPORT_ACTION_ADD_CHANNEL)
+      {
+        fiber_start(fiber_new(CHANNEL_FIBER, transport_channel_loop), message->data);
+        continue;
+      }
+
       log_info("put message");
       while (unlikely(fiber_channel_put(message->channel, message->data) != 0))
       {
@@ -63,9 +81,6 @@ void *transport_controller_run(void *input)
   fiber_init(fiber_c_invoke);
   cbus_init();
   fiber_start(fiber_new(CONTROLLER_FIBER, transport_controller_loop), input);
-  fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), input);
-  fiber_start(fiber_new(CONNECTOR_FIBER, transport_connector_loop), input);
-  fiber_start(fiber_new(CHANNEL_FIBER, transport_channel_loop), input);
   log_info("all fibers started");
   return NULL;
 }
@@ -80,7 +95,7 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->active = false;
   controller->shutdown_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   controller->shutdown_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-  controller->balancer = (void*)transport_initialize_balancer(configuration->balancer_configuration, transport);
+  controller->balancer = (void *)transport_initialize_balancer(configuration->balancer_configuration, transport);
 
   struct transport_controller_context *context = malloc(sizeof(struct transport_controller_context));
   context->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);

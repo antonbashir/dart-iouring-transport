@@ -138,8 +138,13 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   transport_channel_setup_buffers(configuration, channel, context);
 
   context->channel = fiber_channel_new(configuration->ring_size);
-  context->balancer = (struct transport_balancer*)controller->balancer;
+  context->balancer = (struct transport_balancer *)controller->balancer;
   context->balancer->add(context->balancer, channel);
+
+  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  message->action = TRANSPORT_ACTION_ADD_CHANNEL;
+  message->data = (void *)channel;
+  transport_controller_send(channel->controller, message);
 
   return channel;
 }
@@ -172,6 +177,7 @@ int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t 
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct transport_message *message = malloc(sizeof(struct transport_message *));
+  message->action = TRANSPORT_ACTION_SEND;
   message->channel = context->channel;
   struct transport_channel_message *channel_message = malloc(sizeof(struct transport_channel_message));
   channel_message->data = data;
