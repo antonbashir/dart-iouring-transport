@@ -80,7 +80,9 @@ void *transport_controller_run(void *input)
   memory_init();
   fiber_init(fiber_c_invoke);
   cbus_init();
-  fiber_start(fiber_new(CONTROLLER_FIBER, transport_controller_loop), input);
+  struct fiber* controller_fiber = fiber_new(CONTROLLER_FIBER, transport_controller_loop);
+  fiber_start(controller_fiber, input);
+  fiber_wakeup(controller_fiber);
   log_info("all fibers started");
   ev_run(loop(), 0);
   return NULL;
@@ -92,6 +94,7 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
 
   controller->transport = transport;
   controller->internal_ring_size = configuration->internal_ring_size;
+  controller->ring_retry_max_count = configuration->ring_retry_max_count;
   controller->initialized = false;
   controller->active = false;
   controller->shutdown_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;

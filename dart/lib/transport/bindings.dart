@@ -23227,9 +23227,6 @@ class transport_acceptor extends ffi.Struct {
   @ffi.Int32()
   external int server_port;
 
-  @Dart_Port()
-  external int dart_port;
-
   @ffi.Bool()
   external bool active;
 }
@@ -23253,9 +23250,6 @@ class transport_connector extends ffi.Struct {
 
   @ffi.Int32()
   external int client_port;
-
-  @Dart_Port()
-  external int dart_port;
 
   @ffi.Bool()
   external bool active;
