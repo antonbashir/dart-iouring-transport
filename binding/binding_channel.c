@@ -134,12 +134,11 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
     smfree(&transport->allocator, context, sizeof(struct transport_channel_context));
     return NULL;
   }
-
-  context->channel = fiber_channel_new(configuration->ring_size);
-
+  
   transport_channel_setup_buffers(configuration, context);
 
-  context->balancer->add(channel);
+  context->channel = fiber_channel_new(configuration->ring_size);
+  context->balancer->add(context->balancer, channel);
 
   return channel;
 }
@@ -211,13 +210,18 @@ int transport_channel_loop(va_list input)
 
       if (cqe->user_data & TRANSPORT_PAYLOAD_READ)
       {
+        int fd = cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS;
         void *payload = transport_get_buffer(context, buffer_id);
         if (payload)
         {
-          uint32_t length = cqe->res;
-          void *output = malloc(length);
-          memcpy(output, payload, length);
-          dart_post_pointer(channel->read_port, output);
+          transport_payload_t *payload = malloc(sizeof(transport_payload_t));
+          uint32_t size = cqe->res;
+          void *output = malloc(size);
+          memcpy(output, payload, size);
+          payload->data = output;
+          payload->size = size;
+          payload->fd = fd;
+          dart_post_pointer(channel->read_port, payload);
         }
 
         if (!fiber_channel_is_empty(context->channel))
@@ -225,7 +229,7 @@ int transport_channel_loop(va_list input)
           struct transport_message *message;
           if (likely(fiber_channel_get(context->channel, &message) == 0))
           {
-            struct transport_channel_message *data = (struct transport_channel_message *)message->data;
+            struct transport_channel_message *channel_message = (struct transport_channel_message *)message->data;
             free(message);
             struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
             while (unlikely(sqe == NULL))
@@ -234,10 +238,10 @@ int transport_channel_loop(va_list input)
               fiber_sleep(0);
               sqe = io_uring_get_sqe(&context->ring);
             }
-            data->buffer_id = buffer_id;
+            channel_message->buffer_id = buffer_id;
             void *buffer = transport_get_buffer(context, buffer_id);
-            memcpy(buffer, data->data, data->size);
-            io_uring_prep_sendmsg_zc(sqe, data->fd, buffer, 0);
+            memcpy(buffer, channel_message->data, channel_message->size);
+            io_uring_prep_sendmsg_zc(sqe, channel_message->fd, buffer, 0);
             io_uring_sqe_set_data(sqe, (intptr_t)message | TRANSPORT_PAYLOAD_WRITE);
             sqe->flags |= IOSQE_FIXED_FILE;
             io_uring_submit(&context->ring);
@@ -251,18 +255,22 @@ int transport_channel_loop(va_list input)
 
       if (cqe->user_data & TRANSPORT_PAYLOAD_WRITE)
       {
-        struct transport_channel_message *data = (struct transport_channel_message *)(cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
+        struct transport_channel_message *channel_message = (struct transport_channel_message *)(cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
         void *payload = transport_get_buffer(context, buffer_id);
         if (payload)
         {
-          uint32_t length = cqe->res;
-          void *output = malloc(length);
-          memcpy(output, payload, length);
-          dart_post_pointer(channel->read_port, output);
+          transport_payload_t *payload = malloc(sizeof(transport_payload_t));
+          uint32_t size = cqe->res;
+          void *output = malloc(size);
+          memcpy(output, payload, size);
+          payload->data = output;
+          payload->size = size;
+          payload->fd = channel_message->fd;
+          dart_post_pointer(channel->read_port, payload);
         }
         transport_channel_recycle_buffer(context, buffer_id);
-        free(data->data);
-        free(data);
+        free(channel_message->data);
+        free(channel_message);
         continue;
       }
     }

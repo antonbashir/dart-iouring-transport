@@ -7,8 +7,10 @@
 #include "small/include/small/ibuf.h"
 #include "small/include/small/obuf.h"
 #include "small/include/small/small.h"
+#include "small/include/small/rlist.h"
 #include "binding_transport.h"
 #include "binding_controller.h"
+#include <stdio.h>
 
 #if defined(__cplusplus)
 extern "C"
@@ -37,7 +39,16 @@ extern "C"
     void *context;
 
     bool active;
+
+    struct rlist balancer_link;
   } transport_channel_t;
+
+  typedef struct transport_payload
+  {
+    int fd;
+    void *data;
+    size_t size;
+  } transport_payload_t;
 
   transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                     transport_controller_t *controller,

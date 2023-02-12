@@ -67,12 +67,8 @@ int transport_connector_loop(va_list input)
     io_uring_for_each_cqe(&context->ring, head, cqe)
     {
       ++count;
-      if (unlikely(cqe->res < 0 || !cqe->user_data))
+      if (unlikely(cqe->res < 0))
       {
-        if (cqe->user_data)
-        {
-          free((void *)cqe->user_data);
-        }
         continue;
       }
       int fd = cqe->res;
@@ -81,7 +77,7 @@ int transport_connector_loop(va_list input)
       {
         fiber_sleep(0);
       }
-      struct transport_channel *channel = context->balancer->next();
+      struct transport_channel *channel = context->balancer->next(context->balancer);
       io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, TRANSPORT_PAYLOAD_CONNECT, 0);
       io_uring_submit(&context->ring);
     }
