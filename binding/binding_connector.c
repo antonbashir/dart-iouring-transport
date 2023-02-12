@@ -110,7 +110,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   context->balancer = (struct transport_balancer *)controller->balancer;
   connector->context = context;
 
-  int32_t status = io_uring_queue_init(configuration->ring_size, &context->ring, IORING_SETUP_SUBMIT_ALL | IORING_SETUP_COOP_TASKRUN | IORING_SETUP_CQSIZE);
+  int32_t status = io_uring_queue_init(configuration->ring_size, &context->ring, 0);
   if (status)
   {
     log_error("io_urig init error: %d", status);

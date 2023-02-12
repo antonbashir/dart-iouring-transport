@@ -37,7 +37,7 @@ int transport_controller_loop(va_list input)
   while (likely(controller->active))
   {
     struct transport_message *message;
-    while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
+    if (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
       if (message->action & TRANSPORT_ACTION_ADD_ACCEPTOR)
       {

@@ -126,7 +126,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   struct transport_channel_context *context = smalloc(&transport->allocator, sizeof(struct transport_channel_context));
   channel->context = context;
 
-  int32_t status = io_uring_queue_init(configuration->ring_size, &channel->ring, IORING_SETUP_SUBMIT_ALL | IORING_SETUP_COOP_TASKRUN | IORING_SETUP_CQSIZE);
+  int32_t status = io_uring_queue_init(configuration->ring_size, &channel->ring, 0);
   if (status)
   {
     log_error("io_urig init error: %d", status);
