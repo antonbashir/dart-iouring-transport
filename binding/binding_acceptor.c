@@ -101,9 +101,10 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   }
   acceptor->controller = controller;
   acceptor->transport = transport;
+  acceptor->server_ip = ip;
+  acceptor->server_port = port;
 
   struct transport_acceptor_context *context = smalloc(&transport->allocator, sizeof(struct transport_acceptor_context));
-
   memset(&context->client_addres, 0, sizeof(context->client_addres));
   context->client_addres.sin_addr.s_addr = inet_addr(acceptor->server_ip);
   context->client_addres.sin_port = htons(acceptor->server_port);
@@ -111,15 +112,10 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   context->client_addres_length = sizeof(context->client_addres);
   context->balancer = (struct transport_balancer *)controller->balancer;
   context->fd = transport_socket_create();
-  if (!transport_socket_bind(context->fd, ip, port, configuration->backlog))
+  if (transport_socket_bind(context->fd, ip, port, configuration->backlog))
   {
     return NULL;
   }
-
-  struct transport_message *message = malloc(sizeof(struct transport_message *));
-  message->action = TRANSPORT_ACTION_ADD_ACCEPTOR;
-  message->data = (void *)acceptor;
-  transport_controller_send(acceptor->controller, message);
 
   acceptor->context = context;
 
@@ -133,6 +129,12 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   }
 
   context->channel = fiber_channel_new(configuration->ring_size);
+
+  struct transport_message *message = malloc(sizeof(struct transport_message *));
+  message->action = TRANSPORT_ACTION_ADD_ACCEPTOR;
+  message->data = (void *)acceptor;
+  transport_controller_send(acceptor->controller, message);
+
   log_info("acceptor initialized");
   return acceptor;
 }

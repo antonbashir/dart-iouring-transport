@@ -98,6 +98,8 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   }
   connector->controller = controller;
   connector->transport = transport;
+  connector->client_ip = ip;
+  connector->client_port = port;
 
   struct transport_connector_context *context = smalloc(&transport->allocator, sizeof(struct transport_connector_context));
 

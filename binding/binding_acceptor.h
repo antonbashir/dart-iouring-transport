@@ -26,7 +26,6 @@ extern "C"
     void *context;
     const char *server_ip;
     int32_t server_port;
-    Dart_Port dart_port;
     bool active;
   } transport_acceptor_t;
 
