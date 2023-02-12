@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include "dart/dart_api_dl.h"
 #include "binding_transport.h"
+#include "binding_balancer.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -15,6 +16,7 @@ extern "C"
   typedef struct transport_controller
   {
     transport_t *transport;
+    struct transport_balancer *balancer;
     size_t cqe_size;
     size_t internal_ring_size;
     size_t batch_message_limit;
@@ -36,6 +38,7 @@ extern "C"
     size_t internal_ring_size;
     size_t batch_message_limit;
     int ring_retry_max_count;
+    transport_balancer_configuration_t* balancer_configuration;
   } transport_controller_configuration_t;
 
   transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration);

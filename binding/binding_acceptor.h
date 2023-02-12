@@ -30,11 +30,10 @@ extern "C"
   } transport_acceptor_t;
 
   transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
-                                                        transport_controller_t *controller,
-                                                        transport_acceptor_configuration_t *configuration,
-                                                        const char *ip,
-                                                        int32_t port,
-                                                        Dart_Port dart_port);
+                                                      transport_controller_t *controller,
+                                                      transport_acceptor_configuration_t *configuration,
+                                                      const char *ip,
+                                                      int32_t port);
 
   void transport_close_acceptor(transport_acceptor_t *acceptor);
 

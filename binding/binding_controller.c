@@ -32,11 +32,13 @@ int transport_controller_loop(va_list input)
   struct transport_controller_context *context = controller->context;
   controller->active = true;
   controller->initialized = true;
+  log_info("controller fiber started");
   while (likely(controller->active))
   {
     struct transport_message *message;
     while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
+      log_info("put message");
       while (unlikely(fiber_channel_put(message->channel, message->data) != 0))
       {
         fiber_sleep(0);
@@ -63,6 +65,7 @@ void *transport_controller_run(void *input)
   fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), input);
   fiber_start(fiber_new(CONNECTOR_FIBER, transport_connector_loop), input);
   fiber_start(fiber_new(CHANNEL_FIBER, transport_channel_loop), input);
+  log_info("all fibers started");
   return NULL;
 }
 
@@ -78,6 +81,7 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->active = false;
   controller->shutdown_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   controller->shutdown_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+  controller->balancer = transport_initialize_balancer(configuration->balancer_configuration, transport);
 
   struct transport_controller_context *context = malloc(sizeof(struct transport_controller_context));
   context->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);

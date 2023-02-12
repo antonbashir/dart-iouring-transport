@@ -27,18 +27,11 @@ struct transport_connector_context
   int fd;
 };
 
-static inline void dart_post_pointer(void *pointer, Dart_Port port)
-{
-  Dart_CObject dart_object;
-  dart_object.type = Dart_CObject_kInt64;
-  dart_object.value.as_int64 = (int64_t)pointer;
-  Dart_PostCObject(port, &dart_object);
-};
-
 int transport_connector_loop(va_list input)
 {
   struct transport_connector *connector = va_arg(input, struct transport_connector *);
   struct transport_connector_context *context = (struct transport_connector_context *)connector->context;
+  log_info("connector fiber started");
   while (connector->active)
   {
     if (!fiber_channel_is_empty(context->channel))
@@ -46,7 +39,7 @@ int transport_connector_loop(va_list input)
       void *message;
       if (likely(fiber_channel_get(context->channel, &message) == 0))
       {
-        intptr_t fd = (intptr_t)((struct transport_message*)message)->data;
+        intptr_t fd = (intptr_t)((struct transport_message *)message)->data;
         free(message);
         struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
         while (unlikely(sqe == NULL))
@@ -56,7 +49,7 @@ int transport_connector_loop(va_list input)
           sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_connect(sqe, (int)fd, (struct sockaddr *)&context->client_addres, context->client_addres_length);
-        io_uring_sqe_set_data(sqe, (void*)fd);
+        io_uring_sqe_set_data(sqe, TRANSPORT_PAYLOAD_CONNECT);
         io_uring_submit(&context->ring);
       }
     }
@@ -71,15 +64,19 @@ int transport_connector_loop(va_list input)
       {
         continue;
       }
-      int fd = cqe->res;
-      struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
-      while (unlikely(sqe == NULL))
+      if (likely(cqe->user_data & TRANSPORT_PAYLOAD_CONNECT))
       {
-        fiber_sleep(0);
+        int fd = cqe->res;
+        struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
+        while (unlikely(sqe == NULL))
+        {
+          fiber_sleep(0);
+        }
+        log_info("send connect to channel");
+        struct transport_channel *channel = context->balancer->next(context->balancer);
+        io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, TRANSPORT_PAYLOAD_CONNECT, 0);
+        io_uring_submit(&context->ring);
       }
-      struct transport_channel *channel = context->balancer->next(context->balancer);
-      io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, TRANSPORT_PAYLOAD_CONNECT, 0);
-      io_uring_submit(&context->ring);
     }
     io_uring_cq_advance(&context->ring, count);
 
@@ -92,8 +89,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
                                                       transport_controller_t *controller,
                                                       transport_connector_configuration_t *configuration,
                                                       const char *ip,
-                                                      int32_t port,
-                                                      Dart_Port dart_port)
+                                                      int32_t port)
 {
   transport_connector_t *connector = smalloc(&transport->allocator, sizeof(transport_connector_t));
   if (!connector)
@@ -102,7 +98,6 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   }
   connector->controller = controller;
   connector->transport = transport;
-  connector->dart_port = dart_port;
 
   struct transport_connector_context *context = smalloc(&transport->allocator, sizeof(struct transport_connector_context));
 
@@ -112,7 +107,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   context->client_addres.sin_family = AF_INET;
   context->client_addres_length = sizeof(context->client_addres);
   context->fd = transport_socket_create();
-
+  context->balancer = controller->balancer;
   connector->context = context;
 
   int32_t status = io_uring_queue_init(configuration->ring_size, &context->ring, IORING_SETUP_SUBMIT_ALL | IORING_SETUP_COOP_TASKRUN | IORING_SETUP_CQSIZE);
@@ -141,6 +136,6 @@ int32_t transport_connector_connect(transport_connector_t *connector)
   struct transport_connector_context *context = (struct transport_connector_context *)connector->context;
   struct transport_message *message = malloc(sizeof(struct transport_message *));
   message->channel = context->channel;
-  message->data = (void*)(intptr_t)context->fd;
+  message->data = (void *)(intptr_t)context->fd;
   return transport_controller_send(connector->controller, message) ? 0 : -1;
 }

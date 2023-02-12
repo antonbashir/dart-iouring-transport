@@ -27,18 +27,11 @@ struct transport_acceptor_context
   int fd;
 };
 
-static inline void dart_post_pointer(void *pointer, Dart_Port port)
-{
-  Dart_CObject dart_object;
-  dart_object.type = Dart_CObject_kInt64;
-  dart_object.value.as_int64 = (int64_t)pointer;
-  Dart_PostCObject(port, &dart_object);
-};
-
 int transport_acceptor_loop(va_list input)
 {
   struct transport_acceptor *acceptor = va_arg(input, struct transport_acceptor *);
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
+  log_info("acceptor fiber started");
   while (acceptor->active)
   {
     if (!fiber_channel_is_empty(context->channel))
@@ -56,7 +49,7 @@ int transport_acceptor_loop(va_list input)
           sqe = io_uring_get_sqe(&context->ring);
         }
         io_uring_prep_multishot_accept(sqe, (int)fd, (struct sockaddr *)&context->client_addres, &context->client_addres_length, 0);
-        io_uring_sqe_set_data(sqe, (void *)fd);
+        io_uring_sqe_set_data(sqe, TRANSPORT_PAYLOAD_ACCEPT);
         io_uring_submit(&context->ring);
       }
     }
@@ -71,15 +64,19 @@ int transport_acceptor_loop(va_list input)
       {
         continue;
       }
-      int fd = cqe->res;
-      struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
-      while (unlikely(sqe == NULL))
+      if (likely(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
       {
-        fiber_sleep(0);
+        int fd = cqe->res;
+        struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
+        while (unlikely(sqe == NULL))
+        {
+          fiber_sleep(0);
+        }
+        log_info("send accept to channel");
+        struct transport_channel *channel = context->balancer->next(context->balancer);
+        io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, TRANSPORT_PAYLOAD_ACCEPT, 0);
+        io_uring_submit(&context->ring);
       }
-      struct transport_channel *channel = context->balancer->next(context->balancer);
-      io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, TRANSPORT_PAYLOAD_ACCEPT, 0);
-      io_uring_submit(&context->ring);
     }
     io_uring_cq_advance(&context->ring, count);
     if (count)
@@ -95,8 +92,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
                                                     transport_controller_t *controller,
                                                     transport_acceptor_configuration_t *configuration,
                                                     const char *ip,
-                                                    int32_t port,
-                                                    Dart_Port dart_port)
+                                                    int32_t port)
 {
   transport_acceptor_t *acceptor = smalloc(&transport->allocator, sizeof(transport_acceptor_t));
   if (!acceptor)
@@ -105,7 +101,6 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   }
   acceptor->controller = controller;
   acceptor->transport = transport;
-  acceptor->dart_port = dart_port;
 
   struct transport_acceptor_context *context = smalloc(&transport->allocator, sizeof(struct transport_acceptor_context));
 
@@ -114,6 +109,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   context->client_addres.sin_port = htons(acceptor->server_port);
   context->client_addres.sin_family = AF_INET;
   context->client_addres_length = sizeof(context->client_addres);
+  context->balancer = controller->balancer;
   context->fd = transport_socket_create();
   if (!transport_socket_bind(context->fd, ip, port, configuration->backlog))
   {
@@ -132,7 +128,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   }
 
   context->channel = fiber_channel_new(configuration->ring_size);
-
+  log_info("acceptor initialized");
   return acceptor;
 }
 
@@ -148,6 +144,6 @@ int32_t transport_acceptor_accept(transport_acceptor_t *acceptor)
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
   struct transport_message *message = malloc(sizeof(struct transport_message *));
   message->channel = context->channel;
-  message->data = (void*)(intptr_t)context->fd;
+  message->data = (void *)(intptr_t)context->fd;
   return transport_controller_send(acceptor->controller, message) ? 0 : -1;
 }
