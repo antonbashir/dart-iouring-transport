@@ -18,8 +18,8 @@
 
 struct transport_channel_message
 {
-  struct msghdr message;
-  struct iovec data;
+  void *data;
+  size_t size;
   int fd;
   int buffer_id;
 };
@@ -70,7 +70,9 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                   transport_controller_t *controller,
                                                   transport_channel_configuration_t *configuration,
                                                   Dart_Port read_port,
-                                                  Dart_Port write_port)
+                                                  Dart_Port write_port,
+                                                  Dart_Port accept_port,
+                                                  Dart_Port connect_port)
 {
   transport_channel_t *channel = smalloc(&transport->allocator, sizeof(transport_channel_t));
   if (!channel)
@@ -83,6 +85,8 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
   channel->read_port = read_port;
   channel->write_port = write_port;
+  channel->accept_port = accept_port;
+  channel->connect_port = connect_port;
 
   struct transport_channel_context *context = smalloc(&transport->allocator, sizeof(struct transport_channel_context));
   channel->context = context;
@@ -157,7 +161,7 @@ static inline int transport_channel_queue_read(struct transport_channel_context 
     sqe = io_uring_get_sqe(&context->ring);
   }
 
-  io_uring_prep_recvmsg_multishot(sqe, fd, &context->message_header, MSG_TRUNC);
+  io_uring_prep_recv_multishot(sqe, fd, NULL, transport_buffer_size(context), 0);
   io_uring_sqe_set_data(sqe, fd | TRANSPORT_PAYLOAD_READ);
   sqe->flags |= IOSQE_FIXED_FILE;
   sqe->flags |= IOSQE_BUFFER_SELECT;
@@ -171,27 +175,11 @@ int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t 
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct transport_message *message = malloc(sizeof(struct transport_message *));
   message->channel = context->channel;
-
   struct transport_channel_message *channel_message = malloc(sizeof(struct transport_channel_message));
-
-  channel_message->data = (struct iovec){
-      .iov_base = data,
-      .iov_len = size,
-  };
-
-  channel_message->message = (struct msghdr){
-      .msg_namelen = NULL,
-      .msg_name = 0,
-      .msg_control = NULL,
-      .msg_controllen = 0,
-      .msg_iov = &channel_message->data,
-      .msg_iovlen = 1,
-  };
-
+  channel_message->data = data;
+  channel_message->size = size;
   channel_message->fd = fd;
-
   message->data = channel_message;
-
   return transport_controller_send(channel->controller, message) ? 0 : -1;
 }
 
@@ -229,20 +217,17 @@ int transport_channel_loop(va_list input)
 
       int buffer_id = cqe->flags >> 16;
 
-      struct io_uring_recvmsg_out *message_out = io_uring_recvmsg_validate(transport_get_buffer(context, buffer_id), cqe->res, &context->message_header);
-      if (!message_out)
-      {
-        continue;
-      }
-
-      if (message_out->namelen > context->message_header.msg_namelen || message_out->flags & MSG_TRUNC)
-      {
-        transport_recycle_buffer(context, buffer_id);
-        continue;
-      }
-
       if (cqe->user_data & TRANSPORT_PAYLOAD_READ)
       {
+        void *payload = transport_get_buffer(context, buffer_id);
+        if (payload)
+        {
+          uint32_t length = cqe->res;
+          void *output = malloc(length);
+          memcpy(output, payload, length);
+          dart_post_pointer(channel->read_port, output);
+        }
+
         if (!fiber_channel_is_empty(context->channel))
         {
           struct transport_message *message;
@@ -257,35 +242,31 @@ int transport_channel_loop(va_list input)
               fiber_sleep(0);
               sqe = io_uring_get_sqe(&context->ring);
             }
-            data->message.msg_name = io_uring_recvmsg_name(message_out);
-            data->message.msg_namelen = message_out->namelen;
             data->buffer_id = buffer_id;
-            io_uring_prep_sendmsg(sqe, data->fd, &data->message, 0);
+            void *buffer = transport_get_buffer(context, buffer_id);
+            memcpy(buffer, data->data, data->size);
+            io_uring_prep_sendmsg(sqe, data->fd, buffer, 0);
             io_uring_sqe_set_data(sqe, (intptr_t)message | TRANSPORT_PAYLOAD_WRITE);
             sqe->flags |= IOSQE_FIXED_FILE;
             io_uring_submit(&context->ring);
           }
         }
 
-        void *payload = io_uring_recvmsg_payload(message_out, &context->message_header);
-        uint32_t length = io_uring_recvmsg_payload_length(message_out, cqe->res, &context->message_header);
-        void *output = malloc(length);
-        memcpy(output, payload, length);
-        dart_post_pointer(channel->read_port, output);
         transport_channel_queue_read(context, cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
+
         continue;
       }
 
       if (cqe->user_data & TRANSPORT_PAYLOAD_WRITE)
       {
         struct transport_channel_message *data = (struct transport_channel_message *)(cqe->user_data & -TRANSPORT_PAYLOAD_ALL_FLAGS);
-        void *payload = io_uring_recvmsg_payload(message_out, &context->message_header);
-        uint32_t length = io_uring_recvmsg_payload_length(message_out, cqe->res, &context->message_header);
+        void *payload = transport_get_buffer(context, buffer_id);
+        uint32_t length = cqe->res;
         void *output = malloc(length);
         memcpy(output, payload, length);
-        dart_post_pointer(channel->write_port, output);
-        transport_recycle_buffer(context, data->buffer_id);
-        free(data->data.iov_base);
+        dart_post_pointer(channel->read_port, output);
+        transport_recycle_buffer(context, buffer_id);
+        free(data->data);
         free(data);
         continue;
       }
