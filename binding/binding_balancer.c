@@ -4,14 +4,14 @@ static transport_channel_t *transport_round_robbin_balancer_next(struct transpor
 {
   if (!balancer->next)
   {
-    balancer->next = rlist_next(balancer->channels);
+    balancer->next = balancer->channels;
     return balancer->next;
   }
   if (balancer->next = rlist_next(balancer->next))
   {
     return balancer->next;
   }
-  balancer->next = rlist_next(balancer->channels);
+  balancer->next = balancer->channels;
   return balancer->next;
 }
 
