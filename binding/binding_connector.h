@@ -38,6 +38,8 @@ extern "C"
   void transport_close_connector(transport_connector_t *connector);
 
   int32_t transport_connector_connect(transport_connector_t *connector);
+
+  int transport_connector_loop(va_list input);
 #if defined(__cplusplus)
 }
 #endif

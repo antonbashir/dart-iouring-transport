@@ -39,6 +39,8 @@ extern "C"
   void transport_close_acceptor(transport_acceptor_t *acceptor);
 
   int32_t transport_acceptor_accept(transport_acceptor_t *acceptor);
+
+  int transport_acceptor_loop(va_list input);
 #if defined(__cplusplus)
 }
 #endif

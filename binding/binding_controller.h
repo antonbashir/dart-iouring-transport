@@ -38,6 +38,7 @@ extern "C"
     size_t cqe_size;
     size_t internal_ring_size;
     size_t batch_message_limit;
+    int ring_retry_max_count;
 
     volatile bool initialized;
     volatile bool suspended;
@@ -58,6 +59,7 @@ extern "C"
     size_t cqe_size;
     size_t internal_ring_size;
     size_t batch_message_limit;
+    int ring_retry_max_count;
   } transport_controller_configuration_t;
 
   transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration);

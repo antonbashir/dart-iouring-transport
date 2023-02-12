@@ -1,8 +1,11 @@
+#include <stdio.h>
+
 #include "binding_controller.h"
 #include "binding_common.h"
 #include "binding_message.h"
-#include <stdio.h>
-
+#include "binding_acceptor.h"
+#include "binding_connector.h"
+#include "binding_channel.h"
 #include "ck_ring.h"
 #include "ck_backoff.h"
 #include "ck_spinlock.h"
@@ -11,9 +14,10 @@
 #include "memory.h"
 #include "cbus.h"
 
-static int ring_retry_max_count = 3;
-
-void *transport_controller_loop(void *input);
+#define CONTROLLER_FIBER "controller"
+#define ACCEPTOR_FIBER "acceptor"
+#define CONNECTOR_FIBER "connector"
+#define CHANNEL_FIBER "channel"
 
 struct transport_controller_context
 {
@@ -23,83 +27,41 @@ struct transport_controller_context
   ck_spinlock_cas_t submit_lock;
 };
 
-static inline void handle_cqes(transport_controller_t *controller, int count, struct io_uring_cqe **cqes)
+int transport_controller_loop(va_list input)
 {
-  for (size_t cqe_index = 0; cqe_index < count; cqe_index++)
+  transport_controller_t *controller = (transport_controller_t *)input;
+  struct transport_controller_context *context = controller->context;
+  controller->active = true;
+  controller->initialized = true;
+  while (likely(controller->active))
   {
-    struct io_uring_cqe *cqe = cqes[cqe_index];
-    // log_info("ring cqe %d result %d", cqe_index, cqe->res);
-
-    if (unlikely(cqe->res < 0))
+    struct transport_message *message;
+    while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
-      if (cqe->user_data)
+      while (unlikely(!fiber_channel_put(message->channel, message->data)))
       {
-        free((void *)cqe->user_data);
+        fiber_sleep(0);
       }
-      io_uring_cqe_seen(&controller->transport->ring, cqe);
-      continue;
     }
+    fiber_sleep(0);
+  }
 
-    if (unlikely(!cqe->user_data))
-    {
-      io_uring_cqe_seen(&controller->transport->ring, cqe);
-      continue;
-    }
-
-    transport_message_t *message = (transport_message_t *)(cqe->user_data);
-    // log_info("ring cqe %d message type %d", cqe_index, message->payload_type);
-    if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
-    {
-      ((transport_data_payload_t *)(message->payload))->size = cqe->res;
-    }
-
-    if (unlikely(message->payload_type == TRANSPORT_PAYLOAD_ACCEPT))
-    {
-      ((transport_accept_payload_t *)(message->payload))->fd = cqe->res;
-    }
-
-    dart_post_pointer(message->payload, message->port);
-    free(message);
-    io_uring_cqe_seen(&controller->transport->ring, cqe);
+  if (controller->initialized)
+  {
+    pthread_mutex_lock(&controller->shutdown_mutex);
+    controller->initialized = false;
+    pthread_cond_signal(&controller->shutdown_condition);
+    pthread_mutex_unlock(&controller->shutdown_mutex);
   }
 }
 
-static inline void handle_message(transport_controller_t *controller, transport_message_t *message)
+void *transport_controller_run(void *input)
 {
-  struct io_uring_sqe *sqe = io_uring_get_sqe(&controller->transport->ring);
-  if (unlikely(sqe == NULL))
-  {
-    return;
-  }
-
-  if (likely(message->payload_type == TRANSPORT_PAYLOAD_READ))
-  {
-    transport_data_payload_t *read_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_read(sqe, read_payload->fd, (void *)read_payload->position, read_payload->buffer_size, read_payload->offset);
-    io_uring_sqe_set_data(sqe, message);
-    return;
-  }
-  if (likely(message->payload_type == TRANSPORT_PAYLOAD_WRITE))
-  {
-    transport_data_payload_t *write_payload = (transport_data_payload_t *)message->payload;
-    io_uring_prep_write(sqe, write_payload->fd, (void *)write_payload->position, write_payload->size, write_payload->offset);
-    io_uring_sqe_set_data(sqe, message);
-    return;
-  }
-  if (message->payload_type == TRANSPORT_PAYLOAD_ACCEPT)
-  {
-    transport_accept_payload_t *accept_payload = (transport_accept_payload_t *)message->payload;
-    io_uring_prep_accept(sqe, accept_payload->fd, (struct sockaddr *)&accept_payload->client_addres, &accept_payload->client_addres_length, 0);
-    io_uring_sqe_set_data(sqe, message);
-    return;
-  }
-  if (message->payload_type == TRANSPORT_PAYLOAD_CONNECT)
-  {
-    transport_accept_payload_t *connect_payload = (transport_accept_payload_t *)message->payload;
-    io_uring_prep_connect(sqe, connect_payload->fd, (struct sockaddr *)&connect_payload->client_addres, connect_payload->client_addres_length);
-    io_uring_sqe_set_data(sqe, message);
-    return;
-  }
+  fiber_start(fiber_new(CONTROLLER_FIBER, transport_controller_loop), input);
+  fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), input);
+  fiber_start(fiber_new(CONNECTOR_FIBER, transport_connector_loop), input);
+  fiber_start(fiber_new(CHANNEL_FIBER, transport_channel_loop), input);
+  return NULL;
 }
 
 transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration)
@@ -127,9 +89,8 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
     return NULL;
   }
   ck_ring_init(&context->transport_message_ring, configuration->internal_ring_size);
-  ring_retry_max_count = 3;
   controller->context = context;
-  pthread_create(&controller->thread_id, NULL, transport_controller_loop, controller);
+  pthread_create(&controller->thread_id, NULL, transport_controller_run, controller);
   return controller;
 }
 
@@ -147,35 +108,6 @@ void transport_controller_stop(transport_controller_t *controller)
   log_info("controller is stopped");
 }
 
-void *transport_controller_loop(void *input)
-{
-  transport_controller_t *controller = (transport_controller_t *)input;
-  struct transport_controller_context *context = controller->context;
-  controller->active = true;
-  controller->initialized = true;
-  while (likely(controller->active))
-  {
-    struct transport_message *message;
-    while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
-    {
-      while (unlikely(!fiber_channel_put(message->channel, message->data)))
-      {
-        fiber_sleep(0);
-      }
-    }
-  }
-
-  if (controller->initialized)
-  {
-    pthread_mutex_lock(&controller->shutdown_mutex);
-    controller->initialized = false;
-    pthread_cond_signal(&controller->shutdown_condition);
-    pthread_mutex_unlock(&controller->shutdown_mutex);
-  }
-
-  return NULL;
-}
-
 bool transport_controller_send(transport_controller_t *controller, void *message)
 {
   if (unlikely(!controller->active))
@@ -189,7 +121,7 @@ bool transport_controller_send(transport_controller_t *controller, void *message
   while (unlikely(!ck_ring_enqueue_mpsc(&context->transport_message_ring, context->transport_message_buffer, message)))
   {
     ck_backoff_eb(&context->ring_send_backoff);
-    if (++count >= ring_retry_max_count)
+    if (++count >= controller->ring_retry_max_count)
     {
       context->ring_send_backoff = CK_BACKOFF_INITIALIZER;
       return false;

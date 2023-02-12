@@ -19,6 +19,7 @@ extern "C"
   {
     size_t buffer_initial_capacity;
     size_t buffer_limit;
+    size_t buffers_count;
     int32_t payload_buffer_size;
     uint32_t ring_size;
   } transport_channel_configuration_t;
@@ -30,25 +31,12 @@ extern "C"
     transport_t *transport;
     transport_controller_t *controller;
 
-    struct mempool data_payload_pool;
-    struct mempool accept_payload_pool;
-
-    struct ibuf read_buffers[2];
-    struct ibuf *current_read_buffer;
-
-    struct ibuf write_buffers[2];
-    struct ibuf *current_write_buffer;
-
-    size_t current_read_size;
-    size_t current_write_size;
-
     size_t buffer_initial_capacity;
     size_t buffer_limit;
-
+    size_t buffers_count;
+    
     Dart_Port read_port;
     Dart_Port write_port;
-
-    int32_t fd;
 
     int32_t payload_buffer_size;
   } transport_channel_t;
@@ -56,9 +44,10 @@ extern "C"
   transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                     transport_controller_t *controller,
                                                     transport_channel_configuration_t *configuration,
-                                                    int fd,
                                                     Dart_Port read_port,
                                                     Dart_Port write_port);
+  int transport_channel_loop(va_list input);
+
   void transport_close_channel(transport_channel_t *channel);
 
   int32_t transport_channel_queue_read(transport_channel_t *channel, uint64_t offset);
@@ -69,8 +58,6 @@ extern "C"
 
   void *transport_channel_prepare_read(transport_channel_t *channel);
   void *transport_channel_prepare_write(transport_channel_t *channel);
-
-  void transport_channel_free_data_payload(transport_channel_t *channel, transport_data_payload_t *payload);
 #if defined(__cplusplus)
 }
 #endif
