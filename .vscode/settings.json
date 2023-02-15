@@ -83,6 +83,7 @@
     "errno-base.h": "c",
     "compare": "c",
     "optional": "c",
-    "cmath": "c"
+    "cmath": "c",
+    "iostream": "c"
   },
 }
