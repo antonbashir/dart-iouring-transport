@@ -67,6 +67,7 @@ static inline void dart_post_pointer(void *pointer, Dart_Port port)
 static inline void transport_channel_setup_buffers(transport_channel_configuration_t *configuration, struct transport_channel *channel, struct transport_channel_context *context)
 {
   context->buffer_shift = configuration->buffer_shift;
+  context->buffers_count = configuration->buffers_count;
   size_t buffer_ring_size = (sizeof(struct io_uring_buf) + transport_buffer_size(context)) * configuration->buffers_count;
   void *buffer_memory = mmap(NULL, buffer_ring_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (buffer_memory == MAP_FAILED)
@@ -229,7 +230,6 @@ int transport_channel_loop(va_list input)
 
       if (cqe->res < 0)
       {
-        fiber_sleep(0.1);
         continue;
       }
 
@@ -273,9 +273,9 @@ int transport_channel_loop(va_list input)
           log_info("channel send write data to dart, data size = %d", size);
           dart_post_pointer(payload, channel->read_port);
         }
+        transport_channel_select_buffer(channel, context, channel_message->fd);
         free(channel_message->data);
         free(channel_message);
-        transport_channel_select_buffer(channel, context, channel_message->fd);
         continue;
       }
 
