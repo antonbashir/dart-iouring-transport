@@ -15,13 +15,6 @@
 #include "binding_balancer.h"
 #include "binding_message.h"
 
-struct transport_channel_message
-{
-  void *data;
-  size_t size;
-  int fd;
-};
-
 struct transport_channel_context
 {
   struct fiber_channel *channel;
@@ -96,7 +89,7 @@ static inline void transport_channel_setup_buffers(transport_channel_configurati
 static inline int transport_channel_select_buffer(struct transport_channel *channel, struct transport_channel_context *context, int fd)
 {
   struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
-  io_uring_prep_recv_multishot(sqe, fd, NULL, transport_buffer_size(context), 0);
+  io_uring_prep_recv_multishot(sqe, fd, NULL, context->buffer_size, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)(fd | TRANSPORT_PAYLOAD_READ));
   sqe->flags |= IOSQE_BUFFER_SELECT;
   sqe->buf_group = 0;
@@ -110,13 +103,13 @@ static inline void transport_channel_write_ring(struct transport_channel *channe
   void *message;
   if (likely(fiber_channel_get(context->channel, &message) == 0))
   {
-    struct transport_channel_message *channel_message = (struct transport_channel_message *)((struct transport_message *)message)->data;
+    transport_payload_t *payload = (transport_payload_t *)((struct transport_message *)message)->data;
     free(message);
     struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
-    io_uring_prep_send_zc(sqe, channel_message->fd, channel_message->data, channel_message->size, 0, 0);
-    io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)channel_message | TRANSPORT_PAYLOAD_WRITE));
+    io_uring_prep_send_zc(sqe, payload->fd, payload->data, payload->size, 0, 0);
+    io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_WRITE));
     io_uring_submit(&channel->ring);
-    log_info("channel send data to ring, data size = %d", channel_message->size);
+    log_info("channel send data to ring, data size = %d", payload->size);
   }
 }
 
@@ -142,22 +135,13 @@ static inline void transport_channel_handle_read_cqe(struct transport_channel *c
 
 static inline void transport_channel_handle_write_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
 {
-  struct transport_channel_message *channel_message = (struct transport_channel_message *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
-  void *payload = channel_message->data;
-  if (likely(payload))
+  transport_payload_t *payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
+  if (likely(payload->data))
   {
-    transport_payload_t *payload = malloc(sizeof(transport_payload_t));
-    uint32_t size = cqe->res;
-    void *output = malloc(size);
-    memcpy(output, payload, size);
-    payload->data = output;
-    payload->size = size;
-    payload->fd = channel_message->fd;
-    log_info("channel send write data to dart, data size = %d", size);
     dart_post_pointer(payload, channel->read_port);
+    return;
   }
-  free(channel_message->data);
-  free(channel_message);
+  free(payload);
 }
 
 static inline void transport_channel_handle_accept_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
@@ -220,11 +204,11 @@ int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t 
   struct transport_message *message = malloc(sizeof(struct transport_message));
   message->action = TRANSPORT_ACTION_SEND;
   message->channel = context->channel;
-  struct transport_channel_message *channel_message = malloc(sizeof(struct transport_channel_message));
-  channel_message->data = data;
-  channel_message->size = size;
-  channel_message->fd = fd;
-  message->data = channel_message;
+  transport_payload_t *payload = malloc(sizeof(transport_payload_t));
+  payload->data = data;
+  payload->size = size;
+  payload->fd = fd;
+  message->data = payload;
   return transport_controller_send(channel->controller, message) ? 0 : -1;
 }
 
