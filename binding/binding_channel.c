@@ -156,8 +156,14 @@ static inline void transport_channel_handle_write_cqe(struct transport_channel *
   //   log_info("channel send write data to dart, data size = %d", target_payload->size);
   //   dart_post_pointer(target_payload, channel->write_port);
   // }
+  transport_channel_select_buffer(channel, context, source_payload->fd);
   free(source_payload->data);
   free(source_payload);
+}
+
+static inline void transport_channel_handle_accept_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
+{
+  transport_channel_select_buffer(channel, context, cqe->res);
 }
 
 transport_channel_t *transport_initialize_channel(transport_t *transport,
@@ -263,12 +269,11 @@ int transport_channel_loop(va_list input)
       if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
       {
         transport_channel_handle_write_cqe(channel, context, cqe);
-        transport_channel_select_buffer(channel, context, cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
         continue;
       }
       if ((uint64_t)(cqe->user_data & (TRANSPORT_PAYLOAD_ACCEPT | TRANSPORT_PAYLOAD_CONNECT)))
       {
-        transport_channel_select_buffer(channel, context, cqe->res);
+        transport_channel_handle_accept_cqe(channel, context, cqe);
         continue;
       }
     }

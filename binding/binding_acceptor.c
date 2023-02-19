@@ -43,7 +43,7 @@ int transport_acceptor_loop(va_list input)
         intptr_t fd = (intptr_t)((struct transport_message *)message)->data;
         free(message);
         struct io_uring_sqe *sqe = provide_sqe(&context->ring);
-        io_uring_prep_multishot_accept(sqe, (int)fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
+        io_uring_prep_accept(sqe, (int)fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
         io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
         io_uring_submit(&context->ring);
       }
@@ -55,10 +55,6 @@ int transport_acceptor_loop(va_list input)
     io_uring_for_each_cqe(&context->ring, head, cqe)
     {
       ++count;
-      if (unlikely(!(cqe->flags & IORING_CQE_F_MORE)))
-      {
-        transport_acceptor_accept(acceptor);
-      }
       if (unlikely(cqe->res < 0))
       {
         continue;
@@ -71,6 +67,7 @@ int transport_acceptor_loop(va_list input)
         struct transport_channel *channel = context->balancer->next(context->balancer);
         io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT, 0);
         io_uring_submit(&context->ring);
+        transport_acceptor_accept(acceptor);
       }
     }
     if (count)
