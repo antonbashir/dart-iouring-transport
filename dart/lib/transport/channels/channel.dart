@@ -45,7 +45,6 @@ class TransportChannel {
     if (onStop != null) this.onStop = onStop;
     using((Arena arena) {
       final configuration = arena<transport_channel_configuration_t>();
-      configuration.ref.buffer_size = _configuration.bufferSize;
       configuration.ref.buffers_count = _configuration.buffersCount;
       configuration.ref.buffer_shift = _configuration.bufferShift;
       configuration.ref.ring_size = _configuration.ringSize;

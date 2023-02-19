@@ -15,7 +15,6 @@ class TransportDefaults {
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        bufferSize: 64,
         buffersCount: 8,
         ringSize: 8192,
         bufferShift: 12,
