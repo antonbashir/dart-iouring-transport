@@ -138,7 +138,8 @@ static inline void transport_channel_handle_write_cqe(struct transport_channel *
   transport_payload_t *payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
   if (likely(payload->data))
   {
-    dart_post_pointer(payload, channel->read_port);
+    log_info("channel send write data to dart, data size = %d", payload->size);
+    dart_post_pointer(payload, channel->write_port);
     return;
   }
   free(payload);
