@@ -39,30 +39,33 @@ int transport_controller_loop(va_list input)
     struct transport_message *message;
     if (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
-      if (message->action & TRANSPORT_ACTION_ADD_ACCEPTOR)
+      if (likely(message->action == TRANSPORT_ACTION_SEND))
+      {
+        log_info("put message");
+        while (unlikely(fiber_channel_put(message->channel, message) != 0))
+        {
+          fiber_sleep(0);
+        }
+        continue;
+      }
+
+      if (message->action == TRANSPORT_ACTION_ADD_ACCEPTOR)
       {
         fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), message->data);
         continue;
       }
 
-      if (message->action & TRANSPORT_ACTION_ADD_CONNECTOR)
+      if (message->action == TRANSPORT_ACTION_ADD_CONNECTOR)
       {
         fiber_start(fiber_new(CONNECTOR_FIBER, transport_connector_loop), message->data);
         continue;
       }
 
-      if (message->action & TRANSPORT_ACTION_ADD_CHANNEL)
+      if (message->action == TRANSPORT_ACTION_ADD_CHANNEL)
       {
         fiber_start(fiber_new(CHANNEL_FIBER, transport_channel_loop), message->data);
         continue;
       }
-
-      log_info("put message");
-      while (unlikely(fiber_channel_put(message->channel, message) != 0))
-      {
-        fiber_sleep(0);
-      }
-      continue;
     }
     fiber_sleep(0);
   }
@@ -84,7 +87,7 @@ void *transport_controller_run(void *input)
   struct fiber *controller_fiber = fiber_new(CONTROLLER_FIBER, transport_controller_loop);
   fiber_start(controller_fiber, input);
   fiber_wakeup(controller_fiber);
-  log_info("all fibers started");
+  log_info("controller fiber started");
   ev_run(loop(), 0);
   return NULL;
 }

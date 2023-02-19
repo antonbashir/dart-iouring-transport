@@ -79,8 +79,8 @@ class TransportChannel {
   void _handleRead(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onRead == null) {
-      malloc.free(payload.ref.data);
-      malloc.free(payload);
+      calloc.free(payload.ref.data);
+      calloc.free(payload);
       return;
     }
     onRead!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
@@ -89,8 +89,8 @@ class TransportChannel {
   void _handleWrite(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onWrite == null) {
-      malloc.free(payload.ref.data);
-      malloc.free(payload);
+      calloc.free(payload.ref.data);
+      calloc.free(payload);
       return;
     }
     onWrite!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));

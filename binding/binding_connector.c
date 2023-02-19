@@ -60,7 +60,7 @@ int transport_connector_loop(va_list input)
         continue;
       }
       if (likely((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_CONNECT)))
-      {
+      {        
         int fd = cqe->res;
         struct io_uring_sqe *sqe = provide_sqe(&context->ring);
         log_info("send connect to channel");
@@ -85,7 +85,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
                                                       const char *ip,
                                                       int32_t port)
 {
-  transport_connector_t *connector = smalloc(&transport->allocator, sizeof(transport_connector_t));
+  transport_connector_t *connector = malloc(sizeof(transport_connector_t));
   if (!connector)
   {
     return NULL;
@@ -95,7 +95,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   connector->client_ip = ip;
   connector->client_port = port;
 
-  struct transport_connector_context *context = smalloc(&transport->allocator, sizeof(struct transport_connector_context));
+  struct transport_connector_context *context = malloc(sizeof(struct transport_connector_context));
 
   memset(&context->client_addres, 0, sizeof(context->client_addres));
   context->client_addres.sin_addr.s_addr = inet_addr(connector->client_ip);
@@ -111,7 +111,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   {
     log_error("io_urig init error: %d", status);
     free(&context->ring);
-    smfree(&transport->allocator, context, sizeof(struct transport_connector_context));
+    free(context);
     return NULL;
   }
 
@@ -129,7 +129,7 @@ void transport_close_connector(transport_connector_t *connector)
 {
   struct transport_connector_context *context = (struct transport_connector_context *)connector->context;
   io_uring_queue_exit(&context->ring);
-  smfree(&connector->transport->allocator, connector, sizeof(transport_connector_t));
+  free(connector);
 }
 
 int32_t transport_connector_connect(transport_connector_t *connector)

@@ -22,8 +22,8 @@ struct transport_acceptor_context
   struct io_uring ring;
   struct fiber_channel *channel;
   struct transport_balancer *balancer;
-  struct sockaddr_in server_addres;
-  socklen_t server_addres_length;
+  struct sockaddr_in server_address;
+  socklen_t server_address_length;
   int fd;
 };
 
@@ -43,7 +43,7 @@ int transport_acceptor_loop(va_list input)
         intptr_t fd = (intptr_t)((struct transport_message *)message)->data;
         free(message);
         struct io_uring_sqe *sqe = provide_sqe(&context->ring);
-        io_uring_prep_multishot_accept(sqe, (int)fd, (struct sockaddr *)&context->server_addres, &context->server_addres_length, 0);
+        io_uring_prep_multishot_accept(sqe, (int)fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
         io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
         io_uring_submit(&context->ring);
       }
@@ -89,7 +89,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
                                                     const char *ip,
                                                     int32_t port)
 {
-  transport_acceptor_t *acceptor = smalloc(&transport->allocator, sizeof(transport_acceptor_t));
+  transport_acceptor_t *acceptor = malloc(sizeof(transport_acceptor_t));
   if (!acceptor)
   {
     return NULL;
@@ -99,12 +99,12 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   acceptor->server_ip = ip;
   acceptor->server_port = port;
 
-  struct transport_acceptor_context *context = smalloc(&transport->allocator, sizeof(struct transport_acceptor_context));
-  memset(&context->server_addres, 0, sizeof(context->server_addres));
-  context->server_addres.sin_addr.s_addr = inet_addr(acceptor->server_ip);
-  context->server_addres.sin_port = htons(acceptor->server_port);
-  context->server_addres.sin_family = AF_INET;
-  context->server_addres_length = sizeof(context->server_addres);
+  struct transport_acceptor_context *context = malloc(sizeof(struct transport_acceptor_context));
+  memset(&context->server_address, 0, sizeof(context->server_address));
+  context->server_address.sin_addr.s_addr = inet_addr(acceptor->server_ip);
+  context->server_address.sin_port = htons(acceptor->server_port);
+  context->server_address.sin_family = AF_INET;
+  context->server_address_length = sizeof(context->server_address);
   context->balancer = (struct transport_balancer *)controller->balancer;
   context->fd = transport_socket_create();
   if (transport_socket_bind(context->fd, ip, port, configuration->backlog))
@@ -119,7 +119,7 @@ transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
   {
     log_error("io_urig init error: %d", status);
     free(&context->ring);
-    smfree(&transport->allocator, context, sizeof(struct transport_acceptor_context));
+    free(context);
     return NULL;
   }
 
@@ -138,7 +138,7 @@ void transport_close_acceptor(transport_acceptor_t *acceptor)
 {
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
   io_uring_queue_exit(&context->ring);
-  smfree(&acceptor->transport->allocator, acceptor, sizeof(transport_acceptor_t));
+  free(acceptor);
 }
 
 int32_t transport_acceptor_accept(transport_acceptor_t *acceptor)

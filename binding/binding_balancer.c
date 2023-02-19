@@ -28,7 +28,7 @@ static void transport_round_robbin_balancer_remove(struct transport_balancer *ba
 
 struct transport_balancer *transport_initialize_balancer(transport_balancer_configuration_t *configuration, transport_t *transport)
 {
-  struct transport_balancer *balancer = smalloc(&transport->allocator, sizeof(struct transport_balancer));
+  struct transport_balancer *balancer = malloc(sizeof(struct transport_balancer));
   if (!balancer)
   {
     return NULL;
@@ -45,4 +45,6 @@ struct transport_balancer *transport_initialize_balancer(transport_balancer_conf
     balancer->add = transport_round_robbin_balancer_add;
     balancer->remove = transport_round_robbin_balancer_remove;
   }
+
+  return balancer;
 }
