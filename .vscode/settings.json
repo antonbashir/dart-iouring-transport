@@ -84,6 +84,8 @@
     "compare": "c",
     "optional": "c",
     "cmath": "c",
-    "iostream": "c"
+    "iostream": "c",
+    "fiber_channel.h": "c",
+    "dart_api.h": "c"
   },
 }

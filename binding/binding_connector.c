@@ -42,13 +42,7 @@ int transport_connector_loop(va_list input)
       {
         intptr_t fd = (intptr_t)((struct transport_message *)message)->data;
         free(message);
-        struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
-        while (unlikely(sqe == NULL))
-        {
-          io_uring_submit(&context->ring);
-          fiber_sleep(0);
-          sqe = io_uring_get_sqe(&context->ring);
-        }
+        struct io_uring_sqe *sqe = provide_sqe(&context->ring);
         io_uring_prep_connect(sqe, (int)fd, (struct sockaddr *)&context->client_addres, context->client_addres_length);
         io_uring_sqe_set_data(sqe, (void *)(uint64_t)TRANSPORT_PAYLOAD_CONNECT);
         io_uring_submit(&context->ring);
@@ -68,19 +62,18 @@ int transport_connector_loop(va_list input)
       if (likely((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_CONNECT)))
       {
         int fd = cqe->res;
-        struct io_uring_sqe *sqe = io_uring_get_sqe(&context->ring);
-        while (unlikely(sqe == NULL))
-        {
-          fiber_sleep(0);
-        }
+        struct io_uring_sqe *sqe = provide_sqe(&context->ring);
         log_info("send connect to channel");
         struct transport_channel *channel = context->balancer->next(context->balancer);
         io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, (uint64_t)TRANSPORT_PAYLOAD_CONNECT, 0);
         io_uring_submit(&context->ring);
       }
     }
-    io_uring_cq_advance(&context->ring, count);
-
+    if (count)
+    {
+      io_uring_cq_advance(&context->ring, count);
+      continue;
+    }
     fiber_sleep(0);
   }
   return 0;

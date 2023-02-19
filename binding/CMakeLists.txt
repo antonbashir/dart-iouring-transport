@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.18.0)
-project(binding C CXX ASM)
-set(CMAKE_CXX_STANDARD 11)
+project(binding C ASM)
+
+add_definitions("-D_GNU_SOURCE")
+set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
 
 macro(set_source_files_compile_flags)
   foreach(file ${ARGN})
