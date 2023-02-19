@@ -89,7 +89,7 @@ static inline void transport_channel_setup_buffers(transport_channel_configurati
 static inline int transport_channel_select_buffer(struct transport_channel *channel, struct transport_channel_context *context, int fd)
 {
   struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
-  io_uring_prep_recv_multishot(sqe, fd, NULL, context->buffer_size, 0);
+  io_uring_prep_read(sqe, fd, NULL, context->buffer_size, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)(fd | TRANSPORT_PAYLOAD_READ));
   sqe->flags |= IOSQE_BUFFER_SELECT;
   sqe->buf_group = 0;
@@ -174,7 +174,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   struct transport_channel_context *context = smalloc(&transport->allocator, sizeof(struct transport_channel_context));
   channel->context = context;
 
-  int32_t status = io_uring_queue_init(configuration->ring_size, &channel->ring, IORING_SETUP_COOP_TASKRUN | IORING_SETUP_SINGLE_ISSUER);
+  int32_t status = io_uring_queue_init(configuration->ring_size, &channel->ring, 0);
   if (status)
   {
     log_error("io_urig init error: %d", status);
@@ -234,7 +234,7 @@ int transport_channel_loop(va_list input)
     struct io_uring_cqe *cqe;
     io_uring_for_each_cqe(&channel->ring, head, cqe)
     {
-      log_info("channel process cqe with result %d and user_data %d", cqe->res, cqe->user_data);
+      log_info("channel process cqe with result '%s' and user_data %d", cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
       ++count;
       if (cqe->res < 0)
       {
