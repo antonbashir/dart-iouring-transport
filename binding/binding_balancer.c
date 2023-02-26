@@ -5,22 +5,24 @@ static transport_channel_t *transport_round_robbin_balancer_next(struct transpor
 {
   if (unlikely(!balancer->next_channel))
   {
-    balancer->next_channel = rlist_next(&balancer->channels);
-    
+    balancer->next_channel = balancer->channels.next;
+    balancer->last_channel_index = 0;
     return rlist_entry(balancer->next_channel, transport_channel_t, balancer_link);
   }
-  balancer->next_channel = rlist_next(balancer->next_channel);
-  if (balancer->next_channel && rlist_entry(balancer->next_channel, transport_channel_t, balancer_link)->id)
+  if (balancer->last_channel_index + 1 == balancer->count)
   {
+    balancer->next_channel = balancer->channels.next;
+    balancer->last_channel_index = 0;
     return rlist_entry(balancer->next_channel, transport_channel_t, balancer_link);
   }
-  balancer->next_channel = rlist_next(&balancer->channels);
+  balancer->next_channel = balancer->next_channel->next;
+  balancer->last_channel_index++;
   return rlist_entry(balancer->next_channel, transport_channel_t, balancer_link);
 }
 
 static void transport_round_robbin_balancer_add(struct transport_balancer *balancer, transport_channel_t *channel)
 {
-  rlist_add_tail_entry(&balancer->channels, channel, balancer_link);
+  rlist_add_entry(&balancer->channels, channel, balancer_link);
   balancer->count++;
 }
 
@@ -37,7 +39,9 @@ struct transport_balancer *transport_initialize_balancer(transport_balancer_conf
   {
     return NULL;
   }
+  balancer->next_channel = NULL;
   balancer->count = 0;
+  balancer->last_channel_index = 0;
   rlist_create(&balancer->channels);
 
   switch (configuration->type)
