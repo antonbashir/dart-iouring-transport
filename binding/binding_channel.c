@@ -126,13 +126,13 @@ static inline void transport_channel_handle_read_cqe(struct transport_channel *c
 {
   int buffer_id = cqe->flags >> 16;
   int fd = cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS;
-  uint32_t size = cqe->res;
-  void *buffer = transport_get_buffer(context, buffer_id);
-  if (likely(size))
+  void *payload = transport_get_buffer(context, buffer_id);
+  if (likely(payload))
   {
     transport_payload_t *payload = malloc(sizeof(transport_payload_t));
+    uint32_t size = cqe->res;
     void *output = malloc(size);
-    memcpy(output, buffer, size);
+    memcpy(output, payload, size);
     payload->data = output;
     payload->size = size;
     payload->fd = fd;
@@ -170,9 +170,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                   transport_controller_t *controller,
                                                   transport_channel_configuration_t *configuration,
                                                   Dart_Port read_port,
-                                                  Dart_Port write_port,
-                                                  Dart_Port accept_port,
-                                                  Dart_Port connect_port)
+                                                  Dart_Port write_port)
 {
   transport_channel_t *channel = malloc(sizeof(transport_channel_t));
   if (!channel)
@@ -185,9 +183,6 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
   channel->read_port = read_port;
   channel->write_port = write_port;
-  channel->accept_port = accept_port;
-  channel->connect_port = connect_port;
-
   struct transport_channel_context *context = malloc(sizeof(struct transport_channel_context));
   channel->context = context;
 
@@ -240,8 +235,10 @@ int transport_channel_loop(va_list input)
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   log_info("channel fiber started");
   channel->active = true;
+  int cycles = 0;
   while (channel->active)
   {
+    cycles++;
     if (!fiber_channel_is_empty(context->channel))
     {
       transport_channel_write_ring(channel, context);
@@ -277,12 +274,14 @@ int transport_channel_loop(va_list input)
         continue;
       }
     }
-    if (count)
-    {
-      io_uring_cq_advance(&channel->ring, count);
-      continue;
-    }
-    fiber_sleep(0);
+    io_uring_cq_advance(&channel->ring, count);
+    fiber_yield_timeout(0);
   }
   return 0;
+}
+
+void transport_channel_free_payload(transport_channel_t *channel, transport_payload_t *payload)
+{
+  free(payload->data);
+  free(payload);
 }

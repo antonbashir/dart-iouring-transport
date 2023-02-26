@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:typed_data';
@@ -22,8 +21,6 @@ class TransportChannel {
   late final Pointer<transport_channel_t> _channel;
   late final RawReceivePort _readPort = RawReceivePort(_handleRead);
   late final RawReceivePort _writePort = RawReceivePort(_handleWrite);
-  late final RawReceivePort _acceptPort = RawReceivePort();
-  late final RawReceivePort _connectPort = RawReceivePort();
 
   TransportChannel(
     this._bindings,
@@ -54,8 +51,6 @@ class TransportChannel {
         configuration,
         _readPort.sendPort.nativePort,
         _writePort.sendPort.nativePort,
-        _acceptPort.sendPort.nativePort,
-        _connectPort.sendPort.nativePort,
       );
     });
   }
@@ -63,8 +58,6 @@ class TransportChannel {
   void stop() {
     _readPort.close();
     _writePort.close();
-    _acceptPort.close();
-    _connectPort.close();
     _bindings.transport_close_channel(_channel);
     onStop?.call();
   }
@@ -78,20 +71,18 @@ class TransportChannel {
   void _handleRead(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onRead == null) {
-      calloc.free(payload.ref.data);
-      calloc.free(payload);
+      _bindings.transport_channel_free_payload(_channel, payload);
       return;
     }
-    onRead!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
+    onRead!(TransportDataPayload(_bindings, _channel, payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
   }
 
   void _handleWrite(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onWrite == null) {
-      calloc.free(payload.ref.data);
-      calloc.free(payload);
+      _bindings.transport_channel_free_payload(_channel, payload);
       return;
     }
-    onWrite!(TransportDataPayload(payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
+    onWrite!(TransportDataPayload(_bindings, _channel, payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
   }
 }

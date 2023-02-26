@@ -35,6 +35,8 @@ int transport_acceptor_loop(va_list input)
   acceptor->active = true;
   while (acceptor->active)
   {
+    fiber_sleep(1);
+
     if (!fiber_channel_is_empty(context->channel))
     {
       void *message;
@@ -66,8 +68,11 @@ int transport_acceptor_loop(va_list input)
         log_info("send accept to channel");
         struct transport_channel *channel = context->balancer->next(context->balancer);
         io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT, 0);
+
+        sqe = provide_sqe(&context->ring);
+        io_uring_prep_accept(sqe, (int)context->fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
+        io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
         io_uring_submit(&context->ring);
-        transport_acceptor_accept(acceptor);
       }
     }
     if (count)
@@ -75,7 +80,6 @@ int transport_acceptor_loop(va_list input)
       io_uring_cq_advance(&context->ring, count);
       continue;
     }
-    fiber_sleep(0);
   }
   return 0;
 }

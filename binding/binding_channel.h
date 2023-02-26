@@ -31,8 +31,6 @@ extern "C"
     transport_t *transport;
     transport_controller_t *controller;
 
-    Dart_Port accept_port;
-    Dart_Port connect_port;
     Dart_Port read_port;
     Dart_Port write_port;
 
@@ -54,14 +52,14 @@ extern "C"
                                                     transport_controller_t *controller,
                                                     transport_channel_configuration_t *configuration,
                                                     Dart_Port read_port,
-                                                    Dart_Port write_port,
-                                                    Dart_Port accept_port,
-                                                    Dart_Port connect_port);
+                                                    Dart_Port write_port);
   int transport_channel_loop(va_list input);
 
   void transport_close_channel(transport_channel_t *channel);
 
   int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t size, int fd);
+
+  void transport_channel_free_payload(transport_channel_t *channel, transport_payload_t *payload);
 #if defined(__cplusplus)
 }
 #endif

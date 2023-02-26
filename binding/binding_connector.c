@@ -35,6 +35,8 @@ int transport_connector_loop(va_list input)
   connector->active = true;
   while (connector->active)
   {
+    fiber_sleep(1);
+
     if (!fiber_channel_is_empty(context->channel))
     {
       void *message;
@@ -60,7 +62,7 @@ int transport_connector_loop(va_list input)
         continue;
       }
       if (likely((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_CONNECT)))
-      {        
+      {
         int fd = cqe->res;
         struct io_uring_sqe *sqe = provide_sqe(&context->ring);
         log_info("send connect to channel");
@@ -69,12 +71,12 @@ int transport_connector_loop(va_list input)
         io_uring_submit(&context->ring);
       }
     }
+
     if (count)
     {
       io_uring_cq_advance(&context->ring, count);
       continue;
     }
-    fiber_sleep(0);
   }
   return 0;
 }

@@ -16438,8 +16438,6 @@ class TransportBindings {
     ffi.Pointer<transport_channel_configuration_t> configuration,
     int read_port,
     int write_port,
-    int accept_port,
-    int connect_port,
   ) {
     return _transport_initialize_channel(
       transport,
@@ -16447,8 +16445,6 @@ class TransportBindings {
       configuration,
       read_port,
       write_port,
-      accept_port,
-      connect_port,
     );
   }
 
@@ -16459,8 +16455,6 @@ class TransportBindings {
               ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_channel_configuration_t>,
               Dart_Port,
-              Dart_Port,
-              Dart_Port,
               Dart_Port)>>('transport_initialize_channel');
   late final _transport_initialize_channel =
       _transport_initialize_channelPtr.asFunction<
@@ -16468,8 +16462,6 @@ class TransportBindings {
               ffi.Pointer<transport_t>,
               ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_channel_configuration_t>,
-              int,
-              int,
               int,
               int)>();
 
@@ -16526,6 +16518,26 @@ class TransportBindings {
   late final _transport_channel_send = _transport_channel_sendPtr.asFunction<
       int Function(
           ffi.Pointer<transport_channel_t>, ffi.Pointer<ffi.Void>, int, int)>();
+
+  void transport_channel_free_payload(
+    ffi.Pointer<transport_channel_t> channel,
+    ffi.Pointer<transport_payload_t> payload,
+  ) {
+    return _transport_channel_free_payload(
+      channel,
+      payload,
+    );
+  }
+
+  late final _transport_channel_free_payloadPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_channel_t>,
+                  ffi.Pointer<transport_payload_t>)>>(
+      'transport_channel_free_payload');
+  late final _transport_channel_free_payload =
+      _transport_channel_free_payloadPtr.asFunction<
+          void Function(ffi.Pointer<transport_channel_t>,
+              ffi.Pointer<transport_payload_t>)>();
 
   ffi.Pointer<transport_acceptor_t> transport_initialize_acceptor(
     ffi.Pointer<transport_t> transport,
@@ -20047,8 +20059,6 @@ class _SymbolAddresses {
               ffi.Pointer<transport_controller_t>,
               ffi.Pointer<transport_channel_configuration_t>,
               Dart_Port,
-              Dart_Port,
-              Dart_Port,
               Dart_Port)>> get transport_initialize_channel =>
       _library._transport_initialize_channelPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<__va_list_tag>)>>
@@ -20065,6 +20075,12 @@ class _SymbolAddresses {
               ffi.Size,
               ffi.Int)>> get transport_channel_send =>
       _library._transport_channel_sendPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_channel_t>,
+                  ffi.Pointer<transport_payload_t>)>>
+      get transport_channel_free_payload =>
+          _library._transport_channel_free_payloadPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_acceptor_t> Function(
@@ -23160,9 +23176,6 @@ class transport_channel_configuration extends ffi.Struct {
   @ffi.Size()
   external int buffers_count;
 
-  @ffi.Int32()
-  external int buffer_size;
-
   @ffi.Uint32()
   external int ring_size;
 
@@ -23176,12 +23189,6 @@ class transport_channel extends ffi.Struct {
   external ffi.Pointer<transport_t> transport;
 
   external ffi.Pointer<transport_controller_t> controller;
-
-  @Dart_Port()
-  external int accept_port;
-
-  @Dart_Port()
-  external int connect_port;
 
   @Dart_Port()
   external int read_port;
@@ -23209,6 +23216,7 @@ class transport_payload extends ffi.Struct {
 
 typedef transport_channel_t = transport_channel;
 typedef transport_channel_configuration_t = transport_channel_configuration;
+typedef transport_payload_t = transport_payload;
 
 class transport_acceptor_configuration extends ffi.Struct {
   @ffi.Uint32()
