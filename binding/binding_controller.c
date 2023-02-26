@@ -35,14 +35,11 @@ int transport_controller_loop(va_list input)
   controller->initialized = true;
   log_info("controller fiber started");
 
-  double timestampSeconds = fiber_clock64();
-
   while (likely(controller->active))
   {
     struct transport_message *message;
-    if (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
+    while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
-      timestampSeconds = fiber_clock64();
       if (likely(message->action == TRANSPORT_ACTION_SEND))
       {
         log_debug("put message");
@@ -66,18 +63,8 @@ int transport_controller_loop(va_list input)
       {
         fiber_start(fiber_new(CHANNEL_FIBER, transport_channel_loop), message->data);
       }
-      continue;
     }
-
-    double newTimestamp = fiber_clock64();
-    double deltaMicroseconds = newTimestamp - timestampSeconds;
-    if (deltaMicroseconds > 10)
-    {
-      log_debug("controller sleep");
-      fiber_sleep(0);
-      timestampSeconds = fiber_clock64();
-    }
-    ev_now_update(loop());
+    fiber_sleep(0);
   }
 
   if (controller->initialized)
