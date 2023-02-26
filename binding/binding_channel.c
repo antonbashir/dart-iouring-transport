@@ -255,8 +255,6 @@ int transport_channel_loop(va_list input)
 
       if (cqe->res < 0)
       {
-        log_error("channel %d process cqe with result '%s' and user_data %d", channel->id, strerror(-cqe->res), cqe->user_data);
-        exit(-cqe->res);
         continue;
       }
 

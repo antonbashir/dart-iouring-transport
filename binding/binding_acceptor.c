@@ -64,12 +64,9 @@ int transport_acceptor_loop(va_list input)
 
       if (likely((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT)))
       {
-        log_info("send accept to channel");
-
         int fd = cqe->res;
         struct io_uring_sqe *sqe = provide_sqe(&context->ring);
         struct transport_channel *channel = context->balancer->next(context->balancer);
-        log_info("selecting channel: %d", channel->id);
         transport_channel_accept(channel, cqe->res);
         transport_acceptor_accept(acceptor);
       }
