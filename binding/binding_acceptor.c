@@ -69,12 +69,9 @@ int transport_acceptor_loop(va_list input)
         int fd = cqe->res;
         struct io_uring_sqe *sqe = provide_sqe(&context->ring);
         struct transport_channel *channel = context->balancer->next(context->balancer);
-        io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT, 0);
-
-        sqe = provide_sqe(&context->ring);
-        io_uring_prep_accept(sqe, (int)context->fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
-        io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
-        io_uring_submit(&context->ring);
+        log_info("selecting channel: %d", channel->id);
+        transport_channel_accept(channel, cqe->res);
+        transport_acceptor_accept(acceptor);
       }
     }
     io_uring_cq_advance(&context->ring, count);

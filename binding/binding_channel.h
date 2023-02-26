@@ -38,6 +38,8 @@ extern "C"
 
     bool active;
 
+    uint32_t id;
+
     struct rlist balancer_link;
   } transport_channel_t;
 
@@ -57,6 +59,7 @@ extern "C"
 
   void transport_close_channel(transport_channel_t *channel);
 
+  void transport_channel_accept(struct transport_channel *channel, int fd);
   int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t size, int fd);
 
   void transport_channel_free_payload(transport_channel_t *channel, transport_payload_t *payload);

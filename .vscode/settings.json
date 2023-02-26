@@ -86,6 +86,7 @@
     "cmath": "c",
     "iostream": "c",
     "fiber_channel.h": "c",
-    "dart_api.h": "c"
+    "dart_api.h": "c",
+    "cstdio": "c"
   },
 }

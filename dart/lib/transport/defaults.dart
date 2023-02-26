@@ -11,7 +11,7 @@ class TransportDefaults {
         slabAllocationGranularity: 8,
         slabAllocationFactor: 1.05,
         logColored: true,
-        logLevel: 2,
+        logLevel: 0,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
