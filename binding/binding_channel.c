@@ -16,6 +16,8 @@
 #include "binding_message.h"
 #include "dart/dart_api.h"
 
+static volatile uint32_t next_id = 0;
+
 struct transport_channel_context
 {
   struct fiber_channel *channel;
@@ -25,6 +27,7 @@ struct transport_channel_context
   uint32_t buffer_shift;
   uint32_t buffer_size;
   unsigned char *buffer_base;
+  uint32_t id;
 };
 
 static inline void dart_post_pointer(void *pointer, Dart_Port port)
@@ -42,7 +45,7 @@ static inline unsigned char *transport_get_buffer(struct transport_channel_conte
 
 static inline void transport_channel_recycle_buffer(struct transport_channel_context *context, int id)
 {
-  log_info("channel recycle buffer");
+  log_debug("channel recycle buffer");
   io_uring_buf_ring_add(context->buffer_ring,
                         transport_get_buffer(context, id),
                         context->buffer_size,
@@ -127,6 +130,7 @@ static inline void transport_channel_handle_read_cqe(struct transport_channel *c
   int buffer_id = cqe->flags >> 16;
   int fd = cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS;
   void *payload = transport_get_buffer(context, buffer_id);
+  log_debug("channel read accept cqe res = %d, buffer_id = %d", cqe->res, buffer_id);
   if (likely(payload))
   {
     transport_payload_t *payload = malloc(sizeof(transport_payload_t));
@@ -144,6 +148,7 @@ static inline void transport_channel_handle_read_cqe(struct transport_channel *c
 
 static inline void transport_channel_handle_write_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
 {
+  log_debug("channel handle write cqe res = %d", cqe->res);
   transport_payload_t *source_payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
   transport_channel_select_buffer(channel, context, source_payload->fd);
   free(source_payload->data);
@@ -152,6 +157,7 @@ static inline void transport_channel_handle_write_cqe(struct transport_channel *
 
 static inline void transport_channel_handle_accept_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
 {
+  log_debug("channel handle accept cqe %d", cqe->res);
   transport_channel_select_buffer(channel, context, cqe->res);
 }
 
@@ -174,6 +180,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   channel->write_port = write_port;
   struct transport_channel_context *context = malloc(sizeof(struct transport_channel_context));
   channel->context = context;
+  context->id = ++next_id;
 
   int32_t status = io_uring_queue_init(configuration->ring_size, &channel->ring, 0);
   if (status)
@@ -236,20 +243,31 @@ int transport_channel_loop(va_list input)
     struct io_uring_cqe *cqe;
     io_uring_for_each_cqe(&channel->ring, head, cqe)
     {
-      log_debug("channel process cqe with result '%s' and user_data %d", cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
+      log_debug("channel %d process cqe with result '%s' and user_data %d", context->id, cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
+
       ++count;
-      if (cqe->res < 0)
+
+      if (cqe->res == -ENOBUFS)
       {
-        log_error("channel process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
+        fiber_sleep(0);
+        transport_channel_select_buffer(channel, context, cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
         continue;
       }
+
+      if (cqe->res < 0)
+      {
+        log_error("channel %d process cqe with result '%s' and user_data %d", context->id, strerror(-cqe->res), cqe->user_data);
+        exit(-cqe->res);
+        continue;
+      }
+
       if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
       {
         if (likely(cqe->flags & IORING_CQE_F_BUFFER))
         {
           transport_channel_handle_read_cqe(channel, context, cqe);
+          transport_channel_select_buffer(channel, context, cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
         }
-        transport_channel_select_buffer(channel, context, cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
         continue;
       }
 

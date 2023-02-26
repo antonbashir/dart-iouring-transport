@@ -19,7 +19,7 @@ extern "C"
     while (unlikely(sqe == NULL))
     {
       io_uring_submit(ring);
-      fiber_sleep(0);
+      fiber_yield();
       sqe = io_uring_get_sqe(ring);
     }
     return sqe;

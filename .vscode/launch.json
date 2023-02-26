@@ -59,6 +59,25 @@
           "ignoreFailures": true
         }
       ],
+    },
+    {
+      "name": "dart-benchmark-debug-native (rebuild)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/bin/dart",
+      "args": [
+        "${cwd}/dart/test/benchmark.dart"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/dart",
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
       "preLaunchTask": "transport-binding-build"
     },
   ]

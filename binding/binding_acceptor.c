@@ -80,7 +80,7 @@ int transport_acceptor_loop(va_list input)
     io_uring_cq_advance(&context->ring, count);
     if (!count)
     {
-      fiber_sleep(0);
+      fiber_sleep(0.1);
     }
   }
   return 0;
