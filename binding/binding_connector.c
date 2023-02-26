@@ -35,8 +35,6 @@ int transport_connector_loop(va_list input)
   connector->active = true;
   while (connector->active)
   {
-    fiber_sleep(1);
-
     if (!fiber_channel_is_empty(context->channel))
     {
       void *message;

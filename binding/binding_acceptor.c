@@ -35,8 +35,6 @@ int transport_acceptor_loop(va_list input)
   acceptor->active = true;
   while (acceptor->active)
   {
-    fiber_sleep(1);
-
     if (!fiber_channel_is_empty(context->channel))
     {
       void *message;
@@ -56,16 +54,20 @@ int transport_acceptor_loop(va_list input)
     struct io_uring_cqe *cqe;
     io_uring_for_each_cqe(&context->ring, head, cqe)
     {
+      log_debug("acceptor process cqe with result '%s' and user_data %d", cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
       ++count;
       if (unlikely(cqe->res < 0))
       {
+        log_error("acceptor process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
         continue;
       }
+
       if (likely((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT)))
       {
+        log_info("send accept to channel");
+
         int fd = cqe->res;
         struct io_uring_sqe *sqe = provide_sqe(&context->ring);
-        log_info("send accept to channel");
         struct transport_channel *channel = context->balancer->next(context->balancer);
         io_uring_prep_msg_ring(sqe, channel->ring.ring_fd, fd, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT, 0);
 
@@ -75,10 +77,10 @@ int transport_acceptor_loop(va_list input)
         io_uring_submit(&context->ring);
       }
     }
-    if (count)
+    io_uring_cq_advance(&context->ring, count);
+    if (!count)
     {
-      io_uring_cq_advance(&context->ring, count);
-      continue;
+      fiber_sleep(0);
     }
   }
   return 0;

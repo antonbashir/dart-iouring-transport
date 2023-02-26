@@ -22,7 +22,7 @@
 
 #include "binding_logger.h"
 
-#define MAX_CALLBACKS 32
+#define MAX_CALLBACKS 1
 
 typedef struct
 {
@@ -160,8 +160,6 @@ void log_log(int level, const char *file, int line, const char *fmt, ...)
       .level = level,
   };
 
-  lock();
-
   if (!L.quiet && level >= L.level)
   {
     init_event(&ev, stderr);
@@ -169,18 +167,4 @@ void log_log(int level, const char *file, int line, const char *fmt, ...)
     stdout_callback(&ev);
     va_end(ev.ap);
   }
-
-  for (int i = 0; i < MAX_CALLBACKS && L.callbacks[i].fn; i++)
-  {
-    Callback *cb = &L.callbacks[i];
-    if (level >= cb->level)
-    {
-      init_event(&ev, cb->udata);
-      va_start(ev.ap, fmt);
-      cb->fn(&ev);
-      va_end(ev.ap);
-    }
-  }
-
-  unlock();
 }

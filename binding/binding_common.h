@@ -11,6 +11,8 @@ extern "C"
 #include "fiber.h"
 #include "binding_logger.h"
 
+#define NANOS_PER_SEC 1000000000LL
+
   static inline struct io_uring_sqe *provide_sqe(struct io_uring *ring)
   {
     struct io_uring_sqe *sqe = io_uring_get_sqe(ring);

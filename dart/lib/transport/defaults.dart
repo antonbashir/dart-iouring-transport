@@ -11,11 +11,11 @@ class TransportDefaults {
         slabAllocationGranularity: 8,
         slabAllocationFactor: 1.05,
         logColored: true,
-        logLevel: 0,
+        logLevel: 2,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: 8,
+        buffersCount: 32,
         ringSize: 8192,
         bufferShift: 12,
       );
