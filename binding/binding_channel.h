@@ -33,6 +33,7 @@ extern "C"
 
     Dart_Port read_port;
     Dart_Port write_port;
+    Dart_Port accept_port;
 
     void *context;
 
@@ -53,17 +54,19 @@ extern "C"
   transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                     transport_controller_t *controller,
                                                     transport_channel_configuration_t *configuration,
+                                                    Dart_Port accept_port,
                                                     Dart_Port read_port,
                                                     Dart_Port write_port);
   int transport_channel_loop(va_list input);
 
   void transport_close_channel(transport_channel_t *channel);
 
-  void transport_channel_accept(struct transport_channel *channel, int fd);
+  void transport_channel_accept(transport_channel_t *channel, int fd);
 
-  int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t size, int fd);
+  int32_t transport_channel_receive(transport_channel_t *channel, int fd);
+  int32_t transport_channel_send(transport_channel_t *channel, transport_payload_t *payload);
 
-  void *transport_channel_allocate_write_buffer(transport_channel_t *channel);
+  transport_payload_t *transport_channel_allocate_write_payload(transport_channel_t *channel, int fd);
 
   void transport_channel_free_read_payload(transport_channel_t *channel, transport_payload_t *payload);
   void transport_channel_free_write_payload(transport_channel_t *channel, transport_payload_t *payload);

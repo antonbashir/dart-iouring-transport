@@ -19,6 +19,7 @@ class TransportChannel {
   void Function()? onStop;
 
   late final Pointer<transport_channel_t> _channel;
+  late final RawReceivePort _acceptPort = RawReceivePort(_read);
   late final RawReceivePort _readPort = RawReceivePort(_handleRead);
   late final RawReceivePort _writePort = RawReceivePort(_handleWrite);
 
@@ -49,6 +50,7 @@ class TransportChannel {
         _transport,
         _controller,
         configuration,
+        _acceptPort.sendPort.nativePort,
         _readPort.sendPort.nativePort,
         _writePort.sendPort.nativePort,
       );
@@ -63,9 +65,14 @@ class TransportChannel {
   }
 
   void write(Uint8List bytes, int fd) {
-    Pointer<Uint8> data = _bindings.transport_channel_allocate_write_buffer(_channel).cast();
-    data.asTypedList(bytes.length).setAll(0, bytes);
-    _bindings.transport_channel_send(_channel, data.cast(), bytes.length, fd);
+    Pointer<transport_payload_t> data = _bindings.transport_channel_allocate_write_payload(_channel, fd);
+    data.ref.data.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
+    data.ref.size = bytes.length;
+    _bindings.transport_channel_send(_channel, data);
+  }
+
+  void _read(int fd) {
+    _bindings.transport_channel_receive(_channel, fd);
   }
 
   void _handleRead(dynamic payloadPointer) {
@@ -81,6 +88,7 @@ class TransportChannel {
 
   void _handleWrite(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
+    _read(payload.ref.fd);
     if (onWrite == null) {
       _bindings.transport_channel_free_write_payload(_channel, payload);
       return;
