@@ -103,7 +103,7 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
 void transport_channel_accept(struct transport_channel *channel, int fd)
 {
-  log_debug("channel handle accept %d", fd);
+  //log_debug("channel handle accept %d", fd);
   dart_post_int(fd, channel->accept_port);
 }
 
@@ -143,19 +143,19 @@ int32_t transport_channel_send(transport_channel_t *channel, transport_payload_t
 
 static inline void transport_channel_handle_read_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
 {
-  log_debug("channel read accept cqe res = %d", cqe->res);
+  //log_debug("channel read accept cqe res = %d", cqe->res);
   transport_payload_t *payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
   payload->size = cqe->res;
-  log_debug("channel send read data to dart, data size = %d", payload->size);
+  //log_debug("channel send read data to dart, data size = %d", payload->size);
   dart_post_pointer(payload, channel->read_port);
 }
 
 static inline void transport_channel_handle_write_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
 {
-  log_debug("channel handle write cqe res = %d", cqe->res);
+  //log_debug("channel handle write cqe res = %d", cqe->res);
   transport_payload_t *payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
   payload->size = cqe->res;
-  log_debug("channel send write data to dart, data size = %d", payload->size);
+  //log_debug("channel send write data to dart, data size = %d", payload->size);
   dart_post_pointer(payload, channel->write_port);
 }
 
@@ -171,13 +171,14 @@ static inline void transport_channel_consume(struct transport_channel *channel)
     io_uring_for_each_cqe(ring, head, cqe)
     {
       ++count;
-      if (cqe->res == -EPIPE)
-      {
-        continue;
-      }
 
-      if (cqe->res < 0)
+      if (unlikely(cqe->res < 0))
       {
+        if (cqe->res == -EPIPE)
+        {
+          continue;
+        }
+
         log_error("channel %d process cqe with result '%s' and user_data %d", channel->id, strerror(-cqe->res), cqe->user_data);
         continue;
       }
@@ -205,7 +206,7 @@ int transport_channel_process_write(struct transport_channel *channel, void *mes
   struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
   io_uring_prep_send(sqe, payload->fd, payload->data, payload->size, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_WRITE));
-  log_debug("channel send data to ring, data size = %d", payload->size);
+  //log_debug("channel send data to ring, data size = %d", payload->size);
   io_uring_submit(&channel->ring);
   transport_channel_consume(channel);
   return 0;
@@ -218,7 +219,7 @@ int transport_channel_process_read(struct transport_channel *channel, void *mess
   struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
   io_uring_prep_read(sqe, payload->fd, payload->data, payload->size, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_READ));
-  log_debug("channel receive data with ring, data size = %d", payload->size);
+  //log_debug("channel receive data with ring, data size = %d", payload->size);
   io_uring_submit(&channel->ring);
   transport_channel_consume(channel);
   return 0;

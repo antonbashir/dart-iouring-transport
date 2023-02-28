@@ -24,7 +24,7 @@ Future<void> main(List<String> args) async {
   serverTransport.channels(TransportDefaults.channel(), onRead: (payload) {
     payload.finalize();
     payload.channel.write(fromServer, payload.fd);
-  }, count: 1);
+  }, count: 8);
   serverTransport.acceptor(TransportDefaults.acceptor()).accept("0.0.0.0", 9999);
 
   // clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
