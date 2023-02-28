@@ -35,11 +35,22 @@ int transport_controller_loop(va_list input)
   controller->initialized = true;
   log_info("controller fiber started");
 
+  int initial_empty_cycles = 1000;
+  int max_empty_cycles = 1000000;
+  int cycles_multiplier = 2;
+  double regular_sleep_seconds = 0.0;
+  double max_sleep_seconds = 0.0001;
+  int current_empty_cycles = 0;
+  int curent_empty_cycles_limit = initial_empty_cycles;
+
   while (likely(controller->active))
   {
     struct transport_message *message;
-    while (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
+    if (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
+      current_empty_cycles = 0;
+      curent_empty_cycles_limit = initial_empty_cycles;
+
       if (likely(message->action == TRANSPORT_ACTION_SEND))
       {
         log_debug("put message");
@@ -62,7 +73,22 @@ int transport_controller_loop(va_list input)
       if (message->action == TRANSPORT_ACTION_ADD_CHANNEL)
       {
         fiber_start(fiber_new(CHANNEL_FIBER, transport_channel_loop), message->data);
+        continue;
       }
+    }
+
+    current_empty_cycles++;
+    if (current_empty_cycles >= max_empty_cycles)
+    {
+      fiber_sleep(max_sleep_seconds);
+      continue;
+    }
+
+    if (current_empty_cycles >= curent_empty_cycles_limit)
+    {
+      curent_empty_cycles_limit *= cycles_multiplier;
+      fiber_sleep(regular_sleep_seconds);
+      continue;
     }
   }
 

@@ -91,8 +91,8 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
   transport_channel_setup_buffers(configuration, channel, context);
 
-  context->send_channel = fiber_channel_new(1);
-  context->receive_channel = fiber_channel_new(1);
+  context->send_channel = fiber_channel_new(configuration->ring_size);
+  context->receive_channel = fiber_channel_new(configuration->ring_size);
   context->balancer = (struct transport_balancer *)controller->balancer;
   context->balancer->add(context->balancer, channel);
 
@@ -179,39 +179,7 @@ int transport_channel_send_loop(va_list input)
       io_uring_prep_send(sqe, payload->fd, payload->data, payload->size, 0);
       io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_WRITE));
       log_debug("channel send data to ring, data size = %d", payload->size);
-      int count = 0;
-      struct io_uring_cqe *cqe;
-      struct __kernel_timespec ts = {
-          .tv_sec = 0,
-          .tv_nsec = 1000,
-      };
-      if (io_uring_submit_and_wait_timeout(&channel->ring, &cqe, 1, &ts, NULL) > 0)
-      {
-        unsigned int head;
-        io_uring_for_each_cqe(&channel->ring, head, cqe)
-        {
-          log_debug("channel %d process cqe with result '%s' and user_data %d", channel->id, cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
-          ++count;
-          if (cqe->res < 0)
-          {
-            log_error("channel %d process cqe with result '%s' and user_data %d", channel->id, strerror(-cqe->res), cqe->user_data);
-            continue;
-          }
-
-          if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
-          {
-            transport_channel_handle_read_cqe(channel, context, cqe);
-            continue;
-          }
-
-          if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
-          {
-            transport_channel_handle_write_cqe(channel, context, cqe);
-            continue;
-          }
-        }
-        io_uring_cq_advance(&channel->ring, count);
-      }
+      io_uring_submit(&channel->ring);
     }
   }
   return 0;
@@ -233,39 +201,7 @@ int transport_channel_receive_loop(va_list input)
       io_uring_prep_read(sqe, payload->fd, payload->data, payload->size, 0);
       io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_READ));
       log_debug("channel receive data with ring, data size = %d", payload->size);
-      int count = 0;
-      struct io_uring_cqe *cqe;
-      struct __kernel_timespec ts = {
-          .tv_sec = 0,
-          .tv_nsec = 1000,
-      };
-      if (io_uring_submit_and_wait_timeout(&channel->ring, &cqe, 1, &ts, NULL) > 0)
-      {
-        unsigned int head;
-        io_uring_for_each_cqe(&channel->ring, head, cqe)
-        {
-          log_debug("channel %d process cqe with result '%s' and user_data %d", channel->id, cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
-          ++count;
-          if (cqe->res < 0)
-          {
-            log_error("channel %d process cqe with result '%s' and user_data %d", channel->id, strerror(-cqe->res), cqe->user_data);
-            continue;
-          }
-
-          if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
-          {
-            transport_channel_handle_read_cqe(channel, context, cqe);
-            continue;
-          }
-
-          if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
-          {
-            transport_channel_handle_write_cqe(channel, context, cqe);
-            continue;
-          }
-        }
-        io_uring_cq_advance(&channel->ring, count);
-      }
+      io_uring_submit(&channel->ring);
     }
   }
   return 0;
@@ -277,6 +213,15 @@ int transport_channel_consume_loop(va_list input)
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct io_uring *ring = &channel->ring;
   log_info("channel fiber consume started");
+
+  int initial_empty_cycles = 1000;
+  int max_empty_cycles = 1000000;
+  int cycles_multiplier = 2;
+  double regular_sleep_seconds = 0.0;
+  double max_sleep_seconds = 0.0001;
+  int current_empty_cycles = 0;
+  int curent_empty_cycles_limit = initial_empty_cycles;
+
   while (likely(channel->active))
   {
     int count = 0;
@@ -286,6 +231,11 @@ int transport_channel_consume_loop(va_list input)
     {
       log_debug("channel %d process cqe with result '%s' and user_data %d", channel->id, cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
       ++count;
+      if (cqe->res == -EPIPE)
+      {
+        continue;
+      }
+
       if (cqe->res < 0)
       {
         log_error("channel %d process cqe with result '%s' and user_data %d", channel->id, strerror(-cqe->res), cqe->user_data);
@@ -304,8 +254,31 @@ int transport_channel_consume_loop(va_list input)
         continue;
       }
     }
-
     io_uring_cq_advance(ring, count);
+    
+    if (count)
+    {
+      current_empty_cycles = 0;
+      curent_empty_cycles_limit = initial_empty_cycles;
+      fiber_sleep(regular_sleep_seconds);
+      continue;
+    }
+
+    if (!count)
+    {
+      current_empty_cycles++;
+      if (current_empty_cycles >= max_empty_cycles)
+      {
+        fiber_sleep(max_sleep_seconds);
+        continue;
+      }
+
+      if (current_empty_cycles >= curent_empty_cycles_limit)
+      {
+        curent_empty_cycles_limit *= cycles_multiplier;
+      }
+      fiber_sleep(regular_sleep_seconds);
+    }
   }
   return 0;
 }
