@@ -156,16 +156,10 @@ void transport_channel_accept(struct transport_channel *channel, int fd)
   transport_channel_select_buffer(channel, (struct transport_channel_context *)channel->context, fd);
 }
 
-void *transport_channel_allocate_buffer(transport_channel_t *channel, size_t *size)
+void *transport_channel_allocate_write_buffer(transport_channel_t *channel)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   return mempool_alloc(&context->write_buffers);
-}
-
-void transport_channel_free_buffer(transport_channel_t *channel, void *buffer)
-{
-  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  mempool_free(&context->write_buffers, buffer);
 }
 
 int32_t transport_channel_send(transport_channel_t *channel, void *data, size_t size, int fd)
@@ -194,8 +188,6 @@ static inline void transport_channel_recycle_buffer(struct transport_channel_con
   io_uring_buf_ring_advance(context->read_buffer_ring, 1);
 }
 
-
-
 static inline void transport_channel_handle_read_cqe(struct transport_channel *channel, struct transport_channel_context *context, struct io_uring_cqe *cqe)
 {
   int buffer_id = cqe->flags >> 16;
@@ -222,8 +214,8 @@ static inline void transport_channel_handle_write_cqe(struct transport_channel *
   log_debug("channel handle write cqe res = %d", cqe->res);
   transport_payload_t *payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
   log_debug("channel send write data to dart, data size = %d", payload->size);
-  dart_post_pointer(payload, channel->write_port);
   transport_channel_select_buffer(channel, context, payload->fd);
+  dart_post_pointer(payload, channel->write_port);
 }
 
 int transport_channel_produce_loop(va_list input)
@@ -306,7 +298,14 @@ int transport_channel_loop(va_list input)
   return 0;
 }
 
-void transport_channel_free_payload(transport_channel_t *channel, transport_payload_t *payload)
+void transport_channel_free_write_payload(transport_channel_t *channel, transport_payload_t *payload)
+{
+  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
+  mempool_free(&context->write_buffers, payload->data);
+  free(payload);
+}
+
+void transport_channel_free_read_payload(transport_channel_t *channel, transport_payload_t *payload)
 {
   free(payload->data);
   free(payload);

@@ -63,7 +63,7 @@ class TransportChannel {
   }
 
   void write(Uint8List bytes, int fd) {
-    Pointer<Uint8> data = calloc.allocate(bytes.length).cast();
+    Pointer<Uint8> data = _bindings.transport_channel_allocate_write_buffer(_channel).cast();
     data.asTypedList(bytes.length).setAll(0, bytes);
     _bindings.transport_channel_send(_channel, data.cast(), bytes.length, fd);
   }
@@ -71,22 +71,22 @@ class TransportChannel {
   void _handleRead(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onRead == null) {
-      _bindings.transport_channel_free_payload(_channel, payload);
+      _bindings.transport_channel_free_read_payload(_channel, payload);
       return;
     }
-    onRead!(TransportDataPayload(payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd, (finalizable) => _bindings.transport_channel_free_payload(_channel, payload)));
+    onRead!(
+      TransportDataPayload(payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd, (finalizable) => _bindings.transport_channel_free_read_payload(_channel, payload)),
+    );
   }
 
   void _handleWrite(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onWrite == null) {
-      _bindings.transport_channel_free_buffer(_channel, payload.ref.data);
-      _bindings.transport_channel_free_payload(_channel, payload);
+      _bindings.transport_channel_free_write_payload(_channel, payload);
       return;
     }
-    onWrite!(TransportDataPayload(payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd, (finalizable) {
-      _bindings.transport_channel_free_buffer(_channel, payload.ref.data);
-      _bindings.transport_channel_free_payload(_channel, payload);
-    }));
+    onWrite!(
+      TransportDataPayload(payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd, (finalizable) => _bindings.transport_channel_free_write_payload(_channel, payload)),
+    );
   }
 }
