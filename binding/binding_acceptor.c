@@ -27,7 +27,7 @@ struct transport_acceptor_context
   int fd;
 };
 
-int transport_acceptor_sqe_loop(va_list input)
+int transport_acceptor_produce_loop(va_list input)
 {
   struct transport_acceptor *acceptor = va_arg(input, struct transport_acceptor *);
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
@@ -48,17 +48,22 @@ int transport_acceptor_sqe_loop(va_list input)
   return 0;
 }
 
-int transport_acceptor_cqe_loop(va_list input)
+int transport_acceptor_consume_loop(va_list input)
 {
   struct transport_acceptor *acceptor = va_arg(input, struct transport_acceptor *);
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
+  struct io_uring *ring = &context->ring;
   log_info("acceptor cqe fiber started");
   while (likely(acceptor->active))
   {
     int count = 0;
     unsigned int head;
     struct io_uring_cqe *cqe;
-    io_uring_for_each_cqe(&context->ring, head, cqe)
+    while (!io_uring_cq_ready(ring))
+    {
+      fiber_sleep(0.1);
+    }
+    io_uring_for_each_cqe(ring, head, cqe)
     {
       log_debug("acceptor process cqe with result '%s' and user_data %d", cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
       ++count;
@@ -77,11 +82,7 @@ int transport_acceptor_cqe_loop(va_list input)
         transport_acceptor_accept(acceptor);
       }
     }
-    io_uring_cq_advance(&context->ring, count);
-    if (!count)
-    {
-      fiber_sleep(0.1);
-    }
+    io_uring_cq_advance(ring, count);
   }
   return 0;
 }
@@ -91,8 +92,8 @@ int transport_acceptor_loop(va_list input)
   struct transport_acceptor *acceptor = va_arg(input, struct transport_acceptor *);
   log_info("acceptor fiber started");
   acceptor->active = true;
-  struct fiber *sqe = fiber_new("sqe", transport_acceptor_sqe_loop);
-  struct fiber *cqe = fiber_new("cqe", transport_acceptor_cqe_loop);
+  struct fiber *sqe = fiber_new("sqe", transport_acceptor_produce_loop);
+  struct fiber *cqe = fiber_new("cqe", transport_acceptor_consume_loop);
   fiber_set_joinable(sqe, true);
   fiber_set_joinable(cqe, true);
   fiber_start(sqe, acceptor);

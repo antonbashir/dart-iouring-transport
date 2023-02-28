@@ -74,15 +74,19 @@ class TransportChannel {
       _bindings.transport_channel_free_payload(_channel, payload);
       return;
     }
-    onRead!(TransportDataPayload(_bindings, _channel, payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
+    onRead!(TransportDataPayload(payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd, (finalizable) => _bindings.transport_channel_free_payload(_channel, payload)));
   }
 
   void _handleWrite(dynamic payloadPointer) {
     Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
     if (onWrite == null) {
+      _bindings.transport_channel_free_buffer(_channel, payload.ref.data);
       _bindings.transport_channel_free_payload(_channel, payload);
       return;
     }
-    onWrite!(TransportDataPayload(_bindings, _channel, payload, payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd));
+    onWrite!(TransportDataPayload(payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size), this, payload.ref.fd, (finalizable) {
+      _bindings.transport_channel_free_buffer(_channel, payload.ref.data);
+      _bindings.transport_channel_free_payload(_channel, payload);
+    }));
   }
 }
