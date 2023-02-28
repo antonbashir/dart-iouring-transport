@@ -16,6 +16,7 @@
 #include "binding_balancer.h"
 #include "binding_socket.h"
 #include "fiber.h"
+#include "fiber_channel.h"
 
 struct transport_connector_context
 {
@@ -136,8 +137,8 @@ int32_t transport_connector_connect(transport_connector_t *connector)
 {
   struct transport_connector_context *context = (struct transport_connector_context *)connector->context;
   struct transport_message *message = malloc(sizeof(struct transport_message));
-  message->channel = context->channel;
-  message->action = TRANSPORT_ACTION_SEND;
+  message->consumer = connector;
+  //message->action = TRANSPORT_ACTION_SEND;
   message->data = (void *)(intptr_t)context->fd;
   return transport_controller_send(connector->controller, message) ? 0 : -1;
 }

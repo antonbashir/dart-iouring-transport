@@ -21,8 +21,6 @@ static volatile uint32_t next_id = 0;
 struct transport_channel_context
 {
   uint32_t id;
-  struct fiber_channel *send_channel;
-  struct fiber_channel *receive_channel;
   struct transport_balancer *balancer;
 
   uint32_t buffer_size;
@@ -91,8 +89,6 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
   transport_channel_setup_buffers(configuration, channel, context);
 
-  context->send_channel = fiber_channel_new(configuration->ring_size);
-  context->receive_channel = fiber_channel_new(configuration->ring_size);
   context->balancer = (struct transport_balancer *)controller->balancer;
   context->balancer->add(context->balancer, channel);
 
@@ -125,8 +121,8 @@ int32_t transport_channel_receive(transport_channel_t *channel, int fd)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct transport_message *message = malloc(sizeof(struct transport_message));
-  message->action = TRANSPORT_ACTION_SEND;
-  message->channel = context->receive_channel;
+  message->action = TRANSPORT_ACTION_READ;
+  message->consumer = (void *)channel;
   transport_payload_t *payload = mempool_alloc(&context->payloads);
   payload->data = mempool_alloc(&context->read_buffers);
   payload->size = context->buffer_size;
@@ -139,8 +135,8 @@ int32_t transport_channel_send(transport_channel_t *channel, transport_payload_t
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct transport_message *message = malloc(sizeof(struct transport_message));
-  message->action = TRANSPORT_ACTION_SEND;
-  message->channel = context->send_channel;
+  message->action = TRANSPORT_ACTION_WRITE;
+  message->consumer = (void *)channel;
   message->data = payload;
   return transport_controller_send(channel->controller, message) ? 0 : -1;
 }
@@ -163,73 +159,17 @@ static inline void transport_channel_handle_write_cqe(struct transport_channel *
   dart_post_pointer(payload, channel->write_port);
 }
 
-int transport_channel_send_loop(va_list input)
+static inline void transport_channel_consume(struct transport_channel *channel)
 {
-  struct transport_channel *channel = va_arg(input, struct transport_channel *);
-  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  log_info("channel send fiber started");
-  while (channel->active)
-  {
-    void *message;
-    if (likely(fiber_channel_get(context->send_channel, &message) == 0))
-    {
-      transport_payload_t *payload = (transport_payload_t *)((struct transport_message *)message)->data;
-      free(message);
-      struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
-      io_uring_prep_send(sqe, payload->fd, payload->data, payload->size, 0);
-      io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_WRITE));
-      log_debug("channel send data to ring, data size = %d", payload->size);
-      io_uring_submit(&channel->ring);
-    }
-  }
-  return 0;
-}
-
-int transport_channel_receive_loop(va_list input)
-{
-  struct transport_channel *channel = va_arg(input, struct transport_channel *);
-  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  log_info("channel receive fiber started");
-  while (channel->active)
-  {
-    void *message;
-    if (likely(fiber_channel_get(context->receive_channel, &message) == 0))
-    {
-      transport_payload_t *payload = (transport_payload_t *)((struct transport_message *)message)->data;
-      free(message);
-      struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
-      io_uring_prep_read(sqe, payload->fd, payload->data, payload->size, 0);
-      io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_READ));
-      log_debug("channel receive data with ring, data size = %d", payload->size);
-      io_uring_submit(&channel->ring);
-    }
-  }
-  return 0;
-}
-
-int transport_channel_consume_loop(va_list input)
-{
-  struct transport_channel *channel = va_arg(input, struct transport_channel *);
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct io_uring *ring = &channel->ring;
-  log_info("channel fiber consume started");
-
-  int initial_empty_cycles = 1000;
-  int max_empty_cycles = 1000000;
-  int cycles_multiplier = 2;
-  double regular_sleep_seconds = 0.0;
-  double max_sleep_seconds = 0.0001;
-  int current_empty_cycles = 0;
-  int curent_empty_cycles_limit = initial_empty_cycles;
-
-  while (likely(channel->active))
+  int count = 0;
+  struct io_uring_cqe *cqe;
+  unsigned int head;
+  if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
   {
-    int count = 0;
-    struct io_uring_cqe *cqe;
-    unsigned int head;
     io_uring_for_each_cqe(ring, head, cqe)
     {
-      log_debug("channel %d process cqe with result '%s' and user_data %d", channel->id, cqe->res < 0 ? strerror(-cqe->res) : "ok", cqe->user_data);
       ++count;
       if (cqe->res == -EPIPE)
       {
@@ -245,66 +185,44 @@ int transport_channel_consume_loop(va_list input)
       if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
       {
         transport_channel_handle_read_cqe(channel, context, cqe);
+        fiber_sleep(0);
         continue;
       }
 
       if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
       {
         transport_channel_handle_write_cqe(channel, context, cqe);
+        fiber_sleep(0);
         continue;
       }
     }
     io_uring_cq_advance(ring, count);
-    
-    if (count)
-    {
-      current_empty_cycles = 0;
-      curent_empty_cycles_limit = initial_empty_cycles;
-      fiber_sleep(regular_sleep_seconds);
-      continue;
-    }
-
-    if (!count)
-    {
-      current_empty_cycles++;
-      if (current_empty_cycles >= max_empty_cycles)
-      {
-        fiber_sleep(max_sleep_seconds);
-        continue;
-      }
-
-      if (current_empty_cycles >= curent_empty_cycles_limit)
-      {
-        curent_empty_cycles_limit *= cycles_multiplier;
-      }
-      fiber_sleep(regular_sleep_seconds);
-    }
   }
+}
+
+int transport_channel_process_write(struct transport_channel *channel, void *message)
+{
+  transport_payload_t *payload = (transport_payload_t *)((struct transport_message *)message)->data;
+  free(message);
+  struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
+  io_uring_prep_send(sqe, payload->fd, payload->data, payload->size, 0);
+  io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_WRITE));
+  log_debug("channel send data to ring, data size = %d", payload->size);
+  io_uring_submit(&channel->ring);
+  transport_channel_consume(channel);
   return 0;
 }
 
-int transport_channel_loop(va_list input)
+int transport_channel_process_read(struct transport_channel *channel, void *message)
 {
-  struct transport_channel *channel = va_arg(input, struct transport_channel *);
-  log_info("channel fiber started");
-  channel->active = true;
-
-  struct fiber *receive = fiber_new("receive", transport_channel_receive_loop);
-  struct fiber *send = fiber_new("send", transport_channel_send_loop);
-  struct fiber *consume = fiber_new("consume", transport_channel_consume_loop);
-
-  fiber_set_joinable(receive, true);
-  fiber_set_joinable(send, true);
-  fiber_set_joinable(consume, true);
-
-  fiber_start(receive, channel);
-  fiber_start(send, channel);
-  fiber_start(consume, channel);
-
-  fiber_join(receive);
-  fiber_join(send);
-  fiber_join(consume);
-
+  transport_payload_t *payload = (transport_payload_t *)((struct transport_message *)message)->data;
+  free(message);
+  struct io_uring_sqe *sqe = provide_sqe(&channel->ring);
+  io_uring_prep_read(sqe, payload->fd, payload->data, payload->size, 0);
+  io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_READ));
+  log_debug("channel receive data with ring, data size = %d", payload->size);
+  io_uring_submit(&channel->ring);
+  transport_channel_consume(channel);
   return 0;
 }
 

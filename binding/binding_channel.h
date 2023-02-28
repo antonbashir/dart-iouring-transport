@@ -57,7 +57,10 @@ extern "C"
                                                     Dart_Port accept_port,
                                                     Dart_Port read_port,
                                                     Dart_Port write_port);
-  int transport_channel_loop(va_list input);
+  
+  int transport_channel_process_write(struct transport_channel *channel, void *message);
+  
+  int transport_channel_process_read(struct transport_channel *channel, void *message);
 
   void transport_close_channel(transport_channel_t *channel);
 

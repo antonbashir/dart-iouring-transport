@@ -87,6 +87,7 @@
     "iostream": "c",
     "fiber_channel.h": "c",
     "dart_api.h": "c",
-    "cstdio": "c"
+    "cstdio": "c",
+    "binding_acceptor.h": "c"
   },
 }

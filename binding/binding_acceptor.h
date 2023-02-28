@@ -36,7 +36,9 @@ extern "C"
                                                       int32_t port);
 
   void transport_close_acceptor(transport_acceptor_t *acceptor);
-
+  
+  int transport_acceptor_process(struct transport_acceptor *acceptor, void *message);
+  
   int32_t transport_acceptor_accept(transport_acceptor_t *acceptor);
 
   int transport_acceptor_loop(va_list input);
