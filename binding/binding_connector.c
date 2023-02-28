@@ -115,7 +115,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
     return NULL;
   }
 
-  context->channel = fiber_channel_new(configuration->ring_size);
+  context->channel = fiber_channel_new(1);
 
   struct transport_message *message = malloc(sizeof(struct transport_message));
   message->action = TRANSPORT_ACTION_ADD_CONNECTOR;
