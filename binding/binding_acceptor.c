@@ -34,7 +34,7 @@ int transport_acceptor_process(struct transport_acceptor *acceptor, void *messag
   struct io_uring_sqe *sqe = provide_sqe(&context->ring);
   io_uring_prep_accept(sqe, (int)fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
-  io_uring_submit(&context->ring);
+  return io_uring_submit(&context->ring);
 }
 
 int transport_acceptor_loop(va_list input)
@@ -42,7 +42,8 @@ int transport_acceptor_loop(va_list input)
   struct transport_acceptor *acceptor = va_arg(input, struct transport_acceptor *);
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
   struct io_uring *ring = &context->ring;
-  log_info("acceptor cqe fiber started");
+  acceptor->active = true;
+  log_info("acceptor fiber started");
   while (likely(acceptor->active))
   {
     int count = 0;

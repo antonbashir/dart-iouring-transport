@@ -35,11 +35,22 @@ int transport_controller_loop(va_list input)
   controller->initialized = true;
   log_info("controller fiber started");
 
+  int initial_empty_cycles = 1000;
+  int max_empty_cycles = 1000000;
+  int cycles_multiplier = 2;
+  double regular_sleep_seconds = 0;
+  double max_sleep_seconds = 0.0001;
+  int current_empty_cycles = 0;
+  int curent_empty_cycles_limit = initial_empty_cycles;
+
   while (controller->active)
   {
     struct transport_message *message;
     if (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
     {
+      current_empty_cycles = 0;
+      curent_empty_cycles_limit = initial_empty_cycles;
+
       if (message->action == TRANSPORT_ACTION_ACCEPT)
       {
         transport_acceptor_process((struct transport_acceptor *)message->consumer, message);
@@ -64,6 +75,20 @@ int transport_controller_loop(va_list input)
         continue;
       }
     }
+
+    current_empty_cycles++;
+    if (current_empty_cycles >= max_empty_cycles)
+    {
+      fiber_sleep(max_sleep_seconds);
+      continue;
+    }
+
+    if (current_empty_cycles >= curent_empty_cycles_limit)
+    {
+      curent_empty_cycles_limit *= cycles_multiplier;
+      fiber_sleep(regular_sleep_seconds);
+      continue;
+    }
   }
 
   if (controller->initialized)
@@ -83,7 +108,6 @@ void *transport_controller_run(void *input)
   struct fiber *controller_fiber = fiber_new(CONTROLLER_FIBER, transport_controller_loop);
   fiber_start(controller_fiber, input);
   fiber_wakeup(controller_fiber);
-  log_info("controller fiber started");
   ev_now_update(loop());
   ev_run(loop(), 0);
   return NULL;

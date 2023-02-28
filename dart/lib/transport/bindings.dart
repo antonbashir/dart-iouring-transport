@@ -16469,19 +16469,43 @@ class TransportBindings {
               int,
               int)>();
 
-  int transport_channel_loop(
-    ffi.Pointer<__va_list_tag> input,
+  int transport_channel_process_write(
+    ffi.Pointer<transport_channel> channel,
+    ffi.Pointer<ffi.Void> message,
   ) {
-    return _transport_channel_loop(
-      input,
+    return _transport_channel_process_write(
+      channel,
+      message,
     );
   }
 
-  late final _transport_channel_loopPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<__va_list_tag>)>>(
-          'transport_channel_loop');
-  late final _transport_channel_loop = _transport_channel_loopPtr
-      .asFunction<int Function(ffi.Pointer<__va_list_tag>)>();
+  late final _transport_channel_process_writePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<transport_channel>,
+              ffi.Pointer<ffi.Void>)>>('transport_channel_process_write');
+  late final _transport_channel_process_write =
+      _transport_channel_process_writePtr.asFunction<
+          int Function(
+              ffi.Pointer<transport_channel>, ffi.Pointer<ffi.Void>)>();
+
+  int transport_channel_process_read(
+    ffi.Pointer<transport_channel> channel,
+    ffi.Pointer<ffi.Void> message,
+  ) {
+    return _transport_channel_process_read(
+      channel,
+      message,
+    );
+  }
+
+  late final _transport_channel_process_readPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<transport_channel>,
+              ffi.Pointer<ffi.Void>)>>('transport_channel_process_read');
+  late final _transport_channel_process_read =
+      _transport_channel_process_readPtr.asFunction<
+          int Function(
+              ffi.Pointer<transport_channel>, ffi.Pointer<ffi.Void>)>();
 
   void transport_close_channel(
     ffi.Pointer<transport_channel_t> channel,
@@ -16657,6 +16681,25 @@ class TransportBindings {
               ffi.Pointer<transport_acceptor_t>)>>('transport_close_acceptor');
   late final _transport_close_acceptor = _transport_close_acceptorPtr
       .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
+
+  int transport_acceptor_process(
+    ffi.Pointer<transport_acceptor> acceptor,
+    ffi.Pointer<ffi.Void> message,
+  ) {
+    return _transport_acceptor_process(
+      acceptor,
+      message,
+    );
+  }
+
+  late final _transport_acceptor_processPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<transport_acceptor>,
+              ffi.Pointer<ffi.Void>)>>('transport_acceptor_process');
+  late final _transport_acceptor_process =
+      _transport_acceptor_processPtr.asFunction<
+          int Function(
+              ffi.Pointer<transport_acceptor>, ffi.Pointer<ffi.Void>)>();
 
   int transport_acceptor_accept(
     ffi.Pointer<transport_acceptor_t> acceptor,
@@ -20133,8 +20176,18 @@ class _SymbolAddresses {
               Dart_Port,
               Dart_Port)>> get transport_initialize_channel =>
       _library._transport_initialize_channelPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<__va_list_tag>)>>
-      get transport_channel_loop => _library._transport_channel_loopPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<transport_channel>, ffi.Pointer<ffi.Void>)>>
+      get transport_channel_process_write =>
+          _library._transport_channel_process_writePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<transport_channel>, ffi.Pointer<ffi.Void>)>>
+      get transport_channel_process_read =>
+          _library._transport_channel_process_readPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_channel_t>)>>
@@ -20183,6 +20236,11 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
       get transport_close_acceptor => _library._transport_close_acceptorPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<transport_acceptor>, ffi.Pointer<ffi.Void>)>>
+      get transport_acceptor_process => _library._transport_acceptor_processPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int32 Function(ffi.Pointer<transport_acceptor_t>)>>

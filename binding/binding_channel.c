@@ -185,14 +185,12 @@ static inline void transport_channel_consume(struct transport_channel *channel)
       if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
       {
         transport_channel_handle_read_cqe(channel, context, cqe);
-        fiber_sleep(0);
         continue;
       }
 
       if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
       {
         transport_channel_handle_write_cqe(channel, context, cqe);
-        fiber_sleep(0);
         continue;
       }
     }
