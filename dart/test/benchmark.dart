@@ -8,7 +8,23 @@ import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 
 Future<void> main(List<String> args) async {
-  final serverTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
+  final encoder = Utf8Encoder();
+  final fromServer = encoder.convert("from server");
+  final fromClient = encoder.convert("from client");
+
+  final serverTransport = Transport(
+    TransportDefaults.transport(),
+    TransportDefaults.controller(),
+    TransportDefaults.acceptor(),
+    TransportDefaults.channel(),
+  )..initialize(
+      "0.0.0.0",
+      9999,
+      onRead: (payload) {
+        payload.finalize();
+        payload.channel.write(fromServer, payload.fd);
+      },
+    );
   //final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
   final done = Completer();
 
@@ -17,15 +33,7 @@ Future<void> main(List<String> args) async {
   var seconds = 30;
   var stopChannels = false;
 
-  final encoder = Utf8Encoder();
-  final fromServer = encoder.convert("from server");
-  final fromClient = encoder.convert("from client");
-
-  serverTransport.channels(TransportDefaults.channel(), onRead: (payload) {
-    payload.finalize();
-    payload.channel.write(fromServer, payload.fd);
-  }, count: 8);
-  serverTransport.acceptor(TransportDefaults.acceptor()).accept("0.0.0.0", 9999);
+  serverTransport.acceptor.accept();
 
   // clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
   //   clientChannel.start(

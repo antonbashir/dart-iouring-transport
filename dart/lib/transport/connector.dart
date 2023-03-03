@@ -30,7 +30,6 @@ class TransportConnector {
       configuration.ref.ring_size = _configuration.ringSize;
       _connector = _bindings.transport_initialize_connector(
         _transport,
-        _controller,
         configuration,
         host.toNativeUtf8(allocator: arena).cast(),
         port,

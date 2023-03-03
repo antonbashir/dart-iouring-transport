@@ -5,8 +5,9 @@
 #include <stdint.h>
 #include <liburing.h>
 #include <pthread.h>
-#include "dart/dart_api_dl.h"
 #include "binding_transport.h"
+#include "binding_acceptor.h"
+#include "binding_channel.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -26,6 +27,8 @@ extern "C"
 
   typedef struct transport_controller
   {
+    struct io_uring* ring;
+
     transport_t *transport;
     void *balancer;
     size_t internal_ring_size;
@@ -48,7 +51,10 @@ extern "C"
     transport_balancer_configuration_t *balancer_configuration;
   } transport_controller_configuration_t;
 
-  transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration);
+  transport_controller_t *transport_controller_start(transport_t *transport,
+                                                     transport_acceptor_t *acceptor,
+                                                     transport_channel_t *channel,
+                                                     transport_controller_configuration_t *configuration);
   void transport_controller_stop(transport_controller_t *controller);
   bool transport_controller_send(transport_controller_t *controller, void *message);
 #if defined(__cplusplus)

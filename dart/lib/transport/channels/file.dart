@@ -37,7 +37,6 @@ class TransportFileChannel {
       _bindings,
       _configuration,
       _transport,
-      _controller,
     );
   }
 

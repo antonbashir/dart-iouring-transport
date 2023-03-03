@@ -16,13 +16,23 @@ import 'payload.dart';
 class Transport {
   final TransportConfiguration configuration;
   final TransportControllerConfiguration controllerConfiguration;
+  final TransportAcceptorConfiguration acceptorConfiguration;
+  final TransportChannelConfiguration channelConfiguration;
 
   late TransportBindings _bindings;
   late TransportLibrary _library;
   late Pointer<transport_controller_t> _controller;
   late Pointer<transport_t> _transport;
+  late TransportAcceptor acceptor;
+  late TransportChannel channel;
 
-  Transport(this.configuration, this.controllerConfiguration, {String? libraryPath}) {
+  Transport(
+    this.configuration,
+    this.controllerConfiguration,
+    this.acceptorConfiguration,
+    this.channelConfiguration, {
+    String? libraryPath,
+  }) {
     _library = libraryPath != null
         ? File(libraryPath).existsSync()
             ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
@@ -31,7 +41,13 @@ class Transport {
     _bindings = TransportBindings(_library.library);
   }
 
-  Future<void> initialize() async {
+  Future<void> initialize(
+    String host,
+    int port, {
+    void Function(TransportDataPayload payload)? onRead,
+    void Function(TransportDataPayload payload)? onWrite,
+    void Function()? onStop,
+  }) async {
     using((Arena arena) {
       final transportConfiguration = arena<transport_configuration_t>();
       transportConfiguration.ref.log_level = configuration.logLevel;
@@ -42,12 +58,37 @@ class Transport {
       transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
       transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
       _transport = _bindings.transport_initialize(transportConfiguration);
+
       final controllerConfiguration = arena<transport_controller_configuration_t>();
       controllerConfiguration.ref.ring_retry_max_count = this.controllerConfiguration.retryMaxCount;
       controllerConfiguration.ref.internal_ring_size = this.controllerConfiguration.internalRingSize;
       controllerConfiguration.ref.balancer_configuration = arena<transport_balancer_configuration>();
       controllerConfiguration.ref.balancer_configuration.ref.type = transport_balancer_type.TRANSPORT_BALANCER_ROUND_ROBBIN;
-      _controller = _bindings.transport_controller_start(_transport, controllerConfiguration);
+
+      acceptor = TransportAcceptor(
+        acceptorConfiguration,
+        _bindings,
+        _transport,
+      )..initialize(host, port);
+
+      channel = TransportChannel(
+        _bindings,
+        channelConfiguration,
+        _transport,
+        onRead: onRead,
+        onWrite: onWrite,
+        onStop: onStop,
+      )..start();
+
+      _controller = _bindings.transport_controller_start(
+        _transport,
+        acceptor.acceptor,
+        channel.channel,
+        controllerConfiguration,
+      );
+
+      _bindings.transport_acceptor_register(acceptor.acceptor, _controller.ref.ring);
+      _bindings.transport_channel_register(channel.channel, _controller.ref.ring);
     });
   }
 
@@ -62,45 +103,6 @@ class Transport {
         _transport,
         _controller,
       );
-
-  TransportAcceptor acceptor(TransportAcceptorConfiguration configuration) => TransportAcceptor(
-        configuration,
-        _bindings,
-        _transport,
-        _controller,
-      );
-
-  TransportChannel channel(
-    TransportChannelConfiguration configuration, {
-    void Function(TransportDataPayload payload)? onRead,
-    void Function(TransportDataPayload payload)? onWrite,
-    void Function()? onStop,
-  }) {
-    return TransportChannel(
-      _bindings,
-      configuration,
-      _transport,
-      _controller,
-    )..start(
-        onRead: onRead,
-        onWrite: onWrite,
-        onStop: onStop,
-      );
-  }
-
-  List<TransportChannel> channels(
-    TransportChannelConfiguration configuration, {
-    int count = 1,
-    void Function(TransportDataPayload payload)? onRead,
-    void Function(TransportDataPayload payload)? onWrite,
-    void Function()? onStop,
-  }) {
-    List<TransportChannel> channels = [];
-    for (var index = 0; index < count; index++) {
-      channels.add(channel(configuration, onRead: onRead, onWrite: onWrite, onStop: onStop));
-    }
-    return channels;
-  }
 
   TransportFileChannel file(
     String path,

@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <liburing.h>
 #include "binding_transport.h"
-#include "binding_controller.h"
 #include <stdio.h>
 
 #if defined(__cplusplus)
@@ -22,7 +21,6 @@ extern "C"
   typedef struct transport_acceptor
   {
     transport_t *transport;
-    transport_controller_t *controller;
     void *context;
     const char *server_ip;
     int32_t server_port;
@@ -30,18 +28,15 @@ extern "C"
   } transport_acceptor_t;
 
   transport_acceptor_t *transport_initialize_acceptor(transport_t *transport,
-                                                      transport_controller_t *controller,
                                                       transport_acceptor_configuration_t *configuration,
                                                       const char *ip,
                                                       int32_t port);
 
   void transport_close_acceptor(transport_acceptor_t *acceptor);
-  
-  int transport_acceptor_process(struct transport_acceptor *acceptor, void *message);
-  
-  int32_t transport_acceptor_accept(transport_acceptor_t *acceptor);
 
-  int transport_acceptor_loop(va_list input);
+  void transport_acceptor_register(transport_acceptor_t *acceptor, struct io_uring *ring);
+
+  int transport_acceptor_accept(struct transport_acceptor *acceptor);
 #if defined(__cplusplus)
 }
 #endif

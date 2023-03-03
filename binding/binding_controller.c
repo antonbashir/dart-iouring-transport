@@ -1,12 +1,12 @@
 #include <stdio.h>
-
+#include <sys/eventfd.h>
 #include "binding_controller.h"
 #include "binding_common.h"
 #include "binding_message.h"
 #include "binding_acceptor.h"
 #include "binding_connector.h"
 #include "binding_channel.h"
-#include "binding_balancer.h"
+#include "binding_logger.h"
 #include "ck_ring.h"
 #include "ck_backoff.h"
 #include "ck_spinlock.h"
@@ -25,69 +25,61 @@ struct transport_controller_context
   ck_ring_buffer_t *transport_message_buffer;
   ck_ring_t transport_message_ring;
   ck_backoff_t ring_send_backoff;
+  struct transport_channel *channel;
+  struct transport_acceptor *acceptor;
 };
 
-int transport_controller_loop(va_list input)
+int transport_controller_consumer_loop(va_list input)
 {
   transport_controller_t *controller = va_arg(input, transport_controller_t *);
   struct transport_controller_context *context = controller->context;
+  struct io_uring *ring = controller->ring;
   controller->active = true;
   controller->initialized = true;
   log_info("controller fiber started");
-
-  int initial_empty_cycles = 1000;
-  int max_empty_cycles = 1000000;
-  int cycles_multiplier = 2;
-  double regular_sleep_seconds = 0;
-  double max_sleep_seconds = 0.0001;
-  int current_empty_cycles = 0;
-  int curent_empty_cycles_limit = initial_empty_cycles;
-
+  int count = 0;
+  struct io_uring_cqe *cqe;
+  unsigned int head;
   while (controller->active)
   {
-    struct transport_message *message;
-    if (ck_ring_dequeue_mpsc(&context->transport_message_ring, context->transport_message_buffer, &message))
+    if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
-      current_empty_cycles = 0;
-      curent_empty_cycles_limit = initial_empty_cycles;
-
-      if (message->action == TRANSPORT_ACTION_ACCEPT)
+      io_uring_for_each_cqe(ring, head, cqe)
       {
-        transport_acceptor_process((struct transport_acceptor *)message->consumer, message);
-        continue;
+        ++count;
+
+        if (unlikely(cqe->res < 0))
+        {
+          if (cqe->res == -EPIPE)
+          {
+            continue;
+          }
+
+          log_error("controller process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
+          continue;
+        }
+
+        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
+        {
+          transport_channel_handle_accept(context->channel, cqe->res);
+          transport_acceptor_accept(context->acceptor);
+          continue;
+        }
+
+        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
+        {
+          transport_channel_handle_read(context->channel, cqe);
+          continue;
+        }
+
+        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
+        {
+          transport_channel_handle_write(context->channel, cqe);
+          continue;
+        }
       }
 
-      if (message->action == TRANSPORT_ACTION_READ)
-      {
-        transport_channel_process_read((struct transport_channel *)message->consumer, message);
-        continue;
-      }
-
-      if (message->action == TRANSPORT_ACTION_WRITE)
-      {
-        transport_channel_process_write((struct transport_channel *)message->consumer, message);
-        continue;
-      }
-
-      if (message->action == TRANSPORT_ACTION_ADD_ACCEPTOR)
-      {
-        fiber_start(fiber_new(ACCEPTOR_FIBER, transport_acceptor_loop), message->data);
-        continue;
-      }
-    }
-
-    current_empty_cycles++;
-    if (current_empty_cycles >= max_empty_cycles)
-    {
-      fiber_sleep(max_sleep_seconds);
-      continue;
-    }
-
-    if (current_empty_cycles >= curent_empty_cycles_limit)
-    {
-      curent_empty_cycles_limit *= cycles_multiplier;
-      fiber_sleep(regular_sleep_seconds);
-      continue;
+      io_uring_cq_advance(ring, count);
     }
   }
 
@@ -105,7 +97,7 @@ void *transport_controller_run(void *input)
   memory_init();
   fiber_init(fiber_c_invoke);
   cbus_init();
-  struct fiber *controller_fiber = fiber_new(CONTROLLER_FIBER, transport_controller_loop);
+  struct fiber *controller_fiber = fiber_new(CONTROLLER_FIBER, transport_controller_consumer_loop);
   fiber_start(controller_fiber, input);
   fiber_wakeup(controller_fiber);
   ev_now_update(loop());
@@ -113,7 +105,10 @@ void *transport_controller_run(void *input)
   return NULL;
 }
 
-transport_controller_t *transport_controller_start(transport_t *transport, transport_controller_configuration_t *configuration)
+transport_controller_t *transport_controller_start(transport_t *transport,
+                                                   transport_acceptor_t *acceptor,
+                                                   transport_channel_t *channel,
+                                                   transport_controller_configuration_t *configuration)
 {
   transport_controller_t *controller = malloc(sizeof(transport_controller_t));
 
@@ -124,9 +119,19 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   controller->active = false;
   controller->shutdown_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   controller->shutdown_condition = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-  controller->balancer = (void *)transport_initialize_balancer(configuration->balancer_configuration, transport);
 
   struct transport_controller_context *context = malloc(sizeof(struct transport_controller_context));
+
+  controller->ring = malloc(sizeof(struct io_uring));
+  int32_t status = io_uring_queue_init(8192, controller->ring, 0);
+  if (status)
+  {
+    log_error("io_urig init error: %d", status);
+    free(controller->ring);
+    free(context);
+    return NULL;
+  }
+
   context->transport_message_buffer = malloc(sizeof(ck_ring_buffer_t) * configuration->internal_ring_size);
   if (context->transport_message_buffer == NULL)
   {
@@ -136,6 +141,8 @@ transport_controller_t *transport_controller_start(transport_t *transport, trans
   }
   ck_ring_init(&context->transport_message_ring, configuration->internal_ring_size);
   controller->context = context;
+  context->acceptor = acceptor;
+  context->channel = channel;
   pthread_create(&controller->thread_id, NULL, transport_controller_run, controller);
   return controller;
 }

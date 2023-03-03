@@ -21,7 +21,6 @@ extern "C"
   typedef struct transport_connector
   {
     transport_t *transport;
-    transport_controller_t *controller;
     void *context;
     const char *client_ip;
     int32_t client_port;
@@ -29,7 +28,6 @@ extern "C"
   } transport_connector_t;
 
   transport_connector_t *transport_initialize_connector(transport_t *transport,
-                                                        transport_controller_t *controller,
                                                         transport_connector_configuration_t *configuration,
                                                         const char *ip,
                                                         int32_t port);

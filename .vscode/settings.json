@@ -88,6 +88,7 @@
     "fiber_channel.h": "c",
     "dart_api.h": "c",
     "cstdio": "c",
-    "binding_acceptor.h": "c"
+    "binding_acceptor.h": "c",
+    "cbus.h": "c"
   },
 }
