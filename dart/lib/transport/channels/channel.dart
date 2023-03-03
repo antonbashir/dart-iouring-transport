@@ -65,22 +65,22 @@ class TransportChannel {
   }
 
   void write(Uint8List bytes, int fd) async {
-    int bufferId = _bindings.transport_channel_select_write_buffer(channel);
+    int bufferId = _bindings.transport_channel_allocate_buffer(channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_select_write_buffer(channel);
+      bufferId = _bindings.transport_channel_allocate_buffer(channel);
     }
-    Pointer<iovec> data = _bindings.transport_channel_use_write_buffer(channel, bufferId);
+    Pointer<iovec> data = _bindings.transport_channel_get_buffer(channel, bufferId);
     data.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     data.ref.iov_len = bytes.length;
     _bindings.transport_channel_write(channel, fd, bufferId);
   }
 
   void _read(int fd) async {
-    int bufferId = _bindings.transport_channel_select_read_buffer(channel);
+    int bufferId = _bindings.transport_channel_allocate_buffer(channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_select_read_buffer(channel);
+      bufferId = _bindings.transport_channel_allocate_buffer(channel);
     }
     _bindings.transport_channel_read(channel, fd, bufferId);
   }
@@ -96,7 +96,7 @@ class TransportChannel {
       _bindings.transport_channel_free_buffer(channel, bufferId);
       return;
     }
-    final buffer = _bindings.transport_channel_use_read_buffer(channel, bufferId);
+    final buffer = _bindings.transport_channel_get_buffer(channel, bufferId);
     onRead!(
       TransportDataPayload(
         buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len),
@@ -114,7 +114,7 @@ class TransportChannel {
       _bindings.transport_channel_free_buffer(channel, bufferId);
       return;
     }
-    final buffer = _bindings.transport_channel_use_write_buffer(channel, bufferId);
+    final buffer = _bindings.transport_channel_get_buffer(channel, bufferId);
     onWrite!(
       TransportDataPayload(
         buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len),

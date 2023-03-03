@@ -18,17 +18,12 @@
 struct transport_channel_context
 {
   struct io_uring *ring;
-
-  uint32_t id;
-
   uint32_t buffer_size;
   uint32_t buffers_count;
   struct iovec *buffers;
   int *buffers_state;
   int *buffer_by_fd;
   int available_buffer_id;
-
-  struct mempool message_pool;
 };
 
 static inline void dart_post_pointer(void *pointer, Dart_Port port)
@@ -73,7 +68,6 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
   context->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   context->buffers_state = malloc(sizeof(uint64_t) * configuration->buffers_count);
   context->buffer_by_fd = malloc(sizeof(uint64_t) * configuration->buffers_count);
-
   context->available_buffer_id = 0;
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
@@ -86,17 +80,14 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
     context->buffers[index].iov_base = buffer_memory;
     context->buffers[index].iov_len = context->buffer_size;
-
     context->buffers_state[index] = 1;
   }
-
-  mempool_create(&context->message_pool, &channel->transport->cache, sizeof(transport_message_t));
 
   log_info("channel initialized");
   return channel;
 }
 
-int transport_channel_select_write_buffer(transport_channel_t *channel)
+int transport_channel_allocate_buffer(transport_channel_t *channel)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   while (unlikely(!(context->buffers_state[context->available_buffer_id])))
@@ -111,35 +102,6 @@ int transport_channel_select_write_buffer(transport_channel_t *channel)
 
   context->buffers_state[context->available_buffer_id] = 0;
   return context->available_buffer_id;
-}
-
-int transport_channel_select_read_buffer(transport_channel_t *channel)
-{
-  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  while (unlikely(!(context->buffers_state[context->available_buffer_id])))
-  {
-    context->available_buffer_id++;
-    if (unlikely(context->available_buffer_id == context->buffers_count))
-    {
-      context->available_buffer_id = 0;
-      return -1;
-    }
-  }
-
-  context->buffers_state[context->available_buffer_id] = 0;
-  return context->available_buffer_id;
-}
-
-struct iovec *transport_channel_use_write_buffer(transport_channel_t *channel, int buffer_id)
-{
-  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  return &context->buffers[buffer_id];
-}
-
-struct iovec *transport_channel_use_read_buffer(transport_channel_t *channel, int buffer_id)
-{
-  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  return &context->buffers[buffer_id];
 }
 
 void transport_channel_handle_accept(struct transport_channel *channel, int fd)
@@ -184,6 +146,12 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
   io_uring_sqe_set_data(sqe, (void *)(fd | TRANSPORT_PAYLOAD_READ));
   log_debug("channel receive data with ring, data size = %d", message->size);
   return io_uring_submit(context->ring);
+}
+
+struct iovec *transport_channel_get_buffer(transport_channel_t *channel, int buffer_id)
+{
+  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
+  return &context->buffers[buffer_id];
 }
 
 int transport_channel_get_buffer_by_fd(transport_channel_t *channel, int fd)
