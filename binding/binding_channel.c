@@ -116,7 +116,7 @@ int transport_channel_write(struct transport_channel *channel, transport_payload
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct io_uring_sqe *sqe = provide_sqe(context->ring);
-  io_uring_prep_send(sqe, payload->fd, payload->data, payload->size, 0);
+  io_uring_prep_send_zc(sqe, payload->fd, payload->data, payload->size, 0, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_WRITE));
   log_debug("channel send data to ring, data size = %d", payload->size);
   return io_uring_submit(context->ring);

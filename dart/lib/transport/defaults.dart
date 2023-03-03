@@ -7,7 +7,7 @@ class TransportDefaults {
         ringSize: 8192,
         slabSize: 16 * 1024 * 1024,
         memoryQuota: 2 * 1024 * 1024 * 1024,
-        slabAllocationMinimalObjectSize: 8,
+        slabAllocationMinimalObjectSize: 32,
         slabAllocationGranularity: 8,
         slabAllocationFactor: 1.05,
         logColored: true,
