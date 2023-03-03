@@ -37,46 +37,46 @@ int transport_controller_consumer_loop(va_list input)
   controller->active = true;
   controller->initialized = true;
   log_info("controller fiber started");
-  int count = 0;
-  struct io_uring_cqe *cqe;
-  unsigned int head;
-  while (controller->active)
+  while (likely(controller->active))
   {
-    if (io_uring_wait_cqe(ring, &cqe) == 0)
+    struct io_uring_cqe *cqe;
+    unsigned head;
+    unsigned count = 0;
+    if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
-      if (unlikely(cqe->res < 0))
+      io_uring_for_each_cqe(ring, head, cqe)
       {
-        if (cqe->res == -EPIPE)
+        ++count;
+        if (unlikely(cqe->res < 0))
         {
-          io_uring_cqe_seen(ring, cqe);
+          if (cqe->res == -EPIPE)
+          {
+            continue;
+          }
+
+          log_error("controller process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
           continue;
         }
 
-        log_error("controller process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
+        if ((uint64_t)(cqe->user_data == TRANSPORT_PAYLOAD_ACCEPT))
+        {
+          transport_channel_handle_accept(context->channel, cqe->res);
+          continue;
+        }
 
-      if ((uint64_t)(cqe->user_data == TRANSPORT_PAYLOAD_ACCEPT))
-      {
-        transport_channel_handle_accept(context->channel, cqe->res);
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
+        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
+        {
+          transport_channel_handle_read(context->channel, cqe);
+          continue;
+        }
 
-      if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
-      {
-        transport_channel_handle_read(context->channel, cqe);
-        io_uring_cqe_seen(ring, cqe);
-        continue;
+        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
+        {
+          transport_channel_handle_write(context->channel, cqe);
+          continue;
+        }
       }
-
-      if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
-      {
-        transport_channel_handle_write(context->channel, cqe);
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
+      io_uring_cq_advance(ring, count);
     }
   }
 
