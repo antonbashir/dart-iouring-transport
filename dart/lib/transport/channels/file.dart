@@ -32,13 +32,7 @@ class TransportFileChannel {
     this.onRead,
     this.onWrite,
     this.onStop,
-  }) {
-    _delegate = TransportChannel(
-      _bindings,
-      _configuration,
-      _transport,
-    );
-  }
+  }) {}
 
   void start() => _delegate.start(
         onRead: (payload) => onRead?.call(payload),

@@ -3,6 +3,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/acceptor.dart';
 import 'package:iouring_transport/transport/configuration.dart';
 
 import '../bindings.dart';
@@ -12,18 +13,20 @@ class TransportChannel {
   final TransportBindings _bindings;
   final Pointer<transport_t> _transport;
   final TransportChannelConfiguration _configuration;
+  final TransportAcceptor _acceptor;
 
   void Function(TransportDataPayload payload)? onRead;
   void Function(TransportDataPayload payload)? onWrite;
   void Function()? onStop;
 
   late final Pointer<transport_channel_t> channel;
-  late final RawReceivePort _acceptPort = RawReceivePort(_read);
+  late final RawReceivePort _acceptPort = RawReceivePort(_handleAccept);
   late final RawReceivePort _readPort = RawReceivePort(_handleRead);
   late final RawReceivePort _writePort = RawReceivePort(_handleWrite);
 
   TransportChannel(
     this._bindings,
+    this._acceptor,
     this._configuration,
     this._transport, {
     this.onRead,
@@ -70,6 +73,11 @@ class TransportChannel {
 
   void _read(int fd) {
     _bindings.transport_channel_read(channel, fd);
+  }
+
+  void _handleAccept(int fd) {
+    _read(fd);
+    _acceptor.accept();
   }
 
   void _handleRead(dynamic payloadPointer) {

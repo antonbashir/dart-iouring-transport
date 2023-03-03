@@ -73,6 +73,7 @@ class Transport {
 
       channel = TransportChannel(
         _bindings,
+        acceptor,
         channelConfiguration,
         _transport,
         onRead: onRead,

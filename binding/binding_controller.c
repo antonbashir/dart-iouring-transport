@@ -44,6 +44,7 @@ int transport_controller_consumer_loop(va_list input)
   {
     if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
+      count = 0;
       io_uring_for_each_cqe(ring, head, cqe)
       {
         ++count;
@@ -62,7 +63,6 @@ int transport_controller_consumer_loop(va_list input)
         if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
         {
           transport_channel_handle_accept(context->channel, cqe->res);
-          transport_acceptor_accept(context->acceptor);
           continue;
         }
 
@@ -78,7 +78,6 @@ int transport_controller_consumer_loop(va_list input)
           continue;
         }
       }
-
       io_uring_cq_advance(ring, count);
     }
   }
