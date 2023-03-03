@@ -64,15 +64,25 @@ class TransportChannel {
     onStop?.call();
   }
 
-  void write(Uint8List bytes, int fd) {
-    Pointer<transport_payload_t> data = _bindings.transport_channel_allocate_write_payload(channel, fd);
-    data.ref.data.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    data.ref.size = bytes.length;
-    _bindings.transport_channel_write(channel, data);
+  void write(Uint8List bytes, int fd) async {
+    int bufferId = _bindings.transport_channel_select_write_buffer(channel);
+    while (bufferId == -1) {
+      await Future.delayed(Duration.zero);
+      bufferId = _bindings.transport_channel_select_write_buffer(channel);
+    }
+    Pointer<iovec> data = _bindings.transport_channel_use_write_buffer(channel, bufferId);
+    data.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
+    data.ref.iov_len = bytes.length;
+    _bindings.transport_channel_write(channel, fd, bufferId);
   }
 
-  void _read(int fd) {
-    _bindings.transport_channel_read(channel, fd);
+  void _read(int fd) async {
+    int bufferId = _bindings.transport_channel_select_read_buffer(channel);
+    while (bufferId == -1) {
+      await Future.delayed(Duration.zero);
+      bufferId = _bindings.transport_channel_select_read_buffer(channel);
+    }
+    _bindings.transport_channel_read(channel, fd, bufferId);
   }
 
   void _handleAccept(int fd) {
@@ -80,35 +90,37 @@ class TransportChannel {
     _acceptor.accept();
   }
 
-  void _handleRead(dynamic payloadPointer) {
-    Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
+  void _handleRead(int fd) {
+    final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
     if (onRead == null) {
-      _bindings.transport_channel_free_read_payload(channel, payload);
+      _bindings.transport_channel_free_buffer(channel, bufferId);
       return;
     }
+    final buffer = _bindings.transport_channel_use_read_buffer(channel, bufferId);
     onRead!(
       TransportDataPayload(
-        payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size),
+        buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len),
         this,
-        payload.ref.fd,
-        (finalizable) => _bindings.transport_channel_free_read_payload(channel, payload),
+        fd,
+        (finalizable) => _bindings.transport_channel_free_buffer(channel, bufferId),
       ),
     );
   }
 
-  void _handleWrite(dynamic payloadPointer) {
-    Pointer<transport_payload> payload = Pointer.fromAddress(payloadPointer);
-    _read(payload.ref.fd);
+  void _handleWrite(int fd) {
+    final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
+    _read(fd);
     if (onWrite == null) {
-      _bindings.transport_channel_free_write_payload(channel, payload);
+      _bindings.transport_channel_free_buffer(channel, bufferId);
       return;
     }
+    final buffer = _bindings.transport_channel_use_write_buffer(channel, bufferId);
     onWrite!(
       TransportDataPayload(
-        payload.ref.data.cast<Uint8>().asTypedList(payload.ref.size),
+        buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len),
         this,
-        payload.ref.fd,
-        (finalizable) => _bindings.transport_channel_free_write_payload(channel, payload),
+        fd,
+        (finalizable) => _bindings.transport_channel_free_buffer(channel, bufferId),
       ),
     );
   }

@@ -26,7 +26,6 @@ struct transport_connector_context
   int fd;
 };
 
-
 transport_connector_t *transport_initialize_connector(transport_t *transport,
                                                       transport_connector_configuration_t *configuration,
                                                       const char *ip,
@@ -74,10 +73,5 @@ void transport_close_connector(transport_connector_t *connector)
 
 int32_t transport_connector_connect(transport_connector_t *connector)
 {
-  struct transport_connector_context *context = (struct transport_connector_context *)connector->context;
-  struct transport_message *message = malloc(sizeof(struct transport_message));
-  message->consumer = connector;
-  // message->action = TRANSPORT_ACTION_SEND;
-  message->data = (void *)(intptr_t)context->fd;
   return 0;
 }

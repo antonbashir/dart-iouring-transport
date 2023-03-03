@@ -36,17 +36,15 @@ extern "C"
 
     bool active;
 
-    uint32_t id;
-
     struct rlist balancer_link;
   } transport_channel_t;
 
-  typedef struct transport_payload
+  typedef struct transport_message
   {
     int fd;
-    void *data;
+    int buffer_id;
     size_t size;
-  } transport_payload_t;
+  } transport_message_t;
 
   transport_channel_t *transport_initialize_channel(transport_t *transport,
                                                     transport_channel_configuration_t *configuration,
@@ -54,10 +52,10 @@ extern "C"
                                                     Dart_Port read_port,
                                                     Dart_Port write_port);
 
-  void transport_channel_register(struct transport_channel *channel, struct io_uring* ring);
-  
-  int transport_channel_write(struct transport_channel *channel, transport_payload_t *payload);
-  int transport_channel_read(struct transport_channel *channel, int fd);
+  void transport_channel_register(struct transport_channel *channel, struct io_uring *ring);
+
+  int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id);
+  int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id);
 
   void transport_close_channel(transport_channel_t *channel);
 
@@ -65,10 +63,15 @@ extern "C"
   void transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe);
   void transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe);
 
-  transport_payload_t *transport_channel_allocate_write_payload(transport_channel_t *channel, int fd);
+  struct iovec *transport_channel_use_write_buffer(transport_channel_t *channel, int buffer_id);
+  struct iovec *transport_channel_use_read_buffer(transport_channel_t *channel, int buffer_id);
 
-  void transport_channel_free_read_payload(transport_channel_t *channel, transport_payload_t *payload);
-  void transport_channel_free_write_payload(transport_channel_t *channel, transport_payload_t *payload);
+  int transport_channel_select_write_buffer(transport_channel_t *channel);
+  int transport_channel_select_read_buffer(transport_channel_t *channel);
+
+  void transport_channel_free_buffer(transport_channel_t *channel, int buffer_d);
+
+  int transport_channel_get_buffer_by_fd(transport_channel_t *channel, int fd);
 #if defined(__cplusplus)
 }
 #endif

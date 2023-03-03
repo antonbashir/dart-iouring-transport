@@ -15,8 +15,6 @@
 #include "binding_message.h"
 #include "dart/dart_api.h"
 
-static volatile uint32_t next_id = 0;
-
 struct transport_channel_context
 {
   struct io_uring *ring;
@@ -24,10 +22,13 @@ struct transport_channel_context
   uint32_t id;
 
   uint32_t buffer_size;
+  uint32_t buffers_count;
+  struct iovec *buffers;
+  int *buffers_state;
+  int *buffer_by_fd;
+  int available_buffer_id;
 
-  struct mempool write_buffers;
-  struct mempool read_buffers;
-  struct mempool payloads;
+  struct mempool message_pool;
 };
 
 static inline void dart_post_pointer(void *pointer, Dart_Port port)
@@ -65,25 +66,80 @@ transport_channel_t *transport_initialize_channel(transport_t *transport,
 
   struct transport_channel_context *context = malloc(sizeof(struct transport_channel_context));
   channel->context = context;
-  channel->id = ++next_id;
 
   context->buffer_size = 1U << configuration->buffer_shift;
-  mempool_create(&context->write_buffers, &channel->transport->cache, context->buffer_size);
-  mempool_create(&context->read_buffers, &channel->transport->cache, context->buffer_size);
-  mempool_create(&context->payloads, &channel->transport->cache, sizeof(transport_payload_t));
+  context->buffers_count = configuration->buffers_count;
+
+  context->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
+  context->buffers_state = malloc(sizeof(uint64_t) * configuration->buffers_count);
+  context->buffer_by_fd = malloc(sizeof(uint64_t) * configuration->buffers_count);
+
+  context->available_buffer_id = 0;
+
+  for (size_t index = 0; index < configuration->buffers_count; index++)
+  {
+    void *buffer_memory = mmap(NULL, context->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+    if (buffer_memory == MAP_FAILED)
+    {
+      return NULL;
+    }
+
+    context->buffers[index].iov_base = buffer_memory;
+    context->buffers[index].iov_len = context->buffer_size;
+
+    context->buffers_state[index] = 1;
+  }
+
+  mempool_create(&context->message_pool, &channel->transport->cache, sizeof(transport_message_t));
 
   log_info("channel initialized");
   return channel;
 }
 
-transport_payload_t *transport_channel_allocate_write_payload(transport_channel_t *channel, int fd)
+int transport_channel_select_write_buffer(transport_channel_t *channel)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  transport_payload_t *payload = mempool_alloc(&context->payloads);
-  payload->data = mempool_alloc(&context->write_buffers);
-  payload->size = context->buffer_size;
-  payload->fd = fd;
-  return payload;
+  while (unlikely(!(context->buffers_state[context->available_buffer_id])))
+  {
+    context->available_buffer_id++;
+    if (unlikely(context->available_buffer_id == context->buffers_count))
+    {
+      context->available_buffer_id = 0;
+      return -1;
+    }
+  }
+
+  context->buffers_state[context->available_buffer_id] = 0;
+  return context->available_buffer_id;
+}
+
+int transport_channel_select_read_buffer(transport_channel_t *channel)
+{
+  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
+  while (unlikely(!(context->buffers_state[context->available_buffer_id])))
+  {
+    context->available_buffer_id++;
+    if (unlikely(context->available_buffer_id == context->buffers_count))
+    {
+      context->available_buffer_id = 0;
+      return -1;
+    }
+  }
+
+  context->buffers_state[context->available_buffer_id] = 0;
+  return context->available_buffer_id;
+}
+
+struct iovec *transport_channel_use_write_buffer(transport_channel_t *channel, int buffer_id)
+{
+  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
+  return &context->buffers[buffer_id];
+}
+
+struct iovec *transport_channel_use_read_buffer(transport_channel_t *channel, int buffer_id)
+{
+  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
+  return &context->buffers[buffer_id];
 }
 
 void transport_channel_handle_accept(struct transport_channel *channel, int fd)
@@ -96,58 +152,50 @@ void transport_channel_handle_write(struct transport_channel *channel, struct io
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   log_debug("channel handle write cqe res = %d", cqe->res);
-  transport_payload_t *payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
-  payload->size = cqe->res;
-  log_debug("channel send write data to dart, data size = %d", payload->size);
-  dart_post_pointer(payload, channel->write_port);
+  context->buffers[context->buffer_by_fd[cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS]].iov_len = cqe->res;
+  dart_post_int(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS, channel->read_port);
 }
 
 void transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   log_debug("channel read accept cqe res = %d", cqe->res);
-  transport_payload_t *payload = (transport_payload_t *)(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS);
-  payload->size = cqe->res;
-  log_debug("channel send read data to dart, data size = %d", payload->size);
-  dart_post_pointer(payload, channel->read_port);
+  context->buffers[context->buffer_by_fd[cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS]].iov_len = cqe->res;
+  dart_post_int(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS, channel->read_port);
 }
 
-int transport_channel_write(struct transport_channel *channel, transport_payload_t *payload)
+int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   struct io_uring_sqe *sqe = provide_sqe(context->ring);
-  io_uring_prep_send(sqe, payload->fd, payload->data, payload->size, 0);
-  io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_WRITE));
-  log_debug("channel send data to ring, data size = %d", payload->size);
+  context->buffer_by_fd[fd] = buffer_id;
+  io_uring_prep_write_fixed(sqe, fd, context->buffers[buffer_id].iov_base, context->buffers[buffer_id].iov_len, 0, buffer_id);
+  io_uring_sqe_set_data(sqe, (void *)(fd | TRANSPORT_PAYLOAD_WRITE));
+  log_debug("channel send data to ring, data size = %d", message->size);
   return io_uring_submit(context->ring);
 }
 
-int transport_channel_read(struct transport_channel *channel, int fd)
+int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  transport_payload_t *payload = mempool_alloc(&context->payloads);
-  payload->fd = fd;
-  payload->size = context->buffer_size;
-  payload->data = mempool_alloc(&context->read_buffers);
   struct io_uring_sqe *sqe = provide_sqe(context->ring);
-  io_uring_prep_read(sqe, payload->fd, payload->data, payload->size, 0);
-  io_uring_sqe_set_data64(sqe, (uint64_t)((intptr_t)payload | TRANSPORT_PAYLOAD_READ));
-  log_debug("channel receive data with ring, data size = %d", payload->size);
+  context->buffer_by_fd[fd] = buffer_id;
+  io_uring_prep_read_fixed(sqe, fd, context->buffers[buffer_id].iov_base, context->buffers[buffer_id].iov_len, 0, buffer_id);
+  io_uring_sqe_set_data(sqe, (void *)(fd | TRANSPORT_PAYLOAD_READ));
+  log_debug("channel receive data with ring, data size = %d", message->size);
   return io_uring_submit(context->ring);
 }
 
-void transport_channel_free_write_payload(transport_channel_t *channel, transport_payload_t *payload)
+int transport_channel_get_buffer_by_fd(transport_channel_t *channel, int fd)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  mempool_free(&context->write_buffers, payload->data);
-  mempool_free(&context->payloads, payload);
+  return context->buffer_by_fd[fd];
 }
 
-void transport_channel_free_read_payload(transport_channel_t *channel, transport_payload_t *payload)
+void transport_channel_free_buffer(transport_channel_t *channel, int buffer_id)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
-  mempool_free(&context->read_buffers, payload->data);
-  mempool_free(&context->payloads, payload);
+  context->buffers_state[buffer_id] = 1;
 }
 
 void transport_close_channel(transport_channel_t *channel)
@@ -159,4 +207,5 @@ void transport_channel_register(struct transport_channel *channel, struct io_uri
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   context->ring = ring;
+  io_uring_register_buffers(ring, context->buffers, context->buffers_count);
 }

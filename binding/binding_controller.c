@@ -42,43 +42,41 @@ int transport_controller_consumer_loop(va_list input)
   unsigned int head;
   while (controller->active)
   {
-    if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
+    if (io_uring_wait_cqe(ring, &cqe) == 0)
     {
-      count = 0;
-      io_uring_for_each_cqe(ring, head, cqe)
+      if (unlikely(cqe->res < 0))
       {
-        ++count;
-
-        if (unlikely(cqe->res < 0))
+        if (cqe->res == -EPIPE)
         {
-          if (cqe->res == -EPIPE)
-          {
-            continue;
-          }
-
-          log_error("controller process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
+          io_uring_cqe_seen(ring, cqe);
           continue;
         }
 
-        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
-        {
-          transport_channel_handle_accept(context->channel, cqe->res);
-          continue;
-        }
-
-        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
-        {
-          transport_channel_handle_read(context->channel, cqe);
-          continue;
-        }
-
-        if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
-        {
-          transport_channel_handle_write(context->channel, cqe);
-          continue;
-        }
+        log_error("controller process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
+        io_uring_cqe_seen(ring, cqe);
+        continue;
       }
-      io_uring_cq_advance(ring, count);
+
+      if ((uint64_t)(cqe->user_data == TRANSPORT_PAYLOAD_ACCEPT))
+      {
+        transport_channel_handle_accept(context->channel, cqe->res);
+        io_uring_cqe_seen(ring, cqe);
+        continue;
+      }
+
+      if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
+      {
+        transport_channel_handle_read(context->channel, cqe);
+        io_uring_cqe_seen(ring, cqe);
+        continue;
+      }
+
+      if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
+      {
+        transport_channel_handle_write(context->channel, cqe);
+        io_uring_cqe_seen(ring, cqe);
+        continue;
+      }
     }
   }
 
