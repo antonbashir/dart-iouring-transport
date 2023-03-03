@@ -47,20 +47,19 @@ int transport_controller_consumer_loop(va_list input)
       io_uring_for_each_cqe(ring, head, cqe)
       {
         ++count;
-        if (unlikely(cqe->res < 0))
+        if ((uint64_t)(cqe->user_data == TRANSPORT_PAYLOAD_ACCEPT))
         {
-          if (cqe->res == -EPIPE)
+          if (unlikely(cqe->res < 0))
           {
+            transport_acceptor_accept(context->acceptor);
             continue;
           }
-
-          log_error("controller process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
+          transport_channel_handle_accept(context->channel, cqe->res);
           continue;
         }
 
-        if ((uint64_t)(cqe->user_data == TRANSPORT_PAYLOAD_ACCEPT))
+        if (unlikely(cqe->res < 0))
         {
-          transport_channel_handle_accept(context->channel, cqe->res);
           continue;
         }
 
@@ -120,7 +119,7 @@ transport_controller_t *transport_controller_start(transport_t *transport,
   struct transport_controller_context *context = malloc(sizeof(struct transport_controller_context));
 
   controller->ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(8192, controller->ring, 0);
+  int32_t status = io_uring_queue_init(4096, controller->ring, IORING_SETUP_SQPOLL);
   if (status)
   {
     log_error("io_urig init error: %d", status);
