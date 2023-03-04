@@ -39,34 +39,47 @@ transport_channel_t *transport_initialize_channel(transport_channel_configuratio
   context->buffer_size = configuration->buffer_size;
   context->buffers_count = configuration->buffers_count;
 
-  context->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
-  context->buffers_state = malloc(sizeof(uint64_t) * configuration->buffers_count);
-  context->buffer_by_fd = malloc(sizeof(uint64_t) * configuration->buffers_count);
+  log_info("channel initialized");
+  return channel;
+}
+
+transport_channel_t *transport_channel_share(transport_channel_t *source, struct io_uring *ring)
+{
+  struct transport_channel_context *source_context = (struct transport_channel_context *)source->context;
+  transport_channel_t *channel = malloc(sizeof(transport_channel_t));
+  if (!channel)
+  {
+    return NULL;
+  }
+  struct transport_channel_context *context = malloc(sizeof(struct transport_channel_context));
+
+  channel->context = context;
+
+  context->buffer_size = source_context->buffer_size;
+  context->buffers_count = source_context->buffers_count;
+
+  context->buffers = malloc(sizeof(struct iovec) * source_context->buffers_count);
+  context->buffers_state = malloc(sizeof(uint64_t) * source_context->buffers_count);
+  context->buffer_by_fd = malloc(sizeof(uint64_t) * source_context->buffers_count);
   context->available_buffer_id = 0;
 
-  for (size_t index = 0; index < configuration->buffers_count; index++)
+  for (size_t index = 0; index < source_context->buffers_count; index++)
   {
-    void *buffer_memory = mmap(NULL, context->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+    void *buffer_memory = mmap(NULL, source_context->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
     if (buffer_memory == MAP_FAILED)
     {
       return NULL;
     }
 
     context->buffers[index].iov_base = buffer_memory;
-    context->buffers[index].iov_len = context->buffer_size;
+    context->buffers[index].iov_len = source_context->buffer_size;
     context->buffers_state[index] = 1;
   }
-
-  log_info("channel initialized");
-  return channel;
-}
-
-void transport_channel_register(struct transport_channel *channel, struct io_uring *ring)
-{
-  struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   context->ring = ring;
   io_uring_register_buffers(ring, context->buffers, context->buffers_count);
-  log_info("channel registered");
+
+  log_info("channel shared");
+  return channel;
 }
 
 int transport_channel_allocate_buffer(transport_channel_t *channel)
@@ -108,7 +121,7 @@ int transport_channel_write(struct transport_channel *channel, int fd, int buffe
   struct io_uring_sqe *sqe = provide_sqe(context->ring);
   context->buffer_by_fd[fd] = buffer_id;
   io_uring_prep_write_fixed(sqe, fd, context->buffers[buffer_id].iov_base, context->buffers[buffer_id].iov_len, 0, buffer_id);
-  io_uring_sqe_set_data(sqe, (void *)(fd | TRANSPORT_PAYLOAD_WRITE));
+  io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_PAYLOAD_WRITE));
   log_debug("channel send data to ring");
   return io_uring_submit(context->ring);
 }
@@ -119,7 +132,7 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
   struct io_uring_sqe *sqe = provide_sqe(context->ring);
   context->buffer_by_fd[fd] = buffer_id;
   io_uring_prep_read_fixed(sqe, fd, context->buffers[buffer_id].iov_base, context->buffers[buffer_id].iov_len, 0, buffer_id);
-  io_uring_sqe_set_data(sqe, (void *)(fd | TRANSPORT_PAYLOAD_READ));
+  io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_PAYLOAD_READ));
   log_debug("channel receive data with ring");
   return io_uring_submit(context->ring);
 }

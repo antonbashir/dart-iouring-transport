@@ -16,35 +16,33 @@
 #include "binding_channel.h"
 #include "binding_acceptor.h"
 
-int transport_activate(transport_t *transport)
+struct io_uring *transport_activate(transport_t *transport)
 {
-  transport->ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(transport->ring_size, transport->ring, IORING_SETUP_SQPOLL);
+  struct io_uring *ring = malloc(sizeof(struct io_uring));
+  int32_t status = io_uring_queue_init(transport->ring_size, ring, 0);
   if (status)
   {
     log_error("io_urig init error: %d", status);
-    free(transport->ring);
+    free(ring);
     free(transport);
-    return -1;
+    return NULL;
   }
-  transport_acceptor_register(transport->acceptor, transport->ring);
-  transport_channel_register(transport->channel, transport->ring);
+  transport->acceptor = transport_acceptor_share(transport->acceptor, ring);
+  transport->channel = transport_channel_share(transport->channel, ring);
   transport_acceptor_accept(transport->acceptor);
+  return ring;
 }
 
-void transport_cqe_seen(transport_t *transport, struct io_uring_cqe *cqe)
+void transport_cqe_seen(struct io_uring *ring, struct io_uring_cqe *cqe)
 {
-  io_uring_cqe_seen(transport->ring, cqe);
+  io_uring_cqe_seen(ring, cqe);
 }
 
-struct io_uring_cqe *transport_consume(transport_t *transport)
+struct io_uring_cqe *transport_consume(transport_t *transport, struct io_uring *ring)
 {
-  struct io_uring *ring = transport->ring;
   struct io_uring_cqe *cqe;
-  log_info("transport consume");
   if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
   {
-    log_debug("transport process cqe with result %d and user_data %d", cqe->res, cqe->user_data);
     if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
     {
       transport_acceptor_accept(transport->acceptor);

@@ -36,7 +36,7 @@ extern "C"
 
   transport_channel_t *transport_initialize_channel(transport_channel_configuration_t *configuration);
 
-  void transport_channel_register(struct transport_channel *channel, struct io_uring *ring);
+  transport_channel_t *transport_channel_share(transport_channel_t *source, struct io_uring *ring);
 
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id);

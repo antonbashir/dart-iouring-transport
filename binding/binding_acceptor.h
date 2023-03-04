@@ -28,7 +28,7 @@ extern "C"
 
   void transport_close_acceptor(transport_acceptor_t *acceptor);
 
-  void transport_acceptor_register(transport_acceptor_t *acceptor, struct io_uring *ring);
+  transport_acceptor_t* transport_acceptor_share(transport_acceptor_t *source, struct io_uring *ring);
 
   int transport_acceptor_accept(struct transport_acceptor *acceptor);
 #if defined(__cplusplus)

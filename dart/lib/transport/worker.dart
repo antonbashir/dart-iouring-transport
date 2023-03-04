@@ -1,14 +1,11 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'dart:ffi';
-
-import 'package:iouring_transport/transport/payload.dart';
-
-import 'acceptor.dart';
 import 'bindings.dart';
 import 'channels/channel.dart';
 import 'lookup.dart';
+import 'payload.dart';
 
 const TransportPayloadRead = 1 << (64 - 1 - 0);
 const TransportPayloadWrite = 1 << (64 - 1 - 1);
@@ -40,10 +37,7 @@ class TransportWorker {
             : loadBindingLibrary()
         : loadBindingLibrary();
     _bindings = TransportBindings(_library.library);
-    final acceptor = TransportAcceptor.fromPointer(
-      _transport.ref.acceptor,
-      _bindings,
-    );
+    final ring = _bindings.transport_activate(_transport);
     final channel = TransportChannel.fromPointer(
       _transport.ref.channel,
       _bindings,
@@ -51,29 +45,30 @@ class TransportWorker {
       onWrite: onWrite,
       onStop: onStop,
     );
-    _bindings.transport_activate(_transport);
     while (true) {
-      Pointer<io_uring_cqe> cqe = _bindings.transport_consume(_transport);
+      Pointer<io_uring_cqe> cqe = _bindings.transport_consume(_transport, ring);
+      if (cqe == nullptr) continue;
+
       final int result = cqe.ref.res;
       final int userData = cqe.ref.user_data;
-      _bindings.transport_cqe_seen(_transport, cqe);
+      _bindings.transport_cqe_seen(ring, cqe);
 
       if (result < 0) {
         continue;
       }
 
       if (userData & TransportPayloadAccept != 0) {
-        channel.handleAccept(result);
+        await channel.handleAccept(result);
         continue;
       }
 
       if (userData & TransportPayloadRead != 0) {
-        channel.handleRead(userData & ~TransportPayloadAll);
+        await channel.handleRead(userData & ~TransportPayloadAll);
         continue;
       }
 
       if (userData & TransportPayloadWrite != 0) {
-        channel.handleWrite(userData & ~TransportPayloadAll);
+        await channel.handleWrite(userData & ~TransportPayloadAll);
         continue;
       }
     }

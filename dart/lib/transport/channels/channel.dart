@@ -47,7 +47,7 @@ class TransportChannel {
     _onStop?.call();
   }
 
-  void write(Uint8List bytes, int fd) async {
+  Future<void> write(Uint8List bytes, int fd) async {
     int bufferId = _bindings.transport_channel_allocate_buffer(channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
@@ -59,7 +59,7 @@ class TransportChannel {
     _bindings.transport_channel_write(channel, fd, bufferId);
   }
 
-  void _read(int fd) async {
+  Future<void> _read(int fd) async {
     int bufferId = _bindings.transport_channel_allocate_buffer(channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
@@ -68,11 +68,9 @@ class TransportChannel {
     _bindings.transport_channel_read(channel, fd, bufferId);
   }
 
-  void handleAccept(int fd) {
-    _read(fd);
-  }
+  Future<void> handleAccept(int fd) async => await _read(fd);
 
-  void handleRead(int fd) {
+  Future<void> handleRead(int fd) async {
     final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
     if (_onRead == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
@@ -89,9 +87,9 @@ class TransportChannel {
     );
   }
 
-  void handleWrite(int fd) {
+  Future<void> handleWrite(int fd) async {
     final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
-    _read(fd);
+    await _read(fd);
     if (_onWrite == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
       return;

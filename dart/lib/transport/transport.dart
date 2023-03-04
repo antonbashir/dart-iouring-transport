@@ -55,8 +55,10 @@ class Transport {
     for (var isolate = 0; isolate < isolates; isolate++) {
       Isolate.spawn<SendPort>(worker, fromWorker.sendPort);
     }
-    SendPort toWorker = await fromWorker.first;
-    toWorker.send(libraryPath);
-    toWorker.send(_transport.address);
+    fromWorker.listen((port) {
+      SendPort toWorker = port as SendPort;
+      toWorker.send(libraryPath);
+      toWorker.send(_transport.address);
+    });
   }
 }

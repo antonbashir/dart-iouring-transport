@@ -55,11 +55,25 @@ transport_acceptor_t *transport_initialize_acceptor(transport_acceptor_configura
   return acceptor;
 }
 
-void transport_acceptor_register(transport_acceptor_t *acceptor, struct io_uring *ring)
+transport_acceptor_t *transport_acceptor_share(transport_acceptor_t *source, struct io_uring *ring)
 {
-  struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
+  struct transport_acceptor_context *source_context = (struct transport_acceptor_context *)source->context;
+  transport_acceptor_t *acceptor = malloc(sizeof(transport_acceptor_t));
+  if (!acceptor)
+  {
+    return NULL;
+  }
+  struct transport_acceptor_context *context = malloc(sizeof(struct transport_acceptor_context));
+  acceptor->context = context;
+  context->server_address = source_context->server_address;
+  context->server_address_length = source_context->server_address_length;
+  context->backlog = source_context->backlog;
+  context->ip = source_context->ip;
+  context->port = source_context->port;
+  context->fd = source_context->fd;
   context->ring = ring;
-  log_info("acceptor registered");
+  log_info("acceptor shared");
+  return acceptor;
 }
 
 int transport_acceptor_accept(struct transport_acceptor *acceptor)
