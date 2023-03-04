@@ -1,15 +1,17 @@
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/bindings.dart';
 import 'package:iouring_transport/transport/channels/channel.dart';
 
 class TransportDataPayload {
-  final void Function(TransportDataPayload finalizable) _finalizer;
-
-  final Uint8List bytes;
+  final int _bufferId;
+  final TransportBindings _bindings;
   final TransportChannel channel;
-  final int fd;
 
-  TransportDataPayload(this.bytes, this.channel, this.fd, this._finalizer);
+  late Uint8List bytes;
+  late int fd;
 
-  void finalize() => _finalizer(this);
+  TransportDataPayload(this._bindings, this._bufferId, this.channel);
+
+  void finalize() => _bindings.transport_channel_free_buffer(channel.channel, _bufferId);
 }

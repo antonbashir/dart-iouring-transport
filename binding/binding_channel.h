@@ -18,13 +18,15 @@ extern "C"
 
   typedef struct transport_channel_configuration
   {
-    size_t buffers_count;
+    uint32_t buffers_count;
     uint32_t buffer_size;
   } transport_channel_configuration_t;
 
   typedef struct transport_channel
   {
     void *context;
+    uint32_t buffer_size;
+    uint32_t buffers_count;
   } transport_channel_t;
 
   typedef struct transport_message

@@ -23209,7 +23209,7 @@ typedef Dart_ExitScope_Type
     = ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>;
 
 class transport_channel_configuration extends ffi.Struct {
-  @ffi.Size()
+  @ffi.Uint32()
   external int buffers_count;
 
   @ffi.Uint32()
@@ -23218,6 +23218,12 @@ class transport_channel_configuration extends ffi.Struct {
 
 class transport_channel extends ffi.Struct {
   external ffi.Pointer<ffi.Void> context;
+
+  @ffi.Uint32()
+  external int buffer_size;
+
+  @ffi.Uint32()
+  external int buffers_count;
 }
 
 class transport_message extends ffi.Struct {

@@ -13,12 +13,11 @@
 #include "fiber_channel.h"
 #include "fiber.h"
 #include "binding_payload.h"
+#include "pthread.h"
 
 struct transport_channel_context
 {
   struct io_uring *ring;
-  uint32_t buffer_size;
-  uint32_t buffers_count;
   struct iovec *buffers;
   int *buffers_state;
   int *buffer_by_fd;
@@ -36,8 +35,8 @@ transport_channel_t *transport_initialize_channel(transport_channel_configuratio
   struct transport_channel_context *context = malloc(sizeof(struct transport_channel_context));
   channel->context = context;
 
-  context->buffer_size = configuration->buffer_size;
-  context->buffers_count = configuration->buffers_count;
+  channel->buffer_size = configuration->buffer_size;
+  channel->buffers_count = configuration->buffers_count;
 
   log_info("channel initialized");
   return channel;
@@ -55,28 +54,28 @@ transport_channel_t *transport_channel_share(transport_channel_t *source, struct
 
   channel->context = context;
 
-  context->buffer_size = source_context->buffer_size;
-  context->buffers_count = source_context->buffers_count;
+  channel->buffer_size = source->buffer_size;
+  channel->buffers_count = source->buffers_count;
 
-  context->buffers = malloc(sizeof(struct iovec) * source_context->buffers_count);
-  context->buffers_state = malloc(sizeof(uint64_t) * source_context->buffers_count);
-  context->buffer_by_fd = malloc(sizeof(uint64_t) * source_context->buffers_count);
+  context->buffers = malloc(sizeof(struct iovec) * source->buffers_count);
+  context->buffers_state = malloc(sizeof(uint64_t) * source->buffers_count);
+  context->buffer_by_fd = malloc(sizeof(uint64_t) * source->buffers_count);
   context->available_buffer_id = 0;
 
-  for (size_t index = 0; index < source_context->buffers_count; index++)
+  for (size_t index = 0; index < source->buffers_count; index++)
   {
-    void *buffer_memory = mmap(NULL, source_context->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+    void *buffer_memory = mmap(NULL, source->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
     if (buffer_memory == MAP_FAILED)
     {
       return NULL;
     }
 
     context->buffers[index].iov_base = buffer_memory;
-    context->buffers[index].iov_len = source_context->buffer_size;
+    context->buffers[index].iov_len = source->buffer_size;
     context->buffers_state[index] = 1;
   }
   context->ring = ring;
-  io_uring_register_buffers(ring, context->buffers, context->buffers_count);
+  io_uring_register_buffers(ring, context->buffers, source->buffers_count);
 
   log_info("channel shared");
   return channel;
@@ -88,10 +87,10 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
   while (unlikely(!(context->buffers_state[context->available_buffer_id])))
   {
     context->available_buffer_id++;
-    if (unlikely(context->available_buffer_id == context->buffers_count))
+    if (unlikely(context->available_buffer_id == channel->buffers_count))
     {
       context->available_buffer_id = 0;
-      return -1;
+      pthread_yield();
     }
   }
 

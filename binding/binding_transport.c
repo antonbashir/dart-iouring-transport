@@ -19,7 +19,7 @@
 struct io_uring *transport_activate(transport_t *transport)
 {
   struct io_uring *ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(transport->ring_size, ring, 0);
+  int32_t status = io_uring_queue_init(transport->ring_size, ring, IORING_SETUP_SQPOLL);
   if (status)
   {
     log_error("io_urig init error: %d", status);
@@ -43,20 +43,10 @@ struct io_uring_cqe *transport_consume(transport_t *transport, struct io_uring *
   struct io_uring_cqe *cqe;
   if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
   {
-    if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
-    {
-      transport_acceptor_accept(transport->acceptor);
-      if (unlikely(cqe->res < 0))
-      {
-        log_error("transport process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
-        return cqe;
-      }
-      return cqe;
-    }
-
     if (unlikely(cqe->res < 0))
     {
-      log_error("transport process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
+      //log_error("transport process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
+      transport_acceptor_accept(transport->acceptor);
       return cqe;
     }
 
@@ -69,6 +59,11 @@ struct io_uring_cqe *transport_consume(transport_t *transport, struct io_uring *
     if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
     {
       transport_channel_handle_write(transport->channel, cqe);
+      return cqe;
+    }
+
+    if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
+    {
       return cqe;
     }
 

@@ -53,7 +53,7 @@ class Transport {
 
   Future<void> work(int isolates, void Function(SendPort port) worker) async {
     for (var isolate = 0; isolate < isolates; isolate++) {
-      Isolate.spawn<SendPort>(worker, fromWorker.sendPort);
+      Isolate.spawn<SendPort>(worker, fromWorker.sendPort, debugName: "worker-$isolate");
     }
     fromWorker.listen((port) {
       SendPort toWorker = port as SendPort;

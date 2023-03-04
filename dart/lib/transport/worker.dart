@@ -58,17 +58,17 @@ class TransportWorker {
       }
 
       if (userData & TransportPayloadAccept != 0) {
-        await channel.handleAccept(result);
+        channel.handleAccept(result);
         continue;
       }
 
       if (userData & TransportPayloadRead != 0) {
-        await channel.handleRead(userData & ~TransportPayloadAll);
+        channel.handleRead(userData & ~TransportPayloadAll);
         continue;
       }
 
       if (userData & TransportPayloadWrite != 0) {
-        await channel.handleWrite(userData & ~TransportPayloadAll);
+        channel.handleWrite(userData & ~TransportPayloadAll);
         continue;
       }
     }
