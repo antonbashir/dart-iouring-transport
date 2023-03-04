@@ -15,7 +15,6 @@ class TransportFileChannel {
 
   final TransportBindings _bindings;
   final Pointer<transport_t> _transport;
-  final Pointer<transport_controller_t> _controller;
   final TransportChannelConfiguration _configuration;
 
   void Function(TransportDataPayload payload)? onRead;
@@ -27,18 +26,13 @@ class TransportFileChannel {
   TransportFileChannel(
     this._bindings,
     this._transport,
-    this._controller,
     this._configuration, {
     this.onRead,
     this.onWrite,
     this.onStop,
   }) {}
 
-  void start() => _delegate.start(
-        onRead: (payload) => onRead?.call(payload),
-        onWrite: (payload) => onWrite?.call(payload),
-        onStop: onStop,
-      );
+  void start() => {};
 
   void stop() => _delegate.stop();
 

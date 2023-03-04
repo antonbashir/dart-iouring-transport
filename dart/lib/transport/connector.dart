@@ -8,7 +8,6 @@ import 'configuration.dart';
 class TransportConnector {
   final TransportBindings _bindings;
   final Pointer<transport_t> _transport;
-  final Pointer<transport_controller_t> _controller;
   final TransportConnectorConfiguration _configuration;
 
   late final Pointer<transport_connector_t> _connector;
@@ -17,7 +16,6 @@ class TransportConnector {
     this._configuration,
     this._bindings,
     this._transport,
-    this._controller,
   );
 
   void close() {

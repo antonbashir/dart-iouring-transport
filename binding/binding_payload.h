@@ -1,5 +1,7 @@
-#ifndef BINDING_MESSAGE_H
-#define BINDING_MESSAGE_H
+#ifndef BINDING_PAYLOAD_H
+#define BINDING_PAYLOAD_H
+
+#include <stdint.h>
 
 #if defined(__cplusplus)
 extern "C"

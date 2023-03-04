@@ -19,6 +19,14 @@ class TransportBindings {
           lookup)
       : _lookup = lookup;
 
+  late final ffi.Pointer<ffi.Uint64> _TRANSPORT_PAYLOAD_ALL_FLAGS =
+      _lookup<ffi.Uint64>('TRANSPORT_PAYLOAD_ALL_FLAGS');
+
+  int get TRANSPORT_PAYLOAD_ALL_FLAGS => _TRANSPORT_PAYLOAD_ALL_FLAGS.value;
+
+  set TRANSPORT_PAYLOAD_ALL_FLAGS(int value) =>
+      _TRANSPORT_PAYLOAD_ALL_FLAGS.value = value;
+
   int select(
     int __nfds,
     ffi.Pointer<fd_set> __readfds,
@@ -2070,1737 +2078,6 @@ class TransportBindings {
               ffi.Int32)>>('atomic_flag_clear_explicit');
   late final _atomic_flag_clear_explicit = _atomic_flag_clear_explicitPtr
       .asFunction<void Function(ffi.Pointer<atomic_flag>, int)>();
-
-  int sched_setparam(
-    int __pid,
-    ffi.Pointer<sched_param> __param,
-  ) {
-    return _sched_setparam(
-      __pid,
-      __param,
-    );
-  }
-
-  late final _sched_setparamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Int, ffi.Pointer<sched_param>)>>('sched_setparam');
-  late final _sched_setparam = _sched_setparamPtr
-      .asFunction<int Function(int, ffi.Pointer<sched_param>)>();
-
-  int sched_getparam(
-    int __pid,
-    ffi.Pointer<sched_param> __param,
-  ) {
-    return _sched_getparam(
-      __pid,
-      __param,
-    );
-  }
-
-  late final _sched_getparamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Int, ffi.Pointer<sched_param>)>>('sched_getparam');
-  late final _sched_getparam = _sched_getparamPtr
-      .asFunction<int Function(int, ffi.Pointer<sched_param>)>();
-
-  int sched_setscheduler(
-    int __pid,
-    int __policy,
-    ffi.Pointer<sched_param> __param,
-  ) {
-    return _sched_setscheduler(
-      __pid,
-      __policy,
-      __param,
-    );
-  }
-
-  late final _sched_setschedulerPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Int, ffi.Int,
-              ffi.Pointer<sched_param>)>>('sched_setscheduler');
-  late final _sched_setscheduler = _sched_setschedulerPtr
-      .asFunction<int Function(int, int, ffi.Pointer<sched_param>)>();
-
-  int sched_getscheduler(
-    int __pid,
-  ) {
-    return _sched_getscheduler(
-      __pid,
-    );
-  }
-
-  late final _sched_getschedulerPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
-          'sched_getscheduler');
-  late final _sched_getscheduler =
-      _sched_getschedulerPtr.asFunction<int Function(int)>();
-
-  int sched_yield() {
-    return _sched_yield();
-  }
-
-  late final _sched_yieldPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('sched_yield');
-  late final _sched_yield = _sched_yieldPtr.asFunction<int Function()>();
-
-  int sched_get_priority_max(
-    int __algorithm,
-  ) {
-    return _sched_get_priority_max(
-      __algorithm,
-    );
-  }
-
-  late final _sched_get_priority_maxPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
-          'sched_get_priority_max');
-  late final _sched_get_priority_max =
-      _sched_get_priority_maxPtr.asFunction<int Function(int)>();
-
-  int sched_get_priority_min(
-    int __algorithm,
-  ) {
-    return _sched_get_priority_min(
-      __algorithm,
-    );
-  }
-
-  late final _sched_get_priority_minPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
-          'sched_get_priority_min');
-  late final _sched_get_priority_min =
-      _sched_get_priority_minPtr.asFunction<int Function(int)>();
-
-  int sched_rr_get_interval(
-    int __pid,
-    ffi.Pointer<timespec> __t,
-  ) {
-    return _sched_rr_get_interval(
-      __pid,
-      __t,
-    );
-  }
-
-  late final _sched_rr_get_intervalPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<timespec>)>>(
-      'sched_rr_get_interval');
-  late final _sched_rr_get_interval = _sched_rr_get_intervalPtr
-      .asFunction<int Function(int, ffi.Pointer<timespec>)>();
-
-  int pthread_create(
-    ffi.Pointer<pthread_t> __newthread,
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<
-            ffi.NativeFunction<
-                ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>
-        __start_routine,
-    ffi.Pointer<ffi.Void> __arg,
-  ) {
-    return _pthread_create(
-      __newthread,
-      __attr,
-      __start_routine,
-      __arg,
-    );
-  }
-
-  late final _pthread_createPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_t>,
-              ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<
-                  ffi.NativeFunction<
-                      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>,
-              ffi.Pointer<ffi.Void>)>>('pthread_create');
-  late final _pthread_create = _pthread_createPtr.asFunction<
-      int Function(
-          ffi.Pointer<pthread_t>,
-          ffi.Pointer<pthread_attr_t>,
-          ffi.Pointer<
-              ffi.NativeFunction<
-                  ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>,
-          ffi.Pointer<ffi.Void>)>();
-
-  void pthread_exit(
-    ffi.Pointer<ffi.Void> __retval,
-  ) {
-    return _pthread_exit(
-      __retval,
-    );
-  }
-
-  late final _pthread_exitPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
-          'pthread_exit');
-  late final _pthread_exit =
-      _pthread_exitPtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
-
-  int pthread_join(
-    int __th,
-    ffi.Pointer<ffi.Pointer<ffi.Void>> __thread_return,
-  ) {
-    return _pthread_join(
-      __th,
-      __thread_return,
-    );
-  }
-
-  late final _pthread_joinPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              pthread_t, ffi.Pointer<ffi.Pointer<ffi.Void>>)>>('pthread_join');
-  late final _pthread_join = _pthread_joinPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Pointer<ffi.Void>>)>();
-
-  int pthread_detach(
-    int __th,
-  ) {
-    return _pthread_detach(
-      __th,
-    );
-  }
-
-  late final _pthread_detachPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t)>>(
-          'pthread_detach');
-  late final _pthread_detach =
-      _pthread_detachPtr.asFunction<int Function(int)>();
-
-  int pthread_self() {
-    return _pthread_self();
-  }
-
-  late final _pthread_selfPtr =
-      _lookup<ffi.NativeFunction<pthread_t Function()>>('pthread_self');
-  late final _pthread_self = _pthread_selfPtr.asFunction<int Function()>();
-
-  int pthread_equal(
-    int __thread1,
-    int __thread2,
-  ) {
-    return _pthread_equal(
-      __thread1,
-      __thread2,
-    );
-  }
-
-  late final _pthread_equalPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t, pthread_t)>>(
-          'pthread_equal');
-  late final _pthread_equal =
-      _pthread_equalPtr.asFunction<int Function(int, int)>();
-
-  int pthread_attr_init(
-    ffi.Pointer<pthread_attr_t> __attr,
-  ) {
-    return _pthread_attr_init(
-      __attr,
-    );
-  }
-
-  late final _pthread_attr_initPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>(
-      'pthread_attr_init');
-  late final _pthread_attr_init = _pthread_attr_initPtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>)>();
-
-  int pthread_attr_destroy(
-    ffi.Pointer<pthread_attr_t> __attr,
-  ) {
-    return _pthread_attr_destroy(
-      __attr,
-    );
-  }
-
-  late final _pthread_attr_destroyPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>(
-      'pthread_attr_destroy');
-  late final _pthread_attr_destroy = _pthread_attr_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>)>();
-
-  int pthread_attr_getdetachstate(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Int> __detachstate,
-  ) {
-    return _pthread_attr_getdetachstate(
-      __attr,
-      __detachstate,
-    );
-  }
-
-  late final _pthread_attr_getdetachstatePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_attr_getdetachstate');
-  late final _pthread_attr_getdetachstate =
-      _pthread_attr_getdetachstatePtr.asFunction<
-          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_attr_setdetachstate(
-    ffi.Pointer<pthread_attr_t> __attr,
-    int __detachstate,
-  ) {
-    return _pthread_attr_setdetachstate(
-      __attr,
-      __detachstate,
-    );
-  }
-
-  late final _pthread_attr_setdetachstatePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Int)>>('pthread_attr_setdetachstate');
-  late final _pthread_attr_setdetachstate = _pthread_attr_setdetachstatePtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
-
-  int pthread_attr_getguardsize(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Size> __guardsize,
-  ) {
-    return _pthread_attr_getguardsize(
-      __attr,
-      __guardsize,
-    );
-  }
-
-  late final _pthread_attr_getguardsizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Size>)>>('pthread_attr_getguardsize');
-  late final _pthread_attr_getguardsize =
-      _pthread_attr_getguardsizePtr.asFunction<
-          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>();
-
-  int pthread_attr_setguardsize(
-    ffi.Pointer<pthread_attr_t> __attr,
-    int __guardsize,
-  ) {
-    return _pthread_attr_setguardsize(
-      __attr,
-      __guardsize,
-    );
-  }
-
-  late final _pthread_attr_setguardsizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Size)>>('pthread_attr_setguardsize');
-  late final _pthread_attr_setguardsize = _pthread_attr_setguardsizePtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
-
-  int pthread_attr_getschedparam(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<sched_param> __param,
-  ) {
-    return _pthread_attr_getschedparam(
-      __attr,
-      __param,
-    );
-  }
-
-  late final _pthread_attr_getschedparamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<sched_param>)>>('pthread_attr_getschedparam');
-  late final _pthread_attr_getschedparam =
-      _pthread_attr_getschedparamPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>();
-
-  int pthread_attr_setschedparam(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<sched_param> __param,
-  ) {
-    return _pthread_attr_setschedparam(
-      __attr,
-      __param,
-    );
-  }
-
-  late final _pthread_attr_setschedparamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<sched_param>)>>('pthread_attr_setschedparam');
-  late final _pthread_attr_setschedparam =
-      _pthread_attr_setschedparamPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>();
-
-  int pthread_attr_getschedpolicy(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Int> __policy,
-  ) {
-    return _pthread_attr_getschedpolicy(
-      __attr,
-      __policy,
-    );
-  }
-
-  late final _pthread_attr_getschedpolicyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_attr_getschedpolicy');
-  late final _pthread_attr_getschedpolicy =
-      _pthread_attr_getschedpolicyPtr.asFunction<
-          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_attr_setschedpolicy(
-    ffi.Pointer<pthread_attr_t> __attr,
-    int __policy,
-  ) {
-    return _pthread_attr_setschedpolicy(
-      __attr,
-      __policy,
-    );
-  }
-
-  late final _pthread_attr_setschedpolicyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Int)>>('pthread_attr_setschedpolicy');
-  late final _pthread_attr_setschedpolicy = _pthread_attr_setschedpolicyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
-
-  int pthread_attr_getinheritsched(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Int> __inherit,
-  ) {
-    return _pthread_attr_getinheritsched(
-      __attr,
-      __inherit,
-    );
-  }
-
-  late final _pthread_attr_getinheritschedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_attr_getinheritsched');
-  late final _pthread_attr_getinheritsched =
-      _pthread_attr_getinheritschedPtr.asFunction<
-          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_attr_setinheritsched(
-    ffi.Pointer<pthread_attr_t> __attr,
-    int __inherit,
-  ) {
-    return _pthread_attr_setinheritsched(
-      __attr,
-      __inherit,
-    );
-  }
-
-  late final _pthread_attr_setinheritschedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Int)>>('pthread_attr_setinheritsched');
-  late final _pthread_attr_setinheritsched = _pthread_attr_setinheritschedPtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
-
-  int pthread_attr_getscope(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Int> __scope,
-  ) {
-    return _pthread_attr_getscope(
-      __attr,
-      __scope,
-    );
-  }
-
-  late final _pthread_attr_getscopePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_attr_getscope');
-  late final _pthread_attr_getscope = _pthread_attr_getscopePtr.asFunction<
-      int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_attr_setscope(
-    ffi.Pointer<pthread_attr_t> __attr,
-    int __scope,
-  ) {
-    return _pthread_attr_setscope(
-      __attr,
-      __scope,
-    );
-  }
-
-  late final _pthread_attr_setscopePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_attr_t>, ffi.Int)>>('pthread_attr_setscope');
-  late final _pthread_attr_setscope = _pthread_attr_setscopePtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
-
-  int pthread_attr_getstackaddr(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Pointer<ffi.Void>> __stackaddr,
-  ) {
-    return _pthread_attr_getstackaddr(
-      __attr,
-      __stackaddr,
-    );
-  }
-
-  late final _pthread_attr_getstackaddrPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-                  ffi.Pointer<ffi.Pointer<ffi.Void>>)>>(
-      'pthread_attr_getstackaddr');
-  late final _pthread_attr_getstackaddr =
-      _pthread_attr_getstackaddrPtr.asFunction<
-          int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Pointer<ffi.Void>>)>();
-
-  int pthread_attr_setstackaddr(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Void> __stackaddr,
-  ) {
-    return _pthread_attr_setstackaddr(
-      __attr,
-      __stackaddr,
-    );
-  }
-
-  late final _pthread_attr_setstackaddrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Void>)>>('pthread_attr_setstackaddr');
-  late final _pthread_attr_setstackaddr =
-      _pthread_attr_setstackaddrPtr.asFunction<
-          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>)>();
-
-  int pthread_attr_getstacksize(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Size> __stacksize,
-  ) {
-    return _pthread_attr_getstacksize(
-      __attr,
-      __stacksize,
-    );
-  }
-
-  late final _pthread_attr_getstacksizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Size>)>>('pthread_attr_getstacksize');
-  late final _pthread_attr_getstacksize =
-      _pthread_attr_getstacksizePtr.asFunction<
-          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>();
-
-  int pthread_attr_setstacksize(
-    ffi.Pointer<pthread_attr_t> __attr,
-    int __stacksize,
-  ) {
-    return _pthread_attr_setstacksize(
-      __attr,
-      __stacksize,
-    );
-  }
-
-  late final _pthread_attr_setstacksizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-              ffi.Size)>>('pthread_attr_setstacksize');
-  late final _pthread_attr_setstacksize = _pthread_attr_setstacksizePtr
-      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
-
-  int pthread_attr_getstack(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Pointer<ffi.Void>> __stackaddr,
-    ffi.Pointer<ffi.Size> __stacksize,
-  ) {
-    return _pthread_attr_getstack(
-      __attr,
-      __stackaddr,
-      __stacksize,
-    );
-  }
-
-  late final _pthread_attr_getstackPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Pointer<ffi.Void>>,
-              ffi.Pointer<ffi.Size>)>>('pthread_attr_getstack');
-  late final _pthread_attr_getstack = _pthread_attr_getstackPtr.asFunction<
-      int Function(ffi.Pointer<pthread_attr_t>,
-          ffi.Pointer<ffi.Pointer<ffi.Void>>, ffi.Pointer<ffi.Size>)>();
-
-  int pthread_attr_setstack(
-    ffi.Pointer<pthread_attr_t> __attr,
-    ffi.Pointer<ffi.Void> __stackaddr,
-    int __stacksize,
-  ) {
-    return _pthread_attr_setstack(
-      __attr,
-      __stackaddr,
-      __stacksize,
-    );
-  }
-
-  late final _pthread_attr_setstackPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>,
-              ffi.Size)>>('pthread_attr_setstack');
-  late final _pthread_attr_setstack = _pthread_attr_setstackPtr.asFunction<
-      int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>, int)>();
-
-  int pthread_setschedparam(
-    int __target_thread,
-    int __policy,
-    ffi.Pointer<sched_param> __param,
-  ) {
-    return _pthread_setschedparam(
-      __target_thread,
-      __policy,
-      __param,
-    );
-  }
-
-  late final _pthread_setschedparamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(pthread_t, ffi.Int,
-              ffi.Pointer<sched_param>)>>('pthread_setschedparam');
-  late final _pthread_setschedparam = _pthread_setschedparamPtr
-      .asFunction<int Function(int, int, ffi.Pointer<sched_param>)>();
-
-  int pthread_getschedparam(
-    int __target_thread,
-    ffi.Pointer<ffi.Int> __policy,
-    ffi.Pointer<sched_param> __param,
-  ) {
-    return _pthread_getschedparam(
-      __target_thread,
-      __policy,
-      __param,
-    );
-  }
-
-  late final _pthread_getschedparamPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(pthread_t, ffi.Pointer<ffi.Int>,
-              ffi.Pointer<sched_param>)>>('pthread_getschedparam');
-  late final _pthread_getschedparam = _pthread_getschedparamPtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.Int>, ffi.Pointer<sched_param>)>();
-
-  int pthread_setschedprio(
-    int __target_thread,
-    int __prio,
-  ) {
-    return _pthread_setschedprio(
-      __target_thread,
-      __prio,
-    );
-  }
-
-  late final _pthread_setschedprioPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t, ffi.Int)>>(
-          'pthread_setschedprio');
-  late final _pthread_setschedprio =
-      _pthread_setschedprioPtr.asFunction<int Function(int, int)>();
-
-  int pthread_once(
-    ffi.Pointer<pthread_once_t> __once_control,
-    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __init_routine,
-  ) {
-    return _pthread_once(
-      __once_control,
-      __init_routine,
-    );
-  }
-
-  late final _pthread_oncePtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_once_t>,
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>(
-      'pthread_once');
-  late final _pthread_once = _pthread_oncePtr.asFunction<
-      int Function(ffi.Pointer<pthread_once_t>,
-          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
-
-  int pthread_setcancelstate(
-    int __state,
-    ffi.Pointer<ffi.Int> __oldstate,
-  ) {
-    return _pthread_setcancelstate(
-      __state,
-      __oldstate,
-    );
-  }
-
-  late final _pthread_setcancelstatePtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>(
-      'pthread_setcancelstate');
-  late final _pthread_setcancelstate = _pthread_setcancelstatePtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_setcanceltype(
-    int __type,
-    ffi.Pointer<ffi.Int> __oldtype,
-  ) {
-    return _pthread_setcanceltype(
-      __type,
-      __oldtype,
-    );
-  }
-
-  late final _pthread_setcanceltypePtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>(
-      'pthread_setcanceltype');
-  late final _pthread_setcanceltype = _pthread_setcanceltypePtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_cancel(
-    int __th,
-  ) {
-    return _pthread_cancel(
-      __th,
-    );
-  }
-
-  late final _pthread_cancelPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t)>>(
-          'pthread_cancel');
-  late final _pthread_cancel =
-      _pthread_cancelPtr.asFunction<int Function(int)>();
-
-  void pthread_testcancel() {
-    return _pthread_testcancel();
-  }
-
-  late final _pthread_testcancelPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('pthread_testcancel');
-  late final _pthread_testcancel =
-      _pthread_testcancelPtr.asFunction<void Function()>();
-
-  int pthread_mutex_init(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-    ffi.Pointer<pthread_mutexattr_t> __mutexattr,
-  ) {
-    return _pthread_mutex_init(
-      __mutex,
-      __mutexattr,
-    );
-  }
-
-  late final _pthread_mutex_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
-              ffi.Pointer<pthread_mutexattr_t>)>>('pthread_mutex_init');
-  late final _pthread_mutex_init = _pthread_mutex_initPtr.asFunction<
-      int Function(
-          ffi.Pointer<pthread_mutex_t>, ffi.Pointer<pthread_mutexattr_t>)>();
-
-  int pthread_mutex_destroy(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-  ) {
-    return _pthread_mutex_destroy(
-      __mutex,
-    );
-  }
-
-  late final _pthread_mutex_destroyPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
-      'pthread_mutex_destroy');
-  late final _pthread_mutex_destroy = _pthread_mutex_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
-
-  int pthread_mutex_trylock(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-  ) {
-    return _pthread_mutex_trylock(
-      __mutex,
-    );
-  }
-
-  late final _pthread_mutex_trylockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
-      'pthread_mutex_trylock');
-  late final _pthread_mutex_trylock = _pthread_mutex_trylockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
-
-  int pthread_mutex_lock(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-  ) {
-    return _pthread_mutex_lock(
-      __mutex,
-    );
-  }
-
-  late final _pthread_mutex_lockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
-      'pthread_mutex_lock');
-  late final _pthread_mutex_lock = _pthread_mutex_lockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
-
-  int pthread_mutex_timedlock(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-    ffi.Pointer<timespec> __abstime,
-  ) {
-    return _pthread_mutex_timedlock(
-      __mutex,
-      __abstime,
-    );
-  }
-
-  late final _pthread_mutex_timedlockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
-              ffi.Pointer<timespec>)>>('pthread_mutex_timedlock');
-  late final _pthread_mutex_timedlock = _pthread_mutex_timedlockPtr.asFunction<
-      int Function(ffi.Pointer<pthread_mutex_t>, ffi.Pointer<timespec>)>();
-
-  int pthread_mutex_unlock(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-  ) {
-    return _pthread_mutex_unlock(
-      __mutex,
-    );
-  }
-
-  late final _pthread_mutex_unlockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
-      'pthread_mutex_unlock');
-  late final _pthread_mutex_unlock = _pthread_mutex_unlockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
-
-  int pthread_mutex_getprioceiling(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-    ffi.Pointer<ffi.Int> __prioceiling,
-  ) {
-    return _pthread_mutex_getprioceiling(
-      __mutex,
-      __prioceiling,
-    );
-  }
-
-  late final _pthread_mutex_getprioceilingPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_mutex_getprioceiling');
-  late final _pthread_mutex_getprioceiling =
-      _pthread_mutex_getprioceilingPtr.asFunction<
-          int Function(ffi.Pointer<pthread_mutex_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_mutex_setprioceiling(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-    int __prioceiling,
-    ffi.Pointer<ffi.Int> __old_ceiling,
-  ) {
-    return _pthread_mutex_setprioceiling(
-      __mutex,
-      __prioceiling,
-      __old_ceiling,
-    );
-  }
-
-  late final _pthread_mutex_setprioceilingPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutex_t>, ffi.Int,
-              ffi.Pointer<ffi.Int>)>>('pthread_mutex_setprioceiling');
-  late final _pthread_mutex_setprioceiling =
-      _pthread_mutex_setprioceilingPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_mutex_t>, int, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_mutex_consistent(
-    ffi.Pointer<pthread_mutex_t> __mutex,
-  ) {
-    return _pthread_mutex_consistent(
-      __mutex,
-    );
-  }
-
-  late final _pthread_mutex_consistentPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
-      'pthread_mutex_consistent');
-  late final _pthread_mutex_consistent = _pthread_mutex_consistentPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
-
-  int pthread_mutexattr_init(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-  ) {
-    return _pthread_mutexattr_init(
-      __attr,
-    );
-  }
-
-  late final _pthread_mutexattr_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_mutexattr_t>)>>('pthread_mutexattr_init');
-  late final _pthread_mutexattr_init = _pthread_mutexattr_initPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>)>();
-
-  int pthread_mutexattr_destroy(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-  ) {
-    return _pthread_mutexattr_destroy(
-      __attr,
-    );
-  }
-
-  late final _pthread_mutexattr_destroyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_mutexattr_t>)>>('pthread_mutexattr_destroy');
-  late final _pthread_mutexattr_destroy = _pthread_mutexattr_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>)>();
-
-  int pthread_mutexattr_getpshared(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    ffi.Pointer<ffi.Int> __pshared,
-  ) {
-    return _pthread_mutexattr_getpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_mutexattr_getpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getpshared');
-  late final _pthread_mutexattr_getpshared =
-      _pthread_mutexattr_getpsharedPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_mutexattr_setpshared(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    int __pshared,
-  ) {
-    return _pthread_mutexattr_setpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_mutexattr_setpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Int)>>('pthread_mutexattr_setpshared');
-  late final _pthread_mutexattr_setpshared = _pthread_mutexattr_setpsharedPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
-
-  int pthread_mutexattr_gettype(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    ffi.Pointer<ffi.Int> __kind,
-  ) {
-    return _pthread_mutexattr_gettype(
-      __attr,
-      __kind,
-    );
-  }
-
-  late final _pthread_mutexattr_gettypePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_gettype');
-  late final _pthread_mutexattr_gettype =
-      _pthread_mutexattr_gettypePtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_mutexattr_settype(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    int __kind,
-  ) {
-    return _pthread_mutexattr_settype(
-      __attr,
-      __kind,
-    );
-  }
-
-  late final _pthread_mutexattr_settypePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Int)>>('pthread_mutexattr_settype');
-  late final _pthread_mutexattr_settype = _pthread_mutexattr_settypePtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
-
-  int pthread_mutexattr_getprotocol(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    ffi.Pointer<ffi.Int> __protocol,
-  ) {
-    return _pthread_mutexattr_getprotocol(
-      __attr,
-      __protocol,
-    );
-  }
-
-  late final _pthread_mutexattr_getprotocolPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getprotocol');
-  late final _pthread_mutexattr_getprotocol =
-      _pthread_mutexattr_getprotocolPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_mutexattr_setprotocol(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    int __protocol,
-  ) {
-    return _pthread_mutexattr_setprotocol(
-      __attr,
-      __protocol,
-    );
-  }
-
-  late final _pthread_mutexattr_setprotocolPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Int)>>('pthread_mutexattr_setprotocol');
-  late final _pthread_mutexattr_setprotocol = _pthread_mutexattr_setprotocolPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
-
-  int pthread_mutexattr_getprioceiling(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    ffi.Pointer<ffi.Int> __prioceiling,
-  ) {
-    return _pthread_mutexattr_getprioceiling(
-      __attr,
-      __prioceiling,
-    );
-  }
-
-  late final _pthread_mutexattr_getprioceilingPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getprioceiling');
-  late final _pthread_mutexattr_getprioceiling =
-      _pthread_mutexattr_getprioceilingPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_mutexattr_setprioceiling(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    int __prioceiling,
-  ) {
-    return _pthread_mutexattr_setprioceiling(
-      __attr,
-      __prioceiling,
-    );
-  }
-
-  late final _pthread_mutexattr_setprioceilingPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Int)>>('pthread_mutexattr_setprioceiling');
-  late final _pthread_mutexattr_setprioceiling =
-      _pthread_mutexattr_setprioceilingPtr
-          .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
-
-  int pthread_mutexattr_getrobust(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    ffi.Pointer<ffi.Int> __robustness,
-  ) {
-    return _pthread_mutexattr_getrobust(
-      __attr,
-      __robustness,
-    );
-  }
-
-  late final _pthread_mutexattr_getrobustPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getrobust');
-  late final _pthread_mutexattr_getrobust =
-      _pthread_mutexattr_getrobustPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_mutexattr_setrobust(
-    ffi.Pointer<pthread_mutexattr_t> __attr,
-    int __robustness,
-  ) {
-    return _pthread_mutexattr_setrobust(
-      __attr,
-      __robustness,
-    );
-  }
-
-  late final _pthread_mutexattr_setrobustPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
-              ffi.Int)>>('pthread_mutexattr_setrobust');
-  late final _pthread_mutexattr_setrobust = _pthread_mutexattr_setrobustPtr
-      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
-
-  int pthread_rwlock_init(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-    ffi.Pointer<pthread_rwlockattr_t> __attr,
-  ) {
-    return _pthread_rwlock_init(
-      __rwlock,
-      __attr,
-    );
-  }
-
-  late final _pthread_rwlock_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
-              ffi.Pointer<pthread_rwlockattr_t>)>>('pthread_rwlock_init');
-  late final _pthread_rwlock_init = _pthread_rwlock_initPtr.asFunction<
-      int Function(
-          ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<pthread_rwlockattr_t>)>();
-
-  int pthread_rwlock_destroy(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-  ) {
-    return _pthread_rwlock_destroy(
-      __rwlock,
-    );
-  }
-
-  late final _pthread_rwlock_destroyPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
-      'pthread_rwlock_destroy');
-  late final _pthread_rwlock_destroy = _pthread_rwlock_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
-
-  int pthread_rwlock_rdlock(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-  ) {
-    return _pthread_rwlock_rdlock(
-      __rwlock,
-    );
-  }
-
-  late final _pthread_rwlock_rdlockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
-      'pthread_rwlock_rdlock');
-  late final _pthread_rwlock_rdlock = _pthread_rwlock_rdlockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
-
-  int pthread_rwlock_tryrdlock(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-  ) {
-    return _pthread_rwlock_tryrdlock(
-      __rwlock,
-    );
-  }
-
-  late final _pthread_rwlock_tryrdlockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
-      'pthread_rwlock_tryrdlock');
-  late final _pthread_rwlock_tryrdlock = _pthread_rwlock_tryrdlockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
-
-  int pthread_rwlock_timedrdlock(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-    ffi.Pointer<timespec> __abstime,
-  ) {
-    return _pthread_rwlock_timedrdlock(
-      __rwlock,
-      __abstime,
-    );
-  }
-
-  late final _pthread_rwlock_timedrdlockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
-              ffi.Pointer<timespec>)>>('pthread_rwlock_timedrdlock');
-  late final _pthread_rwlock_timedrdlock =
-      _pthread_rwlock_timedrdlockPtr.asFunction<
-          int Function(ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>();
-
-  int pthread_rwlock_wrlock(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-  ) {
-    return _pthread_rwlock_wrlock(
-      __rwlock,
-    );
-  }
-
-  late final _pthread_rwlock_wrlockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
-      'pthread_rwlock_wrlock');
-  late final _pthread_rwlock_wrlock = _pthread_rwlock_wrlockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
-
-  int pthread_rwlock_trywrlock(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-  ) {
-    return _pthread_rwlock_trywrlock(
-      __rwlock,
-    );
-  }
-
-  late final _pthread_rwlock_trywrlockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
-      'pthread_rwlock_trywrlock');
-  late final _pthread_rwlock_trywrlock = _pthread_rwlock_trywrlockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
-
-  int pthread_rwlock_timedwrlock(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-    ffi.Pointer<timespec> __abstime,
-  ) {
-    return _pthread_rwlock_timedwrlock(
-      __rwlock,
-      __abstime,
-    );
-  }
-
-  late final _pthread_rwlock_timedwrlockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
-              ffi.Pointer<timespec>)>>('pthread_rwlock_timedwrlock');
-  late final _pthread_rwlock_timedwrlock =
-      _pthread_rwlock_timedwrlockPtr.asFunction<
-          int Function(ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>();
-
-  int pthread_rwlock_unlock(
-    ffi.Pointer<pthread_rwlock_t> __rwlock,
-  ) {
-    return _pthread_rwlock_unlock(
-      __rwlock,
-    );
-  }
-
-  late final _pthread_rwlock_unlockPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
-      'pthread_rwlock_unlock');
-  late final _pthread_rwlock_unlock = _pthread_rwlock_unlockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
-
-  int pthread_rwlockattr_init(
-    ffi.Pointer<pthread_rwlockattr_t> __attr,
-  ) {
-    return _pthread_rwlockattr_init(
-      __attr,
-    );
-  }
-
-  late final _pthread_rwlockattr_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_rwlockattr_t>)>>('pthread_rwlockattr_init');
-  late final _pthread_rwlockattr_init = _pthread_rwlockattr_initPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>)>();
-
-  int pthread_rwlockattr_destroy(
-    ffi.Pointer<pthread_rwlockattr_t> __attr,
-  ) {
-    return _pthread_rwlockattr_destroy(
-      __attr,
-    );
-  }
-
-  late final _pthread_rwlockattr_destroyPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>)>>(
-      'pthread_rwlockattr_destroy');
-  late final _pthread_rwlockattr_destroy = _pthread_rwlockattr_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>)>();
-
-  int pthread_rwlockattr_getpshared(
-    ffi.Pointer<pthread_rwlockattr_t> __attr,
-    ffi.Pointer<ffi.Int> __pshared,
-  ) {
-    return _pthread_rwlockattr_getpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_rwlockattr_getpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_rwlockattr_getpshared');
-  late final _pthread_rwlockattr_getpshared =
-      _pthread_rwlockattr_getpsharedPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_rwlockattr_setpshared(
-    ffi.Pointer<pthread_rwlockattr_t> __attr,
-    int __pshared,
-  ) {
-    return _pthread_rwlockattr_setpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_rwlockattr_setpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
-              ffi.Int)>>('pthread_rwlockattr_setpshared');
-  late final _pthread_rwlockattr_setpshared = _pthread_rwlockattr_setpsharedPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>, int)>();
-
-  int pthread_rwlockattr_getkind_np(
-    ffi.Pointer<pthread_rwlockattr_t> __attr,
-    ffi.Pointer<ffi.Int> __pref,
-  ) {
-    return _pthread_rwlockattr_getkind_np(
-      __attr,
-      __pref,
-    );
-  }
-
-  late final _pthread_rwlockattr_getkind_npPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_rwlockattr_getkind_np');
-  late final _pthread_rwlockattr_getkind_np =
-      _pthread_rwlockattr_getkind_npPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_rwlockattr_setkind_np(
-    ffi.Pointer<pthread_rwlockattr_t> __attr,
-    int __pref,
-  ) {
-    return _pthread_rwlockattr_setkind_np(
-      __attr,
-      __pref,
-    );
-  }
-
-  late final _pthread_rwlockattr_setkind_npPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
-              ffi.Int)>>('pthread_rwlockattr_setkind_np');
-  late final _pthread_rwlockattr_setkind_np = _pthread_rwlockattr_setkind_npPtr
-      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>, int)>();
-
-  int pthread_cond_init(
-    ffi.Pointer<pthread_cond_t> __cond,
-    ffi.Pointer<pthread_condattr_t> __cond_attr,
-  ) {
-    return _pthread_cond_init(
-      __cond,
-      __cond_attr,
-    );
-  }
-
-  late final _pthread_cond_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_cond_t>,
-              ffi.Pointer<pthread_condattr_t>)>>('pthread_cond_init');
-  late final _pthread_cond_init = _pthread_cond_initPtr.asFunction<
-      int Function(
-          ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_condattr_t>)>();
-
-  int pthread_cond_destroy(
-    ffi.Pointer<pthread_cond_t> __cond,
-  ) {
-    return _pthread_cond_destroy(
-      __cond,
-    );
-  }
-
-  late final _pthread_cond_destroyPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>(
-      'pthread_cond_destroy');
-  late final _pthread_cond_destroy = _pthread_cond_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_cond_t>)>();
-
-  int pthread_cond_signal(
-    ffi.Pointer<pthread_cond_t> __cond,
-  ) {
-    return _pthread_cond_signal(
-      __cond,
-    );
-  }
-
-  late final _pthread_cond_signalPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>(
-      'pthread_cond_signal');
-  late final _pthread_cond_signal = _pthread_cond_signalPtr
-      .asFunction<int Function(ffi.Pointer<pthread_cond_t>)>();
-
-  int pthread_cond_broadcast(
-    ffi.Pointer<pthread_cond_t> __cond,
-  ) {
-    return _pthread_cond_broadcast(
-      __cond,
-    );
-  }
-
-  late final _pthread_cond_broadcastPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>(
-      'pthread_cond_broadcast');
-  late final _pthread_cond_broadcast = _pthread_cond_broadcastPtr
-      .asFunction<int Function(ffi.Pointer<pthread_cond_t>)>();
-
-  int pthread_cond_wait(
-    ffi.Pointer<pthread_cond_t> __cond,
-    ffi.Pointer<pthread_mutex_t> __mutex,
-  ) {
-    return _pthread_cond_wait(
-      __cond,
-      __mutex,
-    );
-  }
-
-  late final _pthread_cond_waitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_cond_t>,
-              ffi.Pointer<pthread_mutex_t>)>>('pthread_cond_wait');
-  late final _pthread_cond_wait = _pthread_cond_waitPtr.asFunction<
-      int Function(
-          ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_mutex_t>)>();
-
-  int pthread_cond_timedwait(
-    ffi.Pointer<pthread_cond_t> __cond,
-    ffi.Pointer<pthread_mutex_t> __mutex,
-    ffi.Pointer<timespec> __abstime,
-  ) {
-    return _pthread_cond_timedwait(
-      __cond,
-      __mutex,
-      __abstime,
-    );
-  }
-
-  late final _pthread_cond_timedwaitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_cond_t>,
-              ffi.Pointer<pthread_mutex_t>,
-              ffi.Pointer<timespec>)>>('pthread_cond_timedwait');
-  late final _pthread_cond_timedwait = _pthread_cond_timedwaitPtr.asFunction<
-      int Function(ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_mutex_t>,
-          ffi.Pointer<timespec>)>();
-
-  int pthread_condattr_init(
-    ffi.Pointer<pthread_condattr_t> __attr,
-  ) {
-    return _pthread_condattr_init(
-      __attr,
-    );
-  }
-
-  late final _pthread_condattr_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_condattr_t>)>>('pthread_condattr_init');
-  late final _pthread_condattr_init = _pthread_condattr_initPtr
-      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>)>();
-
-  int pthread_condattr_destroy(
-    ffi.Pointer<pthread_condattr_t> __attr,
-  ) {
-    return _pthread_condattr_destroy(
-      __attr,
-    );
-  }
-
-  late final _pthread_condattr_destroyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_condattr_t>)>>('pthread_condattr_destroy');
-  late final _pthread_condattr_destroy = _pthread_condattr_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>)>();
-
-  int pthread_condattr_getpshared(
-    ffi.Pointer<pthread_condattr_t> __attr,
-    ffi.Pointer<ffi.Int> __pshared,
-  ) {
-    return _pthread_condattr_getpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_condattr_getpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_condattr_getpshared');
-  late final _pthread_condattr_getpshared =
-      _pthread_condattr_getpsharedPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_condattr_setpshared(
-    ffi.Pointer<pthread_condattr_t> __attr,
-    int __pshared,
-  ) {
-    return _pthread_condattr_setpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_condattr_setpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
-              ffi.Int)>>('pthread_condattr_setpshared');
-  late final _pthread_condattr_setpshared = _pthread_condattr_setpsharedPtr
-      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>, int)>();
-
-  int pthread_condattr_getclock(
-    ffi.Pointer<pthread_condattr_t> __attr,
-    ffi.Pointer<ffi.Int> __clock_id,
-  ) {
-    return _pthread_condattr_getclock(
-      __attr,
-      __clock_id,
-    );
-  }
-
-  late final _pthread_condattr_getclockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_condattr_getclock');
-  late final _pthread_condattr_getclock =
-      _pthread_condattr_getclockPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_condattr_setclock(
-    ffi.Pointer<pthread_condattr_t> __attr,
-    int __clock_id,
-  ) {
-    return _pthread_condattr_setclock(
-      __attr,
-      __clock_id,
-    );
-  }
-
-  late final _pthread_condattr_setclockPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
-              ffi.Int)>>('pthread_condattr_setclock');
-  late final _pthread_condattr_setclock = _pthread_condattr_setclockPtr
-      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>, int)>();
-
-  int pthread_barrier_init(
-    ffi.Pointer<pthread_barrier_t> __barrier,
-    ffi.Pointer<pthread_barrierattr_t> __attr,
-    int __count,
-  ) {
-    return _pthread_barrier_init(
-      __barrier,
-      __attr,
-      __count,
-    );
-  }
-
-  late final _pthread_barrier_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_barrier_t>,
-              ffi.Pointer<pthread_barrierattr_t>,
-              ffi.UnsignedInt)>>('pthread_barrier_init');
-  late final _pthread_barrier_init = _pthread_barrier_initPtr.asFunction<
-      int Function(ffi.Pointer<pthread_barrier_t>,
-          ffi.Pointer<pthread_barrierattr_t>, int)>();
-
-  int pthread_barrier_destroy(
-    ffi.Pointer<pthread_barrier_t> __barrier,
-  ) {
-    return _pthread_barrier_destroy(
-      __barrier,
-    );
-  }
-
-  late final _pthread_barrier_destroyPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>(
-      'pthread_barrier_destroy');
-  late final _pthread_barrier_destroy = _pthread_barrier_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_barrier_t>)>();
-
-  int pthread_barrier_wait(
-    ffi.Pointer<pthread_barrier_t> __barrier,
-  ) {
-    return _pthread_barrier_wait(
-      __barrier,
-    );
-  }
-
-  late final _pthread_barrier_waitPtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>(
-      'pthread_barrier_wait');
-  late final _pthread_barrier_wait = _pthread_barrier_waitPtr
-      .asFunction<int Function(ffi.Pointer<pthread_barrier_t>)>();
-
-  int pthread_barrierattr_init(
-    ffi.Pointer<pthread_barrierattr_t> __attr,
-  ) {
-    return _pthread_barrierattr_init(
-      __attr,
-    );
-  }
-
-  late final _pthread_barrierattr_initPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_barrierattr_t>)>>('pthread_barrierattr_init');
-  late final _pthread_barrierattr_init = _pthread_barrierattr_initPtr
-      .asFunction<int Function(ffi.Pointer<pthread_barrierattr_t>)>();
-
-  int pthread_barrierattr_destroy(
-    ffi.Pointer<pthread_barrierattr_t> __attr,
-  ) {
-    return _pthread_barrierattr_destroy(
-      __attr,
-    );
-  }
-
-  late final _pthread_barrierattr_destroyPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>)>>(
-      'pthread_barrierattr_destroy');
-  late final _pthread_barrierattr_destroy = _pthread_barrierattr_destroyPtr
-      .asFunction<int Function(ffi.Pointer<pthread_barrierattr_t>)>();
-
-  int pthread_barrierattr_getpshared(
-    ffi.Pointer<pthread_barrierattr_t> __attr,
-    ffi.Pointer<ffi.Int> __pshared,
-  ) {
-    return _pthread_barrierattr_getpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_barrierattr_getpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>,
-              ffi.Pointer<ffi.Int>)>>('pthread_barrierattr_getpshared');
-  late final _pthread_barrierattr_getpshared =
-      _pthread_barrierattr_getpsharedPtr.asFunction<
-          int Function(
-              ffi.Pointer<pthread_barrierattr_t>, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_barrierattr_setpshared(
-    ffi.Pointer<pthread_barrierattr_t> __attr,
-    int __pshared,
-  ) {
-    return _pthread_barrierattr_setpshared(
-      __attr,
-      __pshared,
-    );
-  }
-
-  late final _pthread_barrierattr_setpsharedPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>,
-              ffi.Int)>>('pthread_barrierattr_setpshared');
-  late final _pthread_barrierattr_setpshared =
-      _pthread_barrierattr_setpsharedPtr
-          .asFunction<int Function(ffi.Pointer<pthread_barrierattr_t>, int)>();
-
-  int pthread_key_create(
-    ffi.Pointer<pthread_key_t> __key,
-    ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>
-        __destr_function,
-  ) {
-    return _pthread_key_create(
-      __key,
-      __destr_function,
-    );
-  }
-
-  late final _pthread_key_createPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_key_t>,
-              ffi.Pointer<
-                  ffi.NativeFunction<
-                      ffi.Void Function(
-                          ffi.Pointer<ffi.Void>)>>)>>('pthread_key_create');
-  late final _pthread_key_create = _pthread_key_createPtr.asFunction<
-      int Function(
-          ffi.Pointer<pthread_key_t>,
-          ffi.Pointer<
-              ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>)>();
-
-  int pthread_key_delete(
-    int __key,
-  ) {
-    return _pthread_key_delete(
-      __key,
-    );
-  }
-
-  late final _pthread_key_deletePtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_key_t)>>(
-          'pthread_key_delete');
-  late final _pthread_key_delete =
-      _pthread_key_deletePtr.asFunction<int Function(int)>();
-
-  ffi.Pointer<ffi.Void> pthread_getspecific(
-    int __key,
-  ) {
-    return _pthread_getspecific(
-      __key,
-    );
-  }
-
-  late final _pthread_getspecificPtr = _lookup<
-          ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(pthread_key_t)>>(
-      'pthread_getspecific');
-  late final _pthread_getspecific =
-      _pthread_getspecificPtr.asFunction<ffi.Pointer<ffi.Void> Function(int)>();
-
-  int pthread_setspecific(
-    int __key,
-    ffi.Pointer<ffi.Void> __pointer,
-  ) {
-    return _pthread_setspecific(
-      __key,
-      __pointer,
-    );
-  }
-
-  late final _pthread_setspecificPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              pthread_key_t, ffi.Pointer<ffi.Void>)>>('pthread_setspecific');
-  late final _pthread_setspecific = _pthread_setspecificPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Void>)>();
-
-  int pthread_getcpuclockid(
-    int __thread_id,
-    ffi.Pointer<ffi.Int> __clock_id,
-  ) {
-    return _pthread_getcpuclockid(
-      __thread_id,
-      __clock_id,
-    );
-  }
-
-  late final _pthread_getcpuclockidPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              pthread_t, ffi.Pointer<ffi.Int>)>>('pthread_getcpuclockid');
-  late final _pthread_getcpuclockid = _pthread_getcpuclockidPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Int>)>();
-
-  int pthread_atfork(
-    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __prepare,
-    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __parent,
-    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __child,
-  ) {
-    return _pthread_atfork(
-      __prepare,
-      __parent,
-      __child,
-    );
-  }
-
-  late final _pthread_atforkPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>(
-      'pthread_atfork');
-  late final _pthread_atfork = _pthread_atforkPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
-          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
-          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
 
   ffi.Pointer<ffi.Void> memcpy(
     ffi.Pointer<ffi.Void> __dest,
@@ -6448,6 +4725,1737 @@ class TransportBindings {
   late final _slab_arena_mprotect = _slab_arena_mprotectPtr
       .asFunction<void Function(ffi.Pointer<slab_arena>)>();
 
+  int sched_setparam(
+    int __pid,
+    ffi.Pointer<sched_param> __param,
+  ) {
+    return _sched_setparam(
+      __pid,
+      __param,
+    );
+  }
+
+  late final _sched_setparamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Int, ffi.Pointer<sched_param>)>>('sched_setparam');
+  late final _sched_setparam = _sched_setparamPtr
+      .asFunction<int Function(int, ffi.Pointer<sched_param>)>();
+
+  int sched_getparam(
+    int __pid,
+    ffi.Pointer<sched_param> __param,
+  ) {
+    return _sched_getparam(
+      __pid,
+      __param,
+    );
+  }
+
+  late final _sched_getparamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Int, ffi.Pointer<sched_param>)>>('sched_getparam');
+  late final _sched_getparam = _sched_getparamPtr
+      .asFunction<int Function(int, ffi.Pointer<sched_param>)>();
+
+  int sched_setscheduler(
+    int __pid,
+    int __policy,
+    ffi.Pointer<sched_param> __param,
+  ) {
+    return _sched_setscheduler(
+      __pid,
+      __policy,
+      __param,
+    );
+  }
+
+  late final _sched_setschedulerPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Int, ffi.Int,
+              ffi.Pointer<sched_param>)>>('sched_setscheduler');
+  late final _sched_setscheduler = _sched_setschedulerPtr
+      .asFunction<int Function(int, int, ffi.Pointer<sched_param>)>();
+
+  int sched_getscheduler(
+    int __pid,
+  ) {
+    return _sched_getscheduler(
+      __pid,
+    );
+  }
+
+  late final _sched_getschedulerPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
+          'sched_getscheduler');
+  late final _sched_getscheduler =
+      _sched_getschedulerPtr.asFunction<int Function(int)>();
+
+  int sched_yield() {
+    return _sched_yield();
+  }
+
+  late final _sched_yieldPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function()>>('sched_yield');
+  late final _sched_yield = _sched_yieldPtr.asFunction<int Function()>();
+
+  int sched_get_priority_max(
+    int __algorithm,
+  ) {
+    return _sched_get_priority_max(
+      __algorithm,
+    );
+  }
+
+  late final _sched_get_priority_maxPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
+          'sched_get_priority_max');
+  late final _sched_get_priority_max =
+      _sched_get_priority_maxPtr.asFunction<int Function(int)>();
+
+  int sched_get_priority_min(
+    int __algorithm,
+  ) {
+    return _sched_get_priority_min(
+      __algorithm,
+    );
+  }
+
+  late final _sched_get_priority_minPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
+          'sched_get_priority_min');
+  late final _sched_get_priority_min =
+      _sched_get_priority_minPtr.asFunction<int Function(int)>();
+
+  int sched_rr_get_interval(
+    int __pid,
+    ffi.Pointer<timespec> __t,
+  ) {
+    return _sched_rr_get_interval(
+      __pid,
+      __t,
+    );
+  }
+
+  late final _sched_rr_get_intervalPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<timespec>)>>(
+      'sched_rr_get_interval');
+  late final _sched_rr_get_interval = _sched_rr_get_intervalPtr
+      .asFunction<int Function(int, ffi.Pointer<timespec>)>();
+
+  int pthread_create(
+    ffi.Pointer<pthread_t> __newthread,
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<
+            ffi.NativeFunction<
+                ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>
+        __start_routine,
+    ffi.Pointer<ffi.Void> __arg,
+  ) {
+    return _pthread_create(
+      __newthread,
+      __attr,
+      __start_routine,
+      __arg,
+    );
+  }
+
+  late final _pthread_createPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_t>,
+              ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<
+                  ffi.NativeFunction<
+                      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>,
+              ffi.Pointer<ffi.Void>)>>('pthread_create');
+  late final _pthread_create = _pthread_createPtr.asFunction<
+      int Function(
+          ffi.Pointer<pthread_t>,
+          ffi.Pointer<pthread_attr_t>,
+          ffi.Pointer<
+              ffi.NativeFunction<
+                  ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>,
+          ffi.Pointer<ffi.Void>)>();
+
+  void pthread_exit(
+    ffi.Pointer<ffi.Void> __retval,
+  ) {
+    return _pthread_exit(
+      __retval,
+    );
+  }
+
+  late final _pthread_exitPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+          'pthread_exit');
+  late final _pthread_exit =
+      _pthread_exitPtr.asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  int pthread_join(
+    int __th,
+    ffi.Pointer<ffi.Pointer<ffi.Void>> __thread_return,
+  ) {
+    return _pthread_join(
+      __th,
+      __thread_return,
+    );
+  }
+
+  late final _pthread_joinPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              pthread_t, ffi.Pointer<ffi.Pointer<ffi.Void>>)>>('pthread_join');
+  late final _pthread_join = _pthread_joinPtr
+      .asFunction<int Function(int, ffi.Pointer<ffi.Pointer<ffi.Void>>)>();
+
+  int pthread_detach(
+    int __th,
+  ) {
+    return _pthread_detach(
+      __th,
+    );
+  }
+
+  late final _pthread_detachPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t)>>(
+          'pthread_detach');
+  late final _pthread_detach =
+      _pthread_detachPtr.asFunction<int Function(int)>();
+
+  int pthread_self() {
+    return _pthread_self();
+  }
+
+  late final _pthread_selfPtr =
+      _lookup<ffi.NativeFunction<pthread_t Function()>>('pthread_self');
+  late final _pthread_self = _pthread_selfPtr.asFunction<int Function()>();
+
+  int pthread_equal(
+    int __thread1,
+    int __thread2,
+  ) {
+    return _pthread_equal(
+      __thread1,
+      __thread2,
+    );
+  }
+
+  late final _pthread_equalPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t, pthread_t)>>(
+          'pthread_equal');
+  late final _pthread_equal =
+      _pthread_equalPtr.asFunction<int Function(int, int)>();
+
+  int pthread_attr_init(
+    ffi.Pointer<pthread_attr_t> __attr,
+  ) {
+    return _pthread_attr_init(
+      __attr,
+    );
+  }
+
+  late final _pthread_attr_initPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>(
+      'pthread_attr_init');
+  late final _pthread_attr_init = _pthread_attr_initPtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>)>();
+
+  int pthread_attr_destroy(
+    ffi.Pointer<pthread_attr_t> __attr,
+  ) {
+    return _pthread_attr_destroy(
+      __attr,
+    );
+  }
+
+  late final _pthread_attr_destroyPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>(
+      'pthread_attr_destroy');
+  late final _pthread_attr_destroy = _pthread_attr_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>)>();
+
+  int pthread_attr_getdetachstate(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Int> __detachstate,
+  ) {
+    return _pthread_attr_getdetachstate(
+      __attr,
+      __detachstate,
+    );
+  }
+
+  late final _pthread_attr_getdetachstatePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_attr_getdetachstate');
+  late final _pthread_attr_getdetachstate =
+      _pthread_attr_getdetachstatePtr.asFunction<
+          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_attr_setdetachstate(
+    ffi.Pointer<pthread_attr_t> __attr,
+    int __detachstate,
+  ) {
+    return _pthread_attr_setdetachstate(
+      __attr,
+      __detachstate,
+    );
+  }
+
+  late final _pthread_attr_setdetachstatePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Int)>>('pthread_attr_setdetachstate');
+  late final _pthread_attr_setdetachstate = _pthread_attr_setdetachstatePtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
+
+  int pthread_attr_getguardsize(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Size> __guardsize,
+  ) {
+    return _pthread_attr_getguardsize(
+      __attr,
+      __guardsize,
+    );
+  }
+
+  late final _pthread_attr_getguardsizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Size>)>>('pthread_attr_getguardsize');
+  late final _pthread_attr_getguardsize =
+      _pthread_attr_getguardsizePtr.asFunction<
+          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>();
+
+  int pthread_attr_setguardsize(
+    ffi.Pointer<pthread_attr_t> __attr,
+    int __guardsize,
+  ) {
+    return _pthread_attr_setguardsize(
+      __attr,
+      __guardsize,
+    );
+  }
+
+  late final _pthread_attr_setguardsizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Size)>>('pthread_attr_setguardsize');
+  late final _pthread_attr_setguardsize = _pthread_attr_setguardsizePtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
+
+  int pthread_attr_getschedparam(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<sched_param> __param,
+  ) {
+    return _pthread_attr_getschedparam(
+      __attr,
+      __param,
+    );
+  }
+
+  late final _pthread_attr_getschedparamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<sched_param>)>>('pthread_attr_getschedparam');
+  late final _pthread_attr_getschedparam =
+      _pthread_attr_getschedparamPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>();
+
+  int pthread_attr_setschedparam(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<sched_param> __param,
+  ) {
+    return _pthread_attr_setschedparam(
+      __attr,
+      __param,
+    );
+  }
+
+  late final _pthread_attr_setschedparamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<sched_param>)>>('pthread_attr_setschedparam');
+  late final _pthread_attr_setschedparam =
+      _pthread_attr_setschedparamPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>();
+
+  int pthread_attr_getschedpolicy(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Int> __policy,
+  ) {
+    return _pthread_attr_getschedpolicy(
+      __attr,
+      __policy,
+    );
+  }
+
+  late final _pthread_attr_getschedpolicyPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_attr_getschedpolicy');
+  late final _pthread_attr_getschedpolicy =
+      _pthread_attr_getschedpolicyPtr.asFunction<
+          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_attr_setschedpolicy(
+    ffi.Pointer<pthread_attr_t> __attr,
+    int __policy,
+  ) {
+    return _pthread_attr_setschedpolicy(
+      __attr,
+      __policy,
+    );
+  }
+
+  late final _pthread_attr_setschedpolicyPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Int)>>('pthread_attr_setschedpolicy');
+  late final _pthread_attr_setschedpolicy = _pthread_attr_setschedpolicyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
+
+  int pthread_attr_getinheritsched(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Int> __inherit,
+  ) {
+    return _pthread_attr_getinheritsched(
+      __attr,
+      __inherit,
+    );
+  }
+
+  late final _pthread_attr_getinheritschedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_attr_getinheritsched');
+  late final _pthread_attr_getinheritsched =
+      _pthread_attr_getinheritschedPtr.asFunction<
+          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_attr_setinheritsched(
+    ffi.Pointer<pthread_attr_t> __attr,
+    int __inherit,
+  ) {
+    return _pthread_attr_setinheritsched(
+      __attr,
+      __inherit,
+    );
+  }
+
+  late final _pthread_attr_setinheritschedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Int)>>('pthread_attr_setinheritsched');
+  late final _pthread_attr_setinheritsched = _pthread_attr_setinheritschedPtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
+
+  int pthread_attr_getscope(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Int> __scope,
+  ) {
+    return _pthread_attr_getscope(
+      __attr,
+      __scope,
+    );
+  }
+
+  late final _pthread_attr_getscopePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_attr_getscope');
+  late final _pthread_attr_getscope = _pthread_attr_getscopePtr.asFunction<
+      int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_attr_setscope(
+    ffi.Pointer<pthread_attr_t> __attr,
+    int __scope,
+  ) {
+    return _pthread_attr_setscope(
+      __attr,
+      __scope,
+    );
+  }
+
+  late final _pthread_attr_setscopePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_attr_t>, ffi.Int)>>('pthread_attr_setscope');
+  late final _pthread_attr_setscope = _pthread_attr_setscopePtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
+
+  int pthread_attr_getstackaddr(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Pointer<ffi.Void>> __stackaddr,
+  ) {
+    return _pthread_attr_getstackaddr(
+      __attr,
+      __stackaddr,
+    );
+  }
+
+  late final _pthread_attr_getstackaddrPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+                  ffi.Pointer<ffi.Pointer<ffi.Void>>)>>(
+      'pthread_attr_getstackaddr');
+  late final _pthread_attr_getstackaddr =
+      _pthread_attr_getstackaddrPtr.asFunction<
+          int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Pointer<ffi.Void>>)>();
+
+  int pthread_attr_setstackaddr(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Void> __stackaddr,
+  ) {
+    return _pthread_attr_setstackaddr(
+      __attr,
+      __stackaddr,
+    );
+  }
+
+  late final _pthread_attr_setstackaddrPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Void>)>>('pthread_attr_setstackaddr');
+  late final _pthread_attr_setstackaddr =
+      _pthread_attr_setstackaddrPtr.asFunction<
+          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>)>();
+
+  int pthread_attr_getstacksize(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Size> __stacksize,
+  ) {
+    return _pthread_attr_getstacksize(
+      __attr,
+      __stacksize,
+    );
+  }
+
+  late final _pthread_attr_getstacksizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Size>)>>('pthread_attr_getstacksize');
+  late final _pthread_attr_getstacksize =
+      _pthread_attr_getstacksizePtr.asFunction<
+          int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>();
+
+  int pthread_attr_setstacksize(
+    ffi.Pointer<pthread_attr_t> __attr,
+    int __stacksize,
+  ) {
+    return _pthread_attr_setstacksize(
+      __attr,
+      __stacksize,
+    );
+  }
+
+  late final _pthread_attr_setstacksizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+              ffi.Size)>>('pthread_attr_setstacksize');
+  late final _pthread_attr_setstacksize = _pthread_attr_setstacksizePtr
+      .asFunction<int Function(ffi.Pointer<pthread_attr_t>, int)>();
+
+  int pthread_attr_getstack(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Pointer<ffi.Void>> __stackaddr,
+    ffi.Pointer<ffi.Size> __stacksize,
+  ) {
+    return _pthread_attr_getstack(
+      __attr,
+      __stackaddr,
+      __stacksize,
+    );
+  }
+
+  late final _pthread_attr_getstackPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Pointer<ffi.Void>>,
+              ffi.Pointer<ffi.Size>)>>('pthread_attr_getstack');
+  late final _pthread_attr_getstack = _pthread_attr_getstackPtr.asFunction<
+      int Function(ffi.Pointer<pthread_attr_t>,
+          ffi.Pointer<ffi.Pointer<ffi.Void>>, ffi.Pointer<ffi.Size>)>();
+
+  int pthread_attr_setstack(
+    ffi.Pointer<pthread_attr_t> __attr,
+    ffi.Pointer<ffi.Void> __stackaddr,
+    int __stacksize,
+  ) {
+    return _pthread_attr_setstack(
+      __attr,
+      __stackaddr,
+      __stacksize,
+    );
+  }
+
+  late final _pthread_attr_setstackPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>,
+              ffi.Size)>>('pthread_attr_setstack');
+  late final _pthread_attr_setstack = _pthread_attr_setstackPtr.asFunction<
+      int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>, int)>();
+
+  int pthread_setschedparam(
+    int __target_thread,
+    int __policy,
+    ffi.Pointer<sched_param> __param,
+  ) {
+    return _pthread_setschedparam(
+      __target_thread,
+      __policy,
+      __param,
+    );
+  }
+
+  late final _pthread_setschedparamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(pthread_t, ffi.Int,
+              ffi.Pointer<sched_param>)>>('pthread_setschedparam');
+  late final _pthread_setschedparam = _pthread_setschedparamPtr
+      .asFunction<int Function(int, int, ffi.Pointer<sched_param>)>();
+
+  int pthread_getschedparam(
+    int __target_thread,
+    ffi.Pointer<ffi.Int> __policy,
+    ffi.Pointer<sched_param> __param,
+  ) {
+    return _pthread_getschedparam(
+      __target_thread,
+      __policy,
+      __param,
+    );
+  }
+
+  late final _pthread_getschedparamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(pthread_t, ffi.Pointer<ffi.Int>,
+              ffi.Pointer<sched_param>)>>('pthread_getschedparam');
+  late final _pthread_getschedparam = _pthread_getschedparamPtr.asFunction<
+      int Function(int, ffi.Pointer<ffi.Int>, ffi.Pointer<sched_param>)>();
+
+  int pthread_setschedprio(
+    int __target_thread,
+    int __prio,
+  ) {
+    return _pthread_setschedprio(
+      __target_thread,
+      __prio,
+    );
+  }
+
+  late final _pthread_setschedprioPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t, ffi.Int)>>(
+          'pthread_setschedprio');
+  late final _pthread_setschedprio =
+      _pthread_setschedprioPtr.asFunction<int Function(int, int)>();
+
+  int pthread_once(
+    ffi.Pointer<pthread_once_t> __once_control,
+    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __init_routine,
+  ) {
+    return _pthread_once(
+      __once_control,
+      __init_routine,
+    );
+  }
+
+  late final _pthread_oncePtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_once_t>,
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>(
+      'pthread_once');
+  late final _pthread_once = _pthread_oncePtr.asFunction<
+      int Function(ffi.Pointer<pthread_once_t>,
+          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
+
+  int pthread_setcancelstate(
+    int __state,
+    ffi.Pointer<ffi.Int> __oldstate,
+  ) {
+    return _pthread_setcancelstate(
+      __state,
+      __oldstate,
+    );
+  }
+
+  late final _pthread_setcancelstatePtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>(
+      'pthread_setcancelstate');
+  late final _pthread_setcancelstate = _pthread_setcancelstatePtr
+      .asFunction<int Function(int, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_setcanceltype(
+    int __type,
+    ffi.Pointer<ffi.Int> __oldtype,
+  ) {
+    return _pthread_setcanceltype(
+      __type,
+      __oldtype,
+    );
+  }
+
+  late final _pthread_setcanceltypePtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>(
+      'pthread_setcanceltype');
+  late final _pthread_setcanceltype = _pthread_setcanceltypePtr
+      .asFunction<int Function(int, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_cancel(
+    int __th,
+  ) {
+    return _pthread_cancel(
+      __th,
+    );
+  }
+
+  late final _pthread_cancelPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_t)>>(
+          'pthread_cancel');
+  late final _pthread_cancel =
+      _pthread_cancelPtr.asFunction<int Function(int)>();
+
+  void pthread_testcancel() {
+    return _pthread_testcancel();
+  }
+
+  late final _pthread_testcancelPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('pthread_testcancel');
+  late final _pthread_testcancel =
+      _pthread_testcancelPtr.asFunction<void Function()>();
+
+  int pthread_mutex_init(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+    ffi.Pointer<pthread_mutexattr_t> __mutexattr,
+  ) {
+    return _pthread_mutex_init(
+      __mutex,
+      __mutexattr,
+    );
+  }
+
+  late final _pthread_mutex_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
+              ffi.Pointer<pthread_mutexattr_t>)>>('pthread_mutex_init');
+  late final _pthread_mutex_init = _pthread_mutex_initPtr.asFunction<
+      int Function(
+          ffi.Pointer<pthread_mutex_t>, ffi.Pointer<pthread_mutexattr_t>)>();
+
+  int pthread_mutex_destroy(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+  ) {
+    return _pthread_mutex_destroy(
+      __mutex,
+    );
+  }
+
+  late final _pthread_mutex_destroyPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
+      'pthread_mutex_destroy');
+  late final _pthread_mutex_destroy = _pthread_mutex_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
+
+  int pthread_mutex_trylock(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+  ) {
+    return _pthread_mutex_trylock(
+      __mutex,
+    );
+  }
+
+  late final _pthread_mutex_trylockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
+      'pthread_mutex_trylock');
+  late final _pthread_mutex_trylock = _pthread_mutex_trylockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
+
+  int pthread_mutex_lock(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+  ) {
+    return _pthread_mutex_lock(
+      __mutex,
+    );
+  }
+
+  late final _pthread_mutex_lockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
+      'pthread_mutex_lock');
+  late final _pthread_mutex_lock = _pthread_mutex_lockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
+
+  int pthread_mutex_timedlock(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+    ffi.Pointer<timespec> __abstime,
+  ) {
+    return _pthread_mutex_timedlock(
+      __mutex,
+      __abstime,
+    );
+  }
+
+  late final _pthread_mutex_timedlockPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
+              ffi.Pointer<timespec>)>>('pthread_mutex_timedlock');
+  late final _pthread_mutex_timedlock = _pthread_mutex_timedlockPtr.asFunction<
+      int Function(ffi.Pointer<pthread_mutex_t>, ffi.Pointer<timespec>)>();
+
+  int pthread_mutex_unlock(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+  ) {
+    return _pthread_mutex_unlock(
+      __mutex,
+    );
+  }
+
+  late final _pthread_mutex_unlockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
+      'pthread_mutex_unlock');
+  late final _pthread_mutex_unlock = _pthread_mutex_unlockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
+
+  int pthread_mutex_getprioceiling(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+    ffi.Pointer<ffi.Int> __prioceiling,
+  ) {
+    return _pthread_mutex_getprioceiling(
+      __mutex,
+      __prioceiling,
+    );
+  }
+
+  late final _pthread_mutex_getprioceilingPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_mutex_getprioceiling');
+  late final _pthread_mutex_getprioceiling =
+      _pthread_mutex_getprioceilingPtr.asFunction<
+          int Function(ffi.Pointer<pthread_mutex_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_mutex_setprioceiling(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+    int __prioceiling,
+    ffi.Pointer<ffi.Int> __old_ceiling,
+  ) {
+    return _pthread_mutex_setprioceiling(
+      __mutex,
+      __prioceiling,
+      __old_ceiling,
+    );
+  }
+
+  late final _pthread_mutex_setprioceilingPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutex_t>, ffi.Int,
+              ffi.Pointer<ffi.Int>)>>('pthread_mutex_setprioceiling');
+  late final _pthread_mutex_setprioceiling =
+      _pthread_mutex_setprioceilingPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_mutex_t>, int, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_mutex_consistent(
+    ffi.Pointer<pthread_mutex_t> __mutex,
+  ) {
+    return _pthread_mutex_consistent(
+      __mutex,
+    );
+  }
+
+  late final _pthread_mutex_consistentPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>(
+      'pthread_mutex_consistent');
+  late final _pthread_mutex_consistent = _pthread_mutex_consistentPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutex_t>)>();
+
+  int pthread_mutexattr_init(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+  ) {
+    return _pthread_mutexattr_init(
+      __attr,
+    );
+  }
+
+  late final _pthread_mutexattr_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_mutexattr_t>)>>('pthread_mutexattr_init');
+  late final _pthread_mutexattr_init = _pthread_mutexattr_initPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>)>();
+
+  int pthread_mutexattr_destroy(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+  ) {
+    return _pthread_mutexattr_destroy(
+      __attr,
+    );
+  }
+
+  late final _pthread_mutexattr_destroyPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_mutexattr_t>)>>('pthread_mutexattr_destroy');
+  late final _pthread_mutexattr_destroy = _pthread_mutexattr_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>)>();
+
+  int pthread_mutexattr_getpshared(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    ffi.Pointer<ffi.Int> __pshared,
+  ) {
+    return _pthread_mutexattr_getpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_mutexattr_getpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getpshared');
+  late final _pthread_mutexattr_getpshared =
+      _pthread_mutexattr_getpsharedPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_mutexattr_setpshared(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    int __pshared,
+  ) {
+    return _pthread_mutexattr_setpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_mutexattr_setpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Int)>>('pthread_mutexattr_setpshared');
+  late final _pthread_mutexattr_setpshared = _pthread_mutexattr_setpsharedPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
+
+  int pthread_mutexattr_gettype(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    ffi.Pointer<ffi.Int> __kind,
+  ) {
+    return _pthread_mutexattr_gettype(
+      __attr,
+      __kind,
+    );
+  }
+
+  late final _pthread_mutexattr_gettypePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_gettype');
+  late final _pthread_mutexattr_gettype =
+      _pthread_mutexattr_gettypePtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_mutexattr_settype(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    int __kind,
+  ) {
+    return _pthread_mutexattr_settype(
+      __attr,
+      __kind,
+    );
+  }
+
+  late final _pthread_mutexattr_settypePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Int)>>('pthread_mutexattr_settype');
+  late final _pthread_mutexattr_settype = _pthread_mutexattr_settypePtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
+
+  int pthread_mutexattr_getprotocol(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    ffi.Pointer<ffi.Int> __protocol,
+  ) {
+    return _pthread_mutexattr_getprotocol(
+      __attr,
+      __protocol,
+    );
+  }
+
+  late final _pthread_mutexattr_getprotocolPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getprotocol');
+  late final _pthread_mutexattr_getprotocol =
+      _pthread_mutexattr_getprotocolPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_mutexattr_setprotocol(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    int __protocol,
+  ) {
+    return _pthread_mutexattr_setprotocol(
+      __attr,
+      __protocol,
+    );
+  }
+
+  late final _pthread_mutexattr_setprotocolPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Int)>>('pthread_mutexattr_setprotocol');
+  late final _pthread_mutexattr_setprotocol = _pthread_mutexattr_setprotocolPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
+
+  int pthread_mutexattr_getprioceiling(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    ffi.Pointer<ffi.Int> __prioceiling,
+  ) {
+    return _pthread_mutexattr_getprioceiling(
+      __attr,
+      __prioceiling,
+    );
+  }
+
+  late final _pthread_mutexattr_getprioceilingPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getprioceiling');
+  late final _pthread_mutexattr_getprioceiling =
+      _pthread_mutexattr_getprioceilingPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_mutexattr_setprioceiling(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    int __prioceiling,
+  ) {
+    return _pthread_mutexattr_setprioceiling(
+      __attr,
+      __prioceiling,
+    );
+  }
+
+  late final _pthread_mutexattr_setprioceilingPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Int)>>('pthread_mutexattr_setprioceiling');
+  late final _pthread_mutexattr_setprioceiling =
+      _pthread_mutexattr_setprioceilingPtr
+          .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
+
+  int pthread_mutexattr_getrobust(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    ffi.Pointer<ffi.Int> __robustness,
+  ) {
+    return _pthread_mutexattr_getrobust(
+      __attr,
+      __robustness,
+    );
+  }
+
+  late final _pthread_mutexattr_getrobustPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_mutexattr_getrobust');
+  late final _pthread_mutexattr_getrobust =
+      _pthread_mutexattr_getrobustPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_mutexattr_setrobust(
+    ffi.Pointer<pthread_mutexattr_t> __attr,
+    int __robustness,
+  ) {
+    return _pthread_mutexattr_setrobust(
+      __attr,
+      __robustness,
+    );
+  }
+
+  late final _pthread_mutexattr_setrobustPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>,
+              ffi.Int)>>('pthread_mutexattr_setrobust');
+  late final _pthread_mutexattr_setrobust = _pthread_mutexattr_setrobustPtr
+      .asFunction<int Function(ffi.Pointer<pthread_mutexattr_t>, int)>();
+
+  int pthread_rwlock_init(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+    ffi.Pointer<pthread_rwlockattr_t> __attr,
+  ) {
+    return _pthread_rwlock_init(
+      __rwlock,
+      __attr,
+    );
+  }
+
+  late final _pthread_rwlock_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
+              ffi.Pointer<pthread_rwlockattr_t>)>>('pthread_rwlock_init');
+  late final _pthread_rwlock_init = _pthread_rwlock_initPtr.asFunction<
+      int Function(
+          ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<pthread_rwlockattr_t>)>();
+
+  int pthread_rwlock_destroy(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+  ) {
+    return _pthread_rwlock_destroy(
+      __rwlock,
+    );
+  }
+
+  late final _pthread_rwlock_destroyPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
+      'pthread_rwlock_destroy');
+  late final _pthread_rwlock_destroy = _pthread_rwlock_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
+
+  int pthread_rwlock_rdlock(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+  ) {
+    return _pthread_rwlock_rdlock(
+      __rwlock,
+    );
+  }
+
+  late final _pthread_rwlock_rdlockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
+      'pthread_rwlock_rdlock');
+  late final _pthread_rwlock_rdlock = _pthread_rwlock_rdlockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
+
+  int pthread_rwlock_tryrdlock(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+  ) {
+    return _pthread_rwlock_tryrdlock(
+      __rwlock,
+    );
+  }
+
+  late final _pthread_rwlock_tryrdlockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
+      'pthread_rwlock_tryrdlock');
+  late final _pthread_rwlock_tryrdlock = _pthread_rwlock_tryrdlockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
+
+  int pthread_rwlock_timedrdlock(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+    ffi.Pointer<timespec> __abstime,
+  ) {
+    return _pthread_rwlock_timedrdlock(
+      __rwlock,
+      __abstime,
+    );
+  }
+
+  late final _pthread_rwlock_timedrdlockPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
+              ffi.Pointer<timespec>)>>('pthread_rwlock_timedrdlock');
+  late final _pthread_rwlock_timedrdlock =
+      _pthread_rwlock_timedrdlockPtr.asFunction<
+          int Function(ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>();
+
+  int pthread_rwlock_wrlock(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+  ) {
+    return _pthread_rwlock_wrlock(
+      __rwlock,
+    );
+  }
+
+  late final _pthread_rwlock_wrlockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
+      'pthread_rwlock_wrlock');
+  late final _pthread_rwlock_wrlock = _pthread_rwlock_wrlockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
+
+  int pthread_rwlock_trywrlock(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+  ) {
+    return _pthread_rwlock_trywrlock(
+      __rwlock,
+    );
+  }
+
+  late final _pthread_rwlock_trywrlockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
+      'pthread_rwlock_trywrlock');
+  late final _pthread_rwlock_trywrlock = _pthread_rwlock_trywrlockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
+
+  int pthread_rwlock_timedwrlock(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+    ffi.Pointer<timespec> __abstime,
+  ) {
+    return _pthread_rwlock_timedwrlock(
+      __rwlock,
+      __abstime,
+    );
+  }
+
+  late final _pthread_rwlock_timedwrlockPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
+              ffi.Pointer<timespec>)>>('pthread_rwlock_timedwrlock');
+  late final _pthread_rwlock_timedwrlock =
+      _pthread_rwlock_timedwrlockPtr.asFunction<
+          int Function(ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>();
+
+  int pthread_rwlock_unlock(
+    ffi.Pointer<pthread_rwlock_t> __rwlock,
+  ) {
+    return _pthread_rwlock_unlock(
+      __rwlock,
+    );
+  }
+
+  late final _pthread_rwlock_unlockPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>(
+      'pthread_rwlock_unlock');
+  late final _pthread_rwlock_unlock = _pthread_rwlock_unlockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlock_t>)>();
+
+  int pthread_rwlockattr_init(
+    ffi.Pointer<pthread_rwlockattr_t> __attr,
+  ) {
+    return _pthread_rwlockattr_init(
+      __attr,
+    );
+  }
+
+  late final _pthread_rwlockattr_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_rwlockattr_t>)>>('pthread_rwlockattr_init');
+  late final _pthread_rwlockattr_init = _pthread_rwlockattr_initPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>)>();
+
+  int pthread_rwlockattr_destroy(
+    ffi.Pointer<pthread_rwlockattr_t> __attr,
+  ) {
+    return _pthread_rwlockattr_destroy(
+      __attr,
+    );
+  }
+
+  late final _pthread_rwlockattr_destroyPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>)>>(
+      'pthread_rwlockattr_destroy');
+  late final _pthread_rwlockattr_destroy = _pthread_rwlockattr_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>)>();
+
+  int pthread_rwlockattr_getpshared(
+    ffi.Pointer<pthread_rwlockattr_t> __attr,
+    ffi.Pointer<ffi.Int> __pshared,
+  ) {
+    return _pthread_rwlockattr_getpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_rwlockattr_getpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_rwlockattr_getpshared');
+  late final _pthread_rwlockattr_getpshared =
+      _pthread_rwlockattr_getpsharedPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_rwlockattr_setpshared(
+    ffi.Pointer<pthread_rwlockattr_t> __attr,
+    int __pshared,
+  ) {
+    return _pthread_rwlockattr_setpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_rwlockattr_setpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
+              ffi.Int)>>('pthread_rwlockattr_setpshared');
+  late final _pthread_rwlockattr_setpshared = _pthread_rwlockattr_setpsharedPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>, int)>();
+
+  int pthread_rwlockattr_getkind_np(
+    ffi.Pointer<pthread_rwlockattr_t> __attr,
+    ffi.Pointer<ffi.Int> __pref,
+  ) {
+    return _pthread_rwlockattr_getkind_np(
+      __attr,
+      __pref,
+    );
+  }
+
+  late final _pthread_rwlockattr_getkind_npPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_rwlockattr_getkind_np');
+  late final _pthread_rwlockattr_getkind_np =
+      _pthread_rwlockattr_getkind_npPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_rwlockattr_setkind_np(
+    ffi.Pointer<pthread_rwlockattr_t> __attr,
+    int __pref,
+  ) {
+    return _pthread_rwlockattr_setkind_np(
+      __attr,
+      __pref,
+    );
+  }
+
+  late final _pthread_rwlockattr_setkind_npPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>,
+              ffi.Int)>>('pthread_rwlockattr_setkind_np');
+  late final _pthread_rwlockattr_setkind_np = _pthread_rwlockattr_setkind_npPtr
+      .asFunction<int Function(ffi.Pointer<pthread_rwlockattr_t>, int)>();
+
+  int pthread_cond_init(
+    ffi.Pointer<pthread_cond_t> __cond,
+    ffi.Pointer<pthread_condattr_t> __cond_attr,
+  ) {
+    return _pthread_cond_init(
+      __cond,
+      __cond_attr,
+    );
+  }
+
+  late final _pthread_cond_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_cond_t>,
+              ffi.Pointer<pthread_condattr_t>)>>('pthread_cond_init');
+  late final _pthread_cond_init = _pthread_cond_initPtr.asFunction<
+      int Function(
+          ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_condattr_t>)>();
+
+  int pthread_cond_destroy(
+    ffi.Pointer<pthread_cond_t> __cond,
+  ) {
+    return _pthread_cond_destroy(
+      __cond,
+    );
+  }
+
+  late final _pthread_cond_destroyPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>(
+      'pthread_cond_destroy');
+  late final _pthread_cond_destroy = _pthread_cond_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_cond_t>)>();
+
+  int pthread_cond_signal(
+    ffi.Pointer<pthread_cond_t> __cond,
+  ) {
+    return _pthread_cond_signal(
+      __cond,
+    );
+  }
+
+  late final _pthread_cond_signalPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>(
+      'pthread_cond_signal');
+  late final _pthread_cond_signal = _pthread_cond_signalPtr
+      .asFunction<int Function(ffi.Pointer<pthread_cond_t>)>();
+
+  int pthread_cond_broadcast(
+    ffi.Pointer<pthread_cond_t> __cond,
+  ) {
+    return _pthread_cond_broadcast(
+      __cond,
+    );
+  }
+
+  late final _pthread_cond_broadcastPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>(
+      'pthread_cond_broadcast');
+  late final _pthread_cond_broadcast = _pthread_cond_broadcastPtr
+      .asFunction<int Function(ffi.Pointer<pthread_cond_t>)>();
+
+  int pthread_cond_wait(
+    ffi.Pointer<pthread_cond_t> __cond,
+    ffi.Pointer<pthread_mutex_t> __mutex,
+  ) {
+    return _pthread_cond_wait(
+      __cond,
+      __mutex,
+    );
+  }
+
+  late final _pthread_cond_waitPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_cond_t>,
+              ffi.Pointer<pthread_mutex_t>)>>('pthread_cond_wait');
+  late final _pthread_cond_wait = _pthread_cond_waitPtr.asFunction<
+      int Function(
+          ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_mutex_t>)>();
+
+  int pthread_cond_timedwait(
+    ffi.Pointer<pthread_cond_t> __cond,
+    ffi.Pointer<pthread_mutex_t> __mutex,
+    ffi.Pointer<timespec> __abstime,
+  ) {
+    return _pthread_cond_timedwait(
+      __cond,
+      __mutex,
+      __abstime,
+    );
+  }
+
+  late final _pthread_cond_timedwaitPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_cond_t>,
+              ffi.Pointer<pthread_mutex_t>,
+              ffi.Pointer<timespec>)>>('pthread_cond_timedwait');
+  late final _pthread_cond_timedwait = _pthread_cond_timedwaitPtr.asFunction<
+      int Function(ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_mutex_t>,
+          ffi.Pointer<timespec>)>();
+
+  int pthread_condattr_init(
+    ffi.Pointer<pthread_condattr_t> __attr,
+  ) {
+    return _pthread_condattr_init(
+      __attr,
+    );
+  }
+
+  late final _pthread_condattr_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_condattr_t>)>>('pthread_condattr_init');
+  late final _pthread_condattr_init = _pthread_condattr_initPtr
+      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>)>();
+
+  int pthread_condattr_destroy(
+    ffi.Pointer<pthread_condattr_t> __attr,
+  ) {
+    return _pthread_condattr_destroy(
+      __attr,
+    );
+  }
+
+  late final _pthread_condattr_destroyPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_condattr_t>)>>('pthread_condattr_destroy');
+  late final _pthread_condattr_destroy = _pthread_condattr_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>)>();
+
+  int pthread_condattr_getpshared(
+    ffi.Pointer<pthread_condattr_t> __attr,
+    ffi.Pointer<ffi.Int> __pshared,
+  ) {
+    return _pthread_condattr_getpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_condattr_getpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_condattr_getpshared');
+  late final _pthread_condattr_getpshared =
+      _pthread_condattr_getpsharedPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_condattr_setpshared(
+    ffi.Pointer<pthread_condattr_t> __attr,
+    int __pshared,
+  ) {
+    return _pthread_condattr_setpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_condattr_setpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
+              ffi.Int)>>('pthread_condattr_setpshared');
+  late final _pthread_condattr_setpshared = _pthread_condattr_setpsharedPtr
+      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>, int)>();
+
+  int pthread_condattr_getclock(
+    ffi.Pointer<pthread_condattr_t> __attr,
+    ffi.Pointer<ffi.Int> __clock_id,
+  ) {
+    return _pthread_condattr_getclock(
+      __attr,
+      __clock_id,
+    );
+  }
+
+  late final _pthread_condattr_getclockPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_condattr_getclock');
+  late final _pthread_condattr_getclock =
+      _pthread_condattr_getclockPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_condattr_setclock(
+    ffi.Pointer<pthread_condattr_t> __attr,
+    int __clock_id,
+  ) {
+    return _pthread_condattr_setclock(
+      __attr,
+      __clock_id,
+    );
+  }
+
+  late final _pthread_condattr_setclockPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_condattr_t>,
+              ffi.Int)>>('pthread_condattr_setclock');
+  late final _pthread_condattr_setclock = _pthread_condattr_setclockPtr
+      .asFunction<int Function(ffi.Pointer<pthread_condattr_t>, int)>();
+
+  int pthread_barrier_init(
+    ffi.Pointer<pthread_barrier_t> __barrier,
+    ffi.Pointer<pthread_barrierattr_t> __attr,
+    int __count,
+  ) {
+    return _pthread_barrier_init(
+      __barrier,
+      __attr,
+      __count,
+    );
+  }
+
+  late final _pthread_barrier_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_barrier_t>,
+              ffi.Pointer<pthread_barrierattr_t>,
+              ffi.UnsignedInt)>>('pthread_barrier_init');
+  late final _pthread_barrier_init = _pthread_barrier_initPtr.asFunction<
+      int Function(ffi.Pointer<pthread_barrier_t>,
+          ffi.Pointer<pthread_barrierattr_t>, int)>();
+
+  int pthread_barrier_destroy(
+    ffi.Pointer<pthread_barrier_t> __barrier,
+  ) {
+    return _pthread_barrier_destroy(
+      __barrier,
+    );
+  }
+
+  late final _pthread_barrier_destroyPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>(
+      'pthread_barrier_destroy');
+  late final _pthread_barrier_destroy = _pthread_barrier_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_barrier_t>)>();
+
+  int pthread_barrier_wait(
+    ffi.Pointer<pthread_barrier_t> __barrier,
+  ) {
+    return _pthread_barrier_wait(
+      __barrier,
+    );
+  }
+
+  late final _pthread_barrier_waitPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>(
+      'pthread_barrier_wait');
+  late final _pthread_barrier_wait = _pthread_barrier_waitPtr
+      .asFunction<int Function(ffi.Pointer<pthread_barrier_t>)>();
+
+  int pthread_barrierattr_init(
+    ffi.Pointer<pthread_barrierattr_t> __attr,
+  ) {
+    return _pthread_barrierattr_init(
+      __attr,
+    );
+  }
+
+  late final _pthread_barrierattr_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_barrierattr_t>)>>('pthread_barrierattr_init');
+  late final _pthread_barrierattr_init = _pthread_barrierattr_initPtr
+      .asFunction<int Function(ffi.Pointer<pthread_barrierattr_t>)>();
+
+  int pthread_barrierattr_destroy(
+    ffi.Pointer<pthread_barrierattr_t> __attr,
+  ) {
+    return _pthread_barrierattr_destroy(
+      __attr,
+    );
+  }
+
+  late final _pthread_barrierattr_destroyPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>)>>(
+      'pthread_barrierattr_destroy');
+  late final _pthread_barrierattr_destroy = _pthread_barrierattr_destroyPtr
+      .asFunction<int Function(ffi.Pointer<pthread_barrierattr_t>)>();
+
+  int pthread_barrierattr_getpshared(
+    ffi.Pointer<pthread_barrierattr_t> __attr,
+    ffi.Pointer<ffi.Int> __pshared,
+  ) {
+    return _pthread_barrierattr_getpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_barrierattr_getpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>,
+              ffi.Pointer<ffi.Int>)>>('pthread_barrierattr_getpshared');
+  late final _pthread_barrierattr_getpshared =
+      _pthread_barrierattr_getpsharedPtr.asFunction<
+          int Function(
+              ffi.Pointer<pthread_barrierattr_t>, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_barrierattr_setpshared(
+    ffi.Pointer<pthread_barrierattr_t> __attr,
+    int __pshared,
+  ) {
+    return _pthread_barrierattr_setpshared(
+      __attr,
+      __pshared,
+    );
+  }
+
+  late final _pthread_barrierattr_setpsharedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>,
+              ffi.Int)>>('pthread_barrierattr_setpshared');
+  late final _pthread_barrierattr_setpshared =
+      _pthread_barrierattr_setpsharedPtr
+          .asFunction<int Function(ffi.Pointer<pthread_barrierattr_t>, int)>();
+
+  int pthread_key_create(
+    ffi.Pointer<pthread_key_t> __key,
+    ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>
+        __destr_function,
+  ) {
+    return _pthread_key_create(
+      __key,
+      __destr_function,
+    );
+  }
+
+  late final _pthread_key_createPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_key_t>,
+              ffi.Pointer<
+                  ffi.NativeFunction<
+                      ffi.Void Function(
+                          ffi.Pointer<ffi.Void>)>>)>>('pthread_key_create');
+  late final _pthread_key_create = _pthread_key_createPtr.asFunction<
+      int Function(
+          ffi.Pointer<pthread_key_t>,
+          ffi.Pointer<
+              ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>)>();
+
+  int pthread_key_delete(
+    int __key,
+  ) {
+    return _pthread_key_delete(
+      __key,
+    );
+  }
+
+  late final _pthread_key_deletePtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(pthread_key_t)>>(
+          'pthread_key_delete');
+  late final _pthread_key_delete =
+      _pthread_key_deletePtr.asFunction<int Function(int)>();
+
+  ffi.Pointer<ffi.Void> pthread_getspecific(
+    int __key,
+  ) {
+    return _pthread_getspecific(
+      __key,
+    );
+  }
+
+  late final _pthread_getspecificPtr = _lookup<
+          ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(pthread_key_t)>>(
+      'pthread_getspecific');
+  late final _pthread_getspecific =
+      _pthread_getspecificPtr.asFunction<ffi.Pointer<ffi.Void> Function(int)>();
+
+  int pthread_setspecific(
+    int __key,
+    ffi.Pointer<ffi.Void> __pointer,
+  ) {
+    return _pthread_setspecific(
+      __key,
+      __pointer,
+    );
+  }
+
+  late final _pthread_setspecificPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              pthread_key_t, ffi.Pointer<ffi.Void>)>>('pthread_setspecific');
+  late final _pthread_setspecific = _pthread_setspecificPtr
+      .asFunction<int Function(int, ffi.Pointer<ffi.Void>)>();
+
+  int pthread_getcpuclockid(
+    int __thread_id,
+    ffi.Pointer<ffi.Int> __clock_id,
+  ) {
+    return _pthread_getcpuclockid(
+      __thread_id,
+      __clock_id,
+    );
+  }
+
+  late final _pthread_getcpuclockidPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              pthread_t, ffi.Pointer<ffi.Int>)>>('pthread_getcpuclockid');
+  late final _pthread_getcpuclockid = _pthread_getcpuclockidPtr
+      .asFunction<int Function(int, ffi.Pointer<ffi.Int>)>();
+
+  int pthread_atfork(
+    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __prepare,
+    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __parent,
+    ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> __child,
+  ) {
+    return _pthread_atfork(
+      __prepare,
+      __parent,
+      __child,
+    );
+  }
+
+  late final _pthread_atforkPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>(
+      'pthread_atfork');
+  late final _pthread_atfork = _pthread_atforkPtr.asFunction<
+      int Function(
+          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
+          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
+          ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>();
+
   late final ffi.Pointer<ffi.Uint32> _slab_magic =
       _lookup<ffi.Uint32>('slab_magic');
 
@@ -8491,35 +8499,173 @@ class TransportBindings {
 
   set QUOTA_MAX(int value) => _QUOTA_MAX.value = value;
 
-  ffi.Pointer<transport_t> transport_initialize(
-    ffi.Pointer<transport_configuration_t> configuration,
+  void ibuf_create(
+    ffi.Pointer<ibuf> ibuf,
+    ffi.Pointer<slab_cache> slabc,
+    int start_capacity,
   ) {
-    return _transport_initialize(
-      configuration,
+    return _ibuf_create(
+      ibuf,
+      slabc,
+      start_capacity,
     );
   }
 
-  late final _transport_initializePtr = _lookup<
+  late final _ibuf_createPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<transport_t> Function(
-              ffi.Pointer<transport_configuration_t>)>>('transport_initialize');
-  late final _transport_initialize = _transport_initializePtr.asFunction<
-      ffi.Pointer<transport_t> Function(
-          ffi.Pointer<transport_configuration_t>)>();
+          ffi.Void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>,
+              ffi.Size)>>('ibuf_create');
+  late final _ibuf_create = _ibuf_createPtr.asFunction<
+      void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, int)>();
 
-  void transport_close(
-    ffi.Pointer<transport_t> transport,
+  void ibuf_destroy(
+    ffi.Pointer<ibuf> ibuf,
   ) {
-    return _transport_close(
-      transport,
+    return _ibuf_destroy(
+      ibuf,
     );
   }
 
-  late final _transport_closePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>(
-          'transport_close');
-  late final _transport_close =
-      _transport_closePtr.asFunction<void Function(ffi.Pointer<transport_t>)>();
+  late final _ibuf_destroyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
+          'ibuf_destroy');
+  late final _ibuf_destroy =
+      _ibuf_destroyPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
+
+  void ibuf_reinit(
+    ffi.Pointer<ibuf> ibuf,
+  ) {
+    return _ibuf_reinit(
+      ibuf,
+    );
+  }
+
+  late final _ibuf_reinitPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
+          'ibuf_reinit');
+  late final _ibuf_reinit =
+      _ibuf_reinitPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
+
+  ffi.Pointer<ffi.Void> ibuf_reserve_slow(
+    ffi.Pointer<ibuf> ibuf,
+    int size,
+  ) {
+    return _ibuf_reserve_slow(
+      ibuf,
+      size,
+    );
+  }
+
+  late final _ibuf_reserve_slowPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<ibuf>, ffi.Size)>>('ibuf_reserve_slow');
+  late final _ibuf_reserve_slow = _ibuf_reserve_slowPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, int)>();
+
+  void obuf_create(
+    ffi.Pointer<obuf> buf,
+    ffi.Pointer<slab_cache> slabc,
+    int start_capacity,
+  ) {
+    return _obuf_create(
+      buf,
+      slabc,
+      start_capacity,
+    );
+  }
+
+  late final _obuf_createPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>,
+              ffi.Size)>>('obuf_create');
+  late final _obuf_create = _obuf_createPtr.asFunction<
+      void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, int)>();
+
+  void obuf_destroy(
+    ffi.Pointer<obuf> buf,
+  ) {
+    return _obuf_destroy(
+      buf,
+    );
+  }
+
+  late final _obuf_destroyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
+          'obuf_destroy');
+  late final _obuf_destroy =
+      _obuf_destroyPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
+
+  void obuf_reset(
+    ffi.Pointer<obuf> buf,
+  ) {
+    return _obuf_reset(
+      buf,
+    );
+  }
+
+  late final _obuf_resetPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
+          'obuf_reset');
+  late final _obuf_reset =
+      _obuf_resetPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
+
+  /// Slow path of obuf_reserve(), which actually reallocates
+  /// memory and moves data if necessary.
+  ffi.Pointer<ffi.Void> obuf_reserve_slow(
+    ffi.Pointer<obuf> buf,
+    int size,
+  ) {
+    return _obuf_reserve_slow(
+      buf,
+      size,
+    );
+  }
+
+  late final _obuf_reserve_slowPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<obuf>, ffi.Size)>>('obuf_reserve_slow');
+  late final _obuf_reserve_slow = _obuf_reserve_slowPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, int)>();
+
+  /// Append data to the output buffer.
+  int obuf_dup(
+    ffi.Pointer<obuf> buf,
+    ffi.Pointer<ffi.Void> data,
+    int size,
+  ) {
+    return _obuf_dup(
+      buf,
+      data,
+      size,
+    );
+  }
+
+  late final _obuf_dupPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Size Function(
+              ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>('obuf_dup');
+  late final _obuf_dup = _obuf_dupPtr.asFunction<
+      int Function(ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, int)>();
+
+  /// Forget anything added to output buffer after the savepoint.
+  void obuf_rollback_to_svp(
+    ffi.Pointer<obuf> buf,
+    ffi.Pointer<obuf_svp> svp,
+  ) {
+    return _obuf_rollback_to_svp(
+      buf,
+      svp,
+    );
+  }
+
+  late final _obuf_rollback_to_svpPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<obuf>,
+              ffi.Pointer<obuf_svp>)>>('obuf_rollback_to_svp');
+  late final _obuf_rollback_to_svp = _obuf_rollback_to_svpPtr
+      .asFunction<void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>();
 
   late final ffi.Pointer<ffi.Pointer<FILE>> _stdin =
       _lookup<ffi.Pointer<FILE>>('stdin');
@@ -9846,252 +9992,6 @@ class TransportBindings {
           'funlockfile');
   late final _funlockfile =
       _funlockfilePtr.asFunction<void Function(ffi.Pointer<FILE>)>();
-
-  ffi.Pointer<transport_acceptor_t> transport_initialize_acceptor(
-    ffi.Pointer<transport_t> transport,
-    ffi.Pointer<transport_acceptor_configuration_t> configuration,
-    ffi.Pointer<ffi.Char> ip,
-    int port,
-  ) {
-    return _transport_initialize_acceptor(
-      transport,
-      configuration,
-      ip,
-      port,
-    );
-  }
-
-  late final _transport_initialize_acceptorPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_acceptor_configuration_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int32)>>('transport_initialize_acceptor');
-  late final _transport_initialize_acceptor =
-      _transport_initialize_acceptorPtr.asFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_acceptor_configuration_t>,
-              ffi.Pointer<ffi.Char>,
-              int)>();
-
-  void transport_close_acceptor(
-    ffi.Pointer<transport_acceptor_t> acceptor,
-  ) {
-    return _transport_close_acceptor(
-      acceptor,
-    );
-  }
-
-  late final _transport_close_acceptorPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_acceptor_t>)>>('transport_close_acceptor');
-  late final _transport_close_acceptor = _transport_close_acceptorPtr
-      .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
-
-  void transport_acceptor_register(
-    ffi.Pointer<transport_acceptor_t> acceptor,
-    ffi.Pointer<io_uring> ring,
-  ) {
-    return _transport_acceptor_register(
-      acceptor,
-      ring,
-    );
-  }
-
-  late final _transport_acceptor_registerPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_acceptor_t>,
-              ffi.Pointer<io_uring>)>>('transport_acceptor_register');
-  late final _transport_acceptor_register =
-      _transport_acceptor_registerPtr.asFunction<
-          void Function(
-              ffi.Pointer<transport_acceptor_t>, ffi.Pointer<io_uring>)>();
-
-  int transport_acceptor_accept(
-    ffi.Pointer<transport_acceptor> acceptor,
-  ) {
-    return _transport_acceptor_accept(
-      acceptor,
-    );
-  }
-
-  late final _transport_acceptor_acceptPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_acceptor>)>>('transport_acceptor_accept');
-  late final _transport_acceptor_accept = _transport_acceptor_acceptPtr
-      .asFunction<int Function(ffi.Pointer<transport_acceptor>)>();
-
-  void ibuf_create(
-    ffi.Pointer<ibuf> ibuf,
-    ffi.Pointer<slab_cache> slabc,
-    int start_capacity,
-  ) {
-    return _ibuf_create(
-      ibuf,
-      slabc,
-      start_capacity,
-    );
-  }
-
-  late final _ibuf_createPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>,
-              ffi.Size)>>('ibuf_create');
-  late final _ibuf_create = _ibuf_createPtr.asFunction<
-      void Function(ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, int)>();
-
-  void ibuf_destroy(
-    ffi.Pointer<ibuf> ibuf,
-  ) {
-    return _ibuf_destroy(
-      ibuf,
-    );
-  }
-
-  late final _ibuf_destroyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
-          'ibuf_destroy');
-  late final _ibuf_destroy =
-      _ibuf_destroyPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
-
-  void ibuf_reinit(
-    ffi.Pointer<ibuf> ibuf,
-  ) {
-    return _ibuf_reinit(
-      ibuf,
-    );
-  }
-
-  late final _ibuf_reinitPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>(
-          'ibuf_reinit');
-  late final _ibuf_reinit =
-      _ibuf_reinitPtr.asFunction<void Function(ffi.Pointer<ibuf>)>();
-
-  ffi.Pointer<ffi.Void> ibuf_reserve_slow(
-    ffi.Pointer<ibuf> ibuf,
-    int size,
-  ) {
-    return _ibuf_reserve_slow(
-      ibuf,
-      size,
-    );
-  }
-
-  late final _ibuf_reserve_slowPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ibuf>, ffi.Size)>>('ibuf_reserve_slow');
-  late final _ibuf_reserve_slow = _ibuf_reserve_slowPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, int)>();
-
-  void obuf_create(
-    ffi.Pointer<obuf> buf,
-    ffi.Pointer<slab_cache> slabc,
-    int start_capacity,
-  ) {
-    return _obuf_create(
-      buf,
-      slabc,
-      start_capacity,
-    );
-  }
-
-  late final _obuf_createPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>,
-              ffi.Size)>>('obuf_create');
-  late final _obuf_create = _obuf_createPtr.asFunction<
-      void Function(ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, int)>();
-
-  void obuf_destroy(
-    ffi.Pointer<obuf> buf,
-  ) {
-    return _obuf_destroy(
-      buf,
-    );
-  }
-
-  late final _obuf_destroyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
-          'obuf_destroy');
-  late final _obuf_destroy =
-      _obuf_destroyPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
-
-  void obuf_reset(
-    ffi.Pointer<obuf> buf,
-  ) {
-    return _obuf_reset(
-      buf,
-    );
-  }
-
-  late final _obuf_resetPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>(
-          'obuf_reset');
-  late final _obuf_reset =
-      _obuf_resetPtr.asFunction<void Function(ffi.Pointer<obuf>)>();
-
-  /// Slow path of obuf_reserve(), which actually reallocates
-  /// memory and moves data if necessary.
-  ffi.Pointer<ffi.Void> obuf_reserve_slow(
-    ffi.Pointer<obuf> buf,
-    int size,
-  ) {
-    return _obuf_reserve_slow(
-      buf,
-      size,
-    );
-  }
-
-  late final _obuf_reserve_slowPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<obuf>, ffi.Size)>>('obuf_reserve_slow');
-  late final _obuf_reserve_slow = _obuf_reserve_slowPtr
-      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, int)>();
-
-  /// Append data to the output buffer.
-  int obuf_dup(
-    ffi.Pointer<obuf> buf,
-    ffi.Pointer<ffi.Void> data,
-    int size,
-  ) {
-    return _obuf_dup(
-      buf,
-      data,
-      size,
-    );
-  }
-
-  late final _obuf_dupPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(
-              ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>('obuf_dup');
-  late final _obuf_dup = _obuf_dupPtr.asFunction<
-      int Function(ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, int)>();
-
-  /// Forget anything added to output buffer after the savepoint.
-  void obuf_rollback_to_svp(
-    ffi.Pointer<obuf> buf,
-    ffi.Pointer<obuf_svp> svp,
-  ) {
-    return _obuf_rollback_to_svp(
-      buf,
-      svp,
-    );
-  }
-
-  late final _obuf_rollback_to_svpPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<obuf>,
-              ffi.Pointer<obuf_svp>)>>('obuf_rollback_to_svp');
-  late final _obuf_rollback_to_svp = _obuf_rollback_to_svpPtr
-      .asFunction<void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>();
 
   /// Is this an error handle?
   ///
@@ -16456,33 +16356,22 @@ class TransportBindings {
       _Dart_ExitScope_DL.value = value;
 
   ffi.Pointer<transport_channel_t> transport_initialize_channel(
-    ffi.Pointer<transport_t> transport,
     ffi.Pointer<transport_channel_configuration_t> configuration,
-    int accept_port,
-    int read_port,
-    int write_port,
   ) {
     return _transport_initialize_channel(
-      transport,
       configuration,
-      accept_port,
-      read_port,
-      write_port,
     );
   }
 
   late final _transport_initialize_channelPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_channel_configuration_t>,
-              Dart_Port,
-              Dart_Port,
-              Dart_Port)>>('transport_initialize_channel');
+          ffi.NativeFunction<
+              ffi.Pointer<transport_channel_t> Function(
+                  ffi.Pointer<transport_channel_configuration_t>)>>(
+      'transport_initialize_channel');
   late final _transport_initialize_channel =
       _transport_initialize_channelPtr.asFunction<
-          ffi.Pointer<transport_channel_t> Function(ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_channel_configuration_t>, int, int, int)>();
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_channel_configuration_t>)>();
 
   void transport_channel_register(
     ffi.Pointer<transport_channel> channel,
@@ -16556,25 +16445,7 @@ class TransportBindings {
   late final _transport_close_channel = _transport_close_channelPtr
       .asFunction<void Function(ffi.Pointer<transport_channel_t>)>();
 
-  void transport_channel_handle_accept(
-    ffi.Pointer<transport_channel> channel,
-    int fd,
-  ) {
-    return _transport_channel_handle_accept(
-      channel,
-      fd,
-    );
-  }
-
-  late final _transport_channel_handle_acceptPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel>,
-              ffi.Int)>>('transport_channel_handle_accept');
-  late final _transport_channel_handle_accept =
-      _transport_channel_handle_acceptPtr
-          .asFunction<void Function(ffi.Pointer<transport_channel>, int)>();
-
-  void transport_channel_handle_write(
+  int transport_channel_handle_write(
     ffi.Pointer<transport_channel> channel,
     ffi.Pointer<io_uring_cqe> cqe,
   ) {
@@ -16586,14 +16457,14 @@ class TransportBindings {
 
   late final _transport_channel_handle_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel>,
+          ffi.Int Function(ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>)>>('transport_channel_handle_write');
   late final _transport_channel_handle_write =
       _transport_channel_handle_writePtr.asFunction<
-          void Function(
+          int Function(
               ffi.Pointer<transport_channel>, ffi.Pointer<io_uring_cqe>)>();
 
-  void transport_channel_handle_read(
+  int transport_channel_handle_read(
     ffi.Pointer<transport_channel> channel,
     ffi.Pointer<io_uring_cqe> cqe,
   ) {
@@ -16605,11 +16476,11 @@ class TransportBindings {
 
   late final _transport_channel_handle_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel>,
+          ffi.Int Function(ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>)>>('transport_channel_handle_read');
   late final _transport_channel_handle_read =
       _transport_channel_handle_readPtr.asFunction<
-          void Function(
+          int Function(
               ffi.Pointer<transport_channel>, ffi.Pointer<io_uring_cqe>)>();
 
   ffi.Pointer<iovec> transport_channel_get_buffer(
@@ -16681,69 +16552,131 @@ class TransportBindings {
   late final _transport_channel_free_buffer = _transport_channel_free_bufferPtr
       .asFunction<void Function(ffi.Pointer<transport_channel_t>, int)>();
 
-  ffi.Pointer<transport_controller_t> transport_controller_start(
-    ffi.Pointer<transport_t> transport,
-    ffi.Pointer<transport_acceptor_t> acceptor,
-    ffi.Pointer<transport_channel_t> channel,
-    ffi.Pointer<transport_controller_configuration_t> configuration,
+  ffi.Pointer<transport_acceptor_t> transport_initialize_acceptor(
+    ffi.Pointer<transport_acceptor_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> ip,
+    int port,
   ) {
-    return _transport_controller_start(
-      transport,
-      acceptor,
-      channel,
+    return _transport_initialize_acceptor(
       configuration,
+      ip,
+      port,
     );
   }
 
-  late final _transport_controller_startPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_controller_t> Function(
-                  ffi.Pointer<transport_t>,
-                  ffi.Pointer<transport_acceptor_t>,
-                  ffi.Pointer<transport_channel_t>,
-                  ffi.Pointer<transport_controller_configuration_t>)>>(
-      'transport_controller_start');
-  late final _transport_controller_start =
-      _transport_controller_startPtr.asFunction<
-          ffi.Pointer<transport_controller_t> Function(
-              ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_acceptor_t>,
-              ffi.Pointer<transport_channel_t>,
-              ffi.Pointer<transport_controller_configuration_t>)>();
-
-  void transport_controller_stop(
-    ffi.Pointer<transport_controller_t> controller,
-  ) {
-    return _transport_controller_stop(
-      controller,
-    );
-  }
-
-  late final _transport_controller_stopPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_controller_t>)>>(
-      'transport_controller_stop');
-  late final _transport_controller_stop = _transport_controller_stopPtr
-      .asFunction<void Function(ffi.Pointer<transport_controller_t>)>();
-
-  bool transport_controller_send(
-    ffi.Pointer<transport_controller_t> controller,
-    ffi.Pointer<ffi.Void> message,
-  ) {
-    return _transport_controller_send(
-      controller,
-      message,
-    );
-  }
-
-  late final _transport_controller_sendPtr = _lookup<
+  late final _transport_initialize_acceptorPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Bool Function(ffi.Pointer<transport_controller_t>,
-              ffi.Pointer<ffi.Void>)>>('transport_controller_send');
-  late final _transport_controller_send =
-      _transport_controller_sendPtr.asFunction<
-          bool Function(
-              ffi.Pointer<transport_controller_t>, ffi.Pointer<ffi.Void>)>();
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_acceptor_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>>('transport_initialize_acceptor');
+  late final _transport_initialize_acceptor =
+      _transport_initialize_acceptorPtr.asFunction<
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_acceptor_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  void transport_close_acceptor(
+    ffi.Pointer<transport_acceptor_t> acceptor,
+  ) {
+    return _transport_close_acceptor(
+      acceptor,
+    );
+  }
+
+  late final _transport_close_acceptorPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<transport_acceptor_t>)>>('transport_close_acceptor');
+  late final _transport_close_acceptor = _transport_close_acceptorPtr
+      .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
+
+  void transport_acceptor_register(
+    ffi.Pointer<transport_acceptor_t> acceptor,
+    ffi.Pointer<io_uring> ring,
+  ) {
+    return _transport_acceptor_register(
+      acceptor,
+      ring,
+    );
+  }
+
+  late final _transport_acceptor_registerPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_acceptor_t>,
+              ffi.Pointer<io_uring>)>>('transport_acceptor_register');
+  late final _transport_acceptor_register =
+      _transport_acceptor_registerPtr.asFunction<
+          void Function(
+              ffi.Pointer<transport_acceptor_t>, ffi.Pointer<io_uring>)>();
+
+  int transport_acceptor_accept(
+    ffi.Pointer<transport_acceptor> acceptor,
+  ) {
+    return _transport_acceptor_accept(
+      acceptor,
+    );
+  }
+
+  late final _transport_acceptor_acceptPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_acceptor>)>>('transport_acceptor_accept');
+  late final _transport_acceptor_accept = _transport_acceptor_acceptPtr
+      .asFunction<int Function(ffi.Pointer<transport_acceptor>)>();
+
+  ffi.Pointer<transport_t> transport_initialize(
+    ffi.Pointer<transport_configuration_t> configuration,
+    ffi.Pointer<transport_channel_t> channel,
+    ffi.Pointer<transport_acceptor_t> acceptor,
+  ) {
+    return _transport_initialize(
+      configuration,
+      channel,
+      acceptor,
+    );
+  }
+
+  late final _transport_initializePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_t> Function(
+              ffi.Pointer<transport_configuration_t>,
+              ffi.Pointer<transport_channel_t>,
+              ffi.Pointer<transport_acceptor_t>)>>('transport_initialize');
+  late final _transport_initialize = _transport_initializePtr.asFunction<
+      ffi.Pointer<transport_t> Function(
+          ffi.Pointer<transport_configuration_t>,
+          ffi.Pointer<transport_channel_t>,
+          ffi.Pointer<transport_acceptor_t>)>();
+
+  int transport_consume(
+    ffi.Pointer<transport_t> transport,
+  ) {
+    return _transport_consume(
+      transport,
+    );
+  }
+
+  late final _transport_consumePtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_t>)>>(
+          'transport_consume');
+  late final _transport_consume = _transport_consumePtr
+      .asFunction<int Function(ffi.Pointer<transport_t>)>();
+
+  void transport_close(
+    ffi.Pointer<transport_t> transport,
+  ) {
+    return _transport_close(
+      transport,
+    );
+  }
+
+  late final _transport_closePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>(
+          'transport_close');
+  late final _transport_close =
+      _transport_closePtr.asFunction<void Function(ffi.Pointer<transport_t>)>();
 
   ffi.Pointer<transport_connector_t> transport_initialize_connector(
     ffi.Pointer<transport_t> transport,
@@ -16869,6 +16802,8 @@ class TransportBindings {
 class _SymbolAddresses {
   final TransportBindings _library;
   _SymbolAddresses(this._library);
+  ffi.Pointer<ffi.Uint64> get TRANSPORT_PAYLOAD_ALL_FLAGS =>
+      _library._TRANSPORT_PAYLOAD_ALL_FLAGS;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -17327,442 +17262,6 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<atomic_flag>, ffi.Int32)>>
       get atomic_flag_clear_explicit => _library._atomic_flag_clear_explicitPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Int, ffi.Pointer<sched_param>)>>
-      get sched_setparam => _library._sched_setparamPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Int, ffi.Pointer<sched_param>)>>
-      get sched_getparam => _library._sched_getparamPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Int, ffi.Int, ffi.Pointer<sched_param>)>>
-      get sched_setscheduler => _library._sched_setschedulerPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
-      get sched_getscheduler => _library._sched_getschedulerPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function()>> get sched_yield =>
-      _library._sched_yieldPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
-      get sched_get_priority_max => _library._sched_get_priority_maxPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
-      get sched_get_priority_min => _library._sched_get_priority_minPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<timespec>)>>
-      get sched_rr_get_interval => _library._sched_rr_get_intervalPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_t>,
-              ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<
-                  ffi.NativeFunction<
-                      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>,
-              ffi.Pointer<ffi.Void>)>> get pthread_create =>
-      _library._pthread_createPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>
-      get pthread_exit => _library._pthread_exitPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(pthread_t, ffi.Pointer<ffi.Pointer<ffi.Void>>)>>
-      get pthread_join => _library._pthread_joinPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t)>>
-      get pthread_detach => _library._pthread_detachPtr;
-  ffi.Pointer<ffi.NativeFunction<pthread_t Function()>> get pthread_self =>
-      _library._pthread_selfPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t, pthread_t)>>
-      get pthread_equal => _library._pthread_equalPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>
-      get pthread_attr_init => _library._pthread_attr_initPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>
-      get pthread_attr_destroy => _library._pthread_attr_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_attr_getdetachstate =>
-          _library._pthread_attr_getdetachstatePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
-      get pthread_attr_setdetachstate =>
-          _library._pthread_attr_setdetachstatePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>>
-      get pthread_attr_getguardsize => _library._pthread_attr_getguardsizePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Size)>>
-      get pthread_attr_setguardsize => _library._pthread_attr_setguardsizePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>>
-      get pthread_attr_getschedparam => _library._pthread_attr_getschedparamPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>>
-      get pthread_attr_setschedparam => _library._pthread_attr_setschedparamPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_attr_getschedpolicy =>
-          _library._pthread_attr_getschedpolicyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
-      get pthread_attr_setschedpolicy =>
-          _library._pthread_attr_setschedpolicyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_attr_getinheritsched =>
-          _library._pthread_attr_getinheritschedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
-      get pthread_attr_setinheritsched =>
-          _library._pthread_attr_setinheritschedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_attr_getscope => _library._pthread_attr_getscopePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
-      get pthread_attr_setscope => _library._pthread_attr_setscopePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>,
-                  ffi.Pointer<ffi.Pointer<ffi.Void>>)>>
-      get pthread_attr_getstackaddr => _library._pthread_attr_getstackaddrPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>)>>
-      get pthread_attr_setstackaddr => _library._pthread_attr_setstackaddrPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>>
-      get pthread_attr_getstacksize => _library._pthread_attr_getstacksizePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Size)>>
-      get pthread_attr_setstacksize => _library._pthread_attr_setstacksizePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_attr_t>,
-              ffi.Pointer<ffi.Pointer<ffi.Void>>,
-              ffi.Pointer<ffi.Size>)>> get pthread_attr_getstack =>
-      _library._pthread_attr_getstackPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>,
-              ffi.Size)>> get pthread_attr_setstack =>
-      _library._pthread_attr_setstackPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(pthread_t, ffi.Int, ffi.Pointer<sched_param>)>>
-      get pthread_setschedparam => _library._pthread_setschedparamPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  pthread_t, ffi.Pointer<ffi.Int>, ffi.Pointer<sched_param>)>>
-      get pthread_getschedparam => _library._pthread_getschedparamPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t, ffi.Int)>>
-      get pthread_setschedprio => _library._pthread_setschedprioPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_once_t>,
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>
-      get pthread_once => _library._pthread_oncePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>
-      get pthread_setcancelstate => _library._pthread_setcancelstatePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>
-      get pthread_setcanceltype => _library._pthread_setcanceltypePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t)>>
-      get pthread_cancel => _library._pthread_cancelPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get pthread_testcancel =>
-      _library._pthread_testcancelPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
-              ffi.Pointer<pthread_mutexattr_t>)>> get pthread_mutex_init =>
-      _library._pthread_mutex_initPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
-      get pthread_mutex_destroy => _library._pthread_mutex_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
-      get pthread_mutex_trylock => _library._pthread_mutex_trylockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
-      get pthread_mutex_lock => _library._pthread_mutex_lockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutex_t>, ffi.Pointer<timespec>)>>
-      get pthread_mutex_timedlock => _library._pthread_mutex_timedlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
-      get pthread_mutex_unlock => _library._pthread_mutex_unlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutex_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_mutex_getprioceiling =>
-          _library._pthread_mutex_getprioceilingPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutex_t>, ffi.Int, ffi.Pointer<ffi.Int>)>>
-      get pthread_mutex_setprioceiling =>
-          _library._pthread_mutex_setprioceilingPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
-      get pthread_mutex_consistent => _library._pthread_mutex_consistentPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>)>>
-      get pthread_mutexattr_init => _library._pthread_mutexattr_initPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>)>>
-      get pthread_mutexattr_destroy => _library._pthread_mutexattr_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_mutexattr_getpshared =>
-          _library._pthread_mutexattr_getpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
-      get pthread_mutexattr_setpshared =>
-          _library._pthread_mutexattr_setpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_mutexattr_gettype => _library._pthread_mutexattr_gettypePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
-      get pthread_mutexattr_settype => _library._pthread_mutexattr_settypePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_mutexattr_getprotocol =>
-          _library._pthread_mutexattr_getprotocolPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
-      get pthread_mutexattr_setprotocol =>
-          _library._pthread_mutexattr_setprotocolPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_mutexattr_getprioceiling =>
-          _library._pthread_mutexattr_getprioceilingPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
-      get pthread_mutexattr_setprioceiling =>
-          _library._pthread_mutexattr_setprioceilingPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_mutexattr_getrobust =>
-          _library._pthread_mutexattr_getrobustPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
-      get pthread_mutexattr_setrobust =>
-          _library._pthread_mutexattr_setrobustPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
-              ffi.Pointer<pthread_rwlockattr_t>)>> get pthread_rwlock_init =>
-      _library._pthread_rwlock_initPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
-      get pthread_rwlock_destroy => _library._pthread_rwlock_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
-      get pthread_rwlock_rdlock => _library._pthread_rwlock_rdlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
-      get pthread_rwlock_tryrdlock => _library._pthread_rwlock_tryrdlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>>
-      get pthread_rwlock_timedrdlock => _library._pthread_rwlock_timedrdlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
-      get pthread_rwlock_wrlock => _library._pthread_rwlock_wrlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
-      get pthread_rwlock_trywrlock => _library._pthread_rwlock_trywrlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>>
-      get pthread_rwlock_timedwrlock => _library._pthread_rwlock_timedwrlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
-      get pthread_rwlock_unlock => _library._pthread_rwlock_unlockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>)>>
-      get pthread_rwlockattr_init => _library._pthread_rwlockattr_initPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>)>>
-      get pthread_rwlockattr_destroy => _library._pthread_rwlockattr_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_rwlockattr_getpshared =>
-          _library._pthread_rwlockattr_getpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>, ffi.Int)>>
-      get pthread_rwlockattr_setpshared =>
-          _library._pthread_rwlockattr_setpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_rwlockattr_getkind_np =>
-          _library._pthread_rwlockattr_getkind_npPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>, ffi.Int)>>
-      get pthread_rwlockattr_setkind_np =>
-          _library._pthread_rwlockattr_setkind_npPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<pthread_cond_t>,
-              ffi.Pointer<pthread_condattr_t>)>> get pthread_cond_init =>
-      _library._pthread_cond_initPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>
-      get pthread_cond_destroy => _library._pthread_cond_destroyPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>
-      get pthread_cond_signal => _library._pthread_cond_signalPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>
-      get pthread_cond_broadcast => _library._pthread_cond_broadcastPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_mutex_t>)>>
-      get pthread_cond_wait => _library._pthread_cond_waitPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_cond_t>,
-              ffi.Pointer<pthread_mutex_t>,
-              ffi.Pointer<timespec>)>> get pthread_cond_timedwait =>
-      _library._pthread_cond_timedwaitPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_condattr_t>)>>
-      get pthread_condattr_init => _library._pthread_condattr_initPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_condattr_t>)>>
-      get pthread_condattr_destroy => _library._pthread_condattr_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_condattr_getpshared =>
-          _library._pthread_condattr_getpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_condattr_t>, ffi.Int)>>
-      get pthread_condattr_setpshared =>
-          _library._pthread_condattr_setpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_condattr_getclock => _library._pthread_condattr_getclockPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_condattr_t>, ffi.Int)>>
-      get pthread_condattr_setclock => _library._pthread_condattr_setclockPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<pthread_barrier_t>,
-              ffi.Pointer<pthread_barrierattr_t>,
-              ffi.UnsignedInt)>> get pthread_barrier_init =>
-      _library._pthread_barrier_initPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>
-      get pthread_barrier_destroy => _library._pthread_barrier_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>
-      get pthread_barrier_wait => _library._pthread_barrier_waitPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>)>>
-      get pthread_barrierattr_init => _library._pthread_barrierattr_initPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>)>>
-      get pthread_barrierattr_destroy =>
-          _library._pthread_barrierattr_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_barrierattr_t>, ffi.Pointer<ffi.Int>)>>
-      get pthread_barrierattr_getpshared =>
-          _library._pthread_barrierattr_getpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>, ffi.Int)>>
-      get pthread_barrierattr_setpshared =>
-          _library._pthread_barrierattr_setpsharedPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<pthread_key_t>,
-                  ffi.Pointer<
-                      ffi.NativeFunction<
-                          ffi.Void Function(ffi.Pointer<ffi.Void>)>>)>>
-      get pthread_key_create => _library._pthread_key_createPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_key_t)>>
-      get pthread_key_delete => _library._pthread_key_deletePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(pthread_key_t)>>
-      get pthread_getspecific => _library._pthread_getspecificPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(pthread_key_t, ffi.Pointer<ffi.Void>)>>
-      get pthread_setspecific => _library._pthread_setspecificPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(pthread_t, ffi.Pointer<ffi.Int>)>>
-      get pthread_getcpuclockid => _library._pthread_getcpuclockidPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
-                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>
-      get pthread_atfork => _library._pthread_atforkPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<ffi.Void> Function(
@@ -18413,6 +17912,442 @@ class _SymbolAddresses {
       get slab_unmap => _library._slab_unmapPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<slab_arena>)>>
       get slab_arena_mprotect => _library._slab_arena_mprotectPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Int, ffi.Pointer<sched_param>)>>
+      get sched_setparam => _library._sched_setparamPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Int, ffi.Pointer<sched_param>)>>
+      get sched_getparam => _library._sched_getparamPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Int, ffi.Int, ffi.Pointer<sched_param>)>>
+      get sched_setscheduler => _library._sched_setschedulerPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
+      get sched_getscheduler => _library._sched_getschedulerPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function()>> get sched_yield =>
+      _library._sched_yieldPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
+      get sched_get_priority_max => _library._sched_get_priority_maxPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
+      get sched_get_priority_min => _library._sched_get_priority_minPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<timespec>)>>
+      get sched_rr_get_interval => _library._sched_rr_get_intervalPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_t>,
+              ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<
+                  ffi.NativeFunction<
+                      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>>,
+              ffi.Pointer<ffi.Void>)>> get pthread_create =>
+      _library._pthread_createPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>
+      get pthread_exit => _library._pthread_exitPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(pthread_t, ffi.Pointer<ffi.Pointer<ffi.Void>>)>>
+      get pthread_join => _library._pthread_joinPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t)>>
+      get pthread_detach => _library._pthread_detachPtr;
+  ffi.Pointer<ffi.NativeFunction<pthread_t Function()>> get pthread_self =>
+      _library._pthread_selfPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t, pthread_t)>>
+      get pthread_equal => _library._pthread_equalPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>
+      get pthread_attr_init => _library._pthread_attr_initPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_attr_t>)>>
+      get pthread_attr_destroy => _library._pthread_attr_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_attr_getdetachstate =>
+          _library._pthread_attr_getdetachstatePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
+      get pthread_attr_setdetachstate =>
+          _library._pthread_attr_setdetachstatePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>>
+      get pthread_attr_getguardsize => _library._pthread_attr_getguardsizePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Size)>>
+      get pthread_attr_setguardsize => _library._pthread_attr_setguardsizePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>>
+      get pthread_attr_getschedparam => _library._pthread_attr_getschedparamPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<sched_param>)>>
+      get pthread_attr_setschedparam => _library._pthread_attr_setschedparamPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_attr_getschedpolicy =>
+          _library._pthread_attr_getschedpolicyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
+      get pthread_attr_setschedpolicy =>
+          _library._pthread_attr_setschedpolicyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_attr_getinheritsched =>
+          _library._pthread_attr_getinheritschedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
+      get pthread_attr_setinheritsched =>
+          _library._pthread_attr_setinheritschedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_attr_getscope => _library._pthread_attr_getscopePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Int)>>
+      get pthread_attr_setscope => _library._pthread_attr_setscopePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>,
+                  ffi.Pointer<ffi.Pointer<ffi.Void>>)>>
+      get pthread_attr_getstackaddr => _library._pthread_attr_getstackaddrPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>)>>
+      get pthread_attr_setstackaddr => _library._pthread_attr_setstackaddrPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Size>)>>
+      get pthread_attr_getstacksize => _library._pthread_attr_getstacksizePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Size)>>
+      get pthread_attr_setstacksize => _library._pthread_attr_setstacksizePtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_attr_t>,
+              ffi.Pointer<ffi.Pointer<ffi.Void>>,
+              ffi.Pointer<ffi.Size>)>> get pthread_attr_getstack =>
+      _library._pthread_attr_getstackPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_attr_t>, ffi.Pointer<ffi.Void>,
+              ffi.Size)>> get pthread_attr_setstack =>
+      _library._pthread_attr_setstackPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(pthread_t, ffi.Int, ffi.Pointer<sched_param>)>>
+      get pthread_setschedparam => _library._pthread_setschedparamPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  pthread_t, ffi.Pointer<ffi.Int>, ffi.Pointer<sched_param>)>>
+      get pthread_getschedparam => _library._pthread_getschedparamPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t, ffi.Int)>>
+      get pthread_setschedprio => _library._pthread_setschedprioPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_once_t>,
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>
+      get pthread_once => _library._pthread_oncePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>
+      get pthread_setcancelstate => _library._pthread_setcancelstatePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Int>)>>
+      get pthread_setcanceltype => _library._pthread_setcanceltypePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_t)>>
+      get pthread_cancel => _library._pthread_cancelPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get pthread_testcancel =>
+      _library._pthread_testcancelPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_mutex_t>,
+              ffi.Pointer<pthread_mutexattr_t>)>> get pthread_mutex_init =>
+      _library._pthread_mutex_initPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
+      get pthread_mutex_destroy => _library._pthread_mutex_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
+      get pthread_mutex_trylock => _library._pthread_mutex_trylockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
+      get pthread_mutex_lock => _library._pthread_mutex_lockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutex_t>, ffi.Pointer<timespec>)>>
+      get pthread_mutex_timedlock => _library._pthread_mutex_timedlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
+      get pthread_mutex_unlock => _library._pthread_mutex_unlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutex_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_mutex_getprioceiling =>
+          _library._pthread_mutex_getprioceilingPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutex_t>, ffi.Int, ffi.Pointer<ffi.Int>)>>
+      get pthread_mutex_setprioceiling =>
+          _library._pthread_mutex_setprioceilingPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_mutex_t>)>>
+      get pthread_mutex_consistent => _library._pthread_mutex_consistentPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>)>>
+      get pthread_mutexattr_init => _library._pthread_mutexattr_initPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>)>>
+      get pthread_mutexattr_destroy => _library._pthread_mutexattr_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_mutexattr_getpshared =>
+          _library._pthread_mutexattr_getpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
+      get pthread_mutexattr_setpshared =>
+          _library._pthread_mutexattr_setpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_mutexattr_gettype => _library._pthread_mutexattr_gettypePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
+      get pthread_mutexattr_settype => _library._pthread_mutexattr_settypePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_mutexattr_getprotocol =>
+          _library._pthread_mutexattr_getprotocolPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
+      get pthread_mutexattr_setprotocol =>
+          _library._pthread_mutexattr_setprotocolPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_mutexattr_getprioceiling =>
+          _library._pthread_mutexattr_getprioceilingPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
+      get pthread_mutexattr_setprioceiling =>
+          _library._pthread_mutexattr_setprioceilingPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_mutexattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_mutexattr_getrobust =>
+          _library._pthread_mutexattr_getrobustPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_mutexattr_t>, ffi.Int)>>
+      get pthread_mutexattr_setrobust =>
+          _library._pthread_mutexattr_setrobustPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_rwlock_t>,
+              ffi.Pointer<pthread_rwlockattr_t>)>> get pthread_rwlock_init =>
+      _library._pthread_rwlock_initPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
+      get pthread_rwlock_destroy => _library._pthread_rwlock_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
+      get pthread_rwlock_rdlock => _library._pthread_rwlock_rdlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
+      get pthread_rwlock_tryrdlock => _library._pthread_rwlock_tryrdlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>>
+      get pthread_rwlock_timedrdlock => _library._pthread_rwlock_timedrdlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
+      get pthread_rwlock_wrlock => _library._pthread_rwlock_wrlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
+      get pthread_rwlock_trywrlock => _library._pthread_rwlock_trywrlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_rwlock_t>, ffi.Pointer<timespec>)>>
+      get pthread_rwlock_timedwrlock => _library._pthread_rwlock_timedwrlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_rwlock_t>)>>
+      get pthread_rwlock_unlock => _library._pthread_rwlock_unlockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>)>>
+      get pthread_rwlockattr_init => _library._pthread_rwlockattr_initPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>)>>
+      get pthread_rwlockattr_destroy => _library._pthread_rwlockattr_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_rwlockattr_getpshared =>
+          _library._pthread_rwlockattr_getpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>, ffi.Int)>>
+      get pthread_rwlockattr_setpshared =>
+          _library._pthread_rwlockattr_setpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_rwlockattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_rwlockattr_getkind_np =>
+          _library._pthread_rwlockattr_getkind_npPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_rwlockattr_t>, ffi.Int)>>
+      get pthread_rwlockattr_setkind_np =>
+          _library._pthread_rwlockattr_setkind_npPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pthread_cond_t>,
+              ffi.Pointer<pthread_condattr_t>)>> get pthread_cond_init =>
+      _library._pthread_cond_initPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>
+      get pthread_cond_destroy => _library._pthread_cond_destroyPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>
+      get pthread_cond_signal => _library._pthread_cond_signalPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_cond_t>)>>
+      get pthread_cond_broadcast => _library._pthread_cond_broadcastPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_cond_t>, ffi.Pointer<pthread_mutex_t>)>>
+      get pthread_cond_wait => _library._pthread_cond_waitPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_cond_t>,
+              ffi.Pointer<pthread_mutex_t>,
+              ffi.Pointer<timespec>)>> get pthread_cond_timedwait =>
+      _library._pthread_cond_timedwaitPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_condattr_t>)>>
+      get pthread_condattr_init => _library._pthread_condattr_initPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_condattr_t>)>>
+      get pthread_condattr_destroy => _library._pthread_condattr_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_condattr_getpshared =>
+          _library._pthread_condattr_getpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_condattr_t>, ffi.Int)>>
+      get pthread_condattr_setpshared =>
+          _library._pthread_condattr_setpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_condattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_condattr_getclock => _library._pthread_condattr_getclockPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_condattr_t>, ffi.Int)>>
+      get pthread_condattr_setclock => _library._pthread_condattr_setclockPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<pthread_barrier_t>,
+              ffi.Pointer<pthread_barrierattr_t>,
+              ffi.UnsignedInt)>> get pthread_barrier_init =>
+      _library._pthread_barrier_initPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>
+      get pthread_barrier_destroy => _library._pthread_barrier_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<pthread_barrier_t>)>>
+      get pthread_barrier_wait => _library._pthread_barrier_waitPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>)>>
+      get pthread_barrierattr_init => _library._pthread_barrierattr_initPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>)>>
+      get pthread_barrierattr_destroy =>
+          _library._pthread_barrierattr_destroyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_barrierattr_t>, ffi.Pointer<ffi.Int>)>>
+      get pthread_barrierattr_getpshared =>
+          _library._pthread_barrierattr_getpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<pthread_barrierattr_t>, ffi.Int)>>
+      get pthread_barrierattr_setpshared =>
+          _library._pthread_barrierattr_setpsharedPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<pthread_key_t>,
+                  ffi.Pointer<
+                      ffi.NativeFunction<
+                          ffi.Void Function(ffi.Pointer<ffi.Void>)>>)>>
+      get pthread_key_create => _library._pthread_key_createPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(pthread_key_t)>>
+      get pthread_key_delete => _library._pthread_key_deletePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(pthread_key_t)>>
+      get pthread_getspecific => _library._pthread_getspecificPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(pthread_key_t, ffi.Pointer<ffi.Void>)>>
+      get pthread_setspecific => _library._pthread_setspecificPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(pthread_t, ffi.Pointer<ffi.Int>)>>
+      get pthread_getcpuclockid => _library._pthread_getcpuclockidPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>,
+                  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>)>>
+      get pthread_atfork => _library._pthread_atforkPtr;
   ffi.Pointer<ffi.Uint32> get slab_magic => _library._slab_magic;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -18847,11 +18782,39 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.Size> get QUOTA_MAX => _library._QUOTA_MAX;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Pointer<transport_t> Function(
-                  ffi.Pointer<transport_configuration_t>)>>
-      get transport_initialize => _library._transport_initializePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
-      get transport_close => _library._transport_closePtr;
+              ffi.Void Function(
+                  ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
+      get ibuf_create => _library._ibuf_createPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
+      get ibuf_destroy => _library._ibuf_destroyPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
+      get ibuf_reinit => _library._ibuf_reinitPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, ffi.Size)>>
+      get ibuf_reserve_slow => _library._ibuf_reserve_slowPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(
+                  ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
+      get obuf_create => _library._obuf_createPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
+      get obuf_destroy => _library._obuf_destroyPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
+      get obuf_reset => _library._obuf_resetPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, ffi.Size)>>
+      get obuf_reserve_slow => _library._obuf_reserve_slowPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Size Function(
+                  ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>
+      get obuf_dup => _library._obuf_dupPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>>
+      get obuf_rollback_to_svp => _library._obuf_rollback_to_svpPtr;
   ffi.Pointer<ffi.Pointer<FILE>> get stdin => _library._stdin;
   ffi.Pointer<ffi.Pointer<FILE>> get stdout => _library._stdout;
   ffi.Pointer<ffi.Pointer<FILE>> get stderr => _library._stderr;
@@ -19128,62 +19091,6 @@ class _SymbolAddresses {
       get ftrylockfile => _library._ftrylockfilePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<FILE>)>>
       get funlockfile => _library._funlockfilePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_acceptor_configuration_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int32)>> get transport_initialize_acceptor =>
-      _library._transport_initialize_acceptorPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
-      get transport_close_acceptor => _library._transport_close_acceptorPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_acceptor_t>, ffi.Pointer<io_uring>)>>
-      get transport_acceptor_register =>
-          _library._transport_acceptor_registerPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_acceptor>)>>
-      get transport_acceptor_accept => _library._transport_acceptor_acceptPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<ibuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
-      get ibuf_create => _library._ibuf_createPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
-      get ibuf_destroy => _library._ibuf_destroyPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ibuf>)>>
-      get ibuf_reinit => _library._ibuf_reinitPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<ibuf>, ffi.Size)>>
-      get ibuf_reserve_slow => _library._ibuf_reserve_slowPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<obuf>, ffi.Pointer<slab_cache>, ffi.Size)>>
-      get obuf_create => _library._obuf_createPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
-      get obuf_destroy => _library._obuf_destroyPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<obuf>)>>
-      get obuf_reset => _library._obuf_resetPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Void> Function(ffi.Pointer<obuf>, ffi.Size)>>
-      get obuf_reserve_slow => _library._obuf_reserve_slowPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Size Function(
-                  ffi.Pointer<obuf>, ffi.Pointer<ffi.Void>, ffi.Size)>>
-      get obuf_dup => _library._obuf_dupPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<obuf>, ffi.Pointer<obuf_svp>)>>
-      get obuf_rollback_to_svp => _library._obuf_rollback_to_svpPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Handle)>>
       get Dart_IsError => _library._Dart_IsErrorPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Handle)>>
@@ -20184,14 +20091,11 @@ class _SymbolAddresses {
   ffi.Pointer<Dart_ExitScope_Type> get Dart_ExitScope_DL =>
       _library._Dart_ExitScope_DL;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_channel_configuration_t>,
-              Dart_Port,
-              Dart_Port,
-              Dart_Port)>> get transport_initialize_channel =>
-      _library._transport_initialize_channelPtr;
+          ffi.NativeFunction<
+              ffi.Pointer<transport_channel_t> Function(
+                  ffi.Pointer<transport_channel_configuration_t>)>>
+      get transport_initialize_channel =>
+          _library._transport_initialize_channelPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(
@@ -20213,18 +20117,13 @@ class _SymbolAddresses {
       get transport_close_channel => _library._transport_close_channelPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_channel>, ffi.Int)>>
-      get transport_channel_handle_accept =>
-          _library._transport_channel_handle_acceptPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
+              ffi.Int Function(
                   ffi.Pointer<transport_channel>, ffi.Pointer<io_uring_cqe>)>>
       get transport_channel_handle_write =>
           _library._transport_channel_handle_writePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(
+              ffi.Int Function(
                   ffi.Pointer<transport_channel>, ffi.Pointer<io_uring_cqe>)>>
       get transport_channel_handle_read =>
           _library._transport_channel_handle_readPtr;
@@ -20250,22 +20149,36 @@ class _SymbolAddresses {
       get transport_channel_free_buffer =>
           _library._transport_channel_free_bufferPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_controller_t> Function(
-                  ffi.Pointer<transport_t>,
-                  ffi.Pointer<transport_acceptor_t>,
-                  ffi.Pointer<transport_channel_t>,
-                  ffi.Pointer<transport_controller_configuration_t>)>>
-      get transport_controller_start => _library._transport_controller_startPtr;
+      ffi.NativeFunction<
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_acceptor_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>> get transport_initialize_acceptor =>
+      _library._transport_initialize_acceptorPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_controller_t>)>>
-      get transport_controller_stop => _library._transport_controller_stopPtr;
+              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
+      get transport_close_acceptor => _library._transport_close_acceptorPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Bool Function(
-                  ffi.Pointer<transport_controller_t>, ffi.Pointer<ffi.Void>)>>
-      get transport_controller_send => _library._transport_controller_sendPtr;
+              ffi.Void Function(
+                  ffi.Pointer<transport_acceptor_t>, ffi.Pointer<io_uring>)>>
+      get transport_acceptor_register =>
+          _library._transport_acceptor_registerPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_acceptor>)>>
+      get transport_acceptor_accept => _library._transport_acceptor_acceptPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_t> Function(
+              ffi.Pointer<transport_configuration_t>,
+              ffi.Pointer<transport_channel_t>,
+              ffi.Pointer<transport_acceptor_t>)>> get transport_initialize =>
+      _library._transport_initializePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_t>)>>
+      get transport_consume => _library._transport_consumePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
+      get transport_close => _library._transport_closePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_connector_t> Function(
@@ -21705,19 +21618,6 @@ class statx extends ffi.Opaque {}
 
 class epoll_event extends ffi.Opaque {}
 
-class sched_param extends ffi.Struct {
-  @ffi.Int()
-  external int sched_priority;
-}
-
-class cpu_set_t extends ffi.Struct {
-  @ffi.Array.multi([16])
-  external ffi.Array<ffi.UnsignedLong> __bits;
-}
-
-typedef pthread_once_t = ffi.Int;
-typedef pthread_key_t = ffi.UnsignedInt;
-
 /// list entry and head structure
 class rlist extends ffi.Struct {
   external ffi.Pointer<rlist> prev;
@@ -21860,6 +21760,19 @@ class quota extends ffi.Struct {
   @ffi.Uint64()
   external int value;
 }
+
+class sched_param extends ffi.Struct {
+  @ffi.Int()
+  external int sched_priority;
+}
+
+class cpu_set_t extends ffi.Struct {
+  @ffi.Array.multi([16])
+  external ffi.Array<ffi.UnsignedLong> __bits;
+}
+
+typedef pthread_once_t = ffi.Int;
+typedef pthread_key_t = ffi.UnsignedInt;
 
 class slab extends ffi.Struct {
   external rlist next_in_cache;
@@ -22170,41 +22083,72 @@ typedef mempool_stats_cb = ffi.Pointer<
     ffi.NativeFunction<
         ffi.Int Function(ffi.Pointer<mempool_stats>, ffi.Pointer<ffi.Void>)>>;
 
-class transport_configuration extends ffi.Struct {
-  @ffi.Uint32()
-  external int slab_size;
+class ibuf extends ffi.Struct {
+  external ffi.Pointer<slab_cache> slabc;
+
+  external ffi.Pointer<ffi.Char> buf;
+
+  /// Start of input.
+  external ffi.Pointer<ffi.Char> rpos;
+
+  /// End of useful input
+  external ffi.Pointer<ffi.Char> wpos;
+
+  /// End of buffer.
+  external ffi.Pointer<ffi.Char> end;
 
   @ffi.Size()
-  external int memory_quota;
+  external int start_capacity;
+}
 
-  @ffi.Uint32()
-  external int slab_allocation_minimal_object_size;
+/// Output buffer savepoint. It's possible to
+/// save the current buffer state in a savepoint
+/// and roll back to the saved state at any time
+/// before obuf_reset()
+class obuf_svp extends ffi.Struct {
+  @ffi.Size()
+  external int pos;
 
   @ffi.Size()
-  external int slab_allocation_granularity;
+  external int iov_len;
 
-  @ffi.Float()
-  external double slab_allocation_factor;
+  @ffi.Size()
+  external int used;
+}
+
+/// An output buffer is a vector of struct iovec
+/// for writev().
+/// Each iovec buffer is allocated using slab allocator.
+/// Buffer size grows by a factor of 2. With this growth factor,
+/// the number of used buffers is unlikely to ever exceed the
+/// hard limit of SMALL_OBUF_IOV_MAX. If it does, an exception is
+/// raised.
+class obuf extends ffi.Struct {
+  external ffi.Pointer<slab_cache> slabc;
+
+  /// Position of the "current" iovec.
+  @ffi.Int()
+  external int pos;
 
   @ffi.Int()
-  external int log_level;
+  external int n_iov;
 
-  @ffi.Bool()
-  external bool log_colored;
+  @ffi.Size()
+  external int used;
+
+  /// iov[0] size (allocations are normally a multiple of this number),
+  /// but can be larger if a large chunk is requested by
+  /// obuf_reserve().
+  @ffi.Size()
+  external int start_capacity;
+
+  @ffi.Array.multi([32])
+  external ffi.Array<ffi.Size> capacity;
+
+  @ffi.Array.multi([32])
+  external ffi.Array<iovec> iov;
 }
 
-class transport extends ffi.Struct {
-  external slab_arena arena;
-
-  external slab_cache cache;
-
-  external small_alloc allocator;
-
-  external quota quota1;
-}
-
-typedef transport_t = transport;
-typedef transport_configuration_t = transport_configuration;
 typedef FILE = _IO_FILE;
 
 class _IO_FILE extends ffi.Struct {
@@ -22318,97 +22262,6 @@ class UnnamedUnion11 extends ffi.Union {
 
   @ffi.Array.multi([4])
   external ffi.Array<ffi.Char> __wchb;
-}
-
-class transport_acceptor_configuration extends ffi.Struct {
-  @ffi.Uint32()
-  external int ring_size;
-
-  @ffi.Int32()
-  external int backlog;
-}
-
-class transport_acceptor extends ffi.Struct {
-  external ffi.Pointer<transport_t> transport;
-
-  external ffi.Pointer<ffi.Void> context;
-
-  external ffi.Pointer<ffi.Char> server_ip;
-
-  @ffi.Int32()
-  external int server_port;
-
-  @ffi.Bool()
-  external bool active;
-}
-
-typedef transport_acceptor_t = transport_acceptor;
-typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
-
-class ibuf extends ffi.Struct {
-  external ffi.Pointer<slab_cache> slabc;
-
-  external ffi.Pointer<ffi.Char> buf;
-
-  /// Start of input.
-  external ffi.Pointer<ffi.Char> rpos;
-
-  /// End of useful input
-  external ffi.Pointer<ffi.Char> wpos;
-
-  /// End of buffer.
-  external ffi.Pointer<ffi.Char> end;
-
-  @ffi.Size()
-  external int start_capacity;
-}
-
-/// Output buffer savepoint. It's possible to
-/// save the current buffer state in a savepoint
-/// and roll back to the saved state at any time
-/// before obuf_reset()
-class obuf_svp extends ffi.Struct {
-  @ffi.Size()
-  external int pos;
-
-  @ffi.Size()
-  external int iov_len;
-
-  @ffi.Size()
-  external int used;
-}
-
-/// An output buffer is a vector of struct iovec
-/// for writev().
-/// Each iovec buffer is allocated using slab allocator.
-/// Buffer size grows by a factor of 2. With this growth factor,
-/// the number of used buffers is unlikely to ever exceed the
-/// hard limit of SMALL_OBUF_IOV_MAX. If it does, an exception is
-/// raised.
-class obuf extends ffi.Struct {
-  external ffi.Pointer<slab_cache> slabc;
-
-  /// Position of the "current" iovec.
-  @ffi.Int()
-  external int pos;
-
-  @ffi.Int()
-  external int n_iov;
-
-  @ffi.Size()
-  external int used;
-
-  /// iov[0] size (allocations are normally a multiple of this number),
-  /// but can be larger if a large chunk is requested by
-  /// obuf_reserve().
-  @ffi.Size()
-  external int start_capacity;
-
-  @ffi.Array.multi([32])
-  external ffi.Array<ffi.Size> capacity;
-
-  @ffi.Array.multi([32])
-  external ffi.Array<iovec> iov;
 }
 
 typedef Dart_WeakPersistentHandle = ffi.Pointer<_Dart_WeakPersistentHandle>;
@@ -23312,30 +23165,11 @@ class transport_channel_configuration extends ffi.Struct {
   external int buffers_count;
 
   @ffi.Uint32()
-  external int ring_size;
-
-  @ffi.Uint32()
-  external int buffer_shift;
+  external int buffer_size;
 }
 
 class transport_channel extends ffi.Struct {
-  external ffi.Pointer<transport_t> transport;
-
-  @Dart_Port()
-  external int read_port;
-
-  @Dart_Port()
-  external int write_port;
-
-  @Dart_Port()
-  external int accept_port;
-
   external ffi.Pointer<ffi.Void> context;
-
-  @ffi.Bool()
-  external bool active;
-
-  external rlist balancer_link;
 }
 
 class transport_message extends ffi.Struct {
@@ -23352,61 +23186,71 @@ class transport_message extends ffi.Struct {
 typedef transport_channel_t = transport_channel;
 typedef transport_channel_configuration_t = transport_channel_configuration;
 
+class transport_acceptor_configuration extends ffi.Struct {
+  @ffi.Int32()
+  external int backlog;
+}
+
+class transport_acceptor extends ffi.Struct {
+  external ffi.Pointer<ffi.Void> context;
+
+  @ffi.Bool()
+  external bool active;
+}
+
+typedef transport_acceptor_t = transport_acceptor;
+typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
+
+class transport_configuration extends ffi.Struct {
+  @ffi.Uint32()
+  external int slab_size;
+
+  @ffi.Size()
+  external int memory_quota;
+
+  @ffi.Uint32()
+  external int slab_allocation_minimal_object_size;
+
+  @ffi.Size()
+  external int slab_allocation_granularity;
+
+  @ffi.Float()
+  external double slab_allocation_factor;
+
+  @ffi.Int()
+  external int log_level;
+
+  @ffi.Bool()
+  external bool log_colored;
+
+  @ffi.Size()
+  external int ring_size;
+}
+
+class transport extends ffi.Struct {
+  external slab_arena arena;
+
+  external slab_cache cache;
+
+  external small_alloc allocator;
+
+  external quota quota1;
+
+  external ffi.Pointer<io_uring> ring;
+
+  external ffi.Pointer<transport_channel_t> channel;
+
+  external ffi.Pointer<transport_acceptor_t> acceptor;
+}
+
 abstract class transport_balancer_type {
   static const int TRANSPORT_BALANCER_ROUND_ROBBIN = 0;
   static const int TRANSPORT_BALANCER_LEAST_CONNECTIONS = 1;
   static const int TRANSPORT_BALANCER_max = 2;
 }
 
-class transport_balancer_configuration extends ffi.Struct {
-  @ffi.Int32()
-  external int type;
-}
-
-class transport_controller extends ffi.Struct {
-  external ffi.Pointer<io_uring> ring;
-
-  external ffi.Pointer<transport_t> transport;
-
-  external ffi.Pointer<ffi.Void> balancer;
-
-  @ffi.Size()
-  external int internal_ring_size;
-
-  @ffi.Int()
-  external int ring_retry_max_count;
-
-  @ffi.Bool()
-  external bool initialized;
-
-  @ffi.Bool()
-  external bool active;
-
-  external ffi.Pointer<ffi.Void> context;
-
-  @pthread_t()
-  external int thread_id;
-
-  external pthread_mutex_t shutdown_mutex;
-
-  external pthread_cond_t shutdown_condition;
-}
-
-class transport_controller_configuration extends ffi.Struct {
-  @ffi.Int()
-  external int ring_retry_max_count;
-
-  @ffi.Size()
-  external int internal_ring_size;
-
-  external ffi.Pointer<transport_balancer_configuration_t>
-      balancer_configuration;
-}
-
-typedef transport_balancer_configuration_t = transport_balancer_configuration;
-typedef transport_controller_t = transport_controller;
-typedef transport_controller_configuration_t
-    = transport_controller_configuration;
+typedef transport_t = transport;
+typedef transport_configuration_t = transport_configuration;
 
 class _Dart_Handle extends ffi.Opaque {}
 
@@ -23802,6 +23646,16 @@ const int IORING_OP_LAST = 34;
 
 const int IORING_CQE_BUFFER_SHIFT = 16;
 
+const int SLAB_MIN_SIZE = 65536;
+
+const int SMALL_UNLIMITED = -9223372036854775808;
+
+const int SLAB_ARENA_PRIVATE = -2147483647;
+
+const int SLAB_ARENA_SHARED = -2147483646;
+
+const int SLAB_ARENA_DONTDUMP = -2147483644;
+
 const int PTHREAD_CREATE_JOINABLE = 0;
 
 const int PTHREAD_CREATE_DETACHED = 1;
@@ -23863,16 +23717,6 @@ const int PTHREAD_CANCEL_DISABLE = 1;
 const int PTHREAD_CANCEL_DEFERRED = 0;
 
 const int PTHREAD_CANCEL_ASYNCHRONOUS = 1;
-
-const int SLAB_MIN_SIZE = 65536;
-
-const int SMALL_UNLIMITED = -9223372036854775808;
-
-const int SLAB_ARENA_PRIVATE = -2147483647;
-
-const int SLAB_ARENA_SHARED = -2147483646;
-
-const int SLAB_ARENA_DONTDUMP = -2147483644;
 
 const int ORDER_MAX = 16;
 
@@ -24491,6 +24335,120 @@ const int kNativeArgNumberSize = 8;
 const int kNativeArgTypePos = 8;
 
 const int kNativeArgTypeSize = 8;
+
+const int INT8_MIN = -128;
+
+const int INT16_MIN = -32768;
+
+const int INT32_MIN = -2147483648;
+
+const int INT64_MIN = -9223372036854775808;
+
+const int INT8_MAX = 127;
+
+const int INT16_MAX = 32767;
+
+const int INT32_MAX = 2147483647;
+
+const int INT64_MAX = 9223372036854775807;
+
+const int UINT8_MAX = 255;
+
+const int UINT16_MAX = 65535;
+
+const int UINT32_MAX = 4294967295;
+
+const int UINT64_MAX = -1;
+
+const int INT_LEAST8_MIN = -128;
+
+const int INT_LEAST16_MIN = -32768;
+
+const int INT_LEAST32_MIN = -2147483648;
+
+const int INT_LEAST64_MIN = -9223372036854775808;
+
+const int INT_LEAST8_MAX = 127;
+
+const int INT_LEAST16_MAX = 32767;
+
+const int INT_LEAST32_MAX = 2147483647;
+
+const int INT_LEAST64_MAX = 9223372036854775807;
+
+const int UINT_LEAST8_MAX = 255;
+
+const int UINT_LEAST16_MAX = 65535;
+
+const int UINT_LEAST32_MAX = 4294967295;
+
+const int UINT_LEAST64_MAX = -1;
+
+const int INT_FAST8_MIN = -128;
+
+const int INT_FAST16_MIN = -9223372036854775808;
+
+const int INT_FAST32_MIN = -9223372036854775808;
+
+const int INT_FAST64_MIN = -9223372036854775808;
+
+const int INT_FAST8_MAX = 127;
+
+const int INT_FAST16_MAX = 9223372036854775807;
+
+const int INT_FAST32_MAX = 9223372036854775807;
+
+const int INT_FAST64_MAX = 9223372036854775807;
+
+const int UINT_FAST8_MAX = 255;
+
+const int UINT_FAST16_MAX = -1;
+
+const int UINT_FAST32_MAX = -1;
+
+const int UINT_FAST64_MAX = -1;
+
+const int INTPTR_MIN = -9223372036854775808;
+
+const int INTPTR_MAX = 9223372036854775807;
+
+const int UINTPTR_MAX = -1;
+
+const int INTMAX_MIN = -9223372036854775808;
+
+const int INTMAX_MAX = 9223372036854775807;
+
+const int UINTMAX_MAX = -1;
+
+const int PTRDIFF_MIN = -9223372036854775808;
+
+const int PTRDIFF_MAX = 9223372036854775807;
+
+const int SIG_ATOMIC_MIN = -2147483648;
+
+const int SIG_ATOMIC_MAX = 2147483647;
+
+const int SIZE_MAX = -1;
+
+const int WCHAR_MIN = -2147483648;
+
+const int WCHAR_MAX = 2147483647;
+
+const int WINT_MIN = 0;
+
+const int WINT_MAX = 4294967295;
+
+const int TRANSPORT_ACTION_ADD_CONNECTOR = 1;
+
+const int TRANSPORT_ACTION_ADD_ACCEPTOR = 2;
+
+const int TRANSPORT_ACTION_ADD_CHANNEL = 4;
+
+const int TRANSPORT_ACTION_READ = 8;
+
+const int TRANSPORT_ACTION_WRITE = 16;
+
+const int TRANSPORT_ACTION_ACCEPT = 32;
 
 const int LITTLE_ENDIAN = 1234;
 
@@ -25205,108 +25163,6 @@ const int IN_LOOPBACKNET = 127;
 const int INET_ADDRSTRLEN = 16;
 
 const int INET6_ADDRSTRLEN = 46;
-
-const int INT8_MIN = -128;
-
-const int INT16_MIN = -32768;
-
-const int INT32_MIN = -2147483648;
-
-const int INT64_MIN = -9223372036854775808;
-
-const int INT8_MAX = 127;
-
-const int INT16_MAX = 32767;
-
-const int INT32_MAX = 2147483647;
-
-const int INT64_MAX = 9223372036854775807;
-
-const int UINT8_MAX = 255;
-
-const int UINT16_MAX = 65535;
-
-const int UINT32_MAX = 4294967295;
-
-const int UINT64_MAX = -1;
-
-const int INT_LEAST8_MIN = -128;
-
-const int INT_LEAST16_MIN = -32768;
-
-const int INT_LEAST32_MIN = -2147483648;
-
-const int INT_LEAST64_MIN = -9223372036854775808;
-
-const int INT_LEAST8_MAX = 127;
-
-const int INT_LEAST16_MAX = 32767;
-
-const int INT_LEAST32_MAX = 2147483647;
-
-const int INT_LEAST64_MAX = 9223372036854775807;
-
-const int UINT_LEAST8_MAX = 255;
-
-const int UINT_LEAST16_MAX = 65535;
-
-const int UINT_LEAST32_MAX = 4294967295;
-
-const int UINT_LEAST64_MAX = -1;
-
-const int INT_FAST8_MIN = -128;
-
-const int INT_FAST16_MIN = -9223372036854775808;
-
-const int INT_FAST32_MIN = -9223372036854775808;
-
-const int INT_FAST64_MIN = -9223372036854775808;
-
-const int INT_FAST8_MAX = 127;
-
-const int INT_FAST16_MAX = 9223372036854775807;
-
-const int INT_FAST32_MAX = 9223372036854775807;
-
-const int INT_FAST64_MAX = 9223372036854775807;
-
-const int UINT_FAST8_MAX = 255;
-
-const int UINT_FAST16_MAX = -1;
-
-const int UINT_FAST32_MAX = -1;
-
-const int UINT_FAST64_MAX = -1;
-
-const int INTPTR_MIN = -9223372036854775808;
-
-const int INTPTR_MAX = 9223372036854775807;
-
-const int UINTPTR_MAX = -1;
-
-const int INTMAX_MIN = -9223372036854775808;
-
-const int INTMAX_MAX = 9223372036854775807;
-
-const int UINTMAX_MAX = -1;
-
-const int PTRDIFF_MIN = -9223372036854775808;
-
-const int PTRDIFF_MAX = 9223372036854775807;
-
-const int SIG_ATOMIC_MIN = -2147483648;
-
-const int SIG_ATOMIC_MAX = 2147483647;
-
-const int SIZE_MAX = -1;
-
-const int WCHAR_MIN = -2147483648;
-
-const int WCHAR_MAX = 2147483647;
-
-const int WINT_MIN = 0;
-
-const int WINT_MAX = 4294967295;
 
 const int UIO_MAXIOV = 1024;
 
@@ -26650,16 +26506,6 @@ const int ATOMIC_LLONG_LOCK_FREE = 2;
 
 const int ATOMIC_POINTER_LOCK_FREE = 2;
 
-const int SCHED_OTHER = 0;
-
-const int SCHED_FIFO = 1;
-
-const int SCHED_RR = 2;
-
-const int PTHREAD_ONCE_INIT = 0;
-
-const int PTHREAD_BARRIER_SERIAL_THREAD = -1;
-
 const int MB_LEN_MAX = 16;
 
 const int LLONG_MIN = -9223372036854775808;
@@ -26875,6 +26721,16 @@ const int MCL_FUTURE = 2;
 const int MCL_ONFAULT = 4;
 
 const int SLAB_ARENA_FLAG_MARK = 2147483648;
+
+const int SCHED_OTHER = 0;
+
+const int SCHED_FIFO = 1;
+
+const int SCHED_RR = 2;
+
+const int PTHREAD_ONCE_INIT = 0;
+
+const int PTHREAD_BARRIER_SERIAL_THREAD = -1;
 
 const int RB_COMPACT = 1;
 

@@ -2,69 +2,25 @@ library iouring_transport;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-import 'dart:isolate';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
+import 'package:iouring_transport/transport/worker.dart';
 
 Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
   final fromServer = encoder.convert("from server");
-  final fromClient = encoder.convert("from client");
-
-  final serverTransport = Transport(
-    TransportDefaults.transport(),
-    TransportDefaults.controller(),
-    TransportDefaults.acceptor(),
-    TransportDefaults.channel(),
-  )..initialize(
-      "0.0.0.0",
-      9999,
-      onRead: (payload) {
+  final transport = Transport();
+  final acceptor = transport.acceptor(TransportDefaults.acceptor(), "0.0.0.0", 9999);
+  final channel = transport.channel(TransportDefaults.channel());
+  transport.initialize(TransportDefaults.transport(), acceptor, channel);
+  transport.work(
+    2,
+    (port) => TransportWorker(port)
+      ..start(onRead: (payload) {
         payload.finalize();
         payload.channel.write(fromServer, payload.fd);
-      },
-    );
-  //final clientTransport = Transport(TransportDefaults.transport(), TransportDefaults.controller())..initialize();
-  final done = Completer();
-
-  var received = 0;
-  var sent = 0;
-  var seconds = 30;
-  var stopChannels = false;
-
-  serverTransport.acceptor.accept();
-
-  // clientTransport.connection(TransportDefaults.connection(), TransportDefaults.channel()).connect("127.0.0.1", 9999).listen((clientChannel) async {
-  //   clientChannel.start(
-  //     onWrite: (payload) {
-  //       sent++;
-  //       payload.finalize();
-  //       clientChannel.queueRead();
-  //       //print("onWrite");
-  //     },
-  //     onRead: (payload) {
-  //       payload.finalize();
-  //       //print("onRead");
-  //       if (!stopChannels) {
-  //         clientChannel.queueWrite(fromClient);
-  //         return;
-  //       }
-  //       clientChannel.stop();
-  //     },
-  //   );
-  //   //print("onConnect");
-  //   clientChannel.queueWrite(fromClient);
-  // });
-
+      }),
+  );
   await Future.delayed(Duration(days: 1));
-  stopChannels = true;
-
-  print("received RPS: ${received / seconds}");
-  print("sent RPS: ${sent / seconds}");
-
-  await done.future;
-  serverTransport.close();
-  //clientTransport.close();
 }

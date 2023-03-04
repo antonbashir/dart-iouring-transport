@@ -16,13 +16,7 @@ class TransportDefaults {
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
         buffersCount: 1024,
-        ringSize: 8192,
-        bufferShift: 8,
-      );
-
-  static TransportControllerConfiguration controller() => TransportControllerConfiguration(
-        retryMaxCount: 5,
-        internalRingSize: 33554432,
+        bufferSize: 4096,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(

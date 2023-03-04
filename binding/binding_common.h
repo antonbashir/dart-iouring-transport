@@ -8,10 +8,8 @@ extern "C"
 
 #include <liburing.h>
 #include "trivia/util.h"
-#include "fiber.h"
 #include "binding_logger.h"
-
-#define NANOS_PER_SEC 1000000000LL
+#include "pthread.h"
 
   static inline struct io_uring_sqe *provide_sqe(struct io_uring *ring)
   {
@@ -19,7 +17,7 @@ extern "C"
     while (unlikely(sqe == NULL))
     {
       io_uring_submit(ring);
-      fiber_sleep(0);
+      pthread_yield();
       sqe = io_uring_get_sqe(ring);
     }
     return sqe;

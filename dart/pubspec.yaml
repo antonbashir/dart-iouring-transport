@@ -18,7 +18,7 @@ ffigen:
   output: "lib/transport/bindings.dart"
   headers:
     entry-points:
-      - "../binding/binding_controller.h"
+      - "../binding/binding_payload.h"
       - "../binding/binding_transport.h"
       - "../binding/binding_channel.h"
       - "../binding/binding_acceptor.h"

@@ -45,45 +45,24 @@ class TransportConfiguration {
 
 class TransportChannelConfiguration {
   final int buffersCount;
-  final int ringSize;
-  final int bufferShift;
+  final int bufferSize;
 
   TransportChannelConfiguration({
     required this.buffersCount,
-    required this.bufferShift,
-    required this.ringSize,
+    required this.bufferSize,
   });
 
   TransportChannelConfiguration copyWith({
     int? buffersCount,
     int? ringSize,
-    int? bufferShift,
+    int? bufferSize,
   }) =>
       TransportChannelConfiguration(
         buffersCount: buffersCount ?? this.buffersCount,
-        ringSize: ringSize ?? this.ringSize,
-        bufferShift: bufferShift ?? this.bufferShift,
+        bufferSize: bufferSize ?? this.bufferSize,
       );
 }
 
-class TransportControllerConfiguration {
-  final int retryMaxCount;
-  final int internalRingSize;
-
-  TransportControllerConfiguration({
-    required this.retryMaxCount,
-    required this.internalRingSize,
-  });
-
-  TransportControllerConfiguration copyWith({
-    int? retryMaxCount,
-    int? internalRingSize,
-  }) =>
-      TransportControllerConfiguration(
-        retryMaxCount: retryMaxCount ?? this.retryMaxCount,
-        internalRingSize: internalRingSize ?? this.internalRingSize,
-      );
-}
 
 class TransportAcceptorConfiguration {
   final int backlog;

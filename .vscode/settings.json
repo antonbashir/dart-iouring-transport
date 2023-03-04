@@ -89,6 +89,7 @@
     "dart_api.h": "c",
     "cstdio": "c",
     "binding_acceptor.h": "c",
-    "cbus.h": "c"
+    "cbus.h": "c",
+    "binding_socket.h": "c"
   },
 }
