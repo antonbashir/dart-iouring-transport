@@ -115,7 +115,7 @@ void transport_channel_handle_write(struct transport_channel *channel, struct io
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   log_debug("channel handle write cqe res = %d", cqe->res);
   context->buffers[context->buffer_by_fd[cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS]].iov_len = cqe->res;
-  dart_post_int(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS, channel->read_port);
+  dart_post_int(cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS, channel->write_port);
 }
 
 void transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe)
