@@ -9,7 +9,6 @@ import 'package:iouring_transport/transport/configuration.dart';
 import 'bindings.dart';
 import 'channels/channel.dart';
 import 'lookup.dart';
-import 'payload.dart';
 
 class Transport {
   late String? libraryPath;

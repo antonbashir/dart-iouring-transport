@@ -37,6 +37,7 @@ extern "C"
     struct io_uring *ring;
     transport_channel_t *channel;
     transport_acceptor_t *acceptor;
+    uint32_t ring_size;
   } transport_t;
 
   typedef enum
@@ -49,7 +50,9 @@ extern "C"
   transport_t *transport_initialize(transport_configuration_t *configuration,
                                     transport_channel_t *channel,
                                     transport_acceptor_t *acceptor);
-  int transport_consume(transport_t *transport);
+  int transport_activate(transport_t *transport);
+  struct io_uring_cqe *transport_consume(transport_t *transport);
+  void transport_cqe_seen(transport_t *transport, struct io_uring_cqe *cqe);
   void transport_close(transport_t *transport);
 #if defined(__cplusplus)
 }
