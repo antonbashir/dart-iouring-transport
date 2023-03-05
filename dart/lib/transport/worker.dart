@@ -11,7 +11,8 @@ const TransportPayloadRead = 1 << (64 - 1 - 0);
 const TransportPayloadWrite = 1 << (64 - 1 - 1);
 const TransportPayloadAccept = 1 << (64 - 1 - 2);
 const TransportPayloadConnect = 1 << (64 - 1 - 3);
-const TransportPayloadAll = TransportPayloadRead | TransportPayloadWrite | TransportPayloadAccept | TransportPayloadConnect;
+const TransportPayloadMessage = 1 << (64 - 1 - 4);
+const TransportPayloadAll = TransportPayloadRead | TransportPayloadWrite | TransportPayloadAccept | TransportPayloadConnect | TransportPayloadMessage;
 
 class TransportWorker {
   late final TransportBindings _bindings;
@@ -23,7 +24,7 @@ class TransportWorker {
     toTransport.send(fromTransport.sendPort);
   }
 
-  Future<void> start({
+  Future<void> handleData({
     void Function(TransportDataPayload payload)? onRead,
     void Function(TransportDataPayload payload)? onWrite,
     void Function()? onStop,
@@ -37,9 +38,10 @@ class TransportWorker {
             : loadBindingLibrary()
         : loadBindingLibrary();
     _bindings = TransportBindings(_library.library);
-    final ring = _bindings.transport_activate(_transport);
+    final channelPointer = _bindings.transport_activate_data(_transport);
+    final ring = channelPointer.ref.ring;
     final channel = TransportChannel.fromPointer(
-      _transport.ref.channel,
+      channelPointer,
       _bindings,
       onRead: onRead,
       onWrite: onWrite,
@@ -48,7 +50,7 @@ class TransportWorker {
     final futures = <Future>[];
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
-      cqes = _bindings.transport_consume(_transport, cqes, ring);
+      cqes = _bindings.transport_consume_data(_transport, cqes, ring);
       if (cqes == nullptr) continue;
       int cqeCount = _bindings.transport_cqe_ready(ring);
       int cqeProcessed = 0;
@@ -62,12 +64,10 @@ class TransportWorker {
         final int userData = cqe.ref.user_data;
 
         if (result < 0) {
-          _bindings.transport_acceptor_accept(_transport.ref.acceptor);
           continue;
         }
 
-        if (userData & TransportPayloadAccept != 0) {
-          _bindings.transport_acceptor_accept(_transport.ref.acceptor);
+        if (userData & TransportPayloadMessage != 0) {
           futures.add(channel.read(result));
           continue;
         }
@@ -89,6 +89,22 @@ class TransportWorker {
       _bindings.transport_cqe_seen(ring, cqeProcessed);
       await Future.wait(futures);
       futures.clear();
+    }
+  }
+
+  Future<void> handleAccept() async {
+    final configuration = await fromTransport.take(2).toList();
+    final libraryPath = configuration[0] as String?;
+    _transport = Pointer.fromAddress(configuration[1] as int);
+    final _library = libraryPath != null
+        ? File(libraryPath).existsSync()
+            ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
+            : loadBindingLibrary()
+        : loadBindingLibrary();
+    _bindings = TransportBindings(_library.library);
+    final ring = _bindings.transport_activate_accept(_transport);
+    while (true) {
+      _bindings.transport_consume_accept(_transport, ring);
     }
   }
 

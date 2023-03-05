@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/acceptor.dart';
 import 'package:iouring_transport/transport/configuration.dart';
+import 'package:iouring_transport/transport/worker.dart';
 
 import 'bindings.dart';
 import 'channels/channel.dart';
@@ -52,9 +53,16 @@ class Transport {
   }
 
   Future<void> work(int isolates, void Function(SendPort port) worker) async {
+    Isolate.spawn<SendPort>(
+      (port) async => await TransportWorker(port).handleAccept(),
+      fromWorker.sendPort,
+      debugName: "acceptor",
+    );
+
     for (var isolate = 0; isolate < isolates; isolate++) {
       Isolate.spawn<SendPort>(worker, fromWorker.sendPort, debugName: "worker-$isolate");
     }
+
     fromWorker.listen((port) {
       SendPort toWorker = port as SendPort;
       toWorker.send(libraryPath);

@@ -16617,6 +16617,16 @@ class TransportBindings {
   late final _transport_acceptor_accept = _transport_acceptor_acceptPtr
       .asFunction<int Function(ffi.Pointer<transport_acceptor>)>();
 
+  ffi.Pointer<transport_balancer> transport_initialize_balancer() {
+    return _transport_initialize_balancer();
+  }
+
+  late final _transport_initialize_balancerPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<transport_balancer> Function()>>(
+          'transport_initialize_balancer');
+  late final _transport_initialize_balancer = _transport_initialize_balancerPtr
+      .asFunction<ffi.Pointer<transport_balancer> Function()>();
+
   ffi.Pointer<transport_t> transport_initialize(
     ffi.Pointer<transport_configuration_t> configuration,
     ffi.Pointer<transport_channel_t> channel,
@@ -16641,42 +16651,75 @@ class TransportBindings {
           ffi.Pointer<transport_channel_t>,
           ffi.Pointer<transport_acceptor_t>)>();
 
-  ffi.Pointer<io_uring> transport_activate(
+  ffi.Pointer<io_uring> transport_activate_accept(
     ffi.Pointer<transport_t> transport,
   ) {
-    return _transport_activate(
+    return _transport_activate_accept(
       transport,
     );
   }
 
-  late final _transport_activatePtr = _lookup<
+  late final _transport_activate_acceptPtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<io_uring> Function(
-              ffi.Pointer<transport_t>)>>('transport_activate');
-  late final _transport_activate = _transport_activatePtr
+              ffi.Pointer<transport_t>)>>('transport_activate_accept');
+  late final _transport_activate_accept = _transport_activate_acceptPtr
       .asFunction<ffi.Pointer<io_uring> Function(ffi.Pointer<transport_t>)>();
 
-  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_consume(
+  ffi.Pointer<transport_channel_t> transport_activate_data(
+    ffi.Pointer<transport_t> transport,
+  ) {
+    return _transport_activate_data(
+      transport,
+    );
+  }
+
+  late final _transport_activate_dataPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>>('transport_activate_data');
+  late final _transport_activate_data = _transport_activate_dataPtr.asFunction<
+      ffi.Pointer<transport_channel_t> Function(ffi.Pointer<transport_t>)>();
+
+  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_consume_data(
     ffi.Pointer<transport_t> transport,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     ffi.Pointer<io_uring> ring,
   ) {
-    return _transport_consume(
+    return _transport_consume_data(
       transport,
       cqes,
       ring,
     );
   }
 
-  late final _transport_consumePtr = _lookup<
+  late final _transport_consume_dataPtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
               ffi.Pointer<transport_t>,
               ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>>('transport_consume');
-  late final _transport_consume = _transport_consumePtr.asFunction<
+              ffi.Pointer<io_uring>)>>('transport_consume_data');
+  late final _transport_consume_data = _transport_consume_dataPtr.asFunction<
       ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(ffi.Pointer<transport_t>,
           ffi.Pointer<ffi.Pointer<io_uring_cqe>>, ffi.Pointer<io_uring>)>();
+
+  void transport_consume_accept(
+    ffi.Pointer<transport_t> transport,
+    ffi.Pointer<io_uring> ring,
+  ) {
+    return _transport_consume_accept(
+      transport,
+      ring,
+    );
+  }
+
+  late final _transport_consume_acceptPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_t>,
+              ffi.Pointer<io_uring>)>>('transport_consume_accept');
+  late final _transport_consume_accept =
+      _transport_consume_acceptPtr.asFunction<
+          void Function(ffi.Pointer<transport_t>, ffi.Pointer<io_uring>)>();
 
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     ffi.Pointer<transport_t> transport,
@@ -20225,6 +20268,9 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_acceptor>)>>
       get transport_acceptor_accept => _library._transport_acceptor_acceptPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Pointer<transport_balancer> Function()>>
+      get transport_initialize_balancer =>
+          _library._transport_initialize_balancerPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_t> Function(
@@ -20235,14 +20281,24 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<io_uring> Function(ffi.Pointer<transport_t>)>>
-      get transport_activate => _library._transport_activatePtr;
+      get transport_activate_accept => _library._transport_activate_acceptPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>> get transport_activate_data =>
+      _library._transport_activate_dataPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
               ffi.Pointer<transport_t>,
               ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>> get transport_consume =>
-      _library._transport_consumePtr;
+              ffi.Pointer<io_uring>)>> get transport_consume_data =>
+      _library._transport_consume_dataPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(
+                  ffi.Pointer<transport_t>, ffi.Pointer<io_uring>)>>
+      get transport_consume_accept => _library._transport_consume_acceptPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
@@ -23245,6 +23301,8 @@ class transport_channel_configuration extends ffi.Struct {
 }
 
 class transport_channel extends ffi.Struct {
+  external ffi.Pointer<io_uring> ring;
+
   external ffi.Pointer<ffi.Void> context;
 
   @ffi.Uint32()
@@ -23252,6 +23310,8 @@ class transport_channel extends ffi.Struct {
 
   @ffi.Uint32()
   external int buffers_count;
+
+  external rlist balancer_link;
 }
 
 class transport_message extends ffi.Struct {
@@ -23282,6 +23342,33 @@ class transport_acceptor extends ffi.Struct {
 
 typedef transport_acceptor_t = transport_acceptor;
 typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
+
+class transport_balancer extends ffi.Struct {
+  external rlist channels;
+
+  external ffi.Pointer<rlist> next_channel;
+
+  @ffi.Uint16()
+  external int last_channel_index;
+
+  @ffi.Size()
+  external int count;
+
+  external ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel> Function(
+              ffi.Pointer<transport_balancer>)>> next;
+
+  external ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_balancer>,
+              ffi.Pointer<transport_channel>)>> add;
+
+  external ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_balancer>,
+              ffi.Pointer<transport_channel>)>> remove;
+}
 
 class transport_configuration extends ffi.Struct {
   @ffi.Uint32()
@@ -23318,18 +23405,14 @@ class transport extends ffi.Struct {
 
   external quota quota1;
 
-  external ffi.Pointer<transport_channel_t> channel;
+  external ffi.Pointer<transport_balancer> channels;
+
+  external ffi.Pointer<transport_channel_t> current_channel;
 
   external ffi.Pointer<transport_acceptor_t> acceptor;
 
   @ffi.Uint32()
   external int ring_size;
-}
-
-abstract class transport_balancer_type {
-  static const int TRANSPORT_BALANCER_ROUND_ROBBIN = 0;
-  static const int TRANSPORT_BALANCER_LEAST_CONNECTIONS = 1;
-  static const int TRANSPORT_BALANCER_max = 2;
 }
 
 typedef transport_t = transport;
@@ -24520,18 +24603,6 @@ const int WCHAR_MAX = 2147483647;
 const int WINT_MIN = 0;
 
 const int WINT_MAX = 4294967295;
-
-const int TRANSPORT_ACTION_ADD_CONNECTOR = 1;
-
-const int TRANSPORT_ACTION_ADD_ACCEPTOR = 2;
-
-const int TRANSPORT_ACTION_ADD_CHANNEL = 4;
-
-const int TRANSPORT_ACTION_READ = 8;
-
-const int TRANSPORT_ACTION_WRITE = 16;
-
-const int TRANSPORT_ACTION_ACCEPT = 32;
 
 const int LITTLE_ENDIAN = 1234;
 

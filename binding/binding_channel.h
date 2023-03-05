@@ -24,9 +24,11 @@ extern "C"
 
   typedef struct transport_channel
   {
+    struct io_uring *ring;
     void *context;
     uint32_t buffer_size;
     uint32_t buffers_count;
+    struct rlist balancer_link;
   } transport_channel_t;
 
   typedef struct transport_message

@@ -10,6 +10,7 @@
 #include "small/include/small/quota.h"
 #include "binding_channel.h"
 #include "binding_acceptor.h"
+#include "binding_balancer.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -34,23 +35,19 @@ extern "C"
     struct slab_cache cache;
     struct small_alloc allocator;
     struct quota quota;
-    transport_channel_t *channel;
+    struct transport_balancer *channels;
+    transport_channel_t *current_channel;
     transport_acceptor_t *acceptor;
     uint32_t ring_size;
   } transport_t;
 
-  typedef enum
-  {
-    TRANSPORT_BALANCER_ROUND_ROBBIN,
-    TRANSPORT_BALANCER_LEAST_CONNECTIONS,
-    TRANSPORT_BALANCER_max
-  } transport_balancer_type;
-
   transport_t *transport_initialize(transport_configuration_t *configuration,
                                     transport_channel_t *channel,
                                     transport_acceptor_t *acceptor);
-  struct io_uring *transport_activate(transport_t *transport);
-  struct io_uring_cqe **transport_consume(transport_t *transport, struct io_uring_cqe ** cqes, struct io_uring *ring);
+  struct io_uring *transport_activate_accept(transport_t *transport);
+  transport_channel_t *transport_activate_data(transport_t *transport);
+  struct io_uring_cqe **transport_consume_data(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring);
+  void transport_consume_accept(transport_t *transport, struct io_uring *ring);
   struct io_uring_cqe **transport_allocate_cqes(transport_t *transport);
   void transport_cqe_seen(struct io_uring *ring, int count);
   int transport_cqe_ready(struct io_uring *ring);
