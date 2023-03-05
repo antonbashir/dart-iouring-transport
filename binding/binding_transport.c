@@ -85,8 +85,16 @@ void transport_consume_accept(transport_t *transport, struct io_uring *ring)
   struct io_uring_cqe *cqe;
   if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
   {
-    transport_acceptor_accept(transport->acceptor);
-    if (cqe->res < 0 || cqe->user_data & TRANSPORT_PAYLOAD_MESSAGE)
+    log_debug("transport access process cqe with result %d and user_data %d", cqe->res, cqe->user_data);
+
+    if (cqe->res < 0)
+    {
+      transport_acceptor_accept(transport->acceptor);
+      io_uring_cqe_seen(ring, cqe);
+      return;
+    }
+
+    if (cqe->res == 0)
     {
       io_uring_cqe_seen(ring, cqe);
       return;
@@ -94,9 +102,10 @@ void transport_consume_accept(transport_t *transport, struct io_uring *ring)
 
     transport_channel_t *channel = transport->channels->next(transport->channels);
     struct io_uring_sqe *sqe = provide_sqe(ring);
-    io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, cqe->res, (intptr_t)channel & TRANSPORT_PAYLOAD_MESSAGE, 0);
+    io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, cqe->res, TRANSPORT_PAYLOAD_MESSAGE, 0);
     io_uring_submit(ring);
     io_uring_cqe_seen(ring, cqe);
+    transport_acceptor_accept(transport->acceptor);
   }
 }
 

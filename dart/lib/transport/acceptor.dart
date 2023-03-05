@@ -11,12 +11,6 @@ class TransportAcceptor {
 
   TransportAcceptor(this._bindings);
 
-  factory TransportAcceptor.fromPointer(Pointer<transport_acceptor_t> pointer, TransportBindings _bindings) {
-    final acceptor = TransportAcceptor(_bindings);
-    acceptor.acceptor = pointer;
-    return acceptor;
-  }
-
   void initialize(TransportAcceptorConfiguration _configuration, String host, int port) {
     using((Arena arena) {
       final configuration = arena<transport_acceptor_configuration>();
