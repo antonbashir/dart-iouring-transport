@@ -30,6 +30,4 @@ class TransportAcceptor {
   }
 
   void close() => _bindings.transport_close_acceptor(acceptor);
-
-  void accept() => _bindings.transport_acceptor_accept(acceptor);
 }
