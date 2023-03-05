@@ -84,7 +84,7 @@ class TransportWorker {
         if (userData & TransportPayloadWrite != 0) {
           final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel.channel, fd);
           _bindings.transport_channel_handle_write(channel.channel, cqe, bufferId);
-          channel.handleWrite(fd, bufferId);
+          futures.add(channel.handleWrite(fd, bufferId));
           continue;
         }
       }
