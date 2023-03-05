@@ -97,20 +97,18 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
   return context->available_buffer_id;
 }
 
-int transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe)
+void transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe, int buffer_id)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   log_debug("channel handle write cqe res = %d", cqe->res);
-  context->buffers[context->buffer_by_fd[cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS]].iov_len = cqe->res;
-  return cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS;
+  context->buffers[buffer_id].iov_len = cqe->res;
 }
 
-int transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe)
+void transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe, int buffer_id)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   log_debug("channel read accept cqe res = %d", cqe->res);
-  context->buffers[context->buffer_by_fd[cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS]].iov_len = cqe->res;
-  return cqe->user_data & ~TRANSPORT_PAYLOAD_ALL_FLAGS;
+  context->buffers[buffer_id].iov_len = cqe->res;
 }
 
 int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id)

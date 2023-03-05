@@ -72,15 +72,19 @@ class TransportWorker {
           continue;
         }
 
+        final fd = userData & ~TransportPayloadAll;
+
         if (userData & TransportPayloadRead != 0) {
-          _bindings.transport_channel_handle_read(channel.channel, cqe);
-          futures.add(channel.handleRead(userData & ~TransportPayloadAll));
+          final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel.channel, fd);
+          _bindings.transport_channel_handle_read(channel.channel, cqe, bufferId);
+          futures.add(channel.handleRead(fd, bufferId));
           continue;
         }
 
         if (userData & TransportPayloadWrite != 0) {
-          _bindings.transport_channel_handle_write(channel.channel, cqe);
-          futures.add(channel.handleWrite(userData & ~TransportPayloadAll));
+          final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel.channel, fd);
+          _bindings.transport_channel_handle_write(channel.channel, cqe, bufferId);
+          channel.handleWrite(fd, bufferId);
           continue;
         }
       }

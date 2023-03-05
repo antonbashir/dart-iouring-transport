@@ -73,8 +73,11 @@ class TransportChannel {
     _bindings.transport_channel_read(channel, fd, bufferId);
   }
 
-  Future<void> handleRead(int fd) async {
-    final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
+  void _read(int fd, int bufferId) {
+    _bindings.transport_channel_read(channel, fd, bufferId);
+  }
+
+  Future<void> handleRead(int fd, int bufferId) async {
     if (_onRead == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
       return;
@@ -86,11 +89,11 @@ class TransportChannel {
     _onRead!(payload);
   }
 
-  Future<void> handleWrite(int fd) async {
+  void handleWrite(int fd, int bufferId) {
     final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
-    await read(fd);
     if (_onWrite == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
+      _read(fd, bufferId);
       return;
     }
     final buffer = _bindings.transport_channel_get_buffer(channel, bufferId);
