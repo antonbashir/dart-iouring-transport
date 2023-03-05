@@ -23394,6 +23394,9 @@ class transport_configuration extends ffi.Struct {
 
   @ffi.Size()
   external int ring_size;
+
+  @ffi.Bool()
+  external bool ring_use_sq_poll;
 }
 
 class transport extends ffi.Struct {

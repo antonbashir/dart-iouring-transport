@@ -48,6 +48,7 @@ class Transport {
       transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
       transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
       transportConfiguration.ref.ring_size = configuration.ringSize;
+      transportConfiguration.ref.ring_use_sq_poll = configuration.ringUseSqPoll;
       _transport = _bindings.transport_initialize(transportConfiguration, channel.channel, acceptor.acceptor);
     });
   }

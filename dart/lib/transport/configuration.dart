@@ -1,5 +1,6 @@
 class TransportConfiguration {
   final int ringSize;
+  final bool ringUseSqPoll;
   final int slabSize;
   final int memoryQuota;
   final int slabAllocationMinimalObjectSize;
@@ -10,6 +11,7 @@ class TransportConfiguration {
 
   TransportConfiguration({
     required this.ringSize,
+    required this.ringUseSqPoll,
     required this.slabSize,
     required this.memoryQuota,
     required this.slabAllocationMinimalObjectSize,
@@ -21,6 +23,7 @@ class TransportConfiguration {
 
   TransportConfiguration copyWith({
     int? ringSize,
+    bool? ringUseSqPoll,
     int? slabSize,
     int? memoryQuota,
     int? bufferInitialCapacity,
@@ -33,6 +36,7 @@ class TransportConfiguration {
   }) =>
       TransportConfiguration(
         ringSize: ringSize ?? this.ringSize,
+        ringUseSqPoll: ringUseSqPoll ?? this.ringUseSqPoll,
         slabSize: slabSize ?? this.slabSize,
         memoryQuota: memoryQuota ?? this.memoryQuota,
         slabAllocationMinimalObjectSize: slabAllocationMinimalObjectSize ?? this.slabAllocationMinimalObjectSize,
@@ -62,7 +66,6 @@ class TransportChannelConfiguration {
         bufferSize: bufferSize ?? this.bufferSize,
       );
 }
-
 
 class TransportAcceptorConfiguration {
   final int backlog;

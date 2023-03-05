@@ -27,6 +27,7 @@ extern "C"
     int log_level;
     bool log_colored;
     size_t ring_size;
+    bool ring_use_sq_poll;
   } transport_configuration_t;
 
   typedef struct transport
@@ -39,6 +40,7 @@ extern "C"
     transport_channel_t *current_channel;
     transport_acceptor_t *acceptor;
     uint32_t ring_size;
+    bool ring_use_sq_poll;
   } transport_t;
 
   transport_t *transport_initialize(transport_configuration_t *configuration,

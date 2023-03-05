@@ -19,7 +19,7 @@
 struct io_uring *transport_activate_accept(transport_t *transport)
 {
   struct io_uring *ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(transport->ring_size, ring, IORING_SETUP_SQPOLL);
+  int32_t status = io_uring_queue_init(transport->ring_size, ring, 0);
   if (status)
   {
     log_error("io_urig init error: %d", status);
@@ -35,7 +35,10 @@ struct io_uring *transport_activate_accept(transport_t *transport)
 transport_channel_t *transport_activate_data(transport_t *transport)
 {
   struct io_uring *ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(transport->ring_size, ring, IORING_SETUP_SQPOLL);
+  uint32_t flags = 0;
+  if (transport->ring_use_sq_poll)
+    flags |= IORING_SETUP_SQPOLL;
+  int32_t status = io_uring_queue_init(transport->ring_size, ring, flags);
   if (status)
   {
     log_error("io_urig init error: %d", status);
@@ -125,6 +128,7 @@ transport_t *transport_initialize(transport_configuration_t *configuration,
   transport->acceptor = acceptor;
   transport->current_channel = channel;
   transport->ring_size = configuration->ring_size;
+  transport->ring_use_sq_poll = configuration->ring_use_sq_poll;
   transport->channels = transport_initialize_balancer();
 
   quota_init(&transport->quota, configuration->memory_quota);

@@ -5,6 +5,7 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         ringSize: 8192,
+        ringUseSqPoll: true,
         slabSize: 16 * 1024 * 1024,
         memoryQuota: 2 * 1024 * 1024 * 1024,
         slabAllocationMinimalObjectSize: 32,
@@ -20,7 +21,7 @@ class TransportDefaults {
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
-        backlog: 512,
+        backlog: 1024,
         ringSize: 2048,
       );
 
