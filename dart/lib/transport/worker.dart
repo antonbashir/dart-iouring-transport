@@ -51,15 +51,15 @@ class TransportWorker {
       cqes = _bindings.transport_consume(_transport, cqes, ring);
       if (cqes == nullptr) continue;
       int cqeCount = _bindings.transport_cqe_ready(ring);
+      int cqeProcessed = 0;
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = cqes[cqeIndex];
         if (cqe == nullptr) {
           continue;
         }
-
+        cqeProcessed++;
         final int result = cqe.ref.res;
         final int userData = cqe.ref.user_data;
-        _bindings.transport_cqe_seen(ring, 1);
 
         if (result < 0) {
           _bindings.transport_acceptor_accept(_transport.ref.acceptor);
@@ -88,6 +88,7 @@ class TransportWorker {
           continue;
         }
       }
+      _bindings.transport_cqe_seen(ring, cqeProcessed);
       await Future.wait(futures);
       futures.clear();
     }
