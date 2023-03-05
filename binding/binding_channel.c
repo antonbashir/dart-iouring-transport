@@ -13,7 +13,6 @@
 #include "fiber_channel.h"
 #include "fiber.h"
 #include "binding_payload.h"
-#include "pthread.h"
 
 struct transport_channel_context
 {
@@ -90,7 +89,7 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
     if (unlikely(context->available_buffer_id == channel->buffers_count))
     {
       context->available_buffer_id = 0;
-      pthread_yield();
+      return -1;
     }
   }
 

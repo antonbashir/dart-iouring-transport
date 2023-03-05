@@ -90,6 +90,7 @@
     "cstdio": "c",
     "binding_acceptor.h": "c",
     "cbus.h": "c",
-    "binding_socket.h": "c"
+    "binding_socket.h": "c",
+    "in.h": "c"
   },
 }

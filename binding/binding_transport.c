@@ -33,44 +33,36 @@ struct io_uring *transport_activate(transport_t *transport)
   return ring;
 }
 
-void transport_cqe_seen(struct io_uring *ring, struct io_uring_cqe *cqe)
+void transport_cqe_seen(struct io_uring *ring, int count)
 {
-  io_uring_cqe_seen(ring, cqe);
+  io_uring_cq_advance(ring, count);
 }
 
-struct io_uring_cqe *transport_consume(transport_t *transport, struct io_uring *ring)
+int transport_cqe_ready(struct io_uring *ring)
 {
-  struct io_uring_cqe *cqe;
-  if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
+  return io_uring_cq_ready(ring);
+}
+
+struct io_uring_cqe **transport_allocate_cqes(transport_t *transport)
+{
+  return malloc(sizeof(struct io_uring_cqe) * transport->ring_size);
+}
+
+struct io_uring_cqe **transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring)
+{
+  memset(cqes, 0, sizeof(struct io_uring_cqe) * transport->ring_size);
+  if (!io_uring_peek_batch_cqe(ring, cqes, transport->ring_size))
   {
-    if (unlikely(cqe->res < 0))
+    struct io_uring_cqe *cqe;
+    if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
-      //log_error("transport process cqe with result '%s' and user_data %d", strerror(-cqe->res), cqe->user_data);
-      transport_acceptor_accept(transport->acceptor);
-      return cqe;
+      io_uring_peek_batch_cqe(ring, cqes, transport->ring_size);
+      return cqes;
     }
-
-    if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_READ))
-    {
-      transport_channel_handle_read(transport->channel, cqe);
-      return cqe;
-    }
-
-    if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_WRITE))
-    {
-      transport_channel_handle_write(transport->channel, cqe);
-      return cqe;
-    }
-
-    if ((uint64_t)(cqe->user_data & TRANSPORT_PAYLOAD_ACCEPT))
-    {
-      return cqe;
-    }
-
-    return cqe;
+    return NULL;
   }
 
-  return NULL;
+  return cqes;
 }
 
 transport_t *transport_initialize(transport_configuration_t *configuration,

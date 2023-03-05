@@ -45,32 +45,47 @@ class TransportWorker {
       onWrite: onWrite,
       onStop: onStop,
     );
+    final futures = <Future>[];
+    Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
-      Pointer<io_uring_cqe> cqe = _bindings.transport_consume(_transport, ring);
-      if (cqe == nullptr) continue;
+      cqes = _bindings.transport_consume(_transport, cqes, ring);
+      if (cqes == nullptr) continue;
+      int cqeCount = _bindings.transport_cqe_ready(ring);
+      for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+        final cqe = cqes[cqeIndex];
+        if (cqe == nullptr) {
+          continue;
+        }
 
-      final int result = cqe.ref.res;
-      final int userData = cqe.ref.user_data;
-      _bindings.transport_cqe_seen(ring, cqe);
+        final int result = cqe.ref.res;
+        final int userData = cqe.ref.user_data;
+        _bindings.transport_cqe_seen(ring, 1);
 
-      if (result < 0) {
-        continue;
+        if (result < 0) {
+          _bindings.transport_acceptor_accept(_transport.ref.acceptor);
+          continue;
+        }
+
+        if (userData & TransportPayloadAccept != 0) {
+          _bindings.transport_acceptor_accept(_transport.ref.acceptor);
+          futures.add(channel.read(result));
+          continue;
+        }
+
+        if (userData & TransportPayloadRead != 0) {
+          _bindings.transport_channel_handle_read(channel.channel, cqe);
+          futures.add(channel.handleRead(userData & ~TransportPayloadAll));
+          continue;
+        }
+
+        if (userData & TransportPayloadWrite != 0) {
+          _bindings.transport_channel_handle_write(channel.channel, cqe);
+          futures.add(channel.handleWrite(userData & ~TransportPayloadAll));
+          continue;
+        }
       }
-
-      if (userData & TransportPayloadAccept != 0) {
-        channel.handleAccept(result);
-        continue;
-      }
-
-      if (userData & TransportPayloadRead != 0) {
-        channel.handleRead(userData & ~TransportPayloadAll);
-        continue;
-      }
-
-      if (userData & TransportPayloadWrite != 0) {
-        channel.handleWrite(userData & ~TransportPayloadAll);
-        continue;
-      }
+      await Future.wait(futures);
+      futures.clear();
     }
   }
 

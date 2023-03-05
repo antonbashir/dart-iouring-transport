@@ -52,21 +52,28 @@ class TransportChannel {
     _onStop?.call();
   }
 
-  void write(Uint8List bytes, int fd) {
-    int bufferId = _bindings.transport_channel_allocate_buffer(channel);
+  Future<void> write(Uint8List bytes, int fd) async {
+    var bufferId = _bindings.transport_channel_allocate_buffer(channel);
+    while (bufferId == -1) {
+      await Future.delayed(Duration.zero);
+      bufferId = _bindings.transport_channel_allocate_buffer(channel);
+    }
     Pointer<iovec> data = _bindings.transport_channel_get_buffer(channel, bufferId);
     data.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     data.ref.iov_len = bytes.length;
     _bindings.transport_channel_write(channel, fd, bufferId);
   }
 
-  void _read(int fd) {
-    _bindings.transport_channel_read(channel, fd, _bindings.transport_channel_allocate_buffer(channel));
+  Future<void> read(int fd) async {
+    var bufferId = _bindings.transport_channel_allocate_buffer(channel);
+    while (bufferId == -1) {
+      await Future.delayed(Duration.zero);
+      bufferId = _bindings.transport_channel_allocate_buffer(channel);
+    }
+    _bindings.transport_channel_read(channel, fd, bufferId);
   }
 
-  void handleAccept(int fd) => _read(fd);
-
-  void handleRead(int fd) {
+  Future<void> handleRead(int fd) async {
     final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
     if (_onRead == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
@@ -79,9 +86,9 @@ class TransportChannel {
     _onRead!(payload);
   }
 
-  void handleWrite(int fd) {
+  Future<void> handleWrite(int fd) async {
     final bufferId = _bindings.transport_channel_get_buffer_by_fd(channel, fd);
-    _read(fd);
+    await read(fd);
     if (_onWrite == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
       return;

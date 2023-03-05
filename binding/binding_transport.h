@@ -49,9 +49,11 @@ extern "C"
   transport_t *transport_initialize(transport_configuration_t *configuration,
                                     transport_channel_t *channel,
                                     transport_acceptor_t *acceptor);
-  struct io_uring* transport_activate(transport_t *transport);
-  struct io_uring_cqe *transport_consume(transport_t *transport, struct io_uring *ring);
-  void transport_cqe_seen(struct io_uring* ring, struct io_uring_cqe *cqe);
+  struct io_uring *transport_activate(transport_t *transport);
+  struct io_uring_cqe **transport_consume(transport_t *transport, struct io_uring_cqe ** cqes, struct io_uring *ring);
+  struct io_uring_cqe **transport_allocate_cqes(transport_t *transport);
+  void transport_cqe_seen(struct io_uring *ring, int count);
+  int transport_cqe_ready(struct io_uring *ring);
   void transport_close(transport_t *transport);
 #if defined(__cplusplus)
 }
