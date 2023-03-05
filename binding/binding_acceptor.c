@@ -79,7 +79,7 @@ int transport_acceptor_accept(struct transport_acceptor *acceptor)
 {
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
   struct io_uring_sqe *sqe = provide_sqe(acceptor->ring);
-  io_uring_prep_accept(sqe, context->fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
+  io_uring_prep_multishot_accept(sqe, context->fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
   return io_uring_submit(acceptor->ring);
 }

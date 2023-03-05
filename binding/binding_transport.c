@@ -93,13 +93,13 @@ void transport_accept(transport_t *transport, struct io_uring *ring)
       {
         transport_acceptor_accept(transport->acceptor);
         io_uring_cqe_seen(ring, cqe);
-        return;
+        continue;
       }
 
       if (cqe->res == 0)
       {
         io_uring_cqe_seen(ring, cqe);
-        return;
+        continue;
       }
 
       transport_channel_t *channel = transport->channels->next(transport->channels);

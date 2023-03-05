@@ -20,7 +20,7 @@ class TransportDefaults {
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
         backlog: 1024,
         ringSize: 2048,
-        ringFlags: RingSetupIopoll,
+        ringFlags: 0,
       );
 
   static TransportConnectorConfiguration connector() => TransportConnectorConfiguration(
