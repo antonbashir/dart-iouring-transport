@@ -45,11 +45,10 @@ extern "C"
 
   void transport_close_channel(transport_channel_t *channel);
 
-  void transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe, int buffer_id);
-  void transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe, int buffer_id);
+  int transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd);
+  int transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd);
 
   struct iovec *transport_channel_get_buffer(transport_channel_t *channel, int buffer_id);
-  int transport_channel_get_buffer_by_fd(transport_channel_t *channel, int fd);
   int transport_channel_allocate_buffer(transport_channel_t *channel);
   void transport_channel_free_buffer(transport_channel_t *channel, int buffer_d);
 #if defined(__cplusplus)

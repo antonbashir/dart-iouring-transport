@@ -16445,50 +16445,50 @@ class TransportBindings {
   late final _transport_close_channel = _transport_close_channelPtr
       .asFunction<void Function(ffi.Pointer<transport_channel_t>)>();
 
-  void transport_channel_handle_write(
+  int transport_channel_handle_write(
     ffi.Pointer<transport_channel> channel,
     ffi.Pointer<io_uring_cqe> cqe,
-    int buffer_id,
+    int fd,
   ) {
     return _transport_channel_handle_write(
       channel,
       cqe,
-      buffer_id,
+      fd,
     );
   }
 
   late final _transport_channel_handle_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
+          ffi.Int Function(
               ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>,
               ffi.Int)>>('transport_channel_handle_write');
   late final _transport_channel_handle_write =
       _transport_channel_handle_writePtr.asFunction<
-          void Function(ffi.Pointer<transport_channel>,
+          int Function(ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>, int)>();
 
-  void transport_channel_handle_read(
+  int transport_channel_handle_read(
     ffi.Pointer<transport_channel> channel,
     ffi.Pointer<io_uring_cqe> cqe,
-    int buffer_id,
+    int fd,
   ) {
     return _transport_channel_handle_read(
       channel,
       cqe,
-      buffer_id,
+      fd,
     );
   }
 
   late final _transport_channel_handle_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
+          ffi.Int Function(
               ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>,
               ffi.Int)>>('transport_channel_handle_read');
   late final _transport_channel_handle_read =
       _transport_channel_handle_readPtr.asFunction<
-          void Function(ffi.Pointer<transport_channel>,
+          int Function(ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>, int)>();
 
   ffi.Pointer<iovec> transport_channel_get_buffer(
@@ -16508,24 +16508,6 @@ class TransportBindings {
   late final _transport_channel_get_buffer =
       _transport_channel_get_bufferPtr.asFunction<
           ffi.Pointer<iovec> Function(ffi.Pointer<transport_channel_t>, int)>();
-
-  int transport_channel_get_buffer_by_fd(
-    ffi.Pointer<transport_channel_t> channel,
-    int fd,
-  ) {
-    return _transport_channel_get_buffer_by_fd(
-      channel,
-      fd,
-    );
-  }
-
-  late final _transport_channel_get_buffer_by_fdPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_channel_t>,
-              ffi.Int)>>('transport_channel_get_buffer_by_fd');
-  late final _transport_channel_get_buffer_by_fd =
-      _transport_channel_get_buffer_by_fdPtr
-          .asFunction<int Function(ffi.Pointer<transport_channel_t>, int)>();
 
   int transport_channel_allocate_buffer(
     ffi.Pointer<transport_channel_t> channel,
@@ -20196,14 +20178,14 @@ class _SymbolAddresses {
       get transport_close_channel => _library._transport_close_channelPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Void Function(
+          ffi.Int Function(
               ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>,
               ffi.Int)>> get transport_channel_handle_write =>
       _library._transport_channel_handle_writePtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Void Function(
+          ffi.Int Function(
               ffi.Pointer<transport_channel>,
               ffi.Pointer<io_uring_cqe>,
               ffi.Int)>> get transport_channel_handle_read =>
@@ -20214,11 +20196,6 @@ class _SymbolAddresses {
                   ffi.Pointer<transport_channel_t>, ffi.Int)>>
       get transport_channel_get_buffer =>
           _library._transport_channel_get_bufferPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<transport_channel_t>, ffi.Int)>>
-      get transport_channel_get_buffer_by_fd =>
-          _library._transport_channel_get_buffer_by_fdPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<transport_channel_t>)>>
