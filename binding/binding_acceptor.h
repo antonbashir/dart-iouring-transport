@@ -19,7 +19,7 @@ extern "C"
   typedef struct transport_acceptor
   {
     void *context;
-    bool active;
+    struct io_uring *ring;
   } transport_acceptor_t;
 
   transport_acceptor_t *transport_initialize_acceptor(transport_acceptor_configuration_t *configuration,
@@ -28,7 +28,7 @@ extern "C"
 
   void transport_close_acceptor(transport_acceptor_t *acceptor);
 
-  transport_acceptor_t* transport_acceptor_share(transport_acceptor_t *source, struct io_uring *ring);
+  transport_acceptor_t *transport_acceptor_share(transport_acceptor_t *source, struct io_uring *ring);
 
   int transport_acceptor_accept(struct transport_acceptor *acceptor);
 #if defined(__cplusplus)

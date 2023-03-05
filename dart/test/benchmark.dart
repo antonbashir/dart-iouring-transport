@@ -16,11 +16,10 @@ Future<void> main(List<String> args) async {
   transport.initialize(TransportDefaults.transport(), acceptor, channel);
   transport.work(
     8,
-    (port) => TransportWorker(port)
-      ..handleData(onRead: (payload) async {
-        payload.finalize();
-        await payload.channel.write(fromServer, payload.fd);
-      }),
+    (port) => TransportWorker(port).handle(onRead: (payload) async {
+      payload.finalize();
+      await payload.channel.write(fromServer, payload.fd);
+    }),
   );
   await Future.delayed(Duration(days: 1));
 }

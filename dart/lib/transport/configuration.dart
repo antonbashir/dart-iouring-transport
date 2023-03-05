@@ -1,47 +1,19 @@
 class TransportConfiguration {
-  final int ringSize;
-  final bool ringUseSqPoll;
-  final int slabSize;
-  final int memoryQuota;
-  final int slabAllocationMinimalObjectSize;
-  final int slabAllocationGranularity;
-  final double slabAllocationFactor;
   final int logLevel;
   final bool logColored;
 
   TransportConfiguration({
-    required this.ringSize,
-    required this.ringUseSqPoll,
-    required this.slabSize,
-    required this.memoryQuota,
-    required this.slabAllocationMinimalObjectSize,
-    required this.slabAllocationGranularity,
-    required this.slabAllocationFactor,
     required this.logLevel,
     required this.logColored,
   });
 
   TransportConfiguration copyWith({
-    int? ringSize,
-    bool? ringUseSqPoll,
-    int? slabSize,
-    int? memoryQuota,
     int? bufferInitialCapacity,
     int? bufferLimit,
-    int? slabAllocationMinimalObjectSize,
-    int? slabAllocationGranularity,
-    double? slabAllocationFactor,
     int? logLevel,
     bool? logColored,
   }) =>
       TransportConfiguration(
-        ringSize: ringSize ?? this.ringSize,
-        ringUseSqPoll: ringUseSqPoll ?? this.ringUseSqPoll,
-        slabSize: slabSize ?? this.slabSize,
-        memoryQuota: memoryQuota ?? this.memoryQuota,
-        slabAllocationMinimalObjectSize: slabAllocationMinimalObjectSize ?? this.slabAllocationMinimalObjectSize,
-        slabAllocationGranularity: slabAllocationGranularity ?? this.slabAllocationGranularity,
-        slabAllocationFactor: slabAllocationFactor ?? this.slabAllocationFactor,
         logColored: logColored ?? this.logColored,
         logLevel: logLevel ?? this.logLevel,
       );
@@ -50,37 +22,51 @@ class TransportConfiguration {
 class TransportChannelConfiguration {
   final int buffersCount;
   final int bufferSize;
+  final int ringSize;
+  final int ringFlags;
 
   TransportChannelConfiguration({
     required this.buffersCount,
     required this.bufferSize,
+    required this.ringSize,
+    required this.ringFlags,
   });
 
   TransportChannelConfiguration copyWith({
     int? buffersCount,
-    int? ringSize,
     int? bufferSize,
+    int? ringSize,
+    int? ringFlags,
   }) =>
       TransportChannelConfiguration(
         buffersCount: buffersCount ?? this.buffersCount,
         bufferSize: bufferSize ?? this.bufferSize,
+        ringSize: ringSize ?? this.ringSize,
+        ringFlags: ringFlags ?? this.ringFlags,
       );
 }
 
 class TransportAcceptorConfiguration {
   final int backlog;
   final int ringSize;
+  final int ringFlags;
 
   TransportAcceptorConfiguration({
     required this.backlog,
     required this.ringSize,
+    required this.ringFlags,
   });
 
   TransportAcceptorConfiguration copyWith({
     int? backlog,
     int? ringSize,
+    int? ringFlags,
   }) =>
-      TransportAcceptorConfiguration(backlog: backlog ?? this.backlog, ringSize: ringSize ?? this.ringSize);
+      TransportAcceptorConfiguration(
+        backlog: backlog ?? this.backlog,
+        ringSize: ringSize ?? this.ringSize,
+        ringFlags: ringFlags ?? this.ringFlags,
+      );
 }
 
 class TransportConnectorConfiguration {

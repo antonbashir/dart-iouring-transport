@@ -4,15 +4,9 @@ import 'dart:isolate';
 
 import 'bindings.dart';
 import 'channels/channel.dart';
+import 'constants.dart';
 import 'lookup.dart';
 import 'payload.dart';
-
-const TransportPayloadRead = 1 << (64 - 1 - 0);
-const TransportPayloadWrite = 1 << (64 - 1 - 1);
-const TransportPayloadAccept = 1 << (64 - 1 - 2);
-const TransportPayloadConnect = 1 << (64 - 1 - 3);
-const TransportPayloadMessage = 1 << (64 - 1 - 4);
-const TransportPayloadAll = TransportPayloadRead | TransportPayloadWrite | TransportPayloadAccept | TransportPayloadConnect | TransportPayloadMessage;
 
 class TransportWorker {
   late final TransportBindings _bindings;
@@ -24,7 +18,7 @@ class TransportWorker {
     toTransport.send(fromTransport.sendPort);
   }
 
-  Future<void> handleData({
+  Future<void> handle({
     void Function(TransportDataPayload payload)? onRead,
     void Function(TransportDataPayload payload)? onWrite,
     void Function()? onStop,
@@ -38,7 +32,7 @@ class TransportWorker {
             : loadBindingLibrary()
         : loadBindingLibrary();
     _bindings = TransportBindings(_library.library);
-    final channelPointer = _bindings.transport_activate_data(_transport);
+    final channelPointer = _bindings.transport_activate_channel(_transport);
     final ring = channelPointer.ref.ring;
     final channel = TransportChannel.fromPointer(
       channelPointer,
@@ -50,7 +44,7 @@ class TransportWorker {
     final futures = <Future>[];
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
-      cqes = _bindings.transport_consume_data(_transport, cqes, ring);
+      cqes = _bindings.transport_consume(_transport, cqes, ring);
       if (cqes == nullptr) continue;
       int cqeCount = _bindings.transport_cqe_ready(ring);
       int cqeProcessed = 0;
@@ -92,7 +86,7 @@ class TransportWorker {
     }
   }
 
-  Future<void> handleAccept() async {
+  Future<void> accept() async {
     final configuration = await fromTransport.take(2).toList();
     final libraryPath = configuration[0] as String?;
     _transport = Pointer.fromAddress(configuration[1] as int);
@@ -102,10 +96,8 @@ class TransportWorker {
             : loadBindingLibrary()
         : loadBindingLibrary();
     _bindings = TransportBindings(_library.library);
-    final ring = _bindings.transport_activate_accept(_transport);
-    while (true) {
-      _bindings.transport_consume_accept(_transport, ring);
-    }
+    final acceptor = _bindings.transport_activate_acceptor(_transport);
+    _bindings.transport_accept(_transport, acceptor.ref.ring);
   }
 
   void stop() => _bindings.transport_close(_transport);

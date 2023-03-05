@@ -42,20 +42,17 @@ class Transport {
       final transportConfiguration = arena<transport_configuration_t>();
       transportConfiguration.ref.log_level = configuration.logLevel;
       transportConfiguration.ref.log_colored = configuration.logColored;
-      transportConfiguration.ref.slab_size = configuration.slabSize;
-      transportConfiguration.ref.memory_quota = configuration.memoryQuota;
-      transportConfiguration.ref.slab_allocation_granularity = configuration.slabAllocationGranularity;
-      transportConfiguration.ref.slab_allocation_factor = configuration.slabAllocationFactor;
-      transportConfiguration.ref.slab_allocation_minimal_object_size = configuration.slabAllocationMinimalObjectSize;
-      transportConfiguration.ref.ring_size = configuration.ringSize;
-      transportConfiguration.ref.ring_use_sq_poll = configuration.ringUseSqPoll;
+      transportConfiguration.ref.acceptor_ring_size = acceptor.configuration.ringSize;
+      transportConfiguration.ref.acceptor_ring_flags = acceptor.configuration.ringFlags;
+      transportConfiguration.ref.channel_ring_size = channel.configuration.ringSize;
+      transportConfiguration.ref.channel_ring_flags = channel.configuration.ringFlags;
       _transport = _bindings.transport_initialize(transportConfiguration, channel.channel, acceptor.acceptor);
     });
   }
 
   Future<void> work(int isolates, void Function(SendPort port) worker) async {
     Isolate.spawn<SendPort>(
-      (port) async => await TransportWorker(port).handleAccept(),
+      (port) async => await TransportWorker(port).accept(),
       fromWorker.sendPort,
       debugName: "acceptor",
     );

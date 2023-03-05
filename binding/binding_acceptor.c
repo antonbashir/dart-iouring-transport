@@ -17,7 +17,6 @@
 
 struct transport_acceptor_context
 {
-  struct io_uring *ring;
   int fd;
   struct sockaddr_in server_address;
   socklen_t server_address_length;
@@ -71,7 +70,7 @@ transport_acceptor_t *transport_acceptor_share(transport_acceptor_t *source, str
   context->ip = source_context->ip;
   context->port = source_context->port;
   context->fd = source_context->fd;
-  context->ring = ring;
+  acceptor->ring = ring;
   log_info("acceptor shared");
   return acceptor;
 }
@@ -79,15 +78,15 @@ transport_acceptor_t *transport_acceptor_share(transport_acceptor_t *source, str
 int transport_acceptor_accept(struct transport_acceptor *acceptor)
 {
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
-  struct io_uring_sqe *sqe = provide_sqe(context->ring);
+  struct io_uring_sqe *sqe = provide_sqe(acceptor->ring);
   io_uring_prep_accept(sqe, context->fd, (struct sockaddr *)&context->server_address, &context->server_address_length, 0);
   io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_ACCEPT);
-  return io_uring_submit(context->ring);
+  return io_uring_submit(acceptor->ring);
 }
 
 void transport_close_acceptor(transport_acceptor_t *acceptor)
 {
   struct transport_acceptor_context *context = (struct transport_acceptor_context *)acceptor->context;
-  io_uring_queue_exit(context->ring);
+  io_uring_queue_exit(acceptor->ring);
   free(acceptor);
 }

@@ -16651,75 +16651,78 @@ class TransportBindings {
           ffi.Pointer<transport_channel_t>,
           ffi.Pointer<transport_acceptor_t>)>();
 
-  ffi.Pointer<io_uring> transport_activate_accept(
+  ffi.Pointer<transport_acceptor_t> transport_activate_acceptor(
     ffi.Pointer<transport_t> transport,
   ) {
-    return _transport_activate_accept(
+    return _transport_activate_acceptor(
       transport,
     );
   }
 
-  late final _transport_activate_acceptPtr = _lookup<
+  late final _transport_activate_acceptorPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<io_uring> Function(
-              ffi.Pointer<transport_t>)>>('transport_activate_accept');
-  late final _transport_activate_accept = _transport_activate_acceptPtr
-      .asFunction<ffi.Pointer<io_uring> Function(ffi.Pointer<transport_t>)>();
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_t>)>>('transport_activate_acceptor');
+  late final _transport_activate_acceptor =
+      _transport_activate_acceptorPtr.asFunction<
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_t>)>();
 
-  ffi.Pointer<transport_channel_t> transport_activate_data(
+  ffi.Pointer<transport_channel_t> transport_activate_channel(
     ffi.Pointer<transport_t> transport,
   ) {
-    return _transport_activate_data(
+    return _transport_activate_channel(
       transport,
     );
   }
 
-  late final _transport_activate_dataPtr = _lookup<
+  late final _transport_activate_channelPtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_t>)>>('transport_activate_data');
-  late final _transport_activate_data = _transport_activate_dataPtr.asFunction<
-      ffi.Pointer<transport_channel_t> Function(ffi.Pointer<transport_t>)>();
+              ffi.Pointer<transport_t>)>>('transport_activate_channel');
+  late final _transport_activate_channel =
+      _transport_activate_channelPtr.asFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>();
 
-  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_consume_data(
+  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_consume(
     ffi.Pointer<transport_t> transport,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     ffi.Pointer<io_uring> ring,
   ) {
-    return _transport_consume_data(
+    return _transport_consume(
       transport,
       cqes,
       ring,
     );
   }
 
-  late final _transport_consume_dataPtr = _lookup<
+  late final _transport_consumePtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
               ffi.Pointer<transport_t>,
               ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>>('transport_consume_data');
-  late final _transport_consume_data = _transport_consume_dataPtr.asFunction<
+              ffi.Pointer<io_uring>)>>('transport_consume');
+  late final _transport_consume = _transport_consumePtr.asFunction<
       ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(ffi.Pointer<transport_t>,
           ffi.Pointer<ffi.Pointer<io_uring_cqe>>, ffi.Pointer<io_uring>)>();
 
-  void transport_consume_accept(
+  void transport_accept(
     ffi.Pointer<transport_t> transport,
     ffi.Pointer<io_uring> ring,
   ) {
-    return _transport_consume_accept(
+    return _transport_accept(
       transport,
       ring,
     );
   }
 
-  late final _transport_consume_acceptPtr = _lookup<
+  late final _transport_acceptPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<transport_t>,
-              ffi.Pointer<io_uring>)>>('transport_consume_accept');
-  late final _transport_consume_accept =
-      _transport_consume_acceptPtr.asFunction<
-          void Function(ffi.Pointer<transport_t>, ffi.Pointer<io_uring>)>();
+              ffi.Pointer<io_uring>)>>('transport_accept');
+  late final _transport_accept = _transport_acceptPtr.asFunction<
+      void Function(ffi.Pointer<transport_t>, ffi.Pointer<io_uring>)>();
 
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     ffi.Pointer<transport_t> transport,
@@ -20279,26 +20282,27 @@ class _SymbolAddresses {
               ffi.Pointer<transport_acceptor_t>)>> get transport_initialize =>
       _library._transport_initializePtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<io_uring> Function(ffi.Pointer<transport_t>)>>
-      get transport_activate_accept => _library._transport_activate_acceptPtr;
+      ffi.NativeFunction<
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_t>)>> get transport_activate_acceptor =>
+      _library._transport_activate_acceptorPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_t>)>> get transport_activate_data =>
-      _library._transport_activate_dataPtr;
+              ffi.Pointer<transport_t>)>> get transport_activate_channel =>
+      _library._transport_activate_channelPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
               ffi.Pointer<transport_t>,
               ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>> get transport_consume_data =>
-      _library._transport_consume_dataPtr;
+              ffi.Pointer<io_uring>)>> get transport_consume =>
+      _library._transport_consumePtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(
                   ffi.Pointer<transport_t>, ffi.Pointer<io_uring>)>>
-      get transport_consume_accept => _library._transport_consume_acceptPtr;
+      get transport_accept => _library._transport_acceptPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
@@ -23336,8 +23340,7 @@ class transport_acceptor_configuration extends ffi.Struct {
 class transport_acceptor extends ffi.Struct {
   external ffi.Pointer<ffi.Void> context;
 
-  @ffi.Bool()
-  external bool active;
+  external ffi.Pointer<io_uring> ring;
 }
 
 typedef transport_acceptor_t = transport_acceptor;
@@ -23371,21 +23374,6 @@ class transport_balancer extends ffi.Struct {
 }
 
 class transport_configuration extends ffi.Struct {
-  @ffi.Uint32()
-  external int slab_size;
-
-  @ffi.Size()
-  external int memory_quota;
-
-  @ffi.Uint32()
-  external int slab_allocation_minimal_object_size;
-
-  @ffi.Size()
-  external int slab_allocation_granularity;
-
-  @ffi.Float()
-  external double slab_allocation_factor;
-
   @ffi.Int()
   external int log_level;
 
@@ -23393,21 +23381,19 @@ class transport_configuration extends ffi.Struct {
   external bool log_colored;
 
   @ffi.Size()
-  external int ring_size;
+  external int channel_ring_size;
 
-  @ffi.Bool()
-  external bool ring_use_sq_poll;
+  @ffi.Size()
+  external int acceptor_ring_size;
+
+  @ffi.Int()
+  external int channel_ring_flags;
+
+  @ffi.Int()
+  external int acceptor_ring_flags;
 }
 
 class transport extends ffi.Struct {
-  external slab_arena arena;
-
-  external slab_cache cache;
-
-  external small_alloc allocator;
-
-  external quota quota1;
-
   external ffi.Pointer<transport_balancer> channels;
 
   external ffi.Pointer<transport_channel_t> current_channel;
@@ -23415,7 +23401,16 @@ class transport extends ffi.Struct {
   external ffi.Pointer<transport_acceptor_t> acceptor;
 
   @ffi.Uint32()
-  external int ring_size;
+  external int channel_ring_size;
+
+  @ffi.Uint32()
+  external int acceptor_ring_size;
+
+  @ffi.Int()
+  external int channel_ring_flags;
+
+  @ffi.Int()
+  external int acceptor_ring_flags;
 }
 
 typedef transport_t = transport;

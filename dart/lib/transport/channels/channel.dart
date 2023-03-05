@@ -15,6 +15,7 @@ class TransportChannel {
   void Function()? _onStop;
 
   late final Pointer<transport_channel_t> channel;
+  late final TransportChannelConfiguration configuration;
 
   final payloadPool = <int, TransportDataPayload>{};
 
@@ -39,11 +40,12 @@ class TransportChannel {
   }
 
   void initialize(TransportChannelConfiguration configuration) {
+    this.configuration = configuration;
     using((Arena arena) {
-      final rawConfiguration = arena<transport_channel_configuration_t>();
-      rawConfiguration.ref.buffers_count = configuration.buffersCount;
-      rawConfiguration.ref.buffer_size = configuration.bufferSize;
-      channel = _bindings.transport_initialize_channel(rawConfiguration);
+      final channelonfiguration = arena<transport_channel_configuration_t>();
+      channelonfiguration.ref.buffers_count = configuration.buffersCount;
+      channelonfiguration.ref.buffer_size = configuration.bufferSize;
+      channel = _bindings.transport_initialize_channel(channelonfiguration);
     });
   }
 
