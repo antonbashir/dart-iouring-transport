@@ -86,11 +86,12 @@ class TransportChannel {
   }
 
   Future<void> handleWrite(int fd, int bufferId) async {
-    await read(fd);
     if (_onWrite == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
+      await read(fd);
       return;
     }
+    await read(fd);
     final buffer = _bindings.transport_channel_get_buffer(channel, bufferId);
     final payload = payloadPool[bufferId]!;
     payload.fd = fd;
