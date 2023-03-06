@@ -47,9 +47,18 @@ static void stdout_callback(log_Event *ev)
 {
   char buf[16];
   buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
-  fprintf(
-      ev->udata, "%s %-5s %s:%d: ",
-      buf, level_strings[ev->level], ev->file, ev->line);
+  if (ev->line != -1)
+  {
+    fprintf(
+        ev->udata, "%s %-5s %s:%d: ",
+        buf, level_strings[ev->level], ev->file, ev->line);
+  }
+  else
+  {
+    fprintf(
+        ev->udata, "%s %-5s ",
+        buf, level_strings[ev->level]);
+  }
   vfprintf(ev->udata, ev->fmt, ev->ap);
   fprintf(ev->udata, "\n");
   fflush(ev->udata);

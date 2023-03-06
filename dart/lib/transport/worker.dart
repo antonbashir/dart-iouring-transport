@@ -24,7 +24,6 @@ class TransportWorker {
   Future<void> handle({
     void Function(TransportDataPayload payload)? onRead,
     void Function(TransportDataPayload payload)? onWrite,
-    void Function()? onStop,
   }) async {
     final configuration = await fromTransport.take(2).toList();
     final libraryPath = configuration[0] as String?;
@@ -42,7 +41,6 @@ class TransportWorker {
       _bindings,
       onRead: onRead,
       onWrite: onWrite,
-      onClose: onStop,
     );
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
@@ -66,9 +64,14 @@ class TransportWorker {
           channel.handleWrite(userData & ~TransportPayloadAll, result);
           continue;
         }
-        if (userData & TransportPayloadMessage != 0) {
+        if (userData & TransportPayloadActive != 0) {
           await channel.read(result);
           continue;
+        }
+        if (userData & TransportPayloadClose != 0) {
+          _bindings.transport_channel_close(channelPointer);
+          fromTransport.close();
+          Isolate.exit();
         }
       }
       _bindings.transport_cqe_advance(ring, cqeCount);
@@ -90,7 +93,7 @@ class TransportWorker {
     using((Arena arena) {
       _bindings.transport_accept(_transport, host.toNativeUtf8(allocator: arena).cast(), port);
     });
+    fromTransport.close();
+    Isolate.exit();
   }
-
-  void shutdown() => _bindings.transport_close(_transport);
 }

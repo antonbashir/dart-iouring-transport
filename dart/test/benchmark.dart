@@ -2,6 +2,7 @@ library iouring_transport;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
@@ -11,7 +12,7 @@ Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
   final fromServer = encoder.convert("from server");
 
-  Transport()
+  final transport = Transport()
     ..initialize(TransportDefaults.transport(), TransportDefaults.acceptor(), TransportDefaults.channel())
     ..accept(
       "0.0.0.0",
@@ -20,5 +21,9 @@ Future<void> main(List<String> args) async {
       isolates: 2,
     );
 
-  await Future.delayed(Duration(days: 1));
+  await Future.delayed(Duration(seconds: 3));
+
+  await transport.shutdown();
+
+  exit(0);
 }

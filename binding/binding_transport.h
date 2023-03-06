@@ -25,6 +25,7 @@ extern "C"
   typedef struct transport
   {
     struct transport_channel_pool *channels;
+    transport_acceptor_t* acceptor;
     transport_channel_configuration_t *channel_configuration;
     transport_acceptor_configuration_t *acceptor_configuration;
   } transport_t;
@@ -44,6 +45,8 @@ extern "C"
   void transport_cqe_advance(struct io_uring *ring, int count);
 
   void transport_shutdown(transport_t *transport);
+  
+  void transport_destroy(transport_t *transport);
 
   int transport_close_descritor(transport_t *transport, int fd);
 #if defined(__cplusplus)

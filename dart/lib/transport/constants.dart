@@ -85,8 +85,9 @@ const TransportPayloadRead = 1 << (64 - 1 - 0);
 const TransportPayloadWrite = 1 << (64 - 1 - 1);
 const TransportPayloadAccept = 1 << (64 - 1 - 2);
 const TransportPayloadConnect = 1 << (64 - 1 - 3);
-const TransportPayloadMessage = 1 << (64 - 1 - 4);
-const TransportPayloadAll = TransportPayloadRead | TransportPayloadWrite | TransportPayloadAccept | TransportPayloadConnect | TransportPayloadMessage;
+const TransportPayloadActive = 1 << (64 - 1 - 4);
+const TransportPayloadClose = 1 << (64 - 1 - 5);
+const TransportPayloadAll = TransportPayloadRead | TransportPayloadWrite | TransportPayloadAccept | TransportPayloadConnect | TransportPayloadActive | TransportPayloadClose;
 
 const RingSetupIopoll = 1 << 0;
 const RingSetupSqpoll = 1 << 1;

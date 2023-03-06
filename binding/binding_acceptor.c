@@ -50,6 +50,8 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
 void transport_acceptor_shutdown(transport_acceptor_t *acceptor)
 {
   io_uring_queue_exit(acceptor->ring);
+  shutdown(acceptor->fd, SHUT_RDWR);
+  free(acceptor->ring);
   free(acceptor);
   log_info("[acceptor]: shutdown");
 }

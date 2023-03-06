@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
@@ -10,13 +11,12 @@ import 'lookup.dart';
 import 'worker.dart';
 
 class Transport {
-  final fromChannel = ReceivePort();
-  final fromAcceptor = ReceivePort();
-
   late String? libraryPath;
   late TransportBindings _bindings;
   late TransportLibrary _library;
   late Pointer<transport_t> _transport;
+
+  final completer = Completer();
 
   Transport({String? libraryPath}) {
     _library = libraryPath != null
@@ -56,8 +56,19 @@ class Transport {
     );
   }
 
+  Future<void> shutdown() async {
+    _bindings.transport_shutdown(_transport);
+    _bindings.transport_destroy(_transport);
+    await completer.future;
+  }
+
   Future<void> accept(String host, int port, void Function(SendPort port) worker, {int isolates = 1}) async {
-    Isolate.spawn<SendPort>((port) => TransportWorker(port).accept(), fromAcceptor.sendPort);
+    final fromChannel = ReceivePort();
+    final fromAcceptor = ReceivePort();
+    final acceptorExit = ReceivePort();
+    final channelExit = ReceivePort();
+
+    Isolate.spawn<SendPort>((port) => TransportWorker(port).accept(), fromAcceptor.sendPort, onExit: acceptorExit.sendPort);
 
     fromAcceptor.listen((acceptorPort) {
       SendPort toAcceptor = acceptorPort as SendPort;
@@ -68,7 +79,7 @@ class Transport {
     });
 
     for (var isolate = 0; isolate < isolates; isolate++) {
-      Isolate.spawn<SendPort>(worker, fromChannel.sendPort);
+      Isolate.spawn<SendPort>(worker, fromChannel.sendPort, onExit: channelExit.sendPort);
     }
 
     fromChannel.listen((port) {
@@ -76,5 +87,15 @@ class Transport {
       toChannel.send(libraryPath);
       toChannel.send(_transport.address);
     });
+
+    await acceptorExit.first;
+    await channelExit.take(isolates).toList();
+
+    fromChannel.close();
+    fromAcceptor.close();
+    acceptorExit.close();
+    channelExit.close();
+
+    completer.complete();
   }
 }

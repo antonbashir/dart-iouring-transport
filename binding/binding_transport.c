@@ -15,6 +15,7 @@
 #include "binding_constants.h"
 #include "binding_channel.h"
 #include "binding_acceptor.h"
+#include "small/include/small/rlist.h"
 
 static inline int transport_acceptor_accept(struct transport_acceptor *acceptor)
 {
@@ -59,6 +60,7 @@ int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct
 void transport_accept(transport_t *transport, const char *ip, int port)
 {
   transport_acceptor_t *acceptor = transport_acceptor_initialize(transport->acceptor_configuration, ip, port);
+  transport->acceptor = acceptor;
   struct io_uring *ring = acceptor->ring;
   transport_acceptor_accept(acceptor);
   struct io_uring_cqe *cqe;
@@ -66,6 +68,19 @@ void transport_accept(transport_t *transport, const char *ip, int port)
   {
     if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
+      if (unlikely(cqe->user_data & TRANSPORT_PAYLOAD_CLOSE))
+      {
+        io_uring_cqe_seen(ring, cqe);
+        transport_channel_t *channel, *temp;
+        rlist_foreach_entry_safe(channel, &transport->channels->channels, channel_pool_link, temp)
+        {
+          struct io_uring_sqe *sqe = provide_sqe(ring);
+          io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, 0, TRANSPORT_PAYLOAD_CLOSE, 0);
+        }
+        io_uring_submit_and_wait(ring, transport->channels->count);
+        break;
+      }
+
       if (unlikely(cqe->res < 0))
       {
         transport_acceptor_accept(acceptor);
@@ -81,12 +96,13 @@ void transport_accept(transport_t *transport, const char *ip, int port)
 
       transport_channel_t *channel = transport->channels->next(transport->channels);
       struct io_uring_sqe *sqe = provide_sqe(ring);
-      io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, cqe->res, TRANSPORT_PAYLOAD_MESSAGE, 0);
+      io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, cqe->res, TRANSPORT_PAYLOAD_ACTIVATE, 0);
       io_uring_submit(ring);
       io_uring_cqe_seen(ring, cqe);
       transport_acceptor_accept(acceptor);
     }
   }
+  transport_acceptor_shutdown(acceptor);
 }
 
 int transport_close_descritor(transport_t *transport, int fd)
@@ -116,6 +132,17 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 
 void transport_shutdown(transport_t *transport)
 {
-  free(transport);
+  struct io_uring_sqe *sqe = provide_sqe(transport->acceptor->ring);
+  io_uring_prep_nop(sqe);
+  io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_CLOSE);
+  io_uring_submit(transport->acceptor->ring);
   log_info("[transport]: shutdown");
+}
+
+void transport_destroy(transport_t *transport)
+{
+  free(transport->acceptor_configuration);
+  free(transport->channel_configuration);
+  free(transport->channels);
+  log_info("[transport]: destroy");
 }

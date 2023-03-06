@@ -135,6 +135,16 @@ void transport_channel_complete_write_by_buffer_id(transport_channel_t *channel,
 
 void transport_channel_close(transport_channel_t *channel)
 {
+  io_uring_unregister_buffers(channel->ring);
+  for (size_t index = 0; index < channel->buffers_count; index++)
+  {
+    munmap(channel->buffers[index].iov_base, channel->buffer_size);
+  }
+  free(channel->buffers);
+  free(channel->buffers_state);
+  free(channel->buffer_by_fd);
+  io_uring_queue_exit(channel->ring);
+  free(channel->ring);
   free(channel);
   log_info("[channel] closed");
 }
