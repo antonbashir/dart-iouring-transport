@@ -20,7 +20,6 @@ extern "C"
   typedef struct transport_configuration
   {
     int log_level;
-    bool log_colored;
   } transport_configuration_t;
 
   typedef struct transport

@@ -37,33 +37,19 @@ static struct
   log_LockFn lock;
   int level;
   bool quiet;
-  bool colored;
   Callback callbacks[MAX_CALLBACKS];
 } L;
 
 static const char *level_strings[] = {
     "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 
-static const char *level_colors[] = {
-    "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"};
-
 static void stdout_callback(log_Event *ev)
 {
   char buf[16];
   buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
-  if (L.colored)
-  {
-    fprintf(
-        ev->udata, "%s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ",
-        buf, level_colors[ev->level], level_strings[ev->level],
-        ev->file, ev->line);
-  }
-  else
-  {
-    fprintf(
-        ev->udata, "%s %-5s %s:%d: ",
-        buf, level_strings[ev->level], ev->file, ev->line);
-  }
+  fprintf(
+      ev->udata, "%s %-5s %s:%d: ",
+      buf, level_strings[ev->level], ev->file, ev->line);
   vfprintf(ev->udata, ev->fmt, ev->ap);
   fprintf(ev->udata, "\n");
   fflush(ev->udata);
@@ -111,11 +97,6 @@ void log_set_lock(log_LockFn fn, void *udata)
 void log_set_level(int level)
 {
   L.level = level;
-}
-
-void log_set_colored(bool colored)
-{
-  L.colored = colored;
 }
 
 void log_set_quiet(bool enable)

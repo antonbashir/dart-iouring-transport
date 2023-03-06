@@ -45,7 +45,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   int32_t status = io_uring_queue_init(configuration->ring_size, ring, configuration->ring_flags);
   if (status)
   {
-    log_error("io_urig init error: %d", status);
+    log_error("[channel]: io_urig init error = %d", status);
     free(ring);
     free(channel);
     return NULL;
@@ -54,7 +54,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   channel->ring = ring;
   io_uring_register_buffers(ring, channel->buffers, configuration->buffers_count);
 
-  log_info("channel initialized");
+  log_info("[channel] initialized");
   return channel;
 }
 
@@ -84,7 +84,6 @@ int transport_channel_write(struct transport_channel *channel, int fd, int buffe
   channel->buffer_by_fd[fd] = buffer_id;
   io_uring_prep_write_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, 0, buffer_id);
   io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_PAYLOAD_WRITE));
-  log_debug("channel send data to ring");
   return io_uring_submit(channel->ring);
 }
 
@@ -94,13 +93,11 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
   channel->buffer_by_fd[fd] = buffer_id;
   io_uring_prep_read_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, 0, buffer_id);
   io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_PAYLOAD_READ));
-  log_debug("channel receive data with ring");
   return io_uring_submit(channel->ring);
 }
 
 int transport_channel_handle_write(struct transport_channel *channel, int fd, size_t size)
 {
-  log_debug("channel handle write size = %d", size);
   int buffer_id = channel->buffer_by_fd[fd];
   channel->buffers[buffer_id].iov_len = size;
   return buffer_id;
@@ -108,7 +105,6 @@ int transport_channel_handle_write(struct transport_channel *channel, int fd, si
 
 int transport_channel_handle_read(struct transport_channel *channel, int fd, size_t size)
 {
-  log_debug("channel handle read size = %d", size);
   int buffer_id = channel->buffer_by_fd[fd];
   channel->buffers[buffer_id].iov_len = size;
   return buffer_id;

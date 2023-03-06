@@ -6,7 +6,6 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportConfiguration transport() => TransportConfiguration(
-        logColored: true,
         logLevel: 0,
       );
 

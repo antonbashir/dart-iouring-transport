@@ -1,20 +1,14 @@
 class TransportConfiguration {
   final int logLevel;
-  final bool logColored;
 
   TransportConfiguration({
     required this.logLevel,
-    required this.logColored,
   });
 
   TransportConfiguration copyWith({
-    int? bufferInitialCapacity,
-    int? bufferLimit,
     int? logLevel,
-    bool? logColored,
   }) =>
       TransportConfiguration(
-        logColored: logColored ?? this.logColored,
         logLevel: logLevel ?? this.logLevel,
       );
 }

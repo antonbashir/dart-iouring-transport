@@ -68,7 +68,6 @@ void transport_accept(transport_t *transport, const char *ip, int port)
     {
       if (unlikely(cqe->res < 0))
       {
-        log_error("transport accept error cqe with result %d and user_data %d", cqe->res, cqe->user_data);
         transport_acceptor_accept(acceptor);
         io_uring_cqe_seen(ring, cqe);
         continue;
@@ -100,7 +99,6 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
                                   transport_acceptor_configuration_t *acceptor_configuration)
 {
   log_set_level(transport_configuration->log_level);
-  log_set_colored(transport_configuration->log_colored);
 
   transport_t *transport = malloc(sizeof(transport_t));
   if (!transport)
@@ -112,12 +110,12 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
   transport->channel_configuration = channel_configuration;
   transport->channels = transport_channel_pool_initialize();
 
-  log_info("transport initialized");
+  log_info("[transport]: initialized");
   return transport;
 }
 
 void transport_close(transport_t *transport)
 {
   free(transport);
-  log_info("transport closed");
+  log_info("[transport]: closed");
 }

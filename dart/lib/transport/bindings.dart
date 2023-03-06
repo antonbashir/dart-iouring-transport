@@ -23377,9 +23377,6 @@ class transport_channel_pool extends ffi.Struct {
 class transport_configuration extends ffi.Struct {
   @ffi.Int()
   external int log_level;
-
-  @ffi.Bool()
-  external bool log_colored;
 }
 
 class transport extends ffi.Struct {
