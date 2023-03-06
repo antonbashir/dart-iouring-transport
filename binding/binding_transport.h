@@ -46,13 +46,13 @@ extern "C"
 
   transport_channel_t *transport_activate_channel(transport_t *transport);
 
-  struct io_uring_cqe **transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring);
+  int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring);
 
   void transport_accept(transport_t *transport, struct io_uring *ring);
 
   struct io_uring_cqe **transport_allocate_cqes(transport_t *transport);
 
-  void transport_cqe_seen(struct io_uring *ring, int count);
+  void transport_cqe_advance(struct io_uring *ring, int count);
 
   int transport_cqe_ready(struct io_uring *ring);
 

@@ -48,14 +48,9 @@ transport_channel_t *transport_activate_channel(transport_t *transport)
   return channel;
 }
 
-void transport_cqe_seen(struct io_uring *ring, int count)
+void transport_cqe_advance(struct io_uring *ring, int count)
 {
   io_uring_cq_advance(ring, count);
-}
-
-int transport_cqe_ready(struct io_uring *ring)
-{
-  return io_uring_cq_ready(ring);
 }
 
 struct io_uring_cqe **transport_allocate_cqes(transport_t *transport)
@@ -63,21 +58,19 @@ struct io_uring_cqe **transport_allocate_cqes(transport_t *transport)
   return malloc(sizeof(struct io_uring_cqe) * transport->channel_ring_size);
 }
 
-struct io_uring_cqe **transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring)
+int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
-  memset(cqes, 0, sizeof(struct io_uring_cqe) * transport->channel_ring_size);
-  if (!io_uring_peek_batch_cqe(ring, cqes, transport->channel_ring_size))
+  int count = 0;
+  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_ring_size)))
   {
-    struct io_uring_cqe *cqe;
-    if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
+    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
     {
-      io_uring_peek_batch_cqe(ring, cqes, transport->channel_ring_size);
-      return cqes;
+      return io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_ring_size);
     }
-    return NULL;
+    return -1;
   }
 
-  return cqes;
+  return count;
 }
 
 void transport_accept(transport_t *transport, struct io_uring *ring)
@@ -89,7 +82,7 @@ void transport_accept(transport_t *transport, struct io_uring *ring)
     {
       log_debug("transport access process cqe with result %d and user_data %d", cqe->res, cqe->user_data);
 
-      if (cqe->res < 0)
+      if (unlikely(cqe->res < 0))
       {
         transport_acceptor_accept(transport->acceptor);
         io_uring_cqe_seen(ring, cqe);

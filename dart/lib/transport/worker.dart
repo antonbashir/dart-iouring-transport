@@ -44,16 +44,10 @@ class TransportWorker {
     final futures = <Future>[];
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
-      cqes = _bindings.transport_consume(_transport, cqes, ring);
-      if (cqes == nullptr) continue;
-      int cqeCount = _bindings.transport_cqe_ready(ring);
-      int cqeProcessed = 0;
+      int cqeCount = _bindings.transport_consume(_transport, cqes, ring);
+      if (cqeCount == -1) continue;
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = cqes[cqeIndex];
-        if (cqe == nullptr) {
-          continue;
-        }
-        cqeProcessed++;
         final int result = cqe.ref.res;
         final int userData = cqe.ref.user_data;
 
@@ -80,7 +74,8 @@ class TransportWorker {
           continue;
         }
       }
-      _bindings.transport_cqe_seen(ring, cqeProcessed);
+      
+      _bindings.transport_cqe_advance(ring, cqeCount);
       await Future.wait(futures);
       futures.clear();
     }

@@ -16685,7 +16685,7 @@ class TransportBindings {
           ffi.Pointer<transport_channel_t> Function(
               ffi.Pointer<transport_t>)>();
 
-  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_consume(
+  int transport_consume(
     ffi.Pointer<transport_t> transport,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     ffi.Pointer<io_uring> ring,
@@ -16699,12 +16699,12 @@ class TransportBindings {
 
   late final _transport_consumePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
+          ffi.Int Function(
               ffi.Pointer<transport_t>,
               ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
               ffi.Pointer<io_uring>)>>('transport_consume');
   late final _transport_consume = _transport_consumePtr.asFunction<
-      ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(ffi.Pointer<transport_t>,
+      int Function(ffi.Pointer<transport_t>,
           ffi.Pointer<ffi.Pointer<io_uring_cqe>>, ffi.Pointer<io_uring>)>();
 
   void transport_accept(
@@ -16740,21 +16740,21 @@ class TransportBindings {
       ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
           ffi.Pointer<transport_t>)>();
 
-  void transport_cqe_seen(
+  void transport_cqe_advance(
     ffi.Pointer<io_uring> ring,
     int count,
   ) {
-    return _transport_cqe_seen(
+    return _transport_cqe_advance(
       ring,
       count,
     );
   }
 
-  late final _transport_cqe_seenPtr = _lookup<
+  late final _transport_cqe_advancePtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<io_uring>, ffi.Int)>>('transport_cqe_seen');
-  late final _transport_cqe_seen = _transport_cqe_seenPtr
+              ffi.Pointer<io_uring>, ffi.Int)>>('transport_cqe_advance');
+  late final _transport_cqe_advance = _transport_cqe_advancePtr
       .asFunction<void Function(ffi.Pointer<io_uring>, int)>();
 
   int transport_cqe_ready(
@@ -20293,7 +20293,7 @@ class _SymbolAddresses {
       _library._transport_activate_channelPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
+          ffi.Int Function(
               ffi.Pointer<transport_t>,
               ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
               ffi.Pointer<io_uring>)>> get transport_consume =>
@@ -20310,7 +20310,7 @@ class _SymbolAddresses {
       _library._transport_allocate_cqesPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Void Function(ffi.Pointer<io_uring>, ffi.Int)>>
-      get transport_cqe_seen => _library._transport_cqe_seenPtr;
+      get transport_cqe_advance => _library._transport_cqe_advancePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<io_uring>)>>
       get transport_cqe_ready => _library._transport_cqe_readyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
