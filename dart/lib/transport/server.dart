@@ -3,28 +3,23 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:ffi/ffi.dart';
-
 import 'bindings.dart';
 import 'channels/channel.dart';
 import 'constants.dart';
 import 'lookup.dart';
 import 'payload.dart';
 
-class TransportWorker {
+class TransportServer {
   final fromTransport = ReceivePort();
 
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transport;
 
-  TransportWorker(SendPort toTransport) {
+  TransportServer(SendPort toTransport) {
     toTransport.send(fromTransport.sendPort);
   }
 
-  Future<void> handle({
-    void Function(TransportDataPayload payload)? onRead,
-    void Function(TransportDataPayload payload)? onWrite,
-  }) async {
+  Future<void> serve(void Function(TransportDataPayload payload)? consumer) async {
     final configuration = await fromTransport.take(2).toList();
     final libraryPath = configuration[0] as String?;
     _transport = Pointer.fromAddress(configuration[1] as int);
@@ -39,8 +34,7 @@ class TransportWorker {
     final channel = TransportChannel(
       channelPointer,
       _bindings,
-      onRead: onRead,
-      onWrite: onWrite,
+      onRead: consumer,
     );
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
@@ -76,24 +70,5 @@ class TransportWorker {
       }
       _bindings.transport_cqe_advance(ring, cqeCount);
     }
-  }
-
-  Future<void> accept() async {
-    final configuration = await fromTransport.take(4).toList();
-    final libraryPath = configuration[0] as String?;
-    _transport = Pointer.fromAddress(configuration[1] as int);
-    String host = configuration[2] as String;
-    int port = configuration[3] as int;
-    final _library = libraryPath != null
-        ? File(libraryPath).existsSync()
-            ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
-            : loadBindingLibrary()
-        : loadBindingLibrary();
-    _bindings = TransportBindings(_library.library);
-    using((Arena arena) {
-      _bindings.transport_accept(_transport, host.toNativeUtf8(allocator: arena).cast(), port);
-    });
-    fromTransport.close();
-    Isolate.exit();
   }
 }

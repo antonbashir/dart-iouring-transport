@@ -6,7 +6,7 @@ import 'dart:io';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
-import 'package:iouring_transport/transport/worker.dart';
+import 'package:iouring_transport/transport/server.dart';
 
 Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
@@ -14,12 +14,10 @@ Future<void> main(List<String> args) async {
 
   final transport = Transport()
     ..initialize(TransportDefaults.transport(), TransportDefaults.acceptor(), TransportDefaults.channel())
-    ..accept(
+    ..listen(
       "0.0.0.0",
       9999,
-      (port) => TransportWorker(port).handle(onRead: (payload) async {
-        payload.respond(fromServer);
-      }),
+      (port) => TransportServer(port).serve((payload) => payload.respond(fromServer)),
       isolates: Platform.numberOfProcessors,
     );
 

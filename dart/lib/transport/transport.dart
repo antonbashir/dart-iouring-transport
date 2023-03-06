@@ -4,11 +4,11 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/acceptor.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
 import 'lookup.dart';
-import 'worker.dart';
 
 class Transport {
   late String? libraryPath;
@@ -62,13 +62,13 @@ class Transport {
     await completer.future;
   }
 
-  Future<void> accept(String host, int port, void Function(SendPort port) worker, {int isolates = 1}) async {
-    final fromChannel = ReceivePort();
+  Future<void> listen(String host, int port, void Function(SendPort port) server, {int isolates = 1}) async {
+    final fromServer = ReceivePort();
     final fromAcceptor = ReceivePort();
     final acceptorExit = ReceivePort();
-    final channelExit = ReceivePort();
+    final serverExit = ReceivePort();
 
-    Isolate.spawn<SendPort>((port) => TransportWorker(port).accept(), fromAcceptor.sendPort, onExit: acceptorExit.sendPort);
+    Isolate.spawn<SendPort>((port) => TransportAcceptor(port).accept(), fromAcceptor.sendPort, onExit: acceptorExit.sendPort);
 
     fromAcceptor.listen((acceptorPort) {
       SendPort toAcceptor = acceptorPort as SendPort;
@@ -79,22 +79,22 @@ class Transport {
     });
 
     for (var isolate = 0; isolate < isolates; isolate++) {
-      Isolate.spawn<SendPort>(worker, fromChannel.sendPort, onExit: channelExit.sendPort);
+      Isolate.spawn<SendPort>(server, fromServer.sendPort, onExit: serverExit.sendPort);
     }
 
-    fromChannel.listen((port) {
-      SendPort toChannel = port as SendPort;
-      toChannel.send(libraryPath);
-      toChannel.send(_transport.address);
+    fromServer.listen((port) {
+      SendPort toServer = port as SendPort;
+      toServer.send(libraryPath);
+      toServer.send(_transport.address);
     });
 
     await acceptorExit.first;
-    await channelExit.take(isolates).toList();
+    await serverExit.take(isolates).toList();
 
-    fromChannel.close();
+    fromServer.close();
     fromAcceptor.close();
     acceptorExit.close();
-    channelExit.close();
+    serverExit.close();
 
     completer.complete();
   }
