@@ -17,7 +17,10 @@ Future<void> main(List<String> args) async {
     ..listen(
       "0.0.0.0",
       9999,
-      (port) => TransportServer(port).serve((payload) => payload.respond(fromServer)),
+      (port) => TransportServer(port).serve(
+        onAccept: (channel, descriptor) => channel.read(descriptor),
+        onRequest: (payload) => payload.respond(fromServer),
+      ),
       isolates: Platform.numberOfProcessors,
     );
 

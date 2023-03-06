@@ -19,7 +19,10 @@ class TransportServer {
     toTransport.send(fromTransport.sendPort);
   }
 
-  Future<void> serve(void Function(TransportDataPayload payload)? consumer) async {
+  Future<void> serve({
+    FutureOr Function(TransportChannel channel, int descriptor)? onAccept,
+    FutureOr Function(TransportDataPayload payload)? onRequest,
+  }) async {
     final configuration = await fromTransport.take(2).toList();
     final libraryPath = configuration[0] as String?;
     _transport = Pointer.fromAddress(configuration[1] as int);
@@ -31,11 +34,7 @@ class TransportServer {
     _bindings = TransportBindings(_library.library);
     final channelPointer = _bindings.transport_add_channel(_transport);
     final ring = channelPointer.ref.ring;
-    final channel = TransportChannel(
-      channelPointer,
-      _bindings,
-      onRead: consumer,
-    );
+    final channel = TransportChannel(channelPointer, _bindings, onRead: onRequest);
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
       int cqeCount = _bindings.transport_consume(_transport, cqes, ring);
@@ -59,7 +58,7 @@ class TransportServer {
           continue;
         }
         if (userData & TransportPayloadActive != 0) {
-          await channel.read(result);
+          if (onAccept != null) await onAccept.call(channel, result);
           continue;
         }
         if (userData & TransportPayloadClose != 0) {
