@@ -10,8 +10,6 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/time.h>
-#include "fiber_channel.h"
-#include "fiber.h"
 #include "binding_constants.h"
 
 transport_channel_t *transport_channel_initialize(transport_channel_configuration_t *configuration)

@@ -3,7 +3,7 @@
 
 static transport_channel_t *transport_round_robbin_channel_pool_next(struct transport_channel_pool *channel_pool)
 {
-  if (unlikely(!channel_pool->next_channel))
+  if (!channel_pool->next_channel)
   {
     channel_pool->next_channel = channel_pool->channels.next;
     channel_pool->last_channel_index = 0;

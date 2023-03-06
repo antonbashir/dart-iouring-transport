@@ -14,13 +14,10 @@
 #include "binding_constants.h"
 #include "binding_channel.h"
 #include "binding_socket.h"
-#include "fiber.h"
-#include "fiber_channel.h"
 
 struct transport_connector_context
 {
   struct io_uring ring;
-  struct fiber_channel *channel;
   struct sockaddr_in client_addres;
   socklen_t client_addres_length;
   int fd;
@@ -58,8 +55,6 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
     free(context);
     return NULL;
   }
-
-  context->channel = fiber_channel_new(1);
 
   return connector;
 }
