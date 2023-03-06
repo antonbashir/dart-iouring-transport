@@ -21,9 +21,5 @@ Future<void> main(List<String> args) async {
       isolates: 2,
     );
 
-  await Future.delayed(Duration(seconds: 3));
-
-  await transport.shutdown();
-
-  exit(0);
+  await Future.delayed(Duration(days: 1));
 }

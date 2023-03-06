@@ -56,7 +56,7 @@ static void stdout_callback(log_Event *ev)
   else
   {
     fprintf(
-        ev->udata, "%s %-5s ",
+        ev->udata, "%s %-5s",
         buf, level_strings[ev->level]);
   }
   vfprintf(ev->udata, ev->fmt, ev->ap);
