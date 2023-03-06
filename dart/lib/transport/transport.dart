@@ -56,11 +56,7 @@ class Transport {
   }
 
   Future<void> accept(String host, int port, void Function(SendPort port) worker, {int isolates = 1}) async {
-    Isolate.spawn<SendPort>(
-      (port) => TransportWorker(port).accept(),
-      fromAcceptor.sendPort,
-      debugName: "acceptor",
-    );
+    Isolate.spawn<SendPort>((port) => TransportWorker(port).accept(), fromAcceptor.sendPort);
 
     fromAcceptor.listen((acceptorPort) {
       SendPort toAcceptor = acceptorPort as SendPort;
@@ -71,7 +67,7 @@ class Transport {
     });
 
     for (var isolate = 0; isolate < isolates; isolate++) {
-      Isolate.spawn<SendPort>(worker, fromChannel.sendPort, debugName: "worker-$isolate");
+      Isolate.spawn<SendPort>(worker, fromChannel.sendPort);
     }
 
     fromChannel.listen((port) {

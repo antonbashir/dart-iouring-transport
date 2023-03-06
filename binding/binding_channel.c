@@ -80,22 +80,6 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
   return channel->available_buffer_id;
 }
 
-int transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd)
-{
-  log_debug("channel handle write cqe res = %d", cqe->res);
-  int buffer_id = channel->buffer_by_fd[fd];
-  channel->buffers[buffer_id].iov_len = cqe->res;
-  return buffer_id;
-}
-
-int transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd)
-{
-  log_debug("channel read accept cqe res = %d", cqe->res);
-  int buffer_id = channel->buffer_by_fd[fd];
-  channel->buffers[buffer_id].iov_len = cqe->res;
-  return buffer_id;
-}
-
 int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
@@ -116,14 +100,43 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
   return io_uring_submit(channel->ring);
 }
 
-struct iovec *transport_channel_get_buffer(transport_channel_t *channel, int buffer_id)
+int transport_channel_handle_write(struct transport_channel *channel, int fd, size_t size)
 {
-  return &channel->buffers[buffer_id];
+  log_debug("channel handle write size = %d", size);
+  int buffer_id = channel->buffer_by_fd[fd];
+  channel->buffers[buffer_id].iov_len = size;
+  return buffer_id;
 }
 
-void transport_channel_free_buffer(transport_channel_t *channel, int buffer_id)
+int transport_channel_handle_read(struct transport_channel *channel, int fd, size_t size)
 {
+  log_debug("channel handle read size = %d", size);
+  int buffer_id = channel->buffer_by_fd[fd];
+  channel->buffers[buffer_id].iov_len = size;
+  return buffer_id;
+}
+
+void transport_channel_complete_read_by_fd(transport_channel_t *channel, int fd)
+{
+  channel->buffers_state[channel->buffer_by_fd[fd]] = 1;
+}
+
+void transport_channel_complete_write_by_fd(transport_channel_t *channel, int fd)
+{
+  int buffer_id = channel->buffer_by_fd[fd];
   channel->buffers_state[buffer_id] = 1;
+  transport_channel_read(channel, fd, buffer_id);
+}
+
+void transport_channel_complete_read_by_buffer_id(transport_channel_t *channel, int id)
+{
+  channel->buffers_state[id] = 1;
+}
+
+void transport_channel_complete_write_by_buffer_id(transport_channel_t *channel, int fd, int id)
+{
+  channel->buffers_state[id] = 1;
+  transport_channel_read(channel, fd, id);
 }
 
 void transport_channel_close(transport_channel_t *channel)

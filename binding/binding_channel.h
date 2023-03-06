@@ -49,12 +49,16 @@ extern "C"
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id);
 
-  int transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd);
-  int transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd);
+  int transport_channel_handle_write(struct transport_channel *channel, int fd, size_t size);
+  int transport_channel_handle_read(struct transport_channel *channel, int fd, size_t size);
 
-  struct iovec *transport_channel_get_buffer(transport_channel_t *channel, int buffer_id);
   int transport_channel_allocate_buffer(transport_channel_t *channel);
-  void transport_channel_free_buffer(transport_channel_t *channel, int buffer_d);
+
+  void transport_channel_complete_read_by_fd(transport_channel_t *channel, int fd);
+  void transport_channel_complete_write_by_fd(transport_channel_t *channel, int fd);
+
+  void transport_channel_complete_read_by_buffer_id(transport_channel_t *channel, int id);
+  void transport_channel_complete_write_by_buffer_id(transport_channel_t *channel, int fd, int id);
 #if defined(__cplusplus)
 }
 #endif

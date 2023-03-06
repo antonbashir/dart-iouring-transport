@@ -44,39 +44,44 @@ class TransportChannel {
   }
 
   void write(Uint8List bytes, int fd, int bufferId) {
-    Pointer<iovec> data = _bindings.transport_channel_get_buffer(_pointer, bufferId);
-    data.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    data.ref.iov_len = bytes.length;
+    final buffer = _pointer.ref.buffers[bufferId];
+    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
+    buffer.iov_len = bytes.length;
     _bindings.transport_channel_write(_pointer, fd, bufferId);
   }
 
-  void handleRead(int fd, int bufferId) {
+  void handleRead(int fd, int size) {
     if (_onRead == null) {
-      _bindings.transport_channel_free_buffer(_pointer, bufferId);
+      _bindings.transport_channel_complete_read_by_fd(_pointer, fd);
       return;
     }
-    final buffer = _bindings.transport_channel_get_buffer(_pointer, bufferId);
+    final bufferId = _bindings.transport_channel_handle_read(_pointer, fd, size);
+    final buffer = _pointer.ref.buffers[bufferId];
     final payload = payloadPool[bufferId]!;
     payload.fd = fd;
-    payload.bytes = buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len);
-    payload.finalizer = (payload) => _bindings.transport_channel_free_buffer(_pointer, bufferId);
+    payload.bytes = buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len);
+    payload.finalizer = (payload) => _bindings.transport_channel_complete_read_by_buffer_id(
+          _pointer,
+          payload.bufferId,
+        );
     _onRead!(payload);
   }
 
-  void handleWrite(int fd, int bufferId) {
+  void handleWrite(int fd, int size) {
     if (_onWrite == null) {
-      _bindings.transport_channel_free_buffer(_pointer, bufferId);
-      _bindings.transport_channel_read(_pointer, fd, bufferId);
+      _bindings.transport_channel_complete_write_by_fd(_pointer, fd);
       return;
     }
-    final buffer = _bindings.transport_channel_get_buffer(_pointer, bufferId);
+    final bufferId = _bindings.transport_channel_handle_write(_pointer, fd, size);
+    final buffer = _pointer.ref.buffers[bufferId];
     final payload = payloadPool[bufferId]!;
     payload.fd = fd;
-    payload.bytes = buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len);
-    payload.finalizer = (payload) {
-      _bindings.transport_channel_free_buffer(_pointer, bufferId);
-      _bindings.transport_channel_read(_pointer, fd, bufferId);
-    };
+    payload.bytes = buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len);
+    payload.finalizer = (payload) => _bindings.transport_channel_complete_write_by_buffer_id(
+          _pointer,
+          payload.fd,
+          payload.bufferId,
+        );
     _onWrite!(payload);
   }
 }

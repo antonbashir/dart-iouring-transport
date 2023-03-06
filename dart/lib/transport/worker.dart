@@ -56,15 +56,11 @@ class TransportWorker {
           continue;
         }
         if (userData & TransportPayloadRead != 0) {
-          final fd = userData & ~TransportPayloadAll;
-          final bufferId = _bindings.transport_channel_handle_read(channelPointer, cqe, fd);
-          channel.handleRead(fd, bufferId);
+          channel.handleRead(userData & ~TransportPayloadAll, result);
           continue;
         }
         if (userData & TransportPayloadWrite != 0) {
-          final fd = userData & ~TransportPayloadAll;
-          final bufferId = _bindings.transport_channel_handle_write(channelPointer, cqe, fd);
-          channel.handleWrite(fd, bufferId);
+          channel.handleWrite(userData & ~TransportPayloadAll, result);
           continue;
         }
         if (userData & TransportPayloadMessage != 0) {
