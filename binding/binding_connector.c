@@ -47,7 +47,7 @@ transport_connector_t *transport_initialize_connector(transport_t *transport,
   context->client_addres.sin_port = htons(connector->client_port);
   context->client_addres.sin_family = AF_INET;
   context->client_addres_length = sizeof(context->client_addres);
-  context->fd = transport_socket_create();
+  //context->fd = transport_socket_create();
   connector->context = context;
 
   int32_t status = io_uring_queue_init(configuration->ring_size, &context->ring, 0);

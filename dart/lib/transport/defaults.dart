@@ -11,16 +11,16 @@ class TransportDefaults {
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: 16536,
+        buffersCount: 2048,
         bufferSize: 4096,
-        ringSize: 16536,
+        ringSize: 8182,
         ringFlags: RingSetupSqpoll,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
-        maxConnections: 16536,
-        receiveBufferSize: 4096,
-        sendBufferSize: 4096,
+        maxConnections: 1024,
+        receiveBufferSize: 2048,
+        sendBufferSize: 2048,
         ringSize: 2048,
         ringFlags: 0,
       );
