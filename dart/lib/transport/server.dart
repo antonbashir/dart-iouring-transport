@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'bindings.dart';
-import 'channels/channel.dart';
+import 'channel.dart';
 import 'constants.dart';
 import 'lookup.dart';
 import 'payload.dart';

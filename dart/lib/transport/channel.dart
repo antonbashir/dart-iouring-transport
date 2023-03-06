@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import '../bindings.dart';
-import '../payload.dart';
+import 'bindings.dart';
+import 'payload.dart';
 
 class TransportChannel {
   final payloadPool = <int, TransportDataPayload>{};

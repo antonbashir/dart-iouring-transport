@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'channels/channel.dart';
+import 'channel.dart';
 
 class TransportDataPayload {
   final TransportChannel _channel;

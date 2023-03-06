@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/channels/channel.dart';
+import 'package:iouring_transport/transport/channel.dart';
 
-import '../bindings.dart';
-import '../configuration.dart';
-import '../payload.dart';
+import 'bindings.dart';
+import 'configuration.dart';
+import 'payload.dart';
 
 class TransportFileChannel {
   final _decoder = Utf8Decoder();
