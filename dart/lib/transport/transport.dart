@@ -62,8 +62,8 @@ class Transport {
       debugName: "acceptor",
     );
 
-    fromAcceptor.listen((port) {
-      SendPort toAcceptor = port as SendPort;
+    fromAcceptor.listen((acceptorPort) {
+      SendPort toAcceptor = acceptorPort as SendPort;
       toAcceptor.send(libraryPath);
       toAcceptor.send(_transport.address);
       toAcceptor.send(host);
