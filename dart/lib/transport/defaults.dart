@@ -11,9 +11,9 @@ class TransportDefaults {
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: 2048,
+        buffersCount: 1024,
         bufferSize: 4096,
-        ringSize: 8182,
+        ringSize: 16536,
         ringFlags: RingSetupSqpoll,
       );
 
