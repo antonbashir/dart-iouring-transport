@@ -18,7 +18,7 @@ Future<void> main(List<String> args) async {
       "0.0.0.0",
       9999,
       (port) => TransportWorker(port).handle(onRead: (payload) => payload.respond(fromServer)),
-      isolates: 2,
+      isolates: 4,
     );
 
   await Future.delayed(Duration(days: 1));
