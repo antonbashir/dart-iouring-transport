@@ -88,7 +88,11 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
     if (unlikely(context->available_buffer_id == channel->buffers_count))
     {
       context->available_buffer_id = 0;
-      return -1;
+      if (unlikely(!(context->buffers_state[context->available_buffer_id])))
+      {
+        return -1;
+      }
+      break;
     }
   }
 
@@ -142,11 +146,11 @@ struct iovec *transport_channel_get_buffer(transport_channel_t *channel, int buf
   return &context->buffers[buffer_id];
 }
 
-
 void transport_channel_free_buffer(transport_channel_t *channel, int buffer_id)
 {
   struct transport_channel_context *context = (struct transport_channel_context *)channel->context;
   context->buffers_state[buffer_id] = 1;
+  //log_info("free buffer %d", buffer_id);
 }
 
 void transport_close_channel(transport_channel_t *channel)

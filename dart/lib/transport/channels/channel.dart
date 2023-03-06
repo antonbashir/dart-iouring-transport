@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
@@ -34,7 +35,7 @@ class TransportChannel {
     channel._onStop = onStop;
     channel.channel = pointer;
     for (var bufferId = 0; bufferId < pointer.ref.buffers_count; bufferId++) {
-      channel.payloadPool[bufferId] = TransportDataPayload(_bindings, bufferId, channel);
+      channel.payloadPool[bufferId] = TransportDataPayload(channel);
     }
     return channel;
   }
@@ -75,6 +76,8 @@ class TransportChannel {
     _bindings.transport_channel_read(channel, fd, bufferId);
   }
 
+  void _readBuffer(int fd, int bufferId) => _bindings.transport_channel_read(channel, fd, bufferId);
+
   Future<void> handleRead(int fd, int bufferId) async {
     if (_onRead == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
@@ -84,20 +87,24 @@ class TransportChannel {
     final payload = payloadPool[bufferId]!;
     payload.fd = fd;
     payload.bytes = buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len);
+    payload.finalizer = (payload) => _bindings.transport_channel_free_buffer(channel, bufferId);
     _onRead!(payload);
   }
 
   Future<void> handleWrite(int fd, int bufferId) async {
     if (_onWrite == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
-      await read(fd);
+      _readBuffer(fd, bufferId);
       return;
     }
-    await read(fd);
     final buffer = _bindings.transport_channel_get_buffer(channel, bufferId);
     final payload = payloadPool[bufferId]!;
     payload.fd = fd;
     payload.bytes = buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len);
+    payload.finalizer = (payload) async {
+      _bindings.transport_channel_free_buffer(channel, bufferId);
+      _readBuffer(fd, bufferId);
+    };
     _onWrite!(payload);
   }
 }
