@@ -93,6 +93,7 @@
     "binding_socket.h": "c",
     "in.h": "c",
     "binding_channel_pool.h": "c",
-    "rlist.h": "c"
+    "rlist.h": "c",
+    "binding_constants.h": "c"
   },
 }

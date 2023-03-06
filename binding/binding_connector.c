@@ -11,7 +11,7 @@
 #include <sys/time.h>
 #include "binding_connector.h"
 #include "binding_common.h"
-#include "binding_payload.h"
+#include "binding_constants.h"
 #include "binding_channel.h"
 #include "binding_socket.h"
 #include "fiber.h"

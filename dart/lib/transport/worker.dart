@@ -53,6 +53,7 @@ class TransportWorker {
         final int result = cqe.ref.res;
         final int userData = cqe.ref.user_data;
         if (result < 0) {
+          print("transport channel error cqe with result $result and user_data $userData");
           continue;
         }
         if (userData & TransportPayloadRead != 0) {

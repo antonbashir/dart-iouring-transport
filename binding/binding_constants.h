@@ -1,5 +1,5 @@
-#ifndef BINDING_PAYLOAD_H
-#define BINDING_PAYLOAD_H
+#ifndef BINDING_CONSTANTS_H
+#define BINDING_CONSTANTS_H
 
 #include <stdint.h>
 

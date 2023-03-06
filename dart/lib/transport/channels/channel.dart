@@ -62,7 +62,7 @@ class TransportChannel {
     payload.bytes = buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len);
     payload.finalizer = (payload) => _bindings.transport_channel_complete_read_by_buffer_id(
           _pointer,
-          payload.bufferId,
+          bufferId,
         );
     _onRead!(payload);
   }
@@ -79,8 +79,8 @@ class TransportChannel {
     payload.bytes = buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len);
     payload.finalizer = (payload) => _bindings.transport_channel_complete_write_by_buffer_id(
           _pointer,
-          payload.fd,
-          payload.bufferId,
+          fd,
+          bufferId,
         );
     _onWrite!(payload);
   }

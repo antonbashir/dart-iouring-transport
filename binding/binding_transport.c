@@ -12,7 +12,7 @@
 #include <sys/time.h>
 #include "binding_transport.h"
 #include "binding_common.h"
-#include "binding_payload.h"
+#include "binding_constants.h"
 #include "binding_channel.h"
 #include "binding_acceptor.h"
 
@@ -66,10 +66,10 @@ void transport_accept(transport_t *transport, const char *ip, int port)
   {
     if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
-      log_debug("transport access process cqe with result %d and user_data %d", cqe->res, cqe->user_data);
 
       if (unlikely(cqe->res < 0))
       {
+        log_error("transport accept error cqe with result %d and user_data %d", cqe->res, cqe->user_data);
         transport_acceptor_accept(acceptor);
         io_uring_cqe_seen(ring, cqe);
         continue;
