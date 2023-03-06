@@ -114,8 +114,8 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
   return transport;
 }
 
-void transport_close(transport_t *transport)
+void transport_shutdown(transport_t *transport)
 {
   free(transport);
-  log_info("[transport]: closed");
+  log_info("[transport]: shutdown");
 }

@@ -47,8 +47,9 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
   return acceptor;
 }
 
-void transport_acceptor_close(transport_acceptor_t *acceptor)
+void transport_acceptor_shutdown(transport_acceptor_t *acceptor)
 {
   io_uring_queue_exit(acceptor->ring);
   free(acceptor);
+  log_info("[acceptor]: shutdown");
 }

@@ -43,7 +43,7 @@ extern "C"
 
   void transport_cqe_advance(struct io_uring *ring, int count);
 
-  void transport_close(transport_t *transport);
+  void transport_shutdown(transport_t *transport);
 
   int transport_close_descritor(transport_t *transport, int fd);
 #if defined(__cplusplus)

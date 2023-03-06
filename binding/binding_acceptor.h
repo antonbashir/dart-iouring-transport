@@ -32,7 +32,7 @@ extern "C"
                                                       const char *ip,
                                                       int32_t port);
 
-  void transport_acceptor_close(transport_acceptor_t *acceptor);
+  void transport_acceptor_shutdown(transport_acceptor_t *acceptor);
 #if defined(__cplusplus)
 }
 #endif

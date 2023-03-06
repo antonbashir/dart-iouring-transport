@@ -136,4 +136,5 @@ void transport_channel_complete_write_by_buffer_id(transport_channel_t *channel,
 void transport_channel_close(transport_channel_t *channel)
 {
   free(channel);
+  log_info("[channel] closed");
 }

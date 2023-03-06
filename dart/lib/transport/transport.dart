@@ -35,7 +35,6 @@ class Transport {
   ) {
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
     nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel;
-    nativeTransportConfiguration.ref.log_colored = transportConfiguration.logColored;
 
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;

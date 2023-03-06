@@ -42,7 +42,7 @@ class TransportWorker {
       _bindings,
       onRead: onRead,
       onWrite: onWrite,
-      onStop: onStop,
+      onClose: onStop,
     );
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
@@ -92,5 +92,5 @@ class TransportWorker {
     });
   }
 
-  void stop() => _bindings.transport_close(_transport);
+  void shutdown() => _bindings.transport_close(_transport);
 }

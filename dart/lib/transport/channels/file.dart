@@ -34,7 +34,7 @@ class TransportFileChannel {
 
   void start() => {};
 
-  void stop() => _delegate.stop();
+  void stop() => _delegate.close();
 
   Future<Uint8List> readBytes() async {
     final currentOnRead = onRead;

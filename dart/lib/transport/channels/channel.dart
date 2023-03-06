@@ -12,26 +12,26 @@ class TransportChannel {
 
   void Function(TransportDataPayload payload)? _onRead;
   void Function(TransportDataPayload payload)? _onWrite;
-  void Function()? _onStop;
+  void Function()? _onClose;
 
   TransportChannel(
     this._pointer,
     this._bindings, {
     void Function(TransportDataPayload payload)? onRead,
     void Function(TransportDataPayload payload)? onWrite,
-    void Function()? onStop,
+    void Function()? onClose,
   }) {
     this._onRead = onRead;
     this._onWrite = onWrite;
-    this._onStop = onStop;
+    this._onClose = onClose;
     for (var bufferId = 0; bufferId < _pointer.ref.buffers_count; bufferId++) {
       payloadPool[bufferId] = TransportDataPayload(this, bufferId);
     }
   }
 
-  void stop() {
+  void close() {
     _bindings.transport_channel_close(_pointer);
-    _onStop?.call();
+    _onClose?.call();
   }
 
   Future<void> read(int fd) async {
