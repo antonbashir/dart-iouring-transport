@@ -15,7 +15,7 @@ Future<void> main(List<String> args) async {
   final channel = transport.channel(TransportDefaults.channel());
   transport.initialize(TransportDefaults.transport(), acceptor, channel);
   transport.work(
-    8,
+    4,
     (port) => TransportWorker(port).handle(onRead: (payload) async {
       payload.finalize();
       await payload.channel.write(fromServer, payload.fd);

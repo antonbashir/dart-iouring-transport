@@ -61,22 +61,22 @@ class TransportWorker {
           continue;
         }
 
-        if (userData & TransportPayloadMessage != 0) {
-          futures.add(channel.read(result));
-          continue;
-        }
-
-        final fd = userData & ~TransportPayloadAll;
-
         if (userData & TransportPayloadRead != 0) {
+          final fd = userData & ~TransportPayloadAll;
           final bufferId = _bindings.transport_channel_handle_read(channel.channel, cqe, fd);
           futures.add(channel.handleRead(fd, bufferId));
           continue;
         }
 
         if (userData & TransportPayloadWrite != 0) {
+          final fd = userData & ~TransportPayloadAll;
           final bufferId = _bindings.transport_channel_handle_write(channel.channel, cqe, fd);
           futures.add(channel.handleWrite(fd, bufferId));
+          continue;
+        }
+
+        if (userData & TransportPayloadMessage != 0) {
+          futures.add(channel.read(result));
           continue;
         }
       }
