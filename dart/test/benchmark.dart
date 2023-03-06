@@ -5,8 +5,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/server.dart';
+import 'package:iouring_transport/transport/transport.dart';
 
 Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
@@ -19,7 +19,7 @@ Future<void> main(List<String> args) async {
       9999,
       (port) => TransportServer(port).serve(
         onAccept: (channel, descriptor) => channel.read(descriptor),
-        onRequest: (payload) => payload.respond(fromServer),
+        onInput: (payload) => fromServer,
       ),
       isolates: Platform.numberOfProcessors,
     );

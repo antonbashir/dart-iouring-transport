@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'bindings.dart';
 import 'channel.dart';
 import 'constants.dart';
 import 'lookup.dart';
-import 'payload.dart';
 
 class TransportServer {
   final fromTransport = ReceivePort();
@@ -21,7 +21,7 @@ class TransportServer {
 
   Future<void> serve({
     FutureOr Function(TransportChannel channel, int descriptor)? onAccept,
-    FutureOr Function(TransportDataPayload payload)? onRequest,
+    FutureOr<Uint8List> Function(Uint8List input)? onInput,
   }) async {
     final configuration = await fromTransport.take(2).toList();
     final libraryPath = configuration[0] as String?;
@@ -34,7 +34,7 @@ class TransportServer {
     _bindings = TransportBindings(_library.library);
     final channelPointer = _bindings.transport_add_channel(_transport);
     final ring = channelPointer.ref.ring;
-    final channel = TransportChannel(channelPointer, _bindings, onRead: onRequest);
+    final channel = TransportChannel(channelPointer, _bindings, onRead: onInput == null ? null : (payload, fd) => onInput(payload));
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
       int cqeCount = _bindings.transport_consume(_transport, cqes, ring);
