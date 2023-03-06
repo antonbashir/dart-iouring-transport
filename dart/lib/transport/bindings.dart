@@ -16838,27 +16838,36 @@ class TransportBindings {
   late final _transport_file_open =
       _transport_file_openPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
-  int transport_socket_create() {
-    return _transport_socket_create();
+  int transport_socket_create(
+    int max_connections,
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create(
+      max_connections,
+      receive_buffer_size,
+      send_buffer_size,
+    );
   }
 
-  late final _transport_socket_createPtr =
-      _lookup<ffi.NativeFunction<ffi.Int32 Function()>>(
-          'transport_socket_create');
+  late final _transport_socket_createPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(
+              ffi.Uint32, ffi.Uint32, ffi.Uint32)>>('transport_socket_create');
   late final _transport_socket_create =
-      _transport_socket_createPtr.asFunction<int Function()>();
+      _transport_socket_createPtr.asFunction<int Function(int, int, int)>();
 
   int transport_socket_bind(
     int server_socket_fd,
     ffi.Pointer<ffi.Char> ip,
     int port,
-    int backlog,
+    int max_connections,
   ) {
     return _transport_socket_bind(
       server_socket_fd,
       ip,
       port,
-      backlog,
+      max_connections,
     );
   }
 
@@ -20295,7 +20304,9 @@ class _SymbolAddresses {
       get transport_connector_loop => _library._transport_connector_loopPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function()>>
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
       get transport_socket_create => _library._transport_socket_createPtr;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -23306,7 +23317,13 @@ typedef transport_channel_configuration_t = transport_channel_configuration;
 
 class transport_acceptor_configuration extends ffi.Struct {
   @ffi.Int32()
-  external int backlog;
+  external int max_connections;
+
+  @ffi.Uint32()
+  external int receive_buffer_size;
+
+  @ffi.Uint32()
+  external int send_buffer_size;
 
   @ffi.Uint32()
   external int ring_size;
@@ -23325,14 +23342,6 @@ class transport_acceptor extends ffi.Struct {
 
   @socklen_t()
   external int server_address_length;
-
-  external ffi.Pointer<ffi.Char> ip;
-
-  @ffi.Int32()
-  external int port;
-
-  @ffi.Int32()
-  external int backlog;
 }
 
 typedef transport_acceptor_t = transport_acceptor;

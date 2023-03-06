@@ -38,7 +38,9 @@ class Transport {
     nativeTransportConfiguration.ref.log_colored = transportConfiguration.logColored;
 
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
-    nativeAcceptorConfiguration.ref.backlog = acceptorConfiguration.backlog;
+    nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
+    nativeAcceptorConfiguration.ref.receive_buffer_size = acceptorConfiguration.receiveBufferSize;
+    nativeAcceptorConfiguration.ref.send_buffer_size = acceptorConfiguration.sendBufferSize;
     nativeAcceptorConfiguration.ref.ring_flags = acceptorConfiguration.ringFlags;
     nativeAcceptorConfiguration.ref.ring_size = acceptorConfiguration.ringSize;
 

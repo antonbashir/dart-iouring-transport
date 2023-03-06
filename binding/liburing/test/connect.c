@@ -281,7 +281,7 @@ static int test_connect_timeout(struct io_uring *ring)
 		goto err;
 	}
 
-	ret = listen(accept_fd, 0);  // no backlog in order to block connect_fd[1]
+	ret = listen(accept_fd, 0);  // no max_connections in order to block connect_fd[1]
 	if (ret == -1) {
 		perror("listen()");
 		goto err;

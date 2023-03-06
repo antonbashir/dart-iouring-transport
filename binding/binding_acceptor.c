@@ -28,11 +28,8 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
   acceptor->server_address.sin_port = htons(port);
   acceptor->server_address.sin_family = AF_INET;
   acceptor->server_address_length = sizeof(acceptor->server_address);
-  acceptor->backlog = configuration->backlog;
-  acceptor->ip = ip;
-  acceptor->port = port;
-  acceptor->fd = transport_socket_create();
-  if (transport_socket_bind(acceptor->fd, acceptor->ip, acceptor->port, acceptor->backlog))
+  acceptor->fd = transport_socket_create(configuration->max_connections, configuration->receive_buffer_size, configuration->send_buffer_size);
+  if (transport_socket_bind(acceptor->fd, ip, port, configuration->max_connections))
   {
     free(acceptor);
     return NULL;

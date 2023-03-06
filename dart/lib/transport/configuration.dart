@@ -47,25 +47,33 @@ class TransportChannelConfiguration {
 }
 
 class TransportAcceptorConfiguration {
-  final int backlog;
   final int ringSize;
   final int ringFlags;
+  final int maxConnections;
+  final int receiveBufferSize;
+  final int sendBufferSize;
 
   TransportAcceptorConfiguration({
-    required this.backlog,
     required this.ringSize,
     required this.ringFlags,
+    required this.maxConnections,
+    required this.receiveBufferSize,
+    required this.sendBufferSize,
   });
 
   TransportAcceptorConfiguration copyWith({
-    int? backlog,
+    int? maxConnections,
+    int? receiveBufferSize,
+    int? sendBufferSize,
     int? ringSize,
     int? ringFlags,
   }) =>
       TransportAcceptorConfiguration(
-        backlog: backlog ?? this.backlog,
         ringSize: ringSize ?? this.ringSize,
         ringFlags: ringFlags ?? this.ringFlags,
+        maxConnections: maxConnections ?? this.maxConnections,
+        receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
+        sendBufferSize: sendBufferSize ?? this.sendBufferSize,
       );
 }
 
