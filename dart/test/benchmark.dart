@@ -10,14 +10,15 @@ import 'package:iouring_transport/transport/worker.dart';
 Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
   final fromServer = encoder.convert("from server");
-  final transport = Transport();
-  final acceptor = transport.acceptor(TransportDefaults.acceptor(), "0.0.0.0", 9999);
-  final channel = transport.channel(TransportDefaults.channel());
-  transport.initialize(TransportDefaults.transport(), acceptor, channel);
-  transport.work(
-    4,
-    (port) => TransportWorker(port).handle(onRead: (payload) => payload.respond(fromServer)),
-  );
+
+  Transport()
+    ..initialize(TransportDefaults.transport(), TransportDefaults.acceptor(), TransportDefaults.channel())
+    ..accept(
+      "0.0.0.0",
+      9999,
+      (port) => TransportWorker(port).handle(onRead: (payload) => payload.respond(fromServer)),
+      isolates: 4,
+    );
 
   await Future.delayed(Duration(days: 1));
 }

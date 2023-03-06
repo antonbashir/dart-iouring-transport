@@ -14,23 +14,26 @@ extern "C"
   typedef struct transport_acceptor_configuration
   {
     int32_t backlog;
+    uint32_t ring_size;
+    int ring_flags;
   } transport_acceptor_configuration_t;
 
   typedef struct transport_acceptor
   {
-    void *context;
     struct io_uring *ring;
+    int fd;
+    struct sockaddr_in server_address;
+    socklen_t server_address_length;
+    const char *ip;
+    int32_t port;
+    int32_t backlog;
   } transport_acceptor_t;
 
-  transport_acceptor_t *transport_initialize_acceptor(transport_acceptor_configuration_t *configuration,
+  transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configuration_t *configuration,
                                                       const char *ip,
                                                       int32_t port);
 
-  void transport_close_acceptor(transport_acceptor_t *acceptor);
-
-  transport_acceptor_t *transport_acceptor_share(transport_acceptor_t *source, struct io_uring *ring);
-
-  int transport_acceptor_accept(struct transport_acceptor *acceptor);
+  void transport_acceptor_close(transport_acceptor_t *acceptor);
 #if defined(__cplusplus)
 }
 #endif

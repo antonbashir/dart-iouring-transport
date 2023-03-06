@@ -10,7 +10,7 @@
 #include "small/include/small/quota.h"
 #include "binding_channel.h"
 #include "binding_acceptor.h"
-#include "binding_balancer.h"
+#include "binding_channel_pool.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -21,34 +21,24 @@ extern "C"
   {
     int log_level;
     bool log_colored;
-    size_t channel_ring_size;
-    size_t acceptor_ring_size;
-    int channel_ring_flags;
-    int acceptor_ring_flags;
   } transport_configuration_t;
 
   typedef struct transport
   {
-    struct transport_balancer *channels;
-    transport_channel_t *current_channel;
-    transport_acceptor_t *acceptor;
-    uint32_t channel_ring_size;
-    uint32_t acceptor_ring_size;
-    int channel_ring_flags;
-    int acceptor_ring_flags;
+    struct transport_channel_pool *channels;
+    transport_channel_configuration_t *channel_configuration;
+    transport_acceptor_configuration_t *acceptor_configuration;
   } transport_t;
 
-  transport_t *transport_initialize(transport_configuration_t *configuration,
-                                    transport_channel_t *channel,
-                                    transport_acceptor_t *acceptor);
+  transport_t *transport_initialize(transport_configuration_t *transport_configuration,
+                                    transport_channel_configuration_t *channel_configuration,
+                                    transport_acceptor_configuration_t *acceptor_configuration);
 
-  transport_acceptor_t *transport_activate_acceptor(transport_t *transport);
-
-  transport_channel_t *transport_activate_channel(transport_t *transport);
+  transport_channel_t *transport_add_channel(transport_t *transport);
 
   int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring);
 
-  void transport_accept(transport_t *transport, struct io_uring *ring);
+  void transport_accept(transport_t *transport, const char *ip, int port);
 
   struct io_uring_cqe **transport_allocate_cqes(transport_t *transport);
 

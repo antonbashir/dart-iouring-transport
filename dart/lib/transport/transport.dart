@@ -3,21 +3,20 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/acceptor.dart';
-import 'package:iouring_transport/transport/configuration.dart';
-import 'package:iouring_transport/transport/worker.dart';
 
 import 'bindings.dart';
-import 'channels/channel.dart';
+import 'configuration.dart';
 import 'lookup.dart';
+import 'worker.dart';
 
 class Transport {
+  final fromChannel = ReceivePort();
+  final fromAcceptor = ReceivePort();
+
   late String? libraryPath;
   late TransportBindings _bindings;
   late TransportLibrary _library;
   late Pointer<transport_t> _transport;
-
-  final fromWorker = ReceivePort();
 
   Transport({String? libraryPath}) {
     _library = libraryPath != null
@@ -29,42 +28,56 @@ class Transport {
     this.libraryPath = libraryPath;
   }
 
-  TransportAcceptor acceptor(TransportAcceptorConfiguration configuration, String host, int port) => TransportAcceptor(
-        _bindings,
-      )..initialize(configuration, host, port);
+  void initialize(
+    TransportConfiguration transportConfiguration,
+    TransportAcceptorConfiguration acceptorConfiguration,
+    TransportChannelConfiguration channelConfiguration,
+  ) {
+    final nativeTransportConfiguration = calloc<transport_configuration_t>();
+    nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel;
+    nativeTransportConfiguration.ref.log_colored = transportConfiguration.logColored;
 
-  TransportChannel channel(TransportChannelConfiguration configuration) => TransportChannel(
-        _bindings,
-      )..initialize(configuration);
+    final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
+    nativeAcceptorConfiguration.ref.backlog = acceptorConfiguration.backlog;
+    nativeAcceptorConfiguration.ref.ring_flags = acceptorConfiguration.ringFlags;
+    nativeAcceptorConfiguration.ref.ring_size = acceptorConfiguration.ringSize;
 
-  void initialize(TransportConfiguration configuration, TransportAcceptor acceptor, TransportChannel channel) {
-    using((Arena arena) {
-      final transportConfiguration = arena<transport_configuration_t>();
-      transportConfiguration.ref.log_level = configuration.logLevel;
-      transportConfiguration.ref.log_colored = configuration.logColored;
-      transportConfiguration.ref.acceptor_ring_size = acceptor.configuration.ringSize;
-      transportConfiguration.ref.acceptor_ring_flags = acceptor.configuration.ringFlags;
-      transportConfiguration.ref.channel_ring_size = channel.configuration.ringSize;
-      transportConfiguration.ref.channel_ring_flags = channel.configuration.ringFlags;
-      _transport = _bindings.transport_initialize(transportConfiguration, channel.channel, acceptor.acceptor);
-    });
+    final nativeChannelConfiguration = calloc<transport_channel_configuration_t>();
+    nativeChannelConfiguration.ref.buffers_count = channelConfiguration.buffersCount;
+    nativeChannelConfiguration.ref.buffer_size = channelConfiguration.bufferSize;
+    nativeChannelConfiguration.ref.ring_flags = channelConfiguration.ringFlags;
+    nativeChannelConfiguration.ref.ring_size = channelConfiguration.ringSize;
+
+    _transport = _bindings.transport_initialize(
+      nativeTransportConfiguration,
+      nativeChannelConfiguration,
+      nativeAcceptorConfiguration,
+    );
   }
 
-  Future<void> work(int isolates, void Function(SendPort port) worker) async {
+  Future<void> accept(String host, int port, void Function(SendPort port) worker, {int isolates = 1}) async {
     Isolate.spawn<SendPort>(
-      (port) async => await TransportWorker(port).accept(),
-      fromWorker.sendPort,
+      (port) => TransportWorker(port).accept(),
+      fromAcceptor.sendPort,
       debugName: "acceptor",
     );
 
+    fromAcceptor.listen((port) {
+      SendPort toAcceptor = port as SendPort;
+      toAcceptor.send(libraryPath);
+      toAcceptor.send(_transport.address);
+      toAcceptor.send(host);
+      toAcceptor.send(port);
+    });
+
     for (var isolate = 0; isolate < isolates; isolate++) {
-      Isolate.spawn<SendPort>(worker, fromWorker.sendPort, debugName: "worker-$isolate");
+      Isolate.spawn<SendPort>(worker, fromChannel.sendPort, debugName: "worker-$isolate");
     }
 
-    fromWorker.listen((port) {
-      SendPort toWorker = port as SendPort;
-      toWorker.send(libraryPath);
-      toWorker.send(_transport.address);
+    fromChannel.listen((port) {
+      SendPort toChannel = port as SendPort;
+      toChannel.send(libraryPath);
+      toChannel.send(_transport.address);
     });
   }
 }

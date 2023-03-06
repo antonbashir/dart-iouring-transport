@@ -20,15 +20,20 @@ extern "C"
   {
     uint32_t buffers_count;
     uint32_t buffer_size;
+    size_t ring_size;
+    int ring_flags;
   } transport_channel_configuration_t;
 
   typedef struct transport_channel
   {
     struct io_uring *ring;
-    void *context;
+    struct iovec *buffers;
     uint32_t buffer_size;
     uint32_t buffers_count;
-    struct rlist balancer_link;
+    int *buffers_state;
+    int *buffer_by_fd;
+    int available_buffer_id;
+    struct rlist channel_pool_link;
   } transport_channel_t;
 
   typedef struct transport_message
@@ -38,14 +43,11 @@ extern "C"
     size_t size;
   } transport_message_t;
 
-  transport_channel_t *transport_initialize_channel(transport_channel_configuration_t *configuration);
-
-  transport_channel_t *transport_channel_share(transport_channel_t *source, struct io_uring *ring);
+  transport_channel_t *transport_channel_initialize(transport_channel_configuration_t *configuration);
+  void transport_channel_close(transport_channel_t *channel);
 
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id);
-
-  void transport_close_channel(transport_channel_t *channel);
 
   int transport_channel_handle_write(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd);
   int transport_channel_handle_read(struct transport_channel *channel, struct io_uring_cqe *cqe, int fd);

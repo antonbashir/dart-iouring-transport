@@ -3,6 +3,8 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:ffi/ffi.dart';
+
 import 'bindings.dart';
 import 'channels/channel.dart';
 import 'constants.dart';
@@ -10,10 +12,10 @@ import 'lookup.dart';
 import 'payload.dart';
 
 class TransportWorker {
+  final fromTransport = ReceivePort();
+
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transport;
-
-  final fromTransport = ReceivePort();
 
   TransportWorker(SendPort toTransport) {
     toTransport.send(fromTransport.sendPort);
@@ -33,9 +35,9 @@ class TransportWorker {
             : loadBindingLibrary()
         : loadBindingLibrary();
     _bindings = TransportBindings(_library.library);
-    final channelPointer = _bindings.transport_activate_channel(_transport);
+    final channelPointer = _bindings.transport_add_channel(_transport);
     final ring = channelPointer.ref.ring;
-    final channel = TransportChannel.fromPointer(
+    final channel = TransportChannel(
       channelPointer,
       _bindings,
       onRead: onRead,
@@ -50,47 +52,45 @@ class TransportWorker {
         final cqe = cqes[cqeIndex];
         final int result = cqe.ref.res;
         final int userData = cqe.ref.user_data;
-
         if (result < 0) {
           continue;
         }
-
         if (userData & TransportPayloadRead != 0) {
           final fd = userData & ~TransportPayloadAll;
-          final bufferId = _bindings.transport_channel_handle_read(channel.channel, cqe, fd);
+          final bufferId = _bindings.transport_channel_handle_read(channelPointer, cqe, fd);
           channel.handleRead(fd, bufferId);
           continue;
         }
-
         if (userData & TransportPayloadWrite != 0) {
           final fd = userData & ~TransportPayloadAll;
-          final bufferId = _bindings.transport_channel_handle_write(channel.channel, cqe, fd);
+          final bufferId = _bindings.transport_channel_handle_write(channelPointer, cqe, fd);
           channel.handleWrite(fd, bufferId);
           continue;
         }
-
         if (userData & TransportPayloadMessage != 0) {
-          unawaited(channel.read(result));
+          await channel.read(result);
           continue;
         }
       }
-
       _bindings.transport_cqe_advance(ring, cqeCount);
     }
   }
 
   Future<void> accept() async {
-    final configuration = await fromTransport.take(2).toList();
+    final configuration = await fromTransport.take(4).toList();
     final libraryPath = configuration[0] as String?;
     _transport = Pointer.fromAddress(configuration[1] as int);
+    String host = configuration[2] as String;
+    int port = configuration[3] as int;
     final _library = libraryPath != null
         ? File(libraryPath).existsSync()
             ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
             : loadBindingLibrary()
         : loadBindingLibrary();
     _bindings = TransportBindings(_library.library);
-    final acceptor = _bindings.transport_activate_acceptor(_transport);
-    _bindings.transport_accept(_transport, acceptor.ref.ring);
+    using((Arena arena) {
+      _bindings.transport_accept(_transport, host.toNativeUtf8(allocator: arena).cast(), port);
+    });
   }
 
   void stop() => _bindings.transport_close(_transport);
