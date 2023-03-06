@@ -17,7 +17,9 @@ Future<void> main(List<String> args) async {
     ..accept(
       "0.0.0.0",
       9999,
-      (port) => TransportWorker(port).handle(onRead: (payload) => payload.respond(fromServer)),
+      (port) => TransportWorker(port).handle(onRead: (payload) async {
+        payload.respond(fromServer);
+      }),
       isolates: Platform.numberOfProcessors,
     );
 

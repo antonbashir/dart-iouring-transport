@@ -10,14 +10,14 @@ class TransportChannel {
   final Pointer<transport_channel_t> _pointer;
   final TransportBindings _bindings;
 
-  void Function(TransportDataPayload payload)? _onRead;
-  void Function(TransportDataPayload payload)? _onWrite;
+  FutureOr Function(TransportDataPayload payload)? _onRead;
+  FutureOr Function(TransportDataPayload payload)? _onWrite;
 
   TransportChannel(
     this._pointer,
     this._bindings, {
-    void Function(TransportDataPayload payload)? onRead,
-    void Function(TransportDataPayload payload)? onWrite,
+    FutureOr Function(TransportDataPayload payload)? onRead,
+    FutureOr Function(TransportDataPayload payload)? onWrite,
   }) {
     this._onRead = onRead;
     this._onWrite = onWrite;
@@ -42,7 +42,7 @@ class TransportChannel {
     _bindings.transport_channel_write(_pointer, fd, bufferId);
   }
 
-  void handleRead(int fd, int size) {
+  Future<void> handleRead(int fd, int size) async {
     if (_onRead == null) {
       _bindings.transport_channel_complete_read_by_fd(_pointer, fd);
       return;
@@ -56,10 +56,10 @@ class TransportChannel {
           _pointer,
           bufferId,
         );
-    _onRead!(payload);
+    await _onRead!(payload);
   }
 
-  void handleWrite(int fd, int size) {
+  Future<void> handleWrite(int fd, int size) async {
     if (_onWrite == null) {
       _bindings.transport_channel_complete_write_by_fd(_pointer, fd);
       return;
@@ -74,6 +74,6 @@ class TransportChannel {
           fd,
           bufferId,
         );
-    _onWrite!(payload);
+    await _onWrite!(payload);
   }
 }
