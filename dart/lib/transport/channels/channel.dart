@@ -35,7 +35,7 @@ class TransportChannel {
     channel._onStop = onStop;
     channel.channel = pointer;
     for (var bufferId = 0; bufferId < pointer.ref.buffers_count; bufferId++) {
-      channel.payloadPool[bufferId] = TransportDataPayload(channel);
+      channel.payloadPool[bufferId] = TransportDataPayload(channel, bufferId);
     }
     return channel;
   }
@@ -55,12 +55,7 @@ class TransportChannel {
     _onStop?.call();
   }
 
-  Future<void> write(Uint8List bytes, int fd) async {
-    var bufferId = _bindings.transport_channel_allocate_buffer(channel);
-    while (bufferId == -1) {
-      await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_allocate_buffer(channel);
-    }
+  void write(Uint8List bytes, int fd, int bufferId) {
     Pointer<iovec> data = _bindings.transport_channel_get_buffer(channel, bufferId);
     data.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     data.ref.iov_len = bytes.length;
@@ -76,9 +71,7 @@ class TransportChannel {
     _bindings.transport_channel_read(channel, fd, bufferId);
   }
 
-  void _readBuffer(int fd, int bufferId) => _bindings.transport_channel_read(channel, fd, bufferId);
-
-  Future<void> handleRead(int fd, int bufferId) async {
+  void handleRead(int fd, int bufferId) {
     if (_onRead == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
       return;
@@ -91,19 +84,19 @@ class TransportChannel {
     _onRead!(payload);
   }
 
-  Future<void> handleWrite(int fd, int bufferId) async {
+  void handleWrite(int fd, int bufferId) {
     if (_onWrite == null) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
-      _readBuffer(fd, bufferId);
+      _bindings.transport_channel_read(channel, fd, bufferId);
       return;
     }
     final buffer = _bindings.transport_channel_get_buffer(channel, bufferId);
     final payload = payloadPool[bufferId]!;
     payload.fd = fd;
     payload.bytes = buffer.ref.iov_base.cast<Uint8>().asTypedList(buffer.ref.iov_len);
-    payload.finalizer = (payload) async {
+    payload.finalizer = (payload) {
       _bindings.transport_channel_free_buffer(channel, bufferId);
-      _readBuffer(fd, bufferId);
+      _bindings.transport_channel_read(channel, fd, bufferId);
     };
     _onWrite!(payload);
   }

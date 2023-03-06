@@ -4,12 +4,13 @@ import 'channels/channel.dart';
 
 class TransportDataPayload {
   final TransportChannel channel;
+  final int bufferId;
 
   late Uint8List bytes;
   late int fd;
   late void Function(TransportDataPayload payload) finalizer;
 
-  TransportDataPayload(this.channel);
+  TransportDataPayload(this.channel, this.bufferId);
 
   void finalize() => finalizer(this);
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
@@ -41,7 +42,6 @@ class TransportWorker {
       onWrite: onWrite,
       onStop: onStop,
     );
-    final futures = <Future>[];
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
       int cqeCount = _bindings.transport_consume(_transport, cqes, ring);
@@ -58,26 +58,24 @@ class TransportWorker {
         if (userData & TransportPayloadRead != 0) {
           final fd = userData & ~TransportPayloadAll;
           final bufferId = _bindings.transport_channel_handle_read(channel.channel, cqe, fd);
-          futures.add(channel.handleRead(fd, bufferId));
+          channel.handleRead(fd, bufferId);
           continue;
         }
 
         if (userData & TransportPayloadWrite != 0) {
           final fd = userData & ~TransportPayloadAll;
           final bufferId = _bindings.transport_channel_handle_write(channel.channel, cqe, fd);
-          futures.add(channel.handleWrite(fd, bufferId));
+          channel.handleWrite(fd, bufferId);
           continue;
         }
 
         if (userData & TransportPayloadMessage != 0) {
-          futures.add(channel.read(result));
+          unawaited(channel.read(result));
           continue;
         }
       }
-      
+
       _bindings.transport_cqe_advance(ring, cqeCount);
-      await Future.wait(futures);
-      futures.clear();
     }
   }
 
