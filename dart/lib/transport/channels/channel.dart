@@ -55,13 +55,6 @@ class TransportChannel {
     _onStop?.call();
   }
 
-  void write(Uint8List bytes, int fd, int bufferId) {
-    Pointer<iovec> data = _bindings.transport_channel_get_buffer(channel, bufferId);
-    data.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    data.ref.iov_len = bytes.length;
-    _bindings.transport_channel_write(channel, fd, bufferId);
-  }
-
   Future<void> read(int fd) async {
     var bufferId = _bindings.transport_channel_allocate_buffer(channel);
     while (bufferId == -1) {
@@ -69,6 +62,13 @@ class TransportChannel {
       bufferId = _bindings.transport_channel_allocate_buffer(channel);
     }
     _bindings.transport_channel_read(channel, fd, bufferId);
+  }
+
+  void write(Uint8List bytes, int fd, int bufferId) {
+    Pointer<iovec> data = _bindings.transport_channel_get_buffer(channel, bufferId);
+    data.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
+    data.ref.iov_len = bytes.length;
+    _bindings.transport_channel_write(channel, fd, bufferId);
   }
 
   void handleRead(int fd, int bufferId) {

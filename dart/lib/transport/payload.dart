@@ -12,5 +12,10 @@ class TransportDataPayload {
 
   TransportDataPayload(this.channel, this.bufferId);
 
+  void respond(Uint8List data) {
+    finalizer(this);
+    channel.write(bytes, fd, bufferId);
+  }
+
   void finalize() => finalizer(this);
 }
