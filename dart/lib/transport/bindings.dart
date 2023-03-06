@@ -16720,20 +16720,6 @@ class TransportBindings {
   late final _transport_cqe_advance = _transport_cqe_advancePtr
       .asFunction<void Function(ffi.Pointer<io_uring>, int)>();
 
-  int transport_cqe_ready(
-    ffi.Pointer<io_uring> ring,
-  ) {
-    return _transport_cqe_ready(
-      ring,
-    );
-  }
-
-  late final _transport_cqe_readyPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<io_uring>)>>(
-          'transport_cqe_ready');
-  late final _transport_cqe_ready =
-      _transport_cqe_readyPtr.asFunction<int Function(ffi.Pointer<io_uring>)>();
-
   void transport_close(
     ffi.Pointer<transport_t> transport,
   ) {
@@ -16747,6 +16733,23 @@ class TransportBindings {
           'transport_close');
   late final _transport_close =
       _transport_closePtr.asFunction<void Function(ffi.Pointer<transport_t>)>();
+
+  int transport_close_descritor(
+    ffi.Pointer<transport_t> transport,
+    int fd,
+  ) {
+    return _transport_close_descritor(
+      transport,
+      fd,
+    );
+  }
+
+  late final _transport_close_descritorPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_t>, ffi.Int)>>('transport_close_descritor');
+  late final _transport_close_descritor = _transport_close_descritorPtr
+      .asFunction<int Function(ffi.Pointer<transport_t>, int)>();
 
   ffi.Pointer<transport_connector_t> transport_initialize_connector(
     ffi.Pointer<transport_t> transport,
@@ -20265,10 +20268,12 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<ffi.Void Function(ffi.Pointer<io_uring>, ffi.Int)>>
       get transport_cqe_advance => _library._transport_cqe_advancePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<io_uring>)>>
-      get transport_cqe_ready => _library._transport_cqe_readyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
       get transport_close => _library._transport_closePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<transport_t>, ffi.Int)>>
+      get transport_close_descritor => _library._transport_close_descritorPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_connector_t> Function(

@@ -53,7 +53,9 @@ class TransportWorker {
         final int result = cqe.ref.res;
         final int userData = cqe.ref.user_data;
         if (result < 0) {
-          print("transport channel error cqe with result $result and user_data $userData");
+          if (userData & TransportPayloadRead != 0 || userData & TransportPayloadWrite != 0) {
+            _bindings.transport_close_descritor(_transport, userData & ~TransportPayloadAll);
+          }
           continue;
         }
         if (userData & TransportPayloadRead != 0) {

@@ -44,9 +44,9 @@ extern "C"
 
   void transport_cqe_advance(struct io_uring *ring, int count);
 
-  int transport_cqe_ready(struct io_uring *ring);
-
   void transport_close(transport_t *transport);
+
+  int transport_close_descritor(transport_t *transport, int fd);
 #if defined(__cplusplus)
 }
 #endif

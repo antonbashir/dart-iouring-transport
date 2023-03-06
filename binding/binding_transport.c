@@ -66,7 +66,6 @@ void transport_accept(transport_t *transport, const char *ip, int port)
   {
     if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
-
       if (unlikely(cqe->res < 0))
       {
         log_error("transport accept error cqe with result %d and user_data %d", cqe->res, cqe->user_data);
@@ -89,6 +88,11 @@ void transport_accept(transport_t *transport, const char *ip, int port)
       transport_acceptor_accept(acceptor);
     }
   }
+}
+
+int transport_close_descritor(transport_t *transport, int fd)
+{
+  return shutdown(fd, SHUT_RDWR);
 }
 
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
