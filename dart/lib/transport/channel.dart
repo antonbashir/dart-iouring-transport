@@ -34,28 +34,43 @@ class TransportChannel {
     _bindings.transport_channel_write(_pointer, fd, bufferId);
   }
 
-  Future<void> handleRead(int fd, int size) async {
+  @pragma("vm:prefer-inline")
+  void handleRead(int fd, int size) {
     if (onRead == null) {
       _bindings.transport_channel_complete_read_by_fd(_pointer, fd);
       return;
     }
     final bufferId = _bindings.transport_channel_handle_read(_pointer, fd, size);
     final buffer = _pointer.ref.buffers[bufferId];
-    final resultBytes = await onRead!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
+    final result = onRead!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
+    if (result is Future) {
+      unawaited((result as Future).then((resultBytes) {
+        _bindings.transport_channel_complete_read_by_buffer_id(_pointer, bufferId);
+        buffer.iov_base.cast<Uint8>().asTypedList(resultBytes.length).setAll(0, resultBytes);
+        buffer.iov_len = resultBytes.length;
+        _bindings.transport_channel_write(_pointer, fd, bufferId);
+      }));
+      return;
+    }
     _bindings.transport_channel_complete_read_by_buffer_id(_pointer, bufferId);
-    buffer.iov_base.cast<Uint8>().asTypedList(resultBytes.length).setAll(0, resultBytes);
-    buffer.iov_len = resultBytes.length;
+    buffer.iov_base.cast<Uint8>().asTypedList(result.length).setAll(0, result);
+    buffer.iov_len = result.length;
     _bindings.transport_channel_write(_pointer, fd, bufferId);
   }
 
-  Future<void> handleWrite(int fd, int size) async {
+  @pragma("vm:prefer-inline")
+  void handleWrite(int fd, int size) {
     if (onWrite == null) {
       _bindings.transport_channel_complete_write_by_fd(_pointer, fd);
       return;
     }
     final bufferId = _bindings.transport_channel_handle_write(_pointer, fd, size);
     final buffer = _pointer.ref.buffers[bufferId];
-    await onWrite!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
+    final result = onWrite!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
+    if (result is Future) {
+      unawaited(result.then((_) => _bindings.transport_channel_complete_write_by_buffer_id(_pointer, fd, bufferId)));
+      return;
+    }
     _bindings.transport_channel_complete_write_by_buffer_id(_pointer, fd, bufferId);
   }
 }

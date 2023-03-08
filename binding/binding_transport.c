@@ -29,6 +29,7 @@ transport_channel_t *transport_add_channel(transport_t *transport)
 {
   transport_channel_t *channel = transport_channel_initialize(transport->channel_configuration);
   transport->channels->add(transport->channels, channel);
+  Dart_SetPerformanceMode(Dart_PerformanceMode_Throughput);
   return channel;
 }
 
@@ -44,15 +45,16 @@ struct io_uring_cqe **transport_allocate_cqes(transport_t *transport)
 
 int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
+  Dart_EnterScope();
   int count = 0;
-  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size)))
+  while (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size)))
   {
-    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
+    if (unlikely(Dart_IsError(Dart_WaitForEvent(1))))
     {
-      return io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size);
+      log_error("dart handle error");
     }
-    return -1;
   }
+  Dart_ExitScope();
 
   return count;
 }

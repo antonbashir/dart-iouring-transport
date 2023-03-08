@@ -38,7 +38,6 @@ class TransportServer {
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
       int cqeCount = _bindings.transport_consume(_transport, cqes, ring);
-      if (cqeCount == -1) continue;
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = cqes[cqeIndex];
         final int result = cqe.ref.res;
@@ -50,15 +49,15 @@ class TransportServer {
           continue;
         }
         if (userData & TransportPayloadRead != 0) {
-          await channel.handleRead(userData & ~TransportPayloadAll, result);
+          channel.handleRead(userData & ~TransportPayloadAll, result);
           continue;
         }
         if (userData & TransportPayloadWrite != 0) {
-          await channel.handleWrite(userData & ~TransportPayloadAll, result);
+          channel.handleWrite(userData & ~TransportPayloadAll, result);
           continue;
         }
         if (userData & TransportPayloadActive != 0) {
-          if (onAccept != null) await onAccept.call(channel, result);
+          if (onAccept != null) onAccept.call(channel, result);
           continue;
         }
         if (userData & TransportPayloadClose != 0) {
