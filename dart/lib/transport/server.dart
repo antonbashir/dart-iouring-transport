@@ -59,7 +59,7 @@ class TransportServer {
           continue;
         }
         if (userData & TransportPayloadActive != 0) {
-          if (onAccept != null) onAccept(channel, result);
+          if (onAccept != null) await onAccept(channel, result);
           continue;
         }
         if (userData & TransportPayloadClose != 0) {
