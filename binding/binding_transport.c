@@ -45,16 +45,15 @@ struct io_uring_cqe **transport_allocate_cqes(transport_t *transport)
 
 int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
-  Dart_EnterScope();
   int count = 0;
-  while (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size)))
+  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size)))
   {
-    if (unlikely(Dart_IsError(Dart_WaitForEvent(1))))
+    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
     {
-      log_error("dart handle error");
+      return io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size);
     }
+    return -1;
   }
-  Dart_ExitScope();
 
   return count;
 }

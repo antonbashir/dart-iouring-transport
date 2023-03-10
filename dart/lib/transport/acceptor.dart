@@ -24,6 +24,7 @@ class TransportAcceptor {
     _transport = Pointer.fromAddress(configuration[1] as int);
     String host = configuration[2] as String;
     int port = configuration[3] as int;
+    fromTransport.close();
     final _library = libraryPath != null
         ? File(libraryPath).existsSync()
             ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
@@ -33,7 +34,6 @@ class TransportAcceptor {
     using((Arena arena) {
       _bindings.transport_accept(_transport, host.toNativeUtf8(allocator: arena).cast(), port);
     });
-    fromTransport.close();
     Isolate.exit();
   }
 }

@@ -26,6 +26,7 @@ class TransportServer {
     final configuration = await fromTransport.take(2).toList();
     final libraryPath = configuration[0] as String?;
     _transport = Pointer.fromAddress(configuration[1] as int);
+    fromTransport.close();
     final _library = libraryPath != null
         ? File(libraryPath).existsSync()
             ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
@@ -38,10 +39,11 @@ class TransportServer {
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
     while (true) {
       int cqeCount = _bindings.transport_consume(_transport, cqes, ring);
+      if (cqeCount == -1) continue;
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = cqes[cqeIndex];
-        final int result = cqe.ref.res;
-        final int userData = cqe.ref.user_data;
+        final result = cqe.ref.res;
+        final userData = cqe.ref.user_data;
         if (result < 0) {
           if (userData & TransportPayloadRead != 0 || userData & TransportPayloadWrite != 0) {
             _bindings.transport_close_descritor(_transport, userData & ~TransportPayloadAll);
@@ -49,11 +51,11 @@ class TransportServer {
           continue;
         }
         if (userData & TransportPayloadRead != 0) {
-          channel.handleRead(userData & ~TransportPayloadAll, result);
+          await channel.handleRead(userData & ~TransportPayloadAll, result);
           continue;
         }
         if (userData & TransportPayloadWrite != 0) {
-          channel.handleWrite(userData & ~TransportPayloadAll, result);
+          await channel.handleWrite(userData & ~TransportPayloadAll, result);
           continue;
         }
         if (userData & TransportPayloadActive != 0) {
@@ -62,7 +64,6 @@ class TransportServer {
         }
         if (userData & TransportPayloadClose != 0) {
           _bindings.transport_channel_close(channelPointer);
-          fromTransport.close();
           Isolate.exit();
         }
       }

@@ -35,7 +35,7 @@ class TransportChannel {
   }
 
   @pragma("vm:prefer-inline")
-  void handleRead(int fd, int size) {
+  Future<void> handleRead(int fd, int size) async {
     if (onRead == null) {
       _bindings.transport_channel_complete_read_by_fd(_pointer, fd);
       return;
@@ -44,13 +44,12 @@ class TransportChannel {
     final buffer = _pointer.ref.buffers[bufferId];
     final result = onRead!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
     if (result is Future) {
-      unawaited((result as Future).then((resultBytes) {
+      return (result as Future<Uint8List>).then((resultBytes) {
         _bindings.transport_channel_complete_read_by_buffer_id(_pointer, bufferId);
         buffer.iov_base.cast<Uint8>().asTypedList(resultBytes.length).setAll(0, resultBytes);
         buffer.iov_len = resultBytes.length;
         _bindings.transport_channel_write(_pointer, fd, bufferId);
-      }));
-      return;
+      });
     }
     _bindings.transport_channel_complete_read_by_buffer_id(_pointer, bufferId);
     buffer.iov_base.cast<Uint8>().asTypedList(result.length).setAll(0, result);
@@ -59,7 +58,7 @@ class TransportChannel {
   }
 
   @pragma("vm:prefer-inline")
-  void handleWrite(int fd, int size) {
+  Future<void> handleWrite(int fd, int size) async {
     if (onWrite == null) {
       _bindings.transport_channel_complete_write_by_fd(_pointer, fd);
       return;
@@ -68,8 +67,7 @@ class TransportChannel {
     final buffer = _pointer.ref.buffers[bufferId];
     final result = onWrite!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
     if (result is Future) {
-      unawaited(result.then((_) => _bindings.transport_channel_complete_write_by_buffer_id(_pointer, fd, bufferId)));
-      return;
+      return result.then((_) => _bindings.transport_channel_complete_write_by_buffer_id(_pointer, fd, bufferId));
     }
     _bindings.transport_channel_complete_write_by_buffer_id(_pointer, fd, bufferId);
   }
