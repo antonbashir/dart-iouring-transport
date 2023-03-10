@@ -20,7 +20,7 @@ class TransportServer {
   }
 
   Future<void> serve({
-    FutureOr Function(TransportChannel channel, int descriptor)? onAccept,
+    FutureOr<void> Function(TransportChannel channel, int descriptor)? onAccept,
     FutureOr<Uint8List> Function(Uint8List input)? onInput,
   }) async {
     final configuration = await fromTransport.take(2).toList();
@@ -59,7 +59,7 @@ class TransportServer {
           continue;
         }
         if (userData & TransportPayloadActive != 0) {
-          if (onAccept != null) onAccept.call(channel, result);
+          if (onAccept != null) onAccept(channel, result);
           continue;
         }
         if (userData & TransportPayloadClose != 0) {
