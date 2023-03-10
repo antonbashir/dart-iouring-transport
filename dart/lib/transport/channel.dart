@@ -43,8 +43,8 @@ class TransportChannel {
     final bufferId = _bindings.transport_channel_handle_read(_pointer, fd, size);
     final buffer = _pointer.ref.buffers[bufferId];
     final result = onRead!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
-    if (result is Future) {
-      return (result as Future<Uint8List>).then((resultBytes) {
+    if (result is Future<Uint8List>) {
+      return result.then((resultBytes) {
         _bindings.transport_channel_complete_read_by_buffer_id(_pointer, bufferId);
         buffer.iov_base.cast<Uint8>().asTypedList(resultBytes.length).setAll(0, resultBytes);
         buffer.iov_len = resultBytes.length;
@@ -66,7 +66,7 @@ class TransportChannel {
     final bufferId = _bindings.transport_channel_handle_write(_pointer, fd, size);
     final buffer = _pointer.ref.buffers[bufferId];
     final result = onWrite!(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), fd);
-    if (result is Future) {
+    if (result is Future<void>) {
       return result.then((_) => _bindings.transport_channel_complete_write_by_buffer_id(_pointer, fd, bufferId));
     }
     _bindings.transport_channel_complete_write_by_buffer_id(_pointer, fd, bufferId);
