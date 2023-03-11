@@ -22,7 +22,7 @@ class TransportServer {
   }
 
   Future<void> serve({
-    required FutureOr<void> Function(TransportChannel channel, int descriptor) onAccept,
+    required FutureOr<void> Function(TransportServerChannel channel, int descriptor) onAccept,
     FutureOr<Uint8List> Function(Uint8List input)? onInput,
   }) async {
     final configuration = await fromTransport.take(4).toList();
@@ -34,12 +34,7 @@ class TransportServer {
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     final channelPointer = _bindings.transport_add_channel(_transport);
     final ring = channelPointer.ref.ring;
-    final channel = TransportChannel(
-      channelPointer,
-      _bindings,
-      _logger,
-      onRead: onInput == null ? null : (payload, fd) => onInput(payload),
-    );
+    final channel = TransportServerChannel(channelPointer, _bindings);
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(ringSize);
     while (true) {
       int cqeCount = _bindings.transport_consume(ringSize, cqes, ring);
@@ -55,11 +50,31 @@ class TransportServer {
           continue;
         }
         if (userData & transportEventRead != 0) {
-          await channel.handleRead(userData & ~transportEventAll, result);
+          int fd = userData & ~transportEventAll;
+          if (onInput == null) {
+            _bindings.transport_channel_complete_read_by_fd(channelPointer, fd);
+            return;
+          }
+          final bufferId = _bindings.transport_channel_handle_read(channelPointer, fd, result);
+          final buffer = channelPointer.ref.buffers[bufferId];
+          final answer = onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len));
+          if (answer is Future<Uint8List>) {
+            await answer.then((resultBytes) {
+              _bindings.transport_channel_complete_read_by_buffer_id(channelPointer, bufferId);
+              buffer.iov_base.cast<Uint8>().asTypedList(resultBytes.length).setAll(0, resultBytes);
+              buffer.iov_len = resultBytes.length;
+              _bindings.transport_channel_write(channelPointer, fd, bufferId);
+            });
+            continue;
+          }
+          _bindings.transport_channel_complete_read_by_buffer_id(channelPointer, bufferId);
+          buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+          buffer.iov_len = answer.length;
+          _bindings.transport_channel_write(channelPointer, fd, bufferId);
           continue;
         }
         if (userData & transportEventWrite != 0) {
-          await channel.handleWrite(userData & ~transportEventAll, result);
+          _bindings.transport_channel_complete_write_by_fd(channelPointer, userData & ~transportEventAll);
           continue;
         }
         if (userData & transportEventAccept != 0) {

@@ -21,7 +21,7 @@ class TransportFileChannel {
   void Function(TransportDataPayload payload)? onWrite;
   final void Function()? onStop;
 
-  late TransportChannel _delegate;
+  late TransportServerChannel _delegate;
 
   TransportFileChannel(
     this._bindings,
