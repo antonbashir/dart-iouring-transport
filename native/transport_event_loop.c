@@ -38,11 +38,9 @@ transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_con
   return loop;
 }
 
-void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback_send_port)
+void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback_port)
 {
-  Dart_EnterScope();
   struct io_uring *ring = loop->ring;
-  Dart_Handle result_field = Dart_NewStringFromCString("result");
   struct io_uring_cqe *cqe;
   unsigned head;
   int count = 0;
@@ -68,24 +66,15 @@ void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback
         continue;
       }
 
-      Dart_PersistentHandle persistent_handle = (Dart_PersistentHandle)cqe->user_data;
-      Dart_Handle set_result = Dart_SetField(Dart_HandleFromPersistent(persistent_handle), result_field, Dart_NewInteger(cqe->res));
-      if (Dart_IsError(set_result))
-      {
-        const char *error;
-        Dart_StringToCString(Dart_ToString(set_result), &error);
-        transport_error("[loop]: Dart set field error: %s", error);
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
+      transport_event_t *event = (transport_event_t *)cqe->user_data;
+      event->result = cqe->res;
       Dart_CObject dart_object;
       dart_object.type = Dart_CObject_kInt64;
-      dart_object.value.as_int64 = (int64_t)(persistent_handle);
-      Dart_PostCObject(callback_send_port, &dart_object);
+      dart_object.value.as_int64 = (int64_t)cqe->user_data;
+      Dart_PostCObject(callback_port, &dart_object);
       io_uring_cqe_seen(ring, cqe);
     }
   }
-  Dart_ExitScope();
   transport_event_loop_stop(loop);
 }
 
@@ -98,7 +87,7 @@ void transport_event_loop_stop(transport_event_loop_t *loop)
   transport_info("[loop]: stop");
 }
 
-int32_t transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, int port, Dart_Handle callback)
+int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, int port, Dart_Handle callback)
 {
   struct io_uring_sqe *sqe = provide_sqe(loop->ring);
   struct sockaddr_in address;
@@ -108,18 +97,34 @@ int32_t transport_event_loop_connect(transport_event_loop_t *loop, const char *i
   address.sin_port = htons(port);
   address.sin_family = AF_INET;
   address_length = sizeof(address);
+  transport_event_t *event = malloc(sizeof(transport_event_t));
+  event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
   int fd = transport_socket_create(loop->client_max_connections, loop->client_receive_buffer_size, loop->client_send_buffer_size);
   io_uring_prep_connect(sqe, fd, (struct sockaddr *)&address, address_length);
-  io_uring_sqe_set_data64(sqe, (intptr_t)Dart_NewPersistentHandle(callback));
+  io_uring_sqe_set_data64(sqe, (int64_t)event);
   return io_uring_submit(loop->ring);
 }
 
-int32_t transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
+int transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
 {
-  transport_channel_read_custom_data(loop->channel, fd, buffer_id, offset, (intptr_t)Dart_NewPersistentHandle(callback));
+  transport_event_t *event = malloc(sizeof(transport_event_t));
+  event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
+  transport_channel_read_custom_data(loop->channel, fd, buffer_id, offset, (int64_t)event);
 }
 
-int32_t transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
+int transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
 {
-  transport_channel_write_custom_data(loop->channel, fd, buffer_id, offset, (intptr_t)Dart_NewPersistentHandle(callback));
+  transport_event_t *event = malloc(sizeof(transport_event_t));
+  event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
+  return transport_channel_write_custom_data(loop->channel, fd, buffer_id, offset, (int64_t)event);
+}
+
+Dart_Handle transport_get_handle_from_event(transport_event_t *event)
+{
+  return Dart_HandleFromPersistent((Dart_PersistentHandle)event->callback);
+}
+
+void transport_delete_handle_from_event(transport_event_t *event)
+{
+  Dart_DeletePersistentHandle((Dart_PersistentHandle)event->callback);
 }

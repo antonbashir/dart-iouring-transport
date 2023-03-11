@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
-import 'loop.dart';
 import 'payload.dart';
 
 class TransportFileChannel {
@@ -25,10 +24,10 @@ class TransportFileChannel {
     final buffer = _loop.ref.channel.ref.buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_event_loop_write(_loop, fd, bufferId, offset, TransportEvent((event) {
-      _bindings.transport_channel_complete_write_by_buffer_id(_loop.ref.channel, fd, bufferId);
+    _bindings.transport_event_loop_write(_loop, fd, bufferId, offset, (result) {
+      _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId);
       completer.complete();
-    }));
+    });
     return completer.future;
   }
 
@@ -51,8 +50,8 @@ class TransportFileChannel {
       await Future.delayed(Duration.zero);
       bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     }
-    _bindings.transport_event_loop_read(_loop, fd, bufferId, offset, TransportEvent((event) {
-      final bufferId = _bindings.transport_channel_handle_read(_loop.ref.channel, fd, event.result);
+    _bindings.transport_event_loop_read(_loop, fd, bufferId, offset, (result) {
+      final bufferId = _bindings.transport_channel_handle_read(_loop.ref.channel, fd, result);
       final buffer = _loop.ref.channel.ref.buffers[bufferId];
       final payload = TransportPayload(
         buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len),
@@ -60,7 +59,7 @@ class TransportFileChannel {
       );
       _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId);
       completer.complete(payload);
-    }));
+    });
     return completer.future;
   }
 

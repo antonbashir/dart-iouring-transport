@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/logger.dart';
 import 'package:iouring_transport/transport/loop.dart';
 import 'package:iouring_transport/transport/provider.dart';
@@ -70,12 +71,14 @@ class TransportServer {
 
   Future<void> _startEventLoop({String? libraryPath}) async {
     final fromLoop = ReceivePort();
+    final callbackPort = RawReceivePort(_eventCallback);
     final loopPointer = _bindings.transport_event_loop_initialize(_transport.ref.loop_configuration, _transport.ref.channel_configuration);
     provider = TransportProvider(loopPointer, _bindings);
     Isolate.spawn<SendPort>((port) => TransportEventLoop(port)..start(), fromLoop.sendPort);
     final toLoop = await fromLoop.first as SendPort;
     toLoop.send(libraryPath);
     toLoop.send(loopPointer.address);
+    toLoop.send(callbackPort.sendPort.nativePort);
     fromLoop.close();
   }
 
@@ -140,5 +143,13 @@ class TransportServer {
       }
       _bindings.transport_cqe_advance(ring, cqeCount);
     }
+  }
+
+  void _eventCallback(int eventPointer) {
+    Pointer<transport_event> event = Pointer.fromAddress(eventPointer).cast();
+    void Function(int) callback = _bindings.transport_get_handle_from_event(event) as void Function(int);
+    _bindings.transport_delete_handle_from_event(event);
+    callback(event.ref.result);
+    malloc.free(event);
   }
 }

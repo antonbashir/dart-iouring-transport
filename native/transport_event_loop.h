@@ -31,17 +31,27 @@ extern "C"
     transport_channel_t *channel;
   } transport_event_loop_t;
 
+  typedef struct transport_event
+  {
+    Dart_Handle *callback;
+    int32_t result;
+  } transport_event_t;
+
   transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *loop_configuration, transport_channel_configuration_t *channel_configuration);
 
-  void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback_send_port);
+  void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback_port);
 
   void transport_event_loop_stop(transport_event_loop_t *loop);
 
-  int32_t transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, int port, Dart_Handle callback);
+  int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, int port, Dart_Handle callback);
 
-  int32_t transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
+  int transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
 
-  int32_t transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
+  int transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
+
+  Dart_Handle transport_get_handle_from_event(transport_event_t *event);
+  
+  void transport_delete_handle_from_event(transport_event_t *event);
 #if defined(__cplusplus)
 }
 #endif
