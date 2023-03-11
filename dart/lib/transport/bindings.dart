@@ -16595,21 +16595,73 @@ class TransportBindings {
   late final _transport_acceptor_shutdown = _transport_acceptor_shutdownPtr
       .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
 
-  ffi.Pointer<transport_channel_pool> transport_channel_pool_initialize(
-    int mode,
-  ) {
-    return _transport_channel_pool_initialize(
-      mode,
-    );
+  ffi.Pointer<transport_channel_pool> transport_channel_pool_initialize() {
+    return _transport_channel_pool_initialize();
   }
 
   late final _transport_channel_pool_initializePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_channel_pool> Function(
-              ffi.Int32)>>('transport_channel_pool_initialize');
+          ffi.NativeFunction<ffi.Pointer<transport_channel_pool> Function()>>(
+      'transport_channel_pool_initialize');
   late final _transport_channel_pool_initialize =
       _transport_channel_pool_initializePtr
-          .asFunction<ffi.Pointer<transport_channel_pool> Function(int)>();
+          .asFunction<ffi.Pointer<transport_channel_pool> Function()>();
+
+  ffi.Pointer<transport_channel> transport_channel_pool_next(
+    ffi.Pointer<transport_channel_pool> arg0,
+  ) {
+    return _transport_channel_pool_next(
+      arg0,
+    );
+  }
+
+  late final _transport_channel_pool_nextPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Pointer<transport_channel> Function(
+                  ffi.Pointer<transport_channel_pool>)>>(
+      'transport_channel_pool_next');
+  late final _transport_channel_pool_next =
+      _transport_channel_pool_nextPtr.asFunction<
+          ffi.Pointer<transport_channel> Function(
+              ffi.Pointer<transport_channel_pool>)>();
+
+  void transport_channel_pool_add(
+    ffi.Pointer<transport_channel_pool> arg0,
+    ffi.Pointer<transport_channel> arg1,
+  ) {
+    return _transport_channel_pool_add(
+      arg0,
+      arg1,
+    );
+  }
+
+  late final _transport_channel_pool_addPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_channel_pool>,
+              ffi.Pointer<transport_channel>)>>('transport_channel_pool_add');
+  late final _transport_channel_pool_add =
+      _transport_channel_pool_addPtr.asFunction<
+          void Function(ffi.Pointer<transport_channel_pool>,
+              ffi.Pointer<transport_channel>)>();
+
+  void transport_channel_pool_remove(
+    ffi.Pointer<transport_channel_pool> arg0,
+    ffi.Pointer<transport_channel> arg1,
+  ) {
+    return _transport_channel_pool_remove(
+      arg0,
+      arg1,
+    );
+  }
+
+  late final _transport_channel_pool_removePtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_channel_pool>,
+                  ffi.Pointer<transport_channel>)>>(
+      'transport_channel_pool_remove');
+  late final _transport_channel_pool_remove =
+      _transport_channel_pool_removePtr.asFunction<
+          void Function(ffi.Pointer<transport_channel_pool>,
+              ffi.Pointer<transport_channel>)>();
 
   ffi.Pointer<transport_t> transport_initialize(
     ffi.Pointer<transport_configuration_t> transport_configuration,
@@ -20262,10 +20314,26 @@ class _SymbolAddresses {
       get transport_acceptor_shutdown =>
           _library._transport_acceptor_shutdownPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_channel_pool> Function(ffi.Int32)>>
+          ffi.NativeFunction<ffi.Pointer<transport_channel_pool> Function()>>
       get transport_channel_pool_initialize =>
           _library._transport_channel_pool_initializePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<transport_channel> Function(
+                  ffi.Pointer<transport_channel_pool>)>>
+      get transport_channel_pool_next =>
+          _library._transport_channel_pool_nextPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_channel_pool>,
+                  ffi.Pointer<transport_channel>)>>
+      get transport_channel_pool_add => _library._transport_channel_pool_addPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_channel_pool>,
+                  ffi.Pointer<transport_channel>)>>
+      get transport_channel_pool_remove =>
+          _library._transport_channel_pool_removePtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_t> Function(
@@ -23373,12 +23441,6 @@ class transport_acceptor extends ffi.Struct {
 typedef transport_acceptor_t = transport_acceptor;
 typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
 
-abstract class transport_channel_pool_mode_t {
-  static const int TRANSPORT_CHANNEL_POOL_ROUND_ROBBIN = 0;
-  static const int TRANSPORT_CHANNEL_POOL_LEAST_CONNECTIONS = 1;
-  static const int TRANSPORT_CHANNEL_POOL_max = 2;
-}
-
 class transport_channel_pool extends ffi.Struct {
   external rlist channels;
 
@@ -23389,29 +23451,11 @@ class transport_channel_pool extends ffi.Struct {
 
   @ffi.Size()
   external int count;
-
-  external ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_channel> Function(
-              ffi.Pointer<transport_channel_pool>)>> next;
-
-  external ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel_pool>,
-              ffi.Pointer<transport_channel>)>> add;
-
-  external ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel_pool>,
-              ffi.Pointer<transport_channel>)>> remove;
 }
 
 class transport_configuration extends ffi.Struct {
   @ffi.Int()
   external int log_level;
-
-  @ffi.Int32()
-  external int channel_pool_mode;
 }
 
 class transport extends ffi.Struct {
