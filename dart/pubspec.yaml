@@ -22,7 +22,7 @@ ffigen:
       - "../native/transport_constants.h"
       - "../native/transport_channel.h"
       - "../native/transport_acceptor.h"
-      - "../native/transport_connector.h"
+      - "../native/transport_event_loop.h"
       - "../native/transport_file.h"
       - "../native/transport_socket.h"
       - "../native/transport_logger.h"

@@ -73,15 +73,21 @@ class TransportAcceptorConfiguration {
       );
 }
 
-class TransportConnectorConfiguration {
+class TransportEventLoopConfiguration {
   final int ringSize;
+  final int ringFlags;
 
-  TransportConnectorConfiguration({
+  TransportEventLoopConfiguration({
     required this.ringSize,
+    required this.ringFlags,
   });
 
-  TransportConnectorConfiguration copyWith({
+  TransportEventLoopConfiguration copyWith({
     int? ringSize,
+    int? ringFlags,
   }) =>
-      TransportConnectorConfiguration(ringSize: ringSize ?? this.ringSize);
+      TransportEventLoopConfiguration(
+        ringSize: ringSize ?? this.ringSize,
+        ringFlags: ringFlags ?? this.ringFlags,
+      );
 }

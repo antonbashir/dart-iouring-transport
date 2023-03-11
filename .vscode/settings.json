@@ -95,6 +95,7 @@
     "transport_channel_pool.h": "c",
     "rlist.h": "c",
     "transport_constants.h": "c",
-    "transport_logger.h": "c"
+    "transport_logger.h": "c",
+    "transport_event_loop.h": "c"
   },
 }

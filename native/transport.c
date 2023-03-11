@@ -17,12 +17,6 @@
 #include "transport_acceptor.h"
 #include "small/include/small/rlist.h"
 
-static inline int transport_acceptor_accept(struct transport_acceptor *acceptor)
-{
-  struct io_uring_sqe *sqe = provide_sqe(acceptor->ring);
-  io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
-  return io_uring_submit(acceptor->ring);
-}
 
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                   transport_channel_configuration_t *channel_configuration,
@@ -91,6 +85,13 @@ int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_
   }
 
   return count;
+}
+
+static inline int transport_acceptor_accept(struct transport_acceptor *acceptor)
+{
+  struct io_uring_sqe *sqe = provide_sqe(acceptor->ring);
+  io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
+  return io_uring_submit(acceptor->ring);
 }
 
 void transport_accept(transport_t *transport, const char *ip, int port)

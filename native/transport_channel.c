@@ -58,6 +58,41 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   return channel;
 }
 
+transport_channel_t *transport_channel_for_ring(transport_channel_configuration_t *configuration, struct io_uring *ring)
+{
+  transport_channel_t *channel = malloc(sizeof(transport_channel_t));
+  if (!channel)
+  {
+    return NULL;
+  }
+
+  channel->buffer_size = configuration->buffer_size;
+  channel->buffers_count = configuration->buffers_count;
+
+  channel->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
+  channel->buffers_state = malloc(sizeof(uint64_t) * configuration->buffers_count);
+  channel->buffer_by_fd = malloc(sizeof(uint64_t) * configuration->buffers_count);
+  channel->available_buffer_id = 0;
+
+  for (size_t index = 0; index < configuration->buffers_count; index++)
+  {
+    void *buffer_memory = mmap(NULL, configuration->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+    if (buffer_memory == MAP_FAILED)
+    {
+      return NULL;
+    }
+
+    channel->buffers[index].iov_base = buffer_memory;
+    channel->buffers[index].iov_len = configuration->buffer_size;
+    channel->buffers_state[index] = 1;
+  }
+
+  channel->ring = ring;
+  io_uring_register_buffers(ring, channel->buffers, configuration->buffers_count);
+
+  return channel;
+}
+
 int transport_channel_allocate_buffer(transport_channel_t *channel)
 {
   while (unlikely(!(channel->buffers_state[channel->available_buffer_id])))
@@ -93,6 +128,24 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
   channel->buffer_by_fd[fd] = buffer_id;
   io_uring_prep_read_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, 0, buffer_id);
   io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_EVENT_READ));
+  return io_uring_submit(channel->ring);
+}
+
+int transport_channel_write_custom_data(struct transport_channel *channel, int fd, int buffer_id, int64_t user_data)
+{
+  struct io_uring_sqe *sqe = provide_sqe(channel->ring);
+  channel->buffer_by_fd[fd] = buffer_id;
+  io_uring_prep_write_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, 0, buffer_id);
+  io_uring_sqe_set_data64(sqe, user_data);
+  return io_uring_submit(channel->ring);
+}
+
+int transport_channel_read_custom_data(struct transport_channel *channel, int fd, int buffer_id, int64_t user_data)
+{
+  struct io_uring_sqe *sqe = provide_sqe(channel->ring);
+  channel->buffer_by_fd[fd] = buffer_id;
+  io_uring_prep_read_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, 0, buffer_id);
+  io_uring_sqe_set_data64(sqe, user_data);
   return io_uring_submit(channel->ring);
 }
 
@@ -147,4 +200,17 @@ void transport_channel_close(transport_channel_t *channel)
   free(channel->ring);
   free(channel);
   transport_info("[channel] closed");
+}
+
+void transport_channel_for_ring_close(transport_channel_t *channel)
+{
+  io_uring_unregister_buffers(channel->ring);
+  for (size_t index = 0; index < channel->buffers_count; index++)
+  {
+    munmap(channel->buffers[index].iov_base, channel->buffer_size);
+  }
+  free(channel->buffers);
+  free(channel->buffers_state);
+  free(channel->buffer_by_fd);
+  free(channel);
 }

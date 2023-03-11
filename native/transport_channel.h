@@ -46,8 +46,14 @@ extern "C"
   transport_channel_t *transport_channel_initialize(transport_channel_configuration_t *configuration);
   void transport_channel_close(transport_channel_t *channel);
 
+  transport_channel_t *transport_channel_for_ring(transport_channel_configuration_t *configuration, struct io_uring *ring);
+  void transport_channel_for_ring_close(transport_channel_t *channel);
+
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id);
+
+  int transport_channel_write_custom_data(struct transport_channel *channel, int fd, int buffer_id, int64_t user_data);
+  int transport_channel_read_custom_data(struct transport_channel *channel, int fd, int buffer_id, int64_t user_data);
 
   int transport_channel_handle_write(struct transport_channel *channel, int fd, size_t size);
   int transport_channel_handle_read(struct transport_channel *channel, int fd, size_t size);

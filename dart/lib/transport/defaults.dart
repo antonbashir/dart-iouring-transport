@@ -24,7 +24,8 @@ class TransportDefaults {
         ringFlags: 0,
       );
 
-  static TransportConnectorConfiguration connector() => TransportConnectorConfiguration(
+  static TransportEventLoopConfiguration loop() => TransportEventLoopConfiguration(
         ringSize: 2048,
+        ringFlags: ringSetupSqpoll,
       );
 }
