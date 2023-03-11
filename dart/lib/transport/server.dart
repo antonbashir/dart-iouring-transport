@@ -70,12 +70,12 @@ class TransportServer {
 
   Future<void> _startEventLoop({String? libraryPath}) async {
     final fromLoop = ReceivePort();
-    final loopPointer = _bindings.transport_event_loop_initialize(_transport.ref.loop_configuration);
+    final loopPointer = _bindings.transport_event_loop_initialize(_transport.ref.loop_configuration, _transport.ref.channel_configuration);
     provider = TransportProvider(loopPointer, _bindings);
     Isolate.spawn<SendPort>((port) => TransportEventLoop(port)..start(), fromLoop.sendPort);
     final toLoop = await fromLoop.first as SendPort;
     toLoop.send(libraryPath);
-    toLoop.send(loopPointer);
+    toLoop.send(loopPointer.address);
     fromLoop.close();
   }
 

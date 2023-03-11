@@ -31,7 +31,7 @@ extern "C"
     transport_channel_t *channel;
   } transport_event_loop_t;
 
-  transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *configuration);
+  transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *loop_configuration, transport_channel_configuration_t *channel_configuration);
 
   void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback_send_port);
 

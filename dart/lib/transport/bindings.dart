@@ -15158,22 +15158,26 @@ class TransportBindings {
       .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
 
   ffi.Pointer<transport_event_loop_t> transport_event_loop_initialize(
-    ffi.Pointer<transport_event_loop_configuration_t> configuration,
+    ffi.Pointer<transport_event_loop_configuration_t> loop_configuration,
+    ffi.Pointer<transport_channel_configuration_t> channel_configuration,
   ) {
     return _transport_event_loop_initialize(
-      configuration,
+      loop_configuration,
+      channel_configuration,
     );
   }
 
   late final _transport_event_loop_initializePtr = _lookup<
           ffi.NativeFunction<
               ffi.Pointer<transport_event_loop_t> Function(
-                  ffi.Pointer<transport_event_loop_configuration_t>)>>(
+                  ffi.Pointer<transport_event_loop_configuration_t>,
+                  ffi.Pointer<transport_channel_configuration_t>)>>(
       'transport_event_loop_initialize');
   late final _transport_event_loop_initialize =
       _transport_event_loop_initializePtr.asFunction<
           ffi.Pointer<transport_event_loop_t> Function(
-              ffi.Pointer<transport_event_loop_configuration_t>)>();
+              ffi.Pointer<transport_event_loop_configuration_t>,
+              ffi.Pointer<transport_channel_configuration_t>)>();
 
   void transport_event_loop_start(
     ffi.Pointer<transport_event_loop_t> loop,
@@ -18684,7 +18688,8 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_event_loop_t> Function(
-                  ffi.Pointer<transport_event_loop_configuration_t>)>>
+                  ffi.Pointer<transport_event_loop_configuration_t>,
+                  ffi.Pointer<transport_channel_configuration_t>)>>
       get transport_event_loop_initialize =>
           _library._transport_event_loop_initializePtr;
   ffi.Pointer<
