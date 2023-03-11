@@ -22,6 +22,9 @@ class TransportFileChannel {
       await Future.delayed(Duration.zero);
       bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     }
+    final buffer = _loop.ref.channel.ref.buffers[bufferId];
+    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
+    buffer.iov_len = bytes.length;
     _bindings.transport_event_loop_write(_loop, fd, bufferId, offset, TransportEvent((event) {
       _bindings.transport_channel_complete_write_by_buffer_id(_loop.ref.channel, fd, bufferId);
       completer.complete();

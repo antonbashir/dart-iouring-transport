@@ -1,2 +1,3 @@
 !native/libtransport.so
 .dart
+output.txt

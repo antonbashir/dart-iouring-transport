@@ -69,9 +69,12 @@ void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback
       }
 
       Dart_PersistentHandle persistent_handle = (Dart_PersistentHandle)cqe->user_data;
-      if (Dart_IsError(Dart_SetField(Dart_HandleFromPersistent(persistent_handle), result_field, Dart_NewInteger(cqe->res))))
+      Dart_Handle set_result = Dart_SetField(Dart_HandleFromPersistent(persistent_handle), result_field, Dart_NewInteger(cqe->res));
+      if (Dart_IsError(set_result))
       {
-        transport_error("[loop]: Dart set field error");
+        const char *error;
+        Dart_StringToCString(Dart_ToString(set_result), &error);
+        transport_error("[loop]: Dart set field error: %s", error);
         io_uring_cqe_seen(ring, cqe);
         continue;
       }
