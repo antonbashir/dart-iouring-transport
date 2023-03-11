@@ -16,6 +16,7 @@ class Transport {
   late final TransportConfiguration _transportConfiguration;
   late final TransportAcceptorConfiguration _acceptorConfiguration;
   late final TransportChannelConfiguration _channelConfiguration;
+  late final TransportEventLoopConfiguration _loopConfiguration;
   late final String? libraryPath;
   late final TransportLogger _logger;
   late final TransportBindings _bindings;
@@ -32,10 +33,12 @@ class Transport {
     TransportConfiguration transportConfiguration,
     TransportAcceptorConfiguration acceptorConfiguration,
     TransportChannelConfiguration channelConfiguration,
+    TransportEventLoopConfiguration loopConfiguration,
   ) {
     _transportConfiguration = transportConfiguration;
     _acceptorConfiguration = acceptorConfiguration;
     _channelConfiguration = channelConfiguration;
+    _loopConfiguration = loopConfiguration;
 
     _logger = TransportLogger(transportConfiguration.logLevel);
 
