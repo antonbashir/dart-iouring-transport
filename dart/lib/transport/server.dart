@@ -78,7 +78,7 @@ class TransportServer {
         final userData = cqe.ref.user_data;
         if (result < 0) {
           if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
-            _bindings.transport_close_descritor(_transport, userData & ~transportEventAll);
+            _bindings.transport_close_descritor(userData & ~transportEventAll);
           }
           continue;
         }

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/loop.dart';
+import 'package:iouring_transport/transport/payload.dart';
 
 import 'bindings.dart';
 
@@ -14,19 +15,21 @@ class TransportClientChannel {
 
   TransportClientChannel(this._loop, this._bindings, this.fd);
 
-  Future<T> read<T>(T Function(Uint8List bytes) parser) async {
-    final completer = Completer<T>.sync();
+  Future<TransportPayload> read() async {
+    final completer = Completer<TransportPayload>.sync();
     var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
       bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     }
-    _bindings.transport_event_loop_read(_loop, fd, bufferId, TransportEvent((event) {
+    _bindings.transport_event_loop_read(_loop, fd, bufferId, 0, TransportEvent((event) {
       final bufferId = _bindings.transport_channel_handle_read(_loop.ref.channel, fd, event.result);
       final buffer = _loop.ref.channel.ref.buffers[bufferId];
-      final parsed = parser(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len));
-      _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId);
-      completer.complete(parsed);
+      final payload = TransportPayload(
+        buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len),
+        () => _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId),
+      );
+      completer.complete(payload);
     }));
     return completer.future;
   }
@@ -38,8 +41,7 @@ class TransportClientChannel {
       await Future.delayed(Duration.zero);
       bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     }
-    _bindings.transport_event_loop_read(_loop, fd, bufferId, TransportEvent((event) {
-      final bufferId = _bindings.transport_channel_handle_read(_loop.ref.channel, fd, event.result);
+    _bindings.transport_event_loop_write(_loop, fd, bufferId, 0, TransportEvent((event) {
       _bindings.transport_channel_complete_write_by_buffer_id(_loop.ref.channel, fd, bufferId);
       completer.complete();
     }));

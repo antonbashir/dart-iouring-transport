@@ -52,8 +52,8 @@ extern "C"
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id);
 
-  int transport_channel_write_custom_data(struct transport_channel *channel, int fd, int buffer_id, int64_t user_data);
-  int transport_channel_read_custom_data(struct transport_channel *channel, int fd, int buffer_id, int64_t user_data);
+  int transport_channel_write_custom_data(struct transport_channel *channel, int fd, int buffer_id, uint64_t offset, int64_t user_data);
+  int transport_channel_read_custom_data(struct transport_channel *channel, int fd, int buffer_id, uint64_t offset, int64_t user_data);
 
   int transport_channel_handle_write(struct transport_channel *channel, int fd, size_t size);
   int transport_channel_handle_read(struct transport_channel *channel, int fd, size_t size);

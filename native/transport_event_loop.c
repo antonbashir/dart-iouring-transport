@@ -55,13 +55,11 @@ void transport_event_loop_start(transport_event_loop_t *loop)
       }
 
       Dart_PersistentHandle persistent_handle = (Dart_PersistentHandle)cqe->user_data;
-      Dart_Handle handle = Dart_HandleFromPersistent(persistent_handle);
-      Dart_SetField(handle, result_field, Dart_NewInteger(cqe->res));
+      Dart_SetField(Dart_HandleFromPersistent(persistent_handle), result_field, Dart_NewInteger(cqe->res));
       Dart_CObject dart_object;
       dart_object.type = Dart_CObject_kInt64;
-      dart_object.value.as_int64 = (int64_t)(handle);
+      dart_object.value.as_int64 = (int64_t)(persistent_handle);
       Dart_PostCObject(callback_send_port, &dart_object);
-      Dart_DeletePersistentHandle(persistent_handle);
       io_uring_cqe_seen(ring, cqe);
     }
   }
@@ -93,12 +91,12 @@ int32_t transport_event_loop_connect(transport_event_loop_t *loop, const char *i
   return io_uring_submit(loop->ring);
 }
 
-int32_t transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, Dart_Handle callback)
+int32_t transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
 {
-  transport_channel_read_custom_data(loop->channel, fd, buffer_id, Dart_NewPersistentHandle(callback));
+  transport_channel_read_custom_data(loop->channel, fd, buffer_id, offset, Dart_NewPersistentHandle(callback));
 }
 
-int32_t transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, Dart_Handle callback)
+int32_t transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
 {
-  transport_channel_write_custom_data(loop->channel, fd, buffer_id, Dart_NewPersistentHandle(callback));
+  transport_channel_write_custom_data(loop->channel, fd, buffer_id, offset, Dart_NewPersistentHandle(callback));
 }

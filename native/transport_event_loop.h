@@ -33,18 +33,16 @@ extern "C"
   } transport_event_loop_t;
 
   transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *configuration, Dart_Port callback_send_port);
-  
+
   void transport_event_loop_start(transport_event_loop_t *loop);
 
   void transport_event_loop_stop(transport_event_loop_t *loop);
 
   int32_t transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, int port, Dart_Handle callback);
 
-  int32_t transport_event_loop_open(transport_event_loop_t *loop, const char *path, Dart_Handle callback);
+  int32_t transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
 
-  int32_t transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, Dart_Handle callback);
-
-  int32_t transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, Dart_Handle callback);
+  int32_t transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
 #if defined(__cplusplus)
 }
 #endif

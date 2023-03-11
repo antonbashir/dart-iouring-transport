@@ -14944,12 +14944,14 @@ class TransportBindings {
     ffi.Pointer<transport_channel> channel,
     int fd,
     int buffer_id,
+    int offset,
     int user_data,
   ) {
     return _transport_channel_write_custom_data(
       channel,
       fd,
       buffer_id,
+      offset,
       user_data,
     );
   }
@@ -14957,21 +14959,23 @@ class TransportBindings {
   late final _transport_channel_write_custom_dataPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int, ffi.Int,
-              ffi.Int64)>>('transport_channel_write_custom_data');
+              ffi.Uint64, ffi.Int64)>>('transport_channel_write_custom_data');
   late final _transport_channel_write_custom_data =
       _transport_channel_write_custom_dataPtr.asFunction<
-          int Function(ffi.Pointer<transport_channel>, int, int, int)>();
+          int Function(ffi.Pointer<transport_channel>, int, int, int, int)>();
 
   int transport_channel_read_custom_data(
     ffi.Pointer<transport_channel> channel,
     int fd,
     int buffer_id,
+    int offset,
     int user_data,
   ) {
     return _transport_channel_read_custom_data(
       channel,
       fd,
       buffer_id,
+      offset,
       user_data,
     );
   }
@@ -14979,10 +14983,10 @@ class TransportBindings {
   late final _transport_channel_read_custom_dataPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int, ffi.Int,
-              ffi.Int64)>>('transport_channel_read_custom_data');
+              ffi.Uint64, ffi.Int64)>>('transport_channel_read_custom_data');
   late final _transport_channel_read_custom_data =
       _transport_channel_read_custom_dataPtr.asFunction<
-          int Function(ffi.Pointer<transport_channel>, int, int, int)>();
+          int Function(ffi.Pointer<transport_channel>, int, int, int, int)>();
 
   int transport_channel_handle_write(
     ffi.Pointer<transport_channel> channel,
@@ -15361,21 +15365,18 @@ class TransportBindings {
       .asFunction<void Function(ffi.Pointer<transport_t>)>();
 
   int transport_close_descritor(
-    ffi.Pointer<transport_t> transport,
     int fd,
   ) {
     return _transport_close_descritor(
-      transport,
       fd,
     );
   }
 
-  late final _transport_close_descritorPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_t>, ffi.Int)>>('transport_close_descritor');
-  late final _transport_close_descritor = _transport_close_descritorPtr
-      .asFunction<int Function(ffi.Pointer<transport_t>, int)>();
+  late final _transport_close_descritorPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
+          'transport_close_descritor');
+  late final _transport_close_descritor =
+      _transport_close_descritorPtr.asFunction<int Function(int)>();
 
   late final ffi.Pointer<ffi.Uint64> _TRANSPORT_EVENT_ALL_FLAGS =
       _lookup<ffi.Uint64>('TRANSPORT_EVENT_ALL_FLAGS');
@@ -15461,37 +15462,18 @@ class TransportBindings {
           int Function(ffi.Pointer<transport_event_loop_t>,
               ffi.Pointer<ffi.Char>, int, Object)>();
 
-  int transport_event_loop_open(
-    ffi.Pointer<transport_event_loop_t> loop,
-    ffi.Pointer<ffi.Char> path,
-    Object callback,
-  ) {
-    return _transport_event_loop_open(
-      loop,
-      path,
-      callback,
-    );
-  }
-
-  late final _transport_event_loop_openPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Pointer<transport_event_loop_t>,
-              ffi.Pointer<ffi.Char>, ffi.Handle)>>('transport_event_loop_open');
-  late final _transport_event_loop_open =
-      _transport_event_loop_openPtr.asFunction<
-          int Function(ffi.Pointer<transport_event_loop_t>,
-              ffi.Pointer<ffi.Char>, Object)>();
-
   int transport_event_loop_read(
     ffi.Pointer<transport_event_loop_t> loop,
     int fd,
     int buffer_id,
+    int offset,
     Object callback,
   ) {
     return _transport_event_loop_read(
       loop,
       fd,
       buffer_id,
+      offset,
       callback,
     );
   }
@@ -15499,22 +15481,24 @@ class TransportBindings {
   late final _transport_event_loop_readPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int32 Function(ffi.Pointer<transport_event_loop_t>, ffi.Int,
-              ffi.Int, ffi.Handle)>>('transport_event_loop_read');
+              ffi.Int, ffi.Uint64, ffi.Handle)>>('transport_event_loop_read');
   late final _transport_event_loop_read =
       _transport_event_loop_readPtr.asFunction<
           int Function(
-              ffi.Pointer<transport_event_loop_t>, int, int, Object)>();
+              ffi.Pointer<transport_event_loop_t>, int, int, int, Object)>();
 
   int transport_event_loop_write(
     ffi.Pointer<transport_event_loop_t> loop,
     int fd,
     int buffer_id,
+    int offset,
     Object callback,
   ) {
     return _transport_event_loop_write(
       loop,
       fd,
       buffer_id,
+      offset,
       callback,
     );
   }
@@ -15522,11 +15506,11 @@ class TransportBindings {
   late final _transport_event_loop_writePtr = _lookup<
       ffi.NativeFunction<
           ffi.Int32 Function(ffi.Pointer<transport_event_loop_t>, ffi.Int,
-              ffi.Int, ffi.Handle)>>('transport_event_loop_write');
+              ffi.Int, ffi.Uint64, ffi.Handle)>>('transport_event_loop_write');
   late final _transport_event_loop_write =
       _transport_event_loop_writePtr.asFunction<
           int Function(
-              ffi.Pointer<transport_event_loop_t>, int, int, Object)>();
+              ffi.Pointer<transport_event_loop_t>, int, int, int, Object)>();
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
@@ -18626,17 +18610,23 @@ class _SymbolAddresses {
                   ffi.Pointer<transport_channel>, ffi.Int, ffi.Int)>>
       get transport_channel_read => _library._transport_channel_readPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_channel>, ffi.Int, ffi.Int, ffi.Int64)>>
-      get transport_channel_write_custom_data =>
-          _library._transport_channel_write_custom_dataPtr;
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_channel>,
+              ffi.Int,
+              ffi.Int,
+              ffi.Uint64,
+              ffi.Int64)>> get transport_channel_write_custom_data =>
+      _library._transport_channel_write_custom_dataPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_channel>, ffi.Int, ffi.Int, ffi.Int64)>>
-      get transport_channel_read_custom_data =>
-          _library._transport_channel_read_custom_dataPtr;
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_channel>,
+              ffi.Int,
+              ffi.Int,
+              ffi.Uint64,
+              ffi.Int64)>> get transport_channel_read_custom_data =>
+      _library._transport_channel_read_custom_dataPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(
@@ -18741,9 +18731,7 @@ class _SymbolAddresses {
       get transport_shutdown => _library._transport_shutdownPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
       get transport_destroy => _library._transport_destroyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<transport_t>, ffi.Int)>>
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
   ffi.Pointer<ffi.Uint64> get TRANSPORT_EVENT_ALL_FLAGS =>
       _library._TRANSPORT_EVENT_ALL_FLAGS;
@@ -18773,15 +18761,9 @@ class _SymbolAddresses {
       ffi.NativeFunction<
           ffi.Int32 Function(
               ffi.Pointer<transport_event_loop_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Handle)>> get transport_event_loop_open =>
-      _library._transport_event_loop_openPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int32 Function(
-              ffi.Pointer<transport_event_loop_t>,
               ffi.Int,
               ffi.Int,
+              ffi.Uint64,
               ffi.Handle)>> get transport_event_loop_read =>
       _library._transport_event_loop_readPtr;
   ffi.Pointer<
@@ -18790,6 +18772,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_event_loop_t>,
               ffi.Int,
               ffi.Int,
+              ffi.Uint64,
               ffi.Handle)>> get transport_event_loop_write =>
       _library._transport_event_loop_writePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>

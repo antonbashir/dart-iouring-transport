@@ -142,7 +142,7 @@ void transport_accept(transport_t *transport, const char *ip, int port)
   transport_acceptor_shutdown(acceptor);
 }
 
-int transport_close_descritor(transport_t *transport, int fd)
+int transport_close_descritor(int fd)
 {
   return shutdown(fd, SHUT_RDWR);
 }
