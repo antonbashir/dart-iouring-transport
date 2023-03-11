@@ -1,5 +1,5 @@
-#ifndef INCLUDES_transport_SMALL_SMALL_H
-#define INCLUDES_transport_SMALL_SMALL_H
+#ifndef INCLUDES_TRANSPORT_SMALL_SMALL_H
+#define INCLUDES_TRANSPORT_SMALL_SMALL_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -269,4 +269,4 @@ smalloc0_xc(struct small_alloc *alloc, size_t size, const char *where)
 
 #endif /* defined(__cplusplus) */
 
-#endif /* INCLUDES_transport_SMALL_SMALL_H */
+#endif /* INCLUDES_TRANSPORT_SMALL_SMALL_H */

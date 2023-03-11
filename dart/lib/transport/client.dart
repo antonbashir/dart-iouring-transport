@@ -15,7 +15,7 @@ class TransportClientChannel {
   TransportClientChannel(this._loop, this._bindings, this.fd);
 
   Future<TransportPayload> read() async {
-    final completer = Completer<TransportPayload>.sync();
+    final completer = Completer<TransportPayload>();
     var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
@@ -26,7 +26,7 @@ class TransportClientChannel {
       final buffer = _loop.ref.channel.ref.buffers[bufferId];
       final payload = TransportPayload(
         buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len),
-        () => _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId),
+        () => _bindings.transport_channel_free_buffer_by_id(_loop.ref.channel, bufferId),
       );
       completer.complete(payload);
     });
@@ -34,7 +34,7 @@ class TransportClientChannel {
   }
 
   Future<void> write(Uint8List bytes) async {
-    final completer = Completer<void>.sync();
+    final completer = Completer<void>();
     var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
@@ -44,7 +44,7 @@ class TransportClientChannel {
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
     _bindings.transport_event_loop_write(_loop, fd, bufferId, 0, (result) {
-      _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId);
+      _bindings.transport_channel_free_buffer_by_id(_loop.ref.channel, bufferId);
       completer.complete();
     });
     return completer.future;
@@ -60,7 +60,7 @@ class TransportClient {
   TransportClient(this._loop, this._bindings);
 
   Future<TransportClientChannel> connect(String host, int port) async {
-    final completer = Completer<TransportClientChannel>.sync();
+    final completer = Completer<TransportClientChannel>();
     using(
       (arena) => _bindings.transport_event_loop_connect(
         _loop,

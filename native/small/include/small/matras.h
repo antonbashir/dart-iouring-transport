@@ -1,5 +1,5 @@
-#ifndef INCLUDES_transport_SMALL_MATRAS_H
-#define INCLUDES_transport_SMALL_MATRAS_H
+#ifndef INCLUDES_TRANSPORT_SMALL_MATRAS_H
+#define INCLUDES_TRANSPORT_SMALL_MATRAS_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -375,4 +375,4 @@ matras_get(const struct matras *m, matras_id_t id)
 #if defined(__cplusplus)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
-#endif /* INCLUDES_transport_SMALL_MATRAS_H */
+#endif /* INCLUDES_TRANSPORT_SMALL_MATRAS_H */

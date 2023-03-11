@@ -1,5 +1,5 @@
-#ifndef INCLUDES_transport_SMALL_SLAB_CACHE_H
-#define INCLUDES_transport_SMALL_SLAB_CACHE_H
+#ifndef INCLUDES_TRANSPORT_SMALL_SLAB_CACHE_H
+#define INCLUDES_TRANSPORT_SMALL_SLAB_CACHE_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -316,4 +316,4 @@ slab_cache_set_thread(struct slab_cache *cache)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* INCLUDES_transport_SMALL_SLAB_CACHE_H */
+#endif /* INCLUDES_TRANSPORT_SMALL_SLAB_CACHE_H */

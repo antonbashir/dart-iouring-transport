@@ -1,5 +1,5 @@
-#ifndef INCLUDES_transport_SMALL_SLAB_ARENA_H
-#define INCLUDES_transport_SMALL_SLAB_ARENA_H
+#ifndef INCLUDES_TRANSPORT_SMALL_SLAB_ARENA_H
+#define INCLUDES_TRANSPORT_SMALL_SLAB_ARENA_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -185,4 +185,4 @@ small_lb(size_t size)
 } /* extern "C" */
 #endif
 
-#endif /* INCLUDES_transport_SMALL_SLAB_ARENA_H */
+#endif /* INCLUDES_TRANSPORT_SMALL_SLAB_ARENA_H */

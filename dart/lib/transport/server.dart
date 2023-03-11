@@ -107,7 +107,7 @@ class TransportServer {
         if (userData & transportEventRead != 0) {
           int fd = userData & ~transportEventAll;
           if (onInput == null) {
-            _bindings.transport_channel_complete_read_by_fd(channelPointer, fd);
+            _bindings.transport_channel_free_buffer_by_fd(channelPointer, fd);
             return;
           }
           final bufferId = _bindings.transport_channel_handle_read(channelPointer, fd, result);
@@ -115,14 +115,14 @@ class TransportServer {
           final answer = onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), provider);
           if (answer is Future<Uint8List>) {
             await answer.then((resultBytes) {
-              _bindings.transport_channel_complete_read_by_buffer_id(channelPointer, bufferId);
+              _bindings.transport_channel_free_buffer_by_id(channelPointer, bufferId);
               buffer.iov_base.cast<Uint8>().asTypedList(resultBytes.length).setAll(0, resultBytes);
               buffer.iov_len = resultBytes.length;
               _bindings.transport_channel_write(channelPointer, fd, bufferId);
             });
             continue;
           }
-          _bindings.transport_channel_complete_read_by_buffer_id(channelPointer, bufferId);
+          _bindings.transport_channel_free_buffer_by_id(channelPointer, bufferId);
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
           _bindings.transport_channel_write(channelPointer, fd, bufferId);

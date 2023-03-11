@@ -1,5 +1,5 @@
-#ifndef INCLUDES_transport_LSREGION_H
-#define INCLUDES_transport_LSREGION_H
+#ifndef INCLUDES_TRANSPORT_LSREGION_H
+#define INCLUDES_TRANSPORT_LSREGION_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *

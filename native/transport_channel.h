@@ -16,6 +16,22 @@ extern "C"
 {
 #endif
 
+#define LIGHT_NAME _buffer_by_fd
+#define LIGHT_DATA_TYPE int
+#define LIGHT_KEY_TYPE int
+#define LIGHT_CMP_ARG_TYPE int
+#define LIGHT_EQUAL(a, b, ignore) a == b
+#define LIGHT_EQUAL_KEY(a, b, ignore) a == b
+
+#include "salad/light.h"
+
+#undef LIGHT_NAME
+#undef LIGHT_DATA_TYPE
+#undef LIGHT_KEY_TYPE
+#undef LIGHT_CMP_ARG_TYPE
+#undef LIGHT_EQUAL
+#undef LIGHT_EQUAL_KEY
+
   typedef struct transport_channel_configuration
   {
     uint32_t buffers_count;
@@ -31,7 +47,7 @@ extern "C"
     uint32_t buffer_size;
     uint32_t buffers_count;
     int *buffers_state;
-    int *buffer_by_fd;
+    struct light_buffer_by_fd_core buffer_by_fd;
     int available_buffer_id;
     struct rlist channel_pool_link;
   } transport_channel_t;
@@ -60,10 +76,10 @@ extern "C"
 
   int transport_channel_allocate_buffer(transport_channel_t *channel);
 
-  void transport_channel_complete_read_by_fd(transport_channel_t *channel, int fd);
-  void transport_channel_complete_write_by_fd(transport_channel_t *channel, int fd);
+  void transport_channel_free_buffer_by_id(transport_channel_t *channel, int id);
+  void transport_channel_free_buffer_by_fd(transport_channel_t *channel, int fd);
 
-  void transport_channel_complete_read_by_buffer_id(transport_channel_t *channel, int id);
+  void transport_channel_complete_write_by_fd(transport_channel_t *channel, int fd);
   void transport_channel_complete_write_by_buffer_id(transport_channel_t *channel, int fd, int id);
 #if defined(__cplusplus)
 }

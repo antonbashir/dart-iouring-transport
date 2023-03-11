@@ -15,7 +15,7 @@ class TransportFileChannel {
   TransportFileChannel(this._loop, this._bindings, this.fd);
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
-    final completer = Completer<void>.sync();
+    final completer = Completer<void>();
     var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
@@ -25,7 +25,7 @@ class TransportFileChannel {
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
     _bindings.transport_event_loop_write(_loop, fd, bufferId, offset, (result) {
-      _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId);
+      _bindings.transport_channel_free_buffer_by_id(_loop.ref.channel, bufferId);
       completer.complete();
     });
     return completer.future;
@@ -44,7 +44,7 @@ class TransportFileChannel {
   }
 
   Future<TransportPayload> readBuffer({int offset = 0}) async {
-    final completer = Completer<TransportPayload>.sync();
+    final completer = Completer<TransportPayload>();
     var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
@@ -55,9 +55,9 @@ class TransportFileChannel {
       final buffer = _loop.ref.channel.ref.buffers[bufferId];
       final payload = TransportPayload(
         buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len),
-        () => _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId),
+        () => _bindings.transport_channel_free_buffer_by_id(_loop.ref.channel, bufferId),
       );
-      _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId);
+      _bindings.transport_channel_free_buffer_by_id(_loop.ref.channel, bufferId);
       completer.complete(payload);
     });
     return completer.future;

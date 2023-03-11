@@ -1,5 +1,5 @@
-#ifndef INCLUDES_transport_SMALL_QUOTA_H
-#define INCLUDES_transport_SMALL_QUOTA_H
+#ifndef INCLUDES_TRANSPORT_SMALL_QUOTA_H
+#define INCLUDES_TRANSPORT_SMALL_QUOTA_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -183,4 +183,4 @@ quota_release(struct quota *quota, size_t size)
 #if defined(__cplusplus)
 } /* extern "C" { */
 #endif /* defined(__cplusplus) */
-#endif /* INCLUDES_transport_SMALL_QUOTA_H */
+#endif /* INCLUDES_TRANSPORT_SMALL_QUOTA_H */

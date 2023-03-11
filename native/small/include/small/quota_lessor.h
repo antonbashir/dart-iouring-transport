@@ -1,5 +1,5 @@
-#ifndef INCLUDES_transport_SMALL_QUOTA_LESSOR_H
-#define INCLUDES_transport_SMALL_QUOTA_LESSOR_H
+#ifndef INCLUDES_TRANSPORT_SMALL_QUOTA_LESSOR_H
+#define INCLUDES_TRANSPORT_SMALL_QUOTA_LESSOR_H
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -163,4 +163,4 @@ quota_end_lease(struct quota_lessor *lessor, size_t size)
 	return size;
 }
 
-#endif /* INCLUDES_transport_SMALL_QUOTA_LESSOR_H */
+#endif /* INCLUDES_TRANSPORT_SMALL_QUOTA_LESSOR_H */
