@@ -1,81 +1,63 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/channel.dart';
+import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/loop.dart';
 
 import 'bindings.dart';
-import 'configuration.dart';
-import 'payload.dart';
 
 class TransportFileChannel {
-  final _decoder = Utf8Decoder();
-  final _encoder = Utf8Encoder();
-
+  final Pointer<transport_event_loop_t> _loop;
   final TransportBindings _bindings;
-  final Pointer<transport_t> _transport;
-  final TransportChannelConfiguration _configuration;
+  final int fd;
 
-  void Function(TransportDataPayload payload)? onRead;
-  void Function(TransportDataPayload payload)? onWrite;
-  final void Function()? onStop;
+  TransportFileChannel(this._loop, this._bindings, this.fd);
 
-  late TransportServerChannel _delegate;
-
-  TransportFileChannel(
-    this._bindings,
-    this._transport,
-    this._configuration, {
-    this.onRead,
-    this.onWrite,
-    this.onStop,
-  }) {}
-
-  void start() => {};
-
-  Future<Uint8List> readBytes() async {
-    final currentOnRead = onRead;
-    Completer completer = Completer();
-    final bytes = BytesBuilder();
-    var offset = 0;
-    onRead = ((data) {
-      if (data.bytes.isEmpty || data.bytes.last == 0) {
-        completer.complete();
-        return;
-      }
-      bytes.add(data.bytes);
-      queueRead(offset: offset += data.bytes.length);
-    });
-    queueRead();
-    await completer.future;
-    final result = bytes.takeBytes();
-    onRead = currentOnRead;
-    return result;
+  Future<T> read<T>(T Function(Uint8List bytes) parser) async {
+    final completer = Completer<T>.sync();
+    var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
+    while (bufferId == -1) {
+      await Future.delayed(Duration.zero);
+      bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
+    }
+    _bindings.transport_event_loop_read(_loop, fd, bufferId, TransportEvent((event) {
+      final bufferId = _bindings.transport_channel_handle_read(_loop.ref.channel, fd, event.result);
+      final buffer = _loop.ref.channel.ref.buffers[bufferId];
+      final parsed = parser(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len));
+      _bindings.transport_channel_complete_read_by_buffer_id(_loop.ref.channel, bufferId);
+      completer.complete(parsed);
+    }));
+    return completer.future;
   }
 
-  Future<String> readString() => readBytes().then(_decoder.convert);
-
-  Future<void> writeBytes(Uint8List bytes) async {
-    final currentOnWrite = onWrite;
-    Completer completer = Completer();
-    var offset = 0;
-    onWrite = (data) {
-      offset += data.bytes.length;
-      if (data.bytes.isEmpty || offset >= bytes.length) {
-        completer.complete();
-        return;
-      }
-      queueWrite(bytes, offset: offset);
-    };
-    queueWrite(bytes);
-    await completer.future;
-    onWrite = currentOnWrite;
+  Future<void> write(Uint8List bytes) async {
+    final completer = Completer<void>.sync();
+    var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
+    while (bufferId == -1) {
+      await Future.delayed(Duration.zero);
+      bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
+    }
+    _bindings.transport_event_loop_read(_loop, fd, bufferId, TransportEvent((event) {
+      final bufferId = _bindings.transport_channel_handle_read(_loop.ref.channel, fd, event.result);
+      _bindings.transport_channel_complete_write_by_buffer_id(_loop.ref.channel, fd, bufferId);
+      completer.complete();
+    }));
+    return completer.future;
   }
+}
 
-  Future<void> writeString(String string) => writeBytes(_encoder.convert(string));
+class TransportFile {
+  final TransportBindings _bindings;
+  final Pointer<transport_event_loop_t> _loop;
 
-  void queueRead({int offset = 0}) => throw Error();
+  TransportFile(this._loop, this._bindings);
 
-  void queueWrite(Uint8List bytes, {int offset = 0}) => throw Error();
+  TransportFileChannel open(String path) => using(
+        (arena) => TransportFileChannel(
+          _loop,
+          _bindings,
+          _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()),
+        ),
+      );
 }

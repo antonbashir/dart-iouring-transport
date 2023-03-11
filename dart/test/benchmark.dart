@@ -13,13 +13,18 @@ Future<void> main(List<String> args) async {
   final fromServer = encoder.convert("from server");
 
   final transport = Transport()
-    ..initialize(TransportDefaults.transport(), TransportDefaults.acceptor(), TransportDefaults.channel())
+    ..initialize(
+      TransportDefaults.transport(),
+      TransportDefaults.acceptor(),
+      TransportDefaults.channel(),
+      TransportDefaults.loop(),
+    )
     ..listen(
       "0.0.0.0",
       9999,
       (port) => TransportServer(port).serve(
         onAccept: (channel, descriptor) => channel.read(descriptor),
-        onInput: (payload) => fromServer,
+        onInput: (payload, provider) => fromServer,
       ),
       isolates: Platform.numberOfProcessors,
     );

@@ -55,12 +55,14 @@ class TransportClient {
 
   Future<TransportClientChannel> connect(String host, int port) async {
     final completer = Completer<TransportClientChannel>.sync();
-    using((Arena arena) => _bindings.transport_event_loop_connect(
-          _loop,
-          host.toNativeUtf8().cast(),
-          port,
-          TransportEvent((event) => completer.complete(TransportClientChannel(_loop, _bindings, event.result))),
-        ));
+    using(
+      (arena) => _bindings.transport_event_loop_connect(
+        _loop,
+        host.toNativeUtf8().cast(),
+        port,
+        TransportEvent((event) => completer.complete(TransportClientChannel(_loop, _bindings, event.result))),
+      ),
+    );
     return completer.future;
   }
 }

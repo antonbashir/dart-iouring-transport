@@ -12,20 +12,20 @@ class TransportEvent {
 
 class TransportEventLoop {
   final TransportBindings _bindings;
-  late final RawReceivePort port;
 
-  late final Pointer<transport_event_loop_t> _loop;
+  late final RawReceivePort port;
+  late final Pointer<transport_event_loop_t> pointer;
 
   TransportEventLoop(this._bindings) {
     port = RawReceivePort(_callback);
   }
 
   void stop() {
-    _bindings.transport_event_loop_stop(_loop);
+    _bindings.transport_event_loop_stop(pointer);
   }
 
   void start() {
-    _bindings.transport_event_loop_start(_loop);
+    _bindings.transport_event_loop_start(pointer);
     port.close();
     Isolate.exit();
   }

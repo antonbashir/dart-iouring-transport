@@ -4,6 +4,8 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:iouring_transport/transport/logger.dart';
+import 'package:iouring_transport/transport/loop.dart';
+import 'package:iouring_transport/transport/provider.dart';
 
 import 'bindings.dart';
 import 'constants.dart';
@@ -42,15 +44,19 @@ class TransportServer {
 
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transport;
+  late final TransportEventLoop _loop;
   late final TransportLogger _logger;
+  late final TransportProvider _provider;
 
   TransportServer(SendPort toTransport) {
     toTransport.send(fromTransport.sendPort);
+    _loop = TransportEventLoop(_bindings);
+    _provider = TransportProvider(_loop, _bindings);
   }
 
   Future<void> serve({
     required FutureOr<void> Function(TransportServerChannel channel, int descriptor) onAccept,
-    FutureOr<Uint8List> Function(Uint8List input)? onInput,
+    FutureOr<Uint8List> Function(Uint8List input, TransportProvider provider)? onInput,
   }) async {
     final configuration = await fromTransport.take(4).toList();
     _logger = TransportLogger(configuration[0] as TransportLogLevel);
@@ -84,7 +90,7 @@ class TransportServer {
           }
           final bufferId = _bindings.transport_channel_handle_read(channelPointer, fd, result);
           final buffer = channelPointer.ref.buffers[bufferId];
-          final answer = onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len));
+          final answer = onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), _provider);
           if (answer is Future<Uint8List>) {
             await answer.then((resultBytes) {
               _bindings.transport_channel_complete_read_by_buffer_id(channelPointer, bufferId);
