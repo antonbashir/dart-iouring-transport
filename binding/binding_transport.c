@@ -125,7 +125,7 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 
   transport->acceptor_configuration = acceptor_configuration;
   transport->channel_configuration = channel_configuration;
-  transport->channels = transport_channel_pool_initialize();
+  transport->channels = transport_channel_pool_initialize(transport_configuration->channel_pool_mode);
 
   log_info("[transport]: initialized");
   return transport;

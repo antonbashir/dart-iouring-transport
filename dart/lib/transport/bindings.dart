@@ -16595,16 +16595,21 @@ class TransportBindings {
   late final _transport_acceptor_shutdown = _transport_acceptor_shutdownPtr
       .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
 
-  ffi.Pointer<transport_channel_pool> transport_channel_pool_initialize() {
-    return _transport_channel_pool_initialize();
+  ffi.Pointer<transport_channel_pool> transport_channel_pool_initialize(
+    int mode,
+  ) {
+    return _transport_channel_pool_initialize(
+      mode,
+    );
   }
 
   late final _transport_channel_pool_initializePtr = _lookup<
-          ffi.NativeFunction<ffi.Pointer<transport_channel_pool> Function()>>(
-      'transport_channel_pool_initialize');
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_pool> Function(
+              ffi.Int32)>>('transport_channel_pool_initialize');
   late final _transport_channel_pool_initialize =
       _transport_channel_pool_initializePtr
-          .asFunction<ffi.Pointer<transport_channel_pool> Function()>();
+          .asFunction<ffi.Pointer<transport_channel_pool> Function(int)>();
 
   ffi.Pointer<transport_t> transport_initialize(
     ffi.Pointer<transport_configuration_t> transport_configuration,
@@ -20257,7 +20262,8 @@ class _SymbolAddresses {
       get transport_acceptor_shutdown =>
           _library._transport_acceptor_shutdownPtr;
   ffi.Pointer<
-          ffi.NativeFunction<ffi.Pointer<transport_channel_pool> Function()>>
+          ffi.NativeFunction<
+              ffi.Pointer<transport_channel_pool> Function(ffi.Int32)>>
       get transport_channel_pool_initialize =>
           _library._transport_channel_pool_initializePtr;
   ffi.Pointer<
@@ -23316,6 +23322,9 @@ class transport_channel extends ffi.Struct {
   external int available_buffer_id;
 
   external rlist channel_pool_link;
+
+  @ffi.Uint32()
+  external int used_buffers_count;
 }
 
 class transport_message extends ffi.Struct {
@@ -23364,6 +23373,12 @@ class transport_acceptor extends ffi.Struct {
 typedef transport_acceptor_t = transport_acceptor;
 typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
 
+abstract class transport_channel_pool_mode_t {
+  static const int TRANSPORT_CHANNEL_POOL_ROUND_ROBBIN = 0;
+  static const int TRANSPORT_CHANNEL_POOL_LEAST_CONNECTIONS = 1;
+  static const int TRANSPORT_CHANNEL_POOL_max = 2;
+}
+
 class transport_channel_pool extends ffi.Struct {
   external rlist channels;
 
@@ -23394,6 +23409,9 @@ class transport_channel_pool extends ffi.Struct {
 class transport_configuration extends ffi.Struct {
   @ffi.Int()
   external int log_level;
+
+  @ffi.Int32()
+  external int channel_pool_mode;
 }
 
 class transport extends ffi.Struct {
@@ -24596,6 +24614,18 @@ const int WINT_MIN = 0;
 
 const int WINT_MAX = 4294967295;
 
+const int TRANSPORT_PAYLOAD_READ = -9223372036854775808;
+
+const int TRANSPORT_PAYLOAD_WRITE = 4611686018427387904;
+
+const int TRANSPORT_PAYLOAD_ACCEPT = 2305843009213693952;
+
+const int TRANSPORT_PAYLOAD_CONNECT = 1152921504606846976;
+
+const int TRANSPORT_PAYLOAD_ACTIVATE = 576460752303423488;
+
+const int TRANSPORT_PAYLOAD_CLOSE = 288230376151711744;
+
 const int LITTLE_ENDIAN = 1234;
 
 const int BIG_ENDIAN = 4321;
@@ -24605,6 +24635,26 @@ const int PDP_ENDIAN = 3412;
 const int BYTE_ORDER = 1234;
 
 const int FD_SETSIZE = 1024;
+
+const int NFDBITS = 64;
+
+const int SOCK_STREAM = 1;
+
+const int SOCK_DGRAM = 2;
+
+const int SOCK_RAW = 3;
+
+const int SOCK_RDM = 4;
+
+const int SOCK_SEQPACKET = 5;
+
+const int SOCK_DCCP = 6;
+
+const int SOCK_PACKET = 10;
+
+const int SOCK_CLOEXEC = 524288;
+
+const int SOCK_NONBLOCK = 2048;
 
 const int PF_UNSPEC = 0;
 
@@ -24852,6 +24902,50 @@ const int SOL_XDP = 283;
 
 const int SOMAXCONN = 4096;
 
+const int MSG_OOB1 = 1;
+
+const int MSG_PEEK1 = 2;
+
+const int MSG_DONTROUTE1 = 4;
+
+const int MSG_CTRUNC1 = 8;
+
+const int MSG_PROXY1 = 16;
+
+const int MSG_TRUNC1 = 32;
+
+const int MSG_DONTWAIT1 = 64;
+
+const int MSG_EOR1 = 128;
+
+const int MSG_WAITALL1 = 256;
+
+const int MSG_FIN1 = 512;
+
+const int MSG_SYN1 = 1024;
+
+const int MSG_CONFIRM1 = 2048;
+
+const int MSG_RST1 = 4096;
+
+const int MSG_ERRQUEUE1 = 8192;
+
+const int MSG_NOSIGNAL1 = 16384;
+
+const int MSG_MORE1 = 32768;
+
+const int MSG_WAITFORONE1 = 65536;
+
+const int MSG_BATCH1 = 262144;
+
+const int MSG_ZEROCOPY1 = 67108864;
+
+const int MSG_FASTOPEN1 = 536870912;
+
+const int MSG_CMSG_CLOEXEC1 = 1073741824;
+
+const int SCM_RIGHTS1 = 1;
+
 const int FIOSETOWN = 35073;
 
 const int SIOCSPGRP = 35074;
@@ -25027,6 +25121,12 @@ const int SCM_TIMESTAMP = 29;
 const int SCM_TIMESTAMPNS = 35;
 
 const int SCM_TIMESTAMPING = 37;
+
+const int SHUT_RD1 = 0;
+
+const int SHUT_WR1 = 1;
+
+const int SHUT_RDWR1 = 2;
 
 const int IP_OPTIONS = 4;
 
@@ -25282,6 +25382,70 @@ const int IPV6_RTHDR_STRICT = 1;
 
 const int IPV6_RTHDR_TYPE_0 = 0;
 
+const int IPPROTO_IP1 = 0;
+
+const int IPPROTO_ICMP1 = 1;
+
+const int IPPROTO_IGMP1 = 2;
+
+const int IPPROTO_IPIP1 = 4;
+
+const int IPPROTO_TCP1 = 6;
+
+const int IPPROTO_EGP1 = 8;
+
+const int IPPROTO_PUP1 = 12;
+
+const int IPPROTO_UDP1 = 17;
+
+const int IPPROTO_IDP1 = 22;
+
+const int IPPROTO_TP1 = 29;
+
+const int IPPROTO_DCCP1 = 33;
+
+const int IPPROTO_IPV61 = 41;
+
+const int IPPROTO_RSVP1 = 46;
+
+const int IPPROTO_GRE1 = 47;
+
+const int IPPROTO_ESP1 = 50;
+
+const int IPPROTO_AH1 = 51;
+
+const int IPPROTO_MTP1 = 92;
+
+const int IPPROTO_BEETPH1 = 94;
+
+const int IPPROTO_ENCAP1 = 98;
+
+const int IPPROTO_PIM1 = 103;
+
+const int IPPROTO_COMP1 = 108;
+
+const int IPPROTO_SCTP1 = 132;
+
+const int IPPROTO_UDPLITE1 = 136;
+
+const int IPPROTO_MPLS1 = 137;
+
+const int IPPROTO_RAW1 = 255;
+
+const int IPPROTO_HOPOPTS1 = 0;
+
+const int IPPROTO_ROUTING1 = 43;
+
+const int IPPROTO_FRAGMENT1 = 44;
+
+const int IPPROTO_ICMPV61 = 58;
+
+const int IPPROTO_NONE1 = 59;
+
+const int IPPROTO_DSTOPTS1 = 60;
+
+const int IPPROTO_MH1 = 135;
+
 const int IN_CLASSA_NET = 4278190080;
 
 const int IN_CLASSA_NSHIFT = 24;
@@ -25304,7 +25468,25 @@ const int IN_CLASSC_NSHIFT = 8;
 
 const int IN_CLASSC_HOST = 255;
 
+const int INADDR_ANY = 0;
+
+const int INADDR_BROADCAST = 4294967295;
+
+const int INADDR_NONE = 4294967295;
+
 const int IN_LOOPBACKNET = 127;
+
+const int INADDR_LOOPBACK = 2130706433;
+
+const int INADDR_UNSPEC_GROUP = 3758096384;
+
+const int INADDR_ALLHOSTS_GROUP = 3758096385;
+
+const int INADDR_ALLRTRS_GROUP = 3758096386;
+
+const int INADDR_ALLSNOOPERS_GROUP = 3758096490;
+
+const int INADDR_MAX_LOCAL_GROUP = 3758096639;
 
 const int INET_ADDRSTRLEN = 16;
 
@@ -25712,6 +25894,120 @@ const int SIGSTKFLT = 16;
 
 const int SIGPWR = 30;
 
+const int SI_ASYNCNL1 = -60;
+
+const int SI_DETHREAD1 = -7;
+
+const int SI_TKILL1 = -6;
+
+const int SI_SIGIO1 = -5;
+
+const int SI_ASYNCIO1 = -4;
+
+const int SI_MESGQ1 = -3;
+
+const int SI_TIMER1 = -2;
+
+const int SI_QUEUE1 = -1;
+
+const int SI_USER1 = 0;
+
+const int SI_KERNEL1 = 128;
+
+const int ILL_ILLOPC1 = 1;
+
+const int ILL_ILLOPN1 = 2;
+
+const int ILL_ILLADR1 = 3;
+
+const int ILL_ILLTRP1 = 4;
+
+const int ILL_PRVOPC1 = 5;
+
+const int ILL_PRVREG1 = 6;
+
+const int ILL_COPROC1 = 7;
+
+const int ILL_BADSTK1 = 8;
+
+const int ILL_BADIADDR1 = 9;
+
+const int FPE_INTDIV1 = 1;
+
+const int FPE_INTOVF1 = 2;
+
+const int FPE_FLTDIV1 = 3;
+
+const int FPE_FLTOVF1 = 4;
+
+const int FPE_FLTUND1 = 5;
+
+const int FPE_FLTRES1 = 6;
+
+const int FPE_FLTINV1 = 7;
+
+const int FPE_FLTSUB1 = 8;
+
+const int FPE_FLTUNK1 = 14;
+
+const int FPE_CONDTRAP1 = 15;
+
+const int SEGV_MAPERR1 = 1;
+
+const int SEGV_ACCERR1 = 2;
+
+const int SEGV_BNDERR1 = 3;
+
+const int SEGV_PKUERR1 = 4;
+
+const int SEGV_ACCADI1 = 5;
+
+const int SEGV_ADIDERR1 = 6;
+
+const int SEGV_ADIPERR1 = 7;
+
+const int BUS_ADRALN1 = 1;
+
+const int BUS_ADRERR1 = 2;
+
+const int BUS_OBJERR1 = 3;
+
+const int BUS_MCEERR_AR1 = 4;
+
+const int BUS_MCEERR_AO1 = 5;
+
+const int CLD_EXITED1 = 1;
+
+const int CLD_KILLED1 = 2;
+
+const int CLD_DUMPED1 = 3;
+
+const int CLD_TRAPPED1 = 4;
+
+const int CLD_STOPPED1 = 5;
+
+const int CLD_CONTINUED1 = 6;
+
+const int POLL_IN1 = 1;
+
+const int POLL_OUT1 = 2;
+
+const int POLL_MSG1 = 3;
+
+const int POLL_ERR1 = 4;
+
+const int POLL_PRI1 = 5;
+
+const int POLL_HUP1 = 6;
+
+const int SIGEV_SIGNAL1 = 0;
+
+const int SIGEV_NONE1 = 1;
+
+const int SIGEV_THREAD1 = 2;
+
+const int SIGEV_THREAD_ID1 = 4;
+
 const int NSIG = 65;
 
 const int SA_NOCLDSTOP = 1;
@@ -25753,6 +26049,10 @@ const int NGREG = 23;
 const int MINSIGSTKSZ = 2048;
 
 const int SIGSTKSZ = 8192;
+
+const int SS_ONSTACK1 = 1;
+
+const int SS_DISABLE1 = 2;
 
 const String PRId8 = 'd';
 
@@ -26064,6 +26364,8 @@ const String SCNxPTR = 'lx';
 
 const int NULL = 0;
 
+const int CLOCKS_PER_SEC = 1000000;
+
 const int CLOCK_REALTIME = 0;
 
 const int CLOCK_MONOTONIC = 1;
@@ -26179,6 +26481,24 @@ const int FSCRYPT_KEY_STATUS_PRESENT = 2;
 const int FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED = 3;
 
 const int FSCRYPT_KEY_STATUS_FLAG_ADDED_BY_SELF = 1;
+
+const int FS_IOC_SET_ENCRYPTION_POLICY = 2148296211;
+
+const int FS_IOC_GET_ENCRYPTION_PWSALT = 1074816532;
+
+const int FS_IOC_GET_ENCRYPTION_POLICY = 1074554389;
+
+const int FS_IOC_GET_ENCRYPTION_POLICY_EX = 3221841430;
+
+const int FS_IOC_ADD_ENCRYPTION_KEY = 3226494487;
+
+const int FS_IOC_REMOVE_ENCRYPTION_KEY = 3225445912;
+
+const int FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS = 3225445913;
+
+const int FS_IOC_GET_ENCRYPTION_KEY_STATUS = 3229640218;
+
+const int FS_IOC_GET_ENCRYPTION_NONCE = 2148558363;
 
 const int FS_KEY_DESCRIPTOR_SIZE = 8;
 
@@ -26428,6 +26748,12 @@ const int BLKSECTGET = 4711;
 
 const int BLKSSZGET = 4712;
 
+const int BLKBSZGET = 2148012656;
+
+const int BLKBSZSET = 1074270833;
+
+const int BLKGETSIZE64 = 2148012658;
+
 const int BLKTRACESTART = 4724;
 
 const int BLKTRACESTOP = 4725;
@@ -26462,7 +26788,13 @@ const int FIFREEZE = 3221510263;
 
 const int FITHAW = 3221510264;
 
+const int FITRIM = 3222820985;
+
 const int FICLONE = 1074041865;
+
+const int FICLONERANGE = 1075876877;
+
+const int FIDEDUPERANGE = 3222836278;
 
 const int FSLABEL_MAX = 256;
 
@@ -26481,6 +26813,10 @@ const int FS_IOC32_SETFLAGS = 1074030082;
 const int FS_IOC32_GETVERSION = 2147776001;
 
 const int FS_IOC32_SETVERSION = 1074034178;
+
+const int FS_IOC_FSGETXATTR = 2149341215;
+
+const int FS_IOC_FSSETXATTR = 1075599392;
 
 const int FS_IOC_GETFSLABEL = 2164298801;
 
@@ -26557,6 +26893,30 @@ const int SYNC_FILE_RANGE_WRITE = 2;
 const int SYNC_FILE_RANGE_WAIT_AFTER = 4;
 
 const int SYNC_FILE_RANGE_WRITE_AND_WAIT = 7;
+
+const int RWF_HIPRI = 1;
+
+const int RWF_DSYNC = 2;
+
+const int RWF_SYNC = 4;
+
+const int RWF_NOWAIT = 8;
+
+const int RWF_APPEND = 16;
+
+const int RWF_SUPPORTED = 31;
+
+const int IOSQE_FIXED_FILE = 1;
+
+const int IOSQE_IO_DRAIN = 2;
+
+const int IOSQE_IO_LINK = 4;
+
+const int IOSQE_IO_HARDLINK = 8;
+
+const int IOSQE_ASYNC = 16;
+
+const int IOSQE_BUFFER_SELECT = 32;
 
 const int IORING_SETUP_IOPOLL = 1;
 
@@ -26651,6 +27011,8 @@ const int ATOMIC_LONG_LOCK_FREE = 2;
 const int ATOMIC_LLONG_LOCK_FREE = 2;
 
 const int ATOMIC_POINTER_LOCK_FREE = 2;
+
+const int LIBURING_UDATA_TIMEOUT = -1;
 
 const int MB_LEN_MAX = 16;
 
@@ -26874,6 +27236,30 @@ const int SCHED_FIFO = 1;
 
 const int SCHED_RR = 2;
 
+const int PTHREAD_CREATE_JOINABLE1 = 0;
+
+const int PTHREAD_CREATE_DETACHED1 = 1;
+
+const int PTHREAD_INHERIT_SCHED1 = 0;
+
+const int PTHREAD_EXPLICIT_SCHED1 = 1;
+
+const int PTHREAD_SCOPE_SYSTEM1 = 0;
+
+const int PTHREAD_SCOPE_PROCESS1 = 1;
+
+const int PTHREAD_PROCESS_PRIVATE1 = 0;
+
+const int PTHREAD_PROCESS_SHARED1 = 1;
+
+const int PTHREAD_CANCEL_ENABLE1 = 0;
+
+const int PTHREAD_CANCEL_DISABLE1 = 1;
+
+const int PTHREAD_CANCEL_DEFERRED1 = 0;
+
+const int PTHREAD_CANCEL_ASYNCHRONOUS1 = 1;
+
 const int PTHREAD_ONCE_INIT = 0;
 
 const int PTHREAD_BARRIER_SERIAL_THREAD = -1;
@@ -26931,6 +27317,8 @@ const int FOPEN_MAX = 16;
 const int DART_FLAGS_CURRENT_VERSION = 12;
 
 const int DART_INITIALIZE_PARAMS_CURRENT_VERSION = 7;
+
+const int ILLEGAL_PORT = 0;
 
 const String DART_KERNEL_ISOLATE_NAME = 'kernel-service';
 

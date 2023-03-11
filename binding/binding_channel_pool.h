@@ -8,6 +8,13 @@ extern "C"
 {
 #endif
 
+  typedef enum
+  {
+    TRANSPORT_CHANNEL_POOL_ROUND_ROBBIN = 0,
+    TRANSPORT_CHANNEL_POOL_LEAST_CONNECTIONS,
+    TRANSPORT_CHANNEL_POOL_max,
+  } transport_channel_pool_mode_t;
+
   struct transport_channel_pool
   {
     struct rlist channels;
@@ -19,7 +26,7 @@ extern "C"
     void (*remove)(struct transport_channel_pool *, struct transport_channel *);
   };
 
-  struct transport_channel_pool *transport_channel_pool_initialize();
+  struct transport_channel_pool *transport_channel_pool_initialize(transport_channel_pool_mode_t mode);
 #if defined(__cplusplus)
 }
 #endif

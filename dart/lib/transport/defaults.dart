@@ -7,6 +7,7 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: 0,
+        channelPoolMode: TransportChannelPoolMode.LeastConnections,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(

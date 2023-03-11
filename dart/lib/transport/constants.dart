@@ -81,6 +81,11 @@ class PackageConfigFields {
   static const packages = 'packages';
 }
 
+enum TransportChannelPoolMode {
+  RoundRobbin,
+  LeastConnections
+}
+
 const TransportPayloadRead = 1 << (64 - 1 - 0);
 const TransportPayloadWrite = 1 << (64 - 1 - 1);
 const TransportPayloadAccept = 1 << (64 - 1 - 2);

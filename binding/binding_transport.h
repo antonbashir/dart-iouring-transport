@@ -20,6 +20,7 @@ extern "C"
   typedef struct transport_configuration
   {
     int log_level;
+    transport_channel_pool_mode_t channel_pool_mode;
   } transport_configuration_t;
 
   typedef struct transport

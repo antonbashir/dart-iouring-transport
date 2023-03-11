@@ -27,6 +27,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   channel->buffers_state = malloc(sizeof(uint64_t) * configuration->buffers_count);
   channel->buffer_by_fd = malloc(sizeof(uint64_t) * configuration->buffers_count);
   channel->available_buffer_id = 0;
+  channel->used_buffers_count = 0;
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
@@ -75,6 +76,7 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
   }
 
   channel->buffers_state[channel->available_buffer_id] = 0;
+  channel->used_buffers_count++;
   return channel->available_buffer_id;
 }
 
@@ -113,23 +115,27 @@ int transport_channel_handle_read(struct transport_channel *channel, int fd, siz
 void transport_channel_complete_read_by_fd(transport_channel_t *channel, int fd)
 {
   channel->buffers_state[channel->buffer_by_fd[fd]] = 1;
+  channel->used_buffers_count--;
 }
 
 void transport_channel_complete_write_by_fd(transport_channel_t *channel, int fd)
 {
   int buffer_id = channel->buffer_by_fd[fd];
   channel->buffers_state[buffer_id] = 1;
+  channel->used_buffers_count--;
   transport_channel_read(channel, fd, buffer_id);
 }
 
 void transport_channel_complete_read_by_buffer_id(transport_channel_t *channel, int id)
 {
   channel->buffers_state[id] = 1;
+  channel->used_buffers_count--;
 }
 
 void transport_channel_complete_write_by_buffer_id(transport_channel_t *channel, int fd, int id)
 {
   channel->buffers_state[id] = 1;
+  channel->used_buffers_count--;
   transport_channel_read(channel, fd, id);
 }
 
