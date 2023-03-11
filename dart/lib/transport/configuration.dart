@@ -1,21 +1,17 @@
-import 'constants.dart';
+
 
 class TransportConfiguration {
   final int logLevel;
-  final TransportChannelPoolMode channelPoolMode;
 
   TransportConfiguration({
     required this.logLevel,
-    required this.channelPoolMode,
   });
 
   TransportConfiguration copyWith({
     int? logLevel,
-    TransportChannelPoolMode? channelPoolMode,
   }) =>
       TransportConfiguration(
         logLevel: logLevel ?? this.logLevel,
-        channelPoolMode: channelPoolMode ?? this.channelPoolMode,
       );
 }
 
