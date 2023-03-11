@@ -45,6 +45,13 @@ class Transport {
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
     nativeTransportConfiguration.ref.logging_port = _logger.listenNative();
 
+    final nativeLoopConfiguration = calloc<transport_event_loop_configuration_t>();
+    nativeLoopConfiguration.ref.ring_size = loopConfiguration.ringSize;
+    nativeLoopConfiguration.ref.ring_flags = loopConfiguration.ringFlags;
+    nativeLoopConfiguration.ref.client_max_connections = loopConfiguration.clientMaxConnections;
+    nativeLoopConfiguration.ref.client_receive_buffer_size = loopConfiguration.clientReceiveBufferSize;
+    nativeLoopConfiguration.ref.client_send_buffer_size = loopConfiguration.clientSendBufferSize;
+
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
     nativeAcceptorConfiguration.ref.receive_buffer_size = acceptorConfiguration.receiveBufferSize;
@@ -62,6 +69,7 @@ class Transport {
       nativeTransportConfiguration,
       nativeChannelConfiguration,
       nativeAcceptorConfiguration,
+      nativeLoopConfiguration,
     );
   }
 

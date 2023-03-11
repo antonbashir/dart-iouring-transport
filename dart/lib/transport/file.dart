@@ -15,6 +15,32 @@ class TransportFileChannel {
 
   TransportFileChannel(this._loop, this._bindings, this.fd);
 
+  Future<void> write(Uint8List bytes, {int offset = 0}) async {
+    final completer = Completer<void>.sync();
+    var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
+    while (bufferId == -1) {
+      await Future.delayed(Duration.zero);
+      bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
+    }
+    _bindings.transport_event_loop_write(_loop, fd, bufferId, offset, TransportEvent((event) {
+      _bindings.transport_channel_complete_write_by_buffer_id(_loop.ref.channel, fd, bufferId);
+      completer.complete();
+    }));
+    return completer.future;
+  }
+
+  Future<Uint8List> read() async {
+    BytesBuilder builder = BytesBuilder();
+    var offset = 0;
+    var payload = await readBuffer(offset: offset);
+    while (payload.bytes.isNotEmpty) {
+      builder.add(payload.bytes);
+      offset += payload.bytes.length;
+      payload = await readBuffer(offset: offset);
+    }
+    return builder.takeBytes();
+  }
+
   Future<TransportPayload> readBuffer({int offset = 0}) async {
     final completer = Completer<TransportPayload>.sync();
     var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
@@ -35,35 +61,7 @@ class TransportFileChannel {
     return completer.future;
   }
 
-  Future<Uint8List> read() async {
-    BytesBuilder builder = BytesBuilder();
-    var offset = 0;
-    var payload = await readBuffer(offset: offset);
-    while (payload.bytes.isNotEmpty) {
-      builder.add(payload.bytes);
-      offset += payload.bytes.length;
-      payload = await readBuffer(offset: offset);
-    }
-    return builder.takeBytes();
-  }
-
-  Future<void> write(Uint8List bytes, {int offset = 0}) async {
-    final completer = Completer<void>.sync();
-    var bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
-    while (bufferId == -1) {
-      await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_allocate_buffer(_loop.ref.channel);
-    }
-    _bindings.transport_event_loop_write(_loop, fd, bufferId, offset, TransportEvent((event) {
-      _bindings.transport_channel_complete_write_by_buffer_id(_loop.ref.channel, fd, bufferId);
-      completer.complete();
-    }));
-    return completer.future;
-  }
-
-  void close() {
-    _bindings.transport_close_descritor(fd);
-  }
+  void close() => _bindings.transport_close_descritor(fd);
 }
 
 class TransportFile {

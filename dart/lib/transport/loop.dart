@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'bindings.dart';
+import 'lookup.dart';
 
 class TransportEvent {
   late int result;
@@ -11,23 +12,28 @@ class TransportEvent {
 }
 
 class TransportEventLoop {
-  final TransportBindings _bindings;
+  final fromServer = ReceivePort();
 
-  late final RawReceivePort port;
-  late final Pointer<transport_event_loop_t> pointer;
+  late final TransportBindings _bindings;
+  late final Pointer<transport_event_loop_t> _pointer;
 
-  TransportEventLoop(this._bindings) {
-    port = RawReceivePort(_callback);
+  TransportEventLoop(SendPort toServer) {
+    toServer.send(fromServer.sendPort);
   }
-  void start() {
-    _bindings.transport_event_loop_start(pointer);
+
+  Future<void> start() async {
+    final configuration = await fromServer.take(2).toList();
+    final libraryPath = configuration[0] as String?;
+    _pointer = Pointer.fromAddress(configuration[1] as int);
+    fromServer.close();
+    _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
+    RawReceivePort port = RawReceivePort(_callback);
+    _bindings.transport_event_loop_start(_pointer, port.sendPort.nativePort);
     port.close();
     Isolate.exit();
   }
 
-  void stop() {
-    _bindings.transport_event_loop_stop(pointer);
-  }
+  void stop() => _bindings.transport_event_loop_stop(_pointer);
 
   void _callback(dynamic event) {
     TransportEvent transportEvent = _bindings.Dart_HandleFromPersistent(event) as TransportEvent;

@@ -47,6 +47,8 @@ class TransportClientChannel {
     }));
     return completer.future;
   }
+
+  void close() => _bindings.transport_close_descritor(fd);
 }
 
 class TransportClient {

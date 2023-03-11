@@ -28,13 +28,12 @@ extern "C"
     int32_t client_max_connections;
     uint32_t client_receive_buffer_size;
     uint32_t client_send_buffer_size;
-    Dart_Port callback_send_port;
     transport_channel_t *channel;
   } transport_event_loop_t;
 
-  transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *configuration, Dart_Port callback_send_port);
+  transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *configuration);
 
-  void transport_event_loop_start(transport_event_loop_t *loop);
+  void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback_send_port);
 
   void transport_event_loop_stop(transport_event_loop_t *loop);
 

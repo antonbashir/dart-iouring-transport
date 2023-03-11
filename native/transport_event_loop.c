@@ -8,7 +8,7 @@
 #include "transport_channel.h"
 #include "dart/dart_native_api.h"
 
-transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *configuration, Dart_Port callback_send_port)
+transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *configuration)
 {
   transport_event_loop_t *loop = malloc(sizeof(transport_event_loop_t));
   struct io_uring *ring = malloc(sizeof(struct io_uring));
@@ -24,10 +24,9 @@ transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_con
   return loop;
 }
 
-void transport_event_loop_start(transport_event_loop_t *loop)
+void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback_send_port)
 {
   struct io_uring *ring = loop->ring;
-  Dart_Port callback_send_port = loop->callback_send_port;
   Dart_Handle result_field = Dart_NewStringFromCString("result");
   struct io_uring_cqe *cqe;
   unsigned head;

@@ -17,10 +17,10 @@
 #include "transport_acceptor.h"
 #include "small/include/small/rlist.h"
 
-
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                   transport_channel_configuration_t *channel_configuration,
-                                  transport_acceptor_configuration_t *acceptor_configuration)
+                                  transport_acceptor_configuration_t *acceptor_configuration,
+                                  transport_event_loop_configuration_t *loop_configuration)
 {
   transport_logger_initialize(transport_configuration->logging_port);
 
@@ -32,6 +32,7 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 
   transport->acceptor_configuration = acceptor_configuration;
   transport->channel_configuration = channel_configuration;
+  transport->loop_configuration = loop_configuration;
   transport->channels = transport_channel_pool_initialize();
 
   transport_info("[transport]: initialized");

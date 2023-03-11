@@ -41,17 +41,16 @@ class TransportServerChannel {
 
 class TransportServer {
   final fromTransport = ReceivePort();
+  final toLoop = ReceivePort();
+
+  late final TransportProvider provider;
 
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transport;
-  late final TransportEventLoop _loop;
   late final TransportLogger _logger;
-  late final TransportProvider _provider;
 
   TransportServer(SendPort toTransport) {
     toTransport.send(fromTransport.sendPort);
-    _loop = TransportEventLoop(_bindings);
-    _provider = TransportProvider(_loop, _bindings);
   }
 
   Future<void> serve({
@@ -65,6 +64,26 @@ class TransportServer {
     int ringSize = configuration[3] as int;
     fromTransport.close();
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
+    await _startEventLoop(libraryPath: libraryPath);
+    await _startServer(ringSize, onAccept: onAccept, onInput: onInput);
+  }
+
+  Future<void> _startEventLoop({String? libraryPath}) async {
+    final fromLoop = ReceivePort();
+    final loopPointer = _bindings.transport_event_loop_initialize(_transport.ref.loop_configuration);
+    provider = TransportProvider(loopPointer, _bindings);
+    Isolate.spawn<SendPort>((port) => TransportEventLoop(port)..start(), fromLoop.sendPort);
+    final toLoop = await fromLoop.first as SendPort;
+    toLoop.send(libraryPath);
+    toLoop.send(loopPointer);
+    fromLoop.close();
+  }
+
+  Future<void> _startServer(
+    int ringSize, {
+    required FutureOr<void> Function(TransportServerChannel channel, int descriptor) onAccept,
+    FutureOr<Uint8List> Function(Uint8List input, TransportProvider provider)? onInput,
+  }) async {
     final channelPointer = _bindings.transport_add_channel(_transport);
     final ring = channelPointer.ref.ring;
     final channel = TransportServerChannel(channelPointer, _bindings);
@@ -90,7 +109,7 @@ class TransportServer {
           }
           final bufferId = _bindings.transport_channel_handle_read(channelPointer, fd, result);
           final buffer = channelPointer.ref.buffers[bufferId];
-          final answer = onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), _provider);
+          final answer = onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), provider);
           if (answer is Future<Uint8List>) {
             await answer.then((resultBytes) {
               _bindings.transport_channel_complete_read_by_buffer_id(channelPointer, bufferId);
