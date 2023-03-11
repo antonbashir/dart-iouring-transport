@@ -1,5 +1,5 @@
-#ifndef transport_CHANNEL_POOL_H_INCLUDED
-#define transport_CHANNEL_POOL_H_INCLUDED
+#ifndef TRANSPORT_CHANNEL_POOL_H_INCLUDED
+#define TRANSPORT_CHANNEL_POOL_H_INCLUDED
 #include "transport_channel.h"
 #include "small/include/small/rlist.h"
 

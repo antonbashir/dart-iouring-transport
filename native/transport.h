@@ -1,16 +1,14 @@
-#ifndef transport_TRANSPORT_H_INCLUDED
-#define transport_TRANSPORT_H_INCLUDED
+#ifndef TRANSPORT_H_INCLUDED
+#define TRANSPORT_H_INCLUDED
+
 #include <stdbool.h>
 #include <netinet/in.h>
 #include <stdint.h>
 #include <liburing.h>
-#include "small/include/small/small.h"
-#include "small/include/small/slab_cache.h"
-#include "small/include/small/slab_arena.h"
-#include "small/include/small/quota.h"
 #include "transport_channel.h"
 #include "transport_acceptor.h"
 #include "transport_channel_pool.h"
+#include "dart/dart_api.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -19,13 +17,13 @@ extern "C"
 
   typedef struct transport_configuration
   {
-    int log_level;
+    Dart_Port logging_port;
   } transport_configuration_t;
 
   typedef struct transport
   {
     struct transport_channel_pool *channels;
-    transport_acceptor_t* acceptor;
+    transport_acceptor_t *acceptor;
     transport_channel_configuration_t *channel_configuration;
     transport_acceptor_configuration_t *acceptor_configuration;
   } transport_t;
@@ -36,16 +34,16 @@ extern "C"
 
   transport_channel_t *transport_add_channel(transport_t *transport);
 
-  int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring);
+  int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
   void transport_accept(transport_t *transport, const char *ip, int port);
 
-  struct io_uring_cqe **transport_allocate_cqes(transport_t *transport);
+  struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count);
 
   void transport_cqe_advance(struct io_uring *ring, int count);
 
   void transport_shutdown(transport_t *transport);
-  
+
   void transport_destroy(transport_t *transport);
 
   int transport_close_descritor(transport_t *transport, int fd);

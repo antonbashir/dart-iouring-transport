@@ -1,10 +1,10 @@
-#ifndef transport_CONNECTOR_H_INCLUDED
-#define transport_CONNECTOR_H_INCLUDED
+#ifndef TRANSPORT_CONNECTOR_H_INCLUDED
+#define TRANSPORT_CONNECTOR_H_INCLUDED
 #include <stdbool.h>
 #include <netinet/in.h>
 #include <stdint.h>
 #include <liburing.h>
-#include "transport_transport.h"
+#include "transport.h"
 #include <stdio.h>
 
 #if defined(__cplusplus)

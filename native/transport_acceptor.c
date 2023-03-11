@@ -37,13 +37,13 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
   int32_t status = io_uring_queue_init(configuration->ring_size, ring, configuration->ring_flags);
   if (status)
   {
-    log_error("[acceptor]: io_urig init error = %d", status);
+    transport_error("[acceptor]: io_urig init error = %d", status);
     free(ring);
     free(acceptor);
     return NULL;
   }
   acceptor->ring = ring;
-  log_info("[acceptor]: initialized");
+  transport_info("[acceptor]: initialized");
   return acceptor;
 }
 
@@ -53,5 +53,5 @@ void transport_acceptor_shutdown(transport_acceptor_t *acceptor)
   shutdown(acceptor->fd, SHUT_RDWR);
   free(acceptor->ring);
   free(acceptor);
-  log_info("[acceptor]: shutdown");
+  transport_info("[acceptor]: shutdown");
 }

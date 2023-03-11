@@ -18,13 +18,14 @@ ffigen:
   output: "lib/transport/bindings.dart"
   headers:
     entry-points:
+      - "../native/transport.h"
       - "../native/transport_constants.h"
-      - "../native/transport_transport.h"
       - "../native/transport_channel.h"
       - "../native/transport_acceptor.h"
       - "../native/transport_connector.h"
       - "../native/transport_file.h"
       - "../native/transport_socket.h"
+      - "../native/transport_logger.h"
   globals:
     exclude:
       - "_(.*)"

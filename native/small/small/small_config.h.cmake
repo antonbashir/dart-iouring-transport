@@ -1,5 +1,5 @@
-#ifndef transport_SMALL_CONFIG_H_INCLUDED
-#define transport_SMALL_CONFIG_H_INCLUDED
+#ifndef TRANSPORT_SMALL_CONFIG_H_INCLUDED
+#define TRANSPORT_SMALL_CONFIG_H_INCLUDED
 
 /*
  * Check for deprecated MAP_ANON.

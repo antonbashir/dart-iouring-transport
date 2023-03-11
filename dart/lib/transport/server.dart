@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
+
+import 'package:iouring_transport/transport/logger.dart';
 
 import 'bindings.dart';
 import 'channel.dart';
@@ -14,6 +15,7 @@ class TransportServer {
 
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transport;
+  late final TransportLogger _logger;
 
   TransportServer(SendPort toTransport) {
     toTransport.send(fromTransport.sendPort);
@@ -24,21 +26,24 @@ class TransportServer {
     FutureOr<Uint8List> Function(Uint8List input)? onInput,
   }) async {
     final configuration = await fromTransport.take(2).toList();
-    final libraryPath = configuration[0] as String?;
-    _transport = Pointer.fromAddress(configuration[1] as int);
+    _logger = TransportLogger(TransportLogLevel.values[configuration[0] as int]);
+    final libraryPath = configuration[1] as String?;
+    _transport = Pointer.fromAddress(configuration[2] as int);
+    int ringSize = configuration[3] as int;
     fromTransport.close();
-    final _library = libraryPath != null
-        ? File(libraryPath).existsSync()
-            ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
-            : loadBindingLibrary()
-        : loadBindingLibrary();
-    _bindings = TransportBindings(_library.library);
+
+    _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     final channelPointer = _bindings.transport_add_channel(_transport);
     final ring = channelPointer.ref.ring;
-    final channel = TransportChannel(channelPointer, _bindings, onRead: onInput == null ? null : (payload, fd) => onInput(payload));
-    Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_transport);
+    final channel = TransportChannel(
+      channelPointer,
+      _bindings,
+      _logger,
+      onRead: onInput == null ? null : (payload, fd) => onInput(payload),
+    );
+    Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(ringSize);
     while (true) {
-      int cqeCount = _bindings.transport_consume(_transport, cqes, ring);
+      int cqeCount = _bindings.transport_consume(ringSize, cqes, ring);
       if (cqeCount == -1) continue;
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = cqes[cqeIndex];

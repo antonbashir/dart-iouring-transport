@@ -3,15 +3,17 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'bindings.dart';
+import 'logger.dart';
 
 class TransportChannel {
   final Pointer<transport_channel_t> _pointer;
   final TransportBindings _bindings;
+  final TransportLogger _logger;
 
   FutureOr<Uint8List> Function(Uint8List payload, int fd)? onRead;
   FutureOr<void> Function(Uint8List payload, int fd)? onWrite;
 
-  TransportChannel(this._pointer, this._bindings, {this.onRead, this.onWrite});
+  TransportChannel(this._pointer, this._bindings, this._logger, {this.onRead, this.onWrite});
 
   Future<void> read(int fd) async {
     var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);

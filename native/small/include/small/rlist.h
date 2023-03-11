@@ -1,5 +1,5 @@
-#ifndef transport_RLIST_H_INCLUDED
-#define transport_RLIST_H_INCLUDED
+#ifndef TRANSPORT_RLIST_H_INCLUDED
+#define TRANSPORT_RLIST_H_INCLUDED
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *

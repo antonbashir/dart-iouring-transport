@@ -3,7 +3,7 @@
     "liburing.h": "c",
     "memory.h": "c",
     "stdlib.h": "c",
-    "transport_transport.h": "c",
+    "transport.h": "c",
     "transport_file.h": "c",
     "inet.h": "c",
     "stdbool.h": "c",
@@ -49,7 +49,7 @@
     "stdexcept": "c",
     "new": "c",
     "functional": "c",
-    "transport_log.h": "c",
+    "transport_.h": "c",
     "transport_connection.h": "c",
     "ck_backoff.h": "c",
     "system_error": "c",
@@ -73,7 +73,7 @@
     "epoll.h": "c",
     "ev.h": "c",
     "obuf.h": "c",
-    "transport_logger.h": "c",
+    "transport_ger.h": "c",
     "transport_message.h": "c",
     "transport_balancer.h": "c",
     "transport_connector.h": "c",
@@ -94,6 +94,7 @@
     "in.h": "c",
     "transport_channel_pool.h": "c",
     "rlist.h": "c",
-    "transport_constants.h": "c"
+    "transport_constants.h": "c",
+    "transport_logger.h": "c"
   },
 }

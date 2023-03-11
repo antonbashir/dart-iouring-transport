@@ -1,14 +1,14 @@
-
+import 'package:iouring_transport/transport/constants.dart';
 
 class TransportConfiguration {
-  final int logLevel;
+  final TransportLogLevel logLevel;
 
   TransportConfiguration({
     required this.logLevel,
   });
 
   TransportConfiguration copyWith({
-    int? logLevel,
+    TransportLogLevel? logLevel,
   }) =>
       TransportConfiguration(
         logLevel: logLevel ?? this.logLevel,

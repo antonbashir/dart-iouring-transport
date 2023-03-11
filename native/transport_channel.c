@@ -45,7 +45,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   int32_t status = io_uring_queue_init(configuration->ring_size, ring, configuration->ring_flags);
   if (status)
   {
-    log_error("[channel]: io_urig init error = %d", status);
+    transport_error("[channel]: io_urig init error = %d", status);
     free(ring);
     free(channel);
     return NULL;
@@ -54,7 +54,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   channel->ring = ring;
   io_uring_register_buffers(ring, channel->buffers, configuration->buffers_count);
 
-  log_info("[channel] initialized");
+  transport_info("[channel] initialized");
   return channel;
 }
 
@@ -146,5 +146,5 @@ void transport_channel_close(transport_channel_t *channel)
   io_uring_queue_exit(channel->ring);
   free(channel->ring);
   free(channel);
-  log_info("[channel] closed");
+  transport_info("[channel] closed");
 }

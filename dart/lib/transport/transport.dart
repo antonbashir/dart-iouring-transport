@@ -1,29 +1,29 @@
 import 'dart:async';
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/acceptor.dart';
+import 'package:iouring_transport/transport/logger.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
 import 'lookup.dart';
 
 class Transport {
-  late String? libraryPath;
-  late TransportBindings _bindings;
-  late TransportLibrary _library;
-  late Pointer<transport_t> _transport;
-
   final completer = Completer();
 
+  late final TransportConfiguration _transportConfiguration;
+  late final TransportAcceptorConfiguration _acceptorConfiguration;
+  late final TransportChannelConfiguration _channelConfiguration;
+  late final String? libraryPath;
+  late final TransportLogger _logger;
+  late final TransportBindings _bindings;
+  late final TransportLibrary _library;
+  late final Pointer<transport_t> _transport;
+
   Transport({String? libraryPath}) {
-    _library = libraryPath != null
-        ? File(libraryPath).existsSync()
-            ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
-            : loadBindingLibrary()
-        : loadBindingLibrary();
+    _library = TransportLibrary.load(libraryPath: libraryPath);
     _bindings = TransportBindings(_library.library);
     this.libraryPath = libraryPath;
   }
@@ -33,8 +33,14 @@ class Transport {
     TransportAcceptorConfiguration acceptorConfiguration,
     TransportChannelConfiguration channelConfiguration,
   ) {
+    _transportConfiguration = transportConfiguration;
+    _acceptorConfiguration = acceptorConfiguration;
+    _channelConfiguration = channelConfiguration;
+
+    _logger = TransportLogger(transportConfiguration.logLevel);
+
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
-    nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel;
+    nativeTransportConfiguration.ref.logging_port = _logger.listenNative();
 
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
@@ -84,8 +90,10 @@ class Transport {
 
     fromServer.listen((port) {
       SendPort toServer = port as SendPort;
+      toServer.send(_logger.level);
       toServer.send(libraryPath);
       toServer.send(_transport.address);
+      toServer.send(_channelConfiguration.ringSize);
     });
 
     await acceptorExit.first;

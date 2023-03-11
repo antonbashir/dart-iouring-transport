@@ -1,5 +1,5 @@
-#ifndef transport_SMALL_IBUF_H_INCLUDED
-#define transport_SMALL_IBUF_H_INCLUDED
+#ifndef TRANSPORT_SMALL_IBUF_H_INCLUDED
+#define TRANSPORT_SMALL_IBUF_H_INCLUDED
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *

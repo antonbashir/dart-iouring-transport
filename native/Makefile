@@ -580,32 +580,32 @@ transport_socket.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/binding.dir/build.make CMakeFiles/binding.dir/transport_socket.c.s
 .PHONY : transport_socket.c.s
 
-transport_transport.o: transport_transport.c.o
+transport.o: transport.c.o
 
-.PHONY : transport_transport.o
+.PHONY : transport.o
 
 # target to build an object file
-transport_transport.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/binding.dir/build.make CMakeFiles/binding.dir/transport_transport.c.o
-.PHONY : transport_transport.c.o
+transport.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binding.dir/build.make CMakeFiles/binding.dir/transport.c.o
+.PHONY : transport.c.o
 
-transport_transport.i: transport_transport.c.i
+transport.i: transport.c.i
 
-.PHONY : transport_transport.i
+.PHONY : transport.i
 
 # target to preprocess a source file
-transport_transport.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/binding.dir/build.make CMakeFiles/binding.dir/transport_transport.c.i
-.PHONY : transport_transport.c.i
+transport.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binding.dir/build.make CMakeFiles/binding.dir/transport.c.i
+.PHONY : transport.c.i
 
-transport_transport.s: transport_transport.c.s
+transport.s: transport.c.s
 
-.PHONY : transport_transport.s
+.PHONY : transport.s
 
 # target to generate assembly for a file
-transport_transport.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/binding.dir/build.make CMakeFiles/binding.dir/transport_transport.c.s
-.PHONY : transport_transport.c.s
+transport.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binding.dir/build.make CMakeFiles/binding.dir/transport.c.s
+.PHONY : transport.c.s
 
 dart/dart_api_dl.o: dart/dart_api_dl.c.o
 
@@ -679,9 +679,9 @@ help:
 	@echo "... transport_socket.o"
 	@echo "... transport_socket.i"
 	@echo "... transport_socket.s"
-	@echo "... transport_transport.o"
-	@echo "... transport_transport.i"
-	@echo "... transport_transport.s"
+	@echo "... transport.o"
+	@echo "... transport.i"
+	@echo "... transport.s"
 	@echo "... dart/dart_api_dl.o"
 	@echo "... dart/dart_api_dl.i"
 	@echo "... dart/dart_api_dl.s"

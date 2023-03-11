@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <sys/time.h>
-#include "transport_transport.h"
+#include "transport.h"
 #include "transport_common.h"
 #include "transport_constants.h"
 #include "transport_channel.h"
@@ -38,19 +38,19 @@ void transport_cqe_advance(struct io_uring *ring, int count)
   io_uring_cq_advance(ring, count);
 }
 
-struct io_uring_cqe **transport_allocate_cqes(transport_t *transport)
+struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count)
 {
-  return malloc(sizeof(struct io_uring_cqe) * transport->channel_configuration->ring_size);
+  return malloc(sizeof(struct io_uring_cqe) * cqe_count);
 }
 
-int transport_consume(transport_t *transport, struct io_uring_cqe **cqes, struct io_uring *ring)
+int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
   int count = 0;
-  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size)))
+  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
   {
     if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
     {
-      return io_uring_peek_batch_cqe(ring, &cqes[0], transport->channel_configuration->ring_size);
+      return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
     }
     return -1;
   }
@@ -115,7 +115,7 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
                                   transport_channel_configuration_t *channel_configuration,
                                   transport_acceptor_configuration_t *acceptor_configuration)
 {
-  log_set_level(transport_configuration->log_level);
+  transport_logger_initialize(transport_configuration->logging_port);
 
   transport_t *transport = malloc(sizeof(transport_t));
   if (!transport)
@@ -127,7 +127,7 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
   transport->channel_configuration = channel_configuration;
   transport->channels = transport_channel_pool_initialize();
 
-  log_info("[transport]: initialized");
+  transport_info("[transport]: initialized");
   return transport;
 }
 
@@ -137,7 +137,7 @@ void transport_shutdown(transport_t *transport)
   io_uring_prep_nop(sqe);
   io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_PAYLOAD_CLOSE);
   io_uring_submit(transport->acceptor->ring);
-  log_info("[transport]: shutdown");
+  transport_info("[transport]: shutdown");
 }
 
 void transport_destroy(transport_t *transport)
@@ -145,5 +145,5 @@ void transport_destroy(transport_t *transport)
   free(transport->acceptor_configuration);
   free(transport->channel_configuration);
   free(transport->channels);
-  log_info("[transport]: destroy");
+  transport_info("[transport]: destroy");
 }

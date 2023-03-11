@@ -1,5 +1,5 @@
-#ifndef transport_CHANNEL_H_INCLUDED
-#define transport_CHANNEL_H_INCLUDED
+#ifndef TRANSPORT_CHANNEL_H_INCLUDED
+#define TRANSPORT_CHANNEL_H_INCLUDED
 #include <stdbool.h>
 #include <netinet/in.h>
 #include <stdint.h>

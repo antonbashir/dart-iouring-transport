@@ -6,7 +6,7 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportConfiguration transport() => TransportConfiguration(
-        logLevel: 0,
+        logLevel: TransportLogLevel.Info,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(

@@ -9,12 +9,18 @@ class TransportLibrary {
   final String path;
 
   TransportLibrary(this.library, this.path);
+
+  factory TransportLibrary.load({String? libraryPath}) => libraryPath != null
+      ? File(libraryPath).existsSync()
+          ? TransportLibrary(DynamicLibrary.open(libraryPath), libraryPath)
+          : _load()
+      : _load();
 }
 
-TransportLibrary loadBindingLibrary() {
+TransportLibrary _load() {
   try {
-    return TransportLibrary(
-        Platform.isLinux ? DynamicLibrary.open(transportLibraryName) : throw UnsupportedError(Directory.current.path + slash + transportLibraryName), Directory.current.path + slash + transportLibraryName);
+    return TransportLibrary(Platform.isLinux ? DynamicLibrary.open(transportLibraryName) : throw UnsupportedError(Directory.current.path + slash + transportLibraryName),
+        Directory.current.path + slash + transportLibraryName);
   } on ArgumentError {
     final dotDartTool = findDotDartTool();
     if (dotDartTool != null) {

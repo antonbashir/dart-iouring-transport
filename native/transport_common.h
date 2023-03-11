@@ -1,5 +1,5 @@
-#ifndef transport_COMMON_H
-#define transport_COMMON_H
+#ifndef TRANSPORT_COMMON_H
+#define TRANSPORT_COMMON_H
 
 #if defined(__cplusplus)
 extern "C"
