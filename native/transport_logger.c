@@ -1,5 +1,6 @@
 #include "transport_logger.h"
 #include "transport_constants.h"
+#include "transport_common.h"
 #include "dart/dart_native_api.h"
 
 static Dart_Port logging_port;
@@ -11,16 +12,16 @@ void transport_logger_log(int level, const char *file, int line, const char *for
   event->level = level;
   event->message = malloc(TRANSPORT_NATIVE_LOG_BUFFER);
   va_start(arguments, format);
-  sprintf(event->message, "[native] ");
+  int written = sprintf(event->message, "%s", "[native] ");
   if (line != -1)
   {
-    sprintf(
-        event->message,
+    written += sprintf(
+        event->message + written,
         "%s:%d: ",
         file,
         line);
   }
-  vsprintf(event->message, format, arguments);
+  vsprintf(event->message + written, format, arguments);
   va_end(arguments);
 
   Dart_CObject dart_object;

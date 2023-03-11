@@ -15296,13 +15296,13 @@ class TransportBindings {
   late final _transport_close_descritor = _transport_close_descritorPtr
       .asFunction<int Function(ffi.Pointer<transport_t>, int)>();
 
-  late final ffi.Pointer<ffi.Uint64> _TRANSPORT_PAYLOAD_ALL_FLAGS =
-      _lookup<ffi.Uint64>('TRANSPORT_PAYLOAD_ALL_FLAGS');
+  late final ffi.Pointer<ffi.Uint64> _TRANSPORT_EVENT_ALL_FLAGS =
+      _lookup<ffi.Uint64>('TRANSPORT_EVENT_ALL_FLAGS');
 
-  int get TRANSPORT_PAYLOAD_ALL_FLAGS => _TRANSPORT_PAYLOAD_ALL_FLAGS.value;
+  int get TRANSPORT_EVENT_ALL_FLAGS => _TRANSPORT_EVENT_ALL_FLAGS.value;
 
-  set TRANSPORT_PAYLOAD_ALL_FLAGS(int value) =>
-      _TRANSPORT_PAYLOAD_ALL_FLAGS.value = value;
+  set TRANSPORT_EVENT_ALL_FLAGS(int value) =>
+      _TRANSPORT_EVENT_ALL_FLAGS.value = value;
 
   ffi.Pointer<transport_connector_t> transport_initialize_connector(
     ffi.Pointer<transport_t> transport,
@@ -18571,8 +18571,8 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<transport_t>, ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
-  ffi.Pointer<ffi.Uint64> get TRANSPORT_PAYLOAD_ALL_FLAGS =>
-      _library._TRANSPORT_PAYLOAD_ALL_FLAGS;
+  ffi.Pointer<ffi.Uint64> get TRANSPORT_EVENT_ALL_FLAGS =>
+      _library._TRANSPORT_EVENT_ALL_FLAGS;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_connector_t> Function(
@@ -24973,16 +24973,14 @@ const String kIsolateSnapshotInstructionsAsmSymbol =
 
 const String kIsolateSnapshotBssAsmSymbol = '_kDartIsolateSnapshotBss';
 
-const int TRANSPORT_PAYLOAD_READ = -9223372036854775808;
+const int TRANSPORT_EVENT_READ = -9223372036854775808;
 
-const int TRANSPORT_PAYLOAD_WRITE = 4611686018427387904;
+const int TRANSPORT_EVENT_WRITE = 4611686018427387904;
 
-const int TRANSPORT_PAYLOAD_ACCEPT = 2305843009213693952;
+const int TRANSPORT_EVENT_ACCEPT = 2305843009213693952;
 
-const int TRANSPORT_PAYLOAD_CONNECT = 1152921504606846976;
+const int TRANSPORT_EVENT_CONNECT = 1152921504606846976;
 
-const int TRANSPORT_PAYLOAD_ACTIVATE = 576460752303423488;
-
-const int TRANSPORT_PAYLOAD_CLOSE = 288230376151711744;
+const int TRANSPORT_EVENT_CLOSE = 576460752303423488;
 
 const int TRANSPORT_NATIVE_LOG_BUFFER = 2048;

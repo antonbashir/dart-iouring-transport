@@ -83,7 +83,16 @@ class PackageConfigFields {
 
 enum TransportChannelPoolMode { RoundRobbin, LeastConnections }
 
-const TransportLogLevels = [
+enum TransportLogLevel {
+  trace,
+  debug,
+  info,
+  warn,
+  error,
+  fatal,
+}
+
+const transportLogLevels = [
   "TRACE",
   "DEBUG",
   "INFO",
@@ -92,34 +101,24 @@ const TransportLogLevels = [
   "FATAL",
 ];
 
-enum TransportLogLevel {
-  Trace,
-  Debug,
-  Info,
-  Warn,
-  Error,
-  Fatal,
-}
+const transportEventRead = 1 << (64 - 1 - 0);
+const transportEventWrite = 1 << (64 - 1 - 1);
+const transportEventAccept = 1 << (64 - 1 - 2);
+const transportEventConnect = 1 << (64 - 1 - 3);
+const transportEventClose = 1 << (64 - 1 - 4);
+const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose;
 
-const TransportPayloadRead = 1 << (64 - 1 - 0);
-const TransportPayloadWrite = 1 << (64 - 1 - 1);
-const TransportPayloadAccept = 1 << (64 - 1 - 2);
-const TransportPayloadConnect = 1 << (64 - 1 - 3);
-const TransportPayloadActive = 1 << (64 - 1 - 4);
-const TransportPayloadClose = 1 << (64 - 1 - 5);
-const TransportPayloadAll = TransportPayloadRead | TransportPayloadWrite | TransportPayloadAccept | TransportPayloadConnect | TransportPayloadActive | TransportPayloadClose;
-
-const RingSetupIopoll = 1 << 0;
-const RingSetupSqpoll = 1 << 1;
-const RingSetupSqAff = 1 << 2;
-const RingSetupCqsize = 1 << 3;
-const RingSetupClamp = 1 << 4;
-const RingSetupAttachWq = 1 << 5;
-const RingSetupRDisabled = 1 << 6;
-const RingSetupSubmitAll = 1 << 7;
-const RingSetupCoopTaskrun = 1 << 8;
-const RingSetupTaskrunFlag = 1 << 9;
-const RingSetupSqe128 = 1 << 10;
-const RingSetupCqe32 = 1 << 11;
-const RingSetupSingleIssuer = 1 << 12;
-const RingSetupDeferTaskrun = 1 << 13;
+const ringSetupIopoll = 1 << 0;
+const ringSetupSqpoll = 1 << 1;
+const ringSetupSqAff = 1 << 2;
+const ringSetupCqsize = 1 << 3;
+const ringSetupClamp = 1 << 4;
+const ringSetupAttachWq = 1 << 5;
+const ringSetupRDisabled = 1 << 6;
+const ringSetupSubmitAll = 1 << 7;
+const ringSetupCoopTaskrun = 1 << 8;
+const ringSetupTaskrunFlag = 1 << 9;
+const ringSetupSqe128 = 1 << 10;
+const ringSetupCqe32 = 1 << 11;
+const ringSetupSingleIssuer = 1 << 12;
+const ringSetupDeferTaskrun = 1 << 13;

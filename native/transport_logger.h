@@ -9,7 +9,7 @@
 
 typedef struct
 {
-  const char *message;
+  char *message;
   int level;
 } transport_logging_event_t;
 

@@ -6,14 +6,14 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportConfiguration transport() => TransportConfiguration(
-        logLevel: TransportLogLevel.Info,
+        logLevel: TransportLogLevel.info,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
         buffersCount: 1024,
         bufferSize: 4096,
         ringSize: 16536,
-        ringFlags: RingSetupSqpoll,
+        ringFlags: ringSetupSqpoll,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(

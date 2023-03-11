@@ -1,7 +1,7 @@
 #include "transport_channel_pool.h"
 #include "transport_common.h"
 
-static transport_channel_t *transport_channel_pool_next(struct transport_channel_pool *channel_pool)
+transport_channel_t *transport_channel_pool_next(struct transport_channel_pool *channel_pool)
 {
   if (!channel_pool->next_channel)
   {
@@ -20,13 +20,13 @@ static transport_channel_t *transport_channel_pool_next(struct transport_channel
   return rlist_entry(channel_pool->next_channel, transport_channel_t, channel_pool_link);
 }
 
-static void transport_channel_pool_add(struct transport_channel_pool *channel_pool, transport_channel_t *channel)
+void transport_channel_pool_add(struct transport_channel_pool *channel_pool, transport_channel_t *channel)
 {
   rlist_add_entry(&channel_pool->channels, channel, channel_pool_link);
   channel_pool->count++;
 }
 
-static void transport_channel_pool_remove(struct transport_channel_pool *channel_pool, transport_channel_t *channel)
+void transport_channel_pool_remove(struct transport_channel_pool *channel_pool, transport_channel_t *channel)
 {
   rlist_del_entry(channel, channel_pool_link);
   channel_pool->count--;

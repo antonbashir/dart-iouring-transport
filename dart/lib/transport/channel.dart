@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'bindings.dart';
+import 'constants.dart';
 import 'logger.dart';
 
 class TransportChannel {
@@ -36,7 +37,7 @@ class TransportChannel {
     _bindings.transport_channel_write(_pointer, fd, bufferId);
   }
 
-  @pragma("vm:prefer-inline")
+  @pragma(preferInlinePragma)
   Future<void> handleRead(int fd, int size) async {
     if (onRead == null) {
       _bindings.transport_channel_complete_read_by_fd(_pointer, fd);
@@ -59,7 +60,7 @@ class TransportChannel {
     _bindings.transport_channel_write(_pointer, fd, bufferId);
   }
 
-  @pragma("vm:prefer-inline")
+  @pragma(preferInlinePragma)
   Future<void> handleWrite(int fd, int size) async {
     if (onWrite == null) {
       _bindings.transport_channel_complete_write_by_fd(_pointer, fd);
