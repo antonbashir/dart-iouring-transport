@@ -15,7 +15,8 @@
 #include "transport_socket.h"
 
 transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configuration_t *configuration,
-                                                    const char *ip, int32_t port)
+                                                    const char *ip,
+                                                    int32_t port)
 {
   transport_acceptor_t *acceptor = malloc(sizeof(transport_acceptor_t));
   if (!acceptor)
@@ -28,7 +29,7 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
   acceptor->server_address.sin_family = AF_INET;
   acceptor->server_address_length = sizeof(acceptor->server_address);
   acceptor->fd = transport_socket_create(configuration->max_connections, configuration->receive_buffer_size, configuration->send_buffer_size);
-  if (transport_socket_bind(acceptor->fd, ip, port, configuration->max_connections))
+  if (acceptor->fd < 0 || transport_socket_bind(acceptor->fd, ip, port, configuration->max_connections) < 0)
   {
     free(acceptor);
     return NULL;

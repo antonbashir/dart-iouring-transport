@@ -8,19 +8,18 @@ extern "C"
 {
 #endif
 
-
   struct transport_channel_pool
   {
     struct rlist channels;
     struct rlist *next_channel;
-    uint16_t last_channel_index;
+    uint16_t next_channel_index;
     size_t count;
   };
 
   struct transport_channel_pool *transport_channel_pool_initialize();
-  struct transport_channel *transport_channel_pool_next(struct transport_channel_pool *);
-  void transport_channel_pool_add(struct transport_channel_pool *, struct transport_channel *);
-  void transport_channel_pool_remove(struct transport_channel_pool *, struct transport_channel *);
+  struct transport_channel *transport_channel_pool_next(struct transport_channel_pool *pool);
+  void transport_channel_pool_add(struct transport_channel_pool *pool, struct transport_channel *channel);
+  void transport_channel_pool_remove(struct transport_channel_pool *pool, struct transport_channel *channel);
 
 #if defined(__cplusplus)
 }

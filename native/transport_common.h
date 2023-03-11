@@ -16,8 +16,7 @@ extern "C"
     struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
     while (unlikely(sqe == NULL))
     {
-      io_uring_submit(ring);
-      pthread_yield();
+      io_uring_submit_and_wait(ring, 1);
       sqe = io_uring_get_sqe(ring);
     }
     return sqe;

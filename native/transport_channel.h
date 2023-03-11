@@ -34,7 +34,6 @@ extern "C"
     int *buffer_by_fd;
     int available_buffer_id;
     struct rlist channel_pool_link;
-    uint32_t used_buffers_count;
   } transport_channel_t;
 
   typedef struct transport_message
