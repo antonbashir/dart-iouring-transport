@@ -38,7 +38,7 @@ Future<void> main(List<String> args) async {
           },
         );
       },
-      isolates: 6,
+      isolates: 4,
     );
 
   await Future.delayed(Duration(days: 1));
