@@ -97,7 +97,7 @@ int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, i
   address->sin_addr.s_addr = inet_addr(ip);
   address->sin_port = htons(port);
   address->sin_family = AF_INET;
-  int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  int fd = transport_socket_create(loop->client_max_connections, loop->client_receive_buffer_size, loop->client_send_buffer_size);
   transport_event_t *event = malloc(sizeof(transport_event_t));
   event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
   event->free = true;
