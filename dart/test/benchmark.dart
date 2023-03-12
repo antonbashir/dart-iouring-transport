@@ -38,7 +38,7 @@ Future<void> main(List<String> args) async {
           },
         );
       },
-      isolates: Platform.numberOfProcessors,
+      isolates: 6,
     );
 
   await Future.delayed(Duration(days: 1));
