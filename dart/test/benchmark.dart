@@ -6,8 +6,6 @@ import 'dart:io';
 
 import 'package:iouring_transport/transport/client.dart';
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/file.dart';
-import 'package:iouring_transport/transport/provider.dart';
 import 'package:iouring_transport/transport/server.dart';
 import 'package:iouring_transport/transport/transport.dart';
 
@@ -32,8 +30,7 @@ Future<void> main(List<String> args) async {
             client = await provider.client.connect("127.0.0.1", 12345);
             channel.read(descriptor);
           },
-          onInput: (payload, provider) async {
-            unawaited(client.write(fromServer));
+          onInput: (payload, provider) {
             return fromServer;
           },
         );
