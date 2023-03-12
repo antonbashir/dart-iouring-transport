@@ -25,7 +25,7 @@ class TransportDefaults {
       );
 
   static TransportEventLoopConfiguration loop() => TransportEventLoopConfiguration(
-        ringSize: 2048,
+        ringSize: 16536,
         ringFlags: ringSetupSqpoll,
         clientMaxConnections: 1024,
         clientReceiveBufferSize: 2048,

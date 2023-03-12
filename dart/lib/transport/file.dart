@@ -57,7 +57,6 @@ class TransportFileChannel {
         buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len),
         () => _bindings.transport_channel_free_buffer_by_id(_loop.ref.channel, bufferId),
       );
-      _bindings.transport_channel_free_buffer_by_id(_loop.ref.channel, bufferId);
       completer.complete(payload);
     });
     return completer.future;

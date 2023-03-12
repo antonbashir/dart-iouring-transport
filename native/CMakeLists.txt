@@ -31,7 +31,7 @@ add_custom_target(liburing
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/trivia/config.h.cmake"
-  "${PROJECT_BINARY_DIR}/trivia/config.h"
+  "${PROJECT_SOURCE_DIR}/trivia/config.h"
 )
 message(STATUS "")
 

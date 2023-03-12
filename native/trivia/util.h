@@ -30,7 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include "trivia/config.h"
+#include "config.h"
 
 #include <stdarg.h>
 #include <stdio.h>

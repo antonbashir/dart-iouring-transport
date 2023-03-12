@@ -34,6 +34,7 @@ transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_con
   }
   loop->ring = ring;
   loop->channel = transport_channel_for_ring(channel_configuration, ring);
+  loop->events_cache = malloc(sizeof(transport_event_t) * loop->channel->buffers_count);
   transport_info("[loop]: initialized");
   return loop;
 }
@@ -99,22 +100,23 @@ int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, i
   address_length = sizeof(address);
   transport_event_t *event = malloc(sizeof(transport_event_t));
   event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
+  event->free = true;
   int fd = transport_socket_create(loop->client_max_connections, loop->client_receive_buffer_size, loop->client_send_buffer_size);
   io_uring_prep_connect(sqe, fd, (struct sockaddr *)&address, address_length);
-  io_uring_sqe_set_data64(sqe, (int64_t)event);
+  io_uring_sqe_set_data64(sqe, (int64_t)event & TRANSPORT_EVENT_CONNECT);
   return io_uring_submit(loop->ring);
 }
 
 int transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
 {
-  transport_event_t *event = malloc(sizeof(transport_event_t));
+  transport_event_t *event = &loop->events_cache[buffer_id];
   event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
   transport_channel_read_custom_data(loop->channel, fd, buffer_id, offset, (int64_t)event);
 }
 
 int transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback)
 {
-  transport_event_t *event = malloc(sizeof(transport_event_t));
+  transport_event_t *event = &loop->events_cache[buffer_id];
   event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
   return transport_channel_write_custom_data(loop->channel, fd, buffer_id, offset, (int64_t)event);
 }

@@ -141,6 +141,6 @@ class TransportServer {
     void Function(int) callback = _bindings.transport_get_handle_from_event(event) as void Function(int);
     _bindings.transport_delete_handle_from_event(event);
     callback(event.ref.result);
-    malloc.free(event);
+    if (event.ref.free) malloc.free(event);
   }
 }

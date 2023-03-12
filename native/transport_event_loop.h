@@ -12,6 +12,12 @@
 extern "C"
 {
 #endif
+  typedef struct transport_event
+  {
+    Dart_Handle *callback;
+    int32_t result;
+    bool free;
+  } transport_event_t;
 
   typedef struct transport_event_loop_configuration
   {
@@ -29,13 +35,8 @@ extern "C"
     uint32_t client_receive_buffer_size;
     uint32_t client_send_buffer_size;
     transport_channel_t *channel;
+    transport_event_t *events_cache;
   } transport_event_loop_t;
-
-  typedef struct transport_event
-  {
-    Dart_Handle *callback;
-    int32_t result;
-  } transport_event_t;
 
   transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_configuration_t *loop_configuration, transport_channel_configuration_t *channel_configuration);
 
@@ -46,11 +47,10 @@ extern "C"
   int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, int port, Dart_Handle callback);
 
   int transport_event_loop_read(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
-
   int transport_event_loop_write(transport_event_loop_t *loop, int fd, int buffer_id, uint64_t offset, Dart_Handle callback);
 
   Dart_Handle transport_get_handle_from_event(transport_event_t *event);
-  
+
   void transport_delete_handle_from_event(transport_event_t *event);
 #if defined(__cplusplus)
 }
