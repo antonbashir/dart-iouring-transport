@@ -35,6 +35,12 @@ transport_event_loop_t *transport_event_loop_initialize(transport_event_loop_con
   loop->ring = ring;
   loop->channel = transport_channel_for_ring(channel_configuration, ring);
   loop->events_cache = malloc(sizeof(transport_event_t) * loop->channel->buffers_count);
+  for (size_t event_index = 0; event_index < loop->channel->buffers_count; event_index++)
+  {
+    loop->events_cache[event_index].socket_fd = -1;
+    loop->events_cache[event_index].free = false;
+  }
+
   transport_info("[loop]: initialized");
   return loop;
 }
@@ -57,12 +63,7 @@ void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback
 
       if (unlikely(cqe->res < 0))
       {
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
-
-      if (cqe->res == 0)
-      {
+        transport_error("[loop]: cqe result error = %d", cqe->res);
         io_uring_cqe_seen(ring, cqe);
         continue;
       }
@@ -91,18 +92,17 @@ void transport_event_loop_stop(transport_event_loop_t *loop)
 int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, int port, Dart_Handle callback)
 {
   struct io_uring_sqe *sqe = provide_sqe(loop->ring);
-  struct sockaddr_in address;
-  socklen_t address_length;
-  memset(&address, 0, sizeof(address));
-  address.sin_addr.s_addr = inet_addr(ip);
-  address.sin_port = htons(port);
-  address.sin_family = AF_INET;
-  address_length = sizeof(address);
+  struct sockaddr_in *address = malloc(sizeof(struct sockaddr_in));
+  memset(address, 0, sizeof(*address));
+  address->sin_addr.s_addr = inet_addr(ip);
+  address->sin_port = htons(port);
+  address->sin_family = AF_INET;
+  int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   transport_event_t *event = malloc(sizeof(transport_event_t));
   event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
   event->free = true;
-  int fd = transport_socket_create(loop->client_max_connections, loop->client_receive_buffer_size, loop->client_send_buffer_size);
-  io_uring_prep_connect(sqe, fd, (struct sockaddr *)&address, address_length);
+  event->socket_fd = fd;
+  io_uring_prep_connect(sqe, fd, (struct sockaddr *)address, sizeof(*address));
   io_uring_sqe_set_data64(sqe, (int64_t)event);
   return io_uring_submit(loop->ring);
 }

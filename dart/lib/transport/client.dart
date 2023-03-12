@@ -64,9 +64,11 @@ class TransportClient {
     using(
       (arena) => _bindings.transport_event_loop_connect(
         _loop,
-        host.toNativeUtf8().cast(),
+        host.toNativeUtf8(allocator: arena).cast(),
         port,
-        (result) => completer.complete(TransportClientChannel(_loop, _bindings, result)),
+        (result) {
+          completer.complete(TransportClientChannel(_loop, _bindings, result));
+        },
       ),
     );
     return completer.future;

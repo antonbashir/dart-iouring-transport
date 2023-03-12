@@ -140,7 +140,7 @@ class TransportServer {
     Pointer<transport_event> event = Pointer.fromAddress(eventPointer).cast();
     void Function(int) callback = _bindings.transport_get_handle_from_event(event) as void Function(int);
     _bindings.transport_delete_handle_from_event(event);
-    callback(event.ref.result);
+    callback(event.ref.socket_fd == -1 ? event.ref.result : event.ref.socket_fd);
     if (event.ref.free) malloc.free(event);
   }
 }

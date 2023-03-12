@@ -16,6 +16,7 @@ extern "C"
   {
     Dart_Handle *callback;
     int32_t result;
+    int32_t socket_fd;
     bool free;
   } transport_event_t;
 

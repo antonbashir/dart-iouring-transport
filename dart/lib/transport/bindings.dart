@@ -26704,6 +26704,9 @@ class transport_event extends ffi.Struct {
   @ffi.Int32()
   external int result;
 
+  @ffi.Int32()
+  external int socket_fd;
+
   @ffi.Bool()
   external bool free;
 }
@@ -30745,7 +30748,7 @@ const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'RelWithDebInfo';
+const String BUILD_TYPE = 'Debug';
 
 const String BUILD_INFO = '';
 

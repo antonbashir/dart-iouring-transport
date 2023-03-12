@@ -14,7 +14,7 @@ int32_t transport_socket_create(uint32_t max_connections, uint32_t receive_buffe
 {
   int32_t option = 1;
 
-  int32_t fd = socket(AF_INET, SOCK_STREAM | O_NONBLOCK | SOCK_CLOEXEC, 0);
+  int32_t fd = socket(AF_INET, SOCK_STREAM | O_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
   if (fd == -1)
   {
     return -1;
