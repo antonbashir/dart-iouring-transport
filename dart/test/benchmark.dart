@@ -24,10 +24,7 @@ Future<void> main(List<String> args) async {
       9999,
       (port) => TransportServer(port).serve(
         onAccept: (channel, descriptor) => channel.read(descriptor),
-        onInput: (payload, provider) async {
-          await provider.file.open("output.txt").write(fromServer);
-          return fromServer;
-        },
+        onInput: (payload, provider) => fromServer,
       ),
       isolates: Platform.numberOfProcessors,
     );

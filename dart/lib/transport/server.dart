@@ -112,16 +112,7 @@ class TransportServer {
           }
           final bufferId = _bindings.transport_channel_handle_read(channelPointer, fd, result);
           final buffer = channelPointer.ref.buffers[bufferId];
-          final answer = onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), provider);
-          if (answer is Future<Uint8List>) {
-            await answer.then((resultBytes) {
-              _bindings.transport_channel_free_buffer_by_id(channelPointer, bufferId);
-              buffer.iov_base.cast<Uint8>().asTypedList(resultBytes.length).setAll(0, resultBytes);
-              buffer.iov_len = resultBytes.length;
-              _bindings.transport_channel_write(channelPointer, fd, bufferId);
-            });
-            continue;
-          }
+          final answer = await onInput(buffer.iov_base.cast<Uint8>().asTypedList(buffer.iov_len), provider);
           _bindings.transport_channel_free_buffer_by_id(channelPointer, bufferId);
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;

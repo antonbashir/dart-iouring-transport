@@ -98,6 +98,7 @@
     "transport_logger.h": "c",
     "transport_event_loop.h": "c",
     "dart_native_api.h": "c",
-    "light.h": "c"
+    "light.h": "c",
+    "mhash.h": "c"
   },
 }

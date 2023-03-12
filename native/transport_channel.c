@@ -12,16 +12,6 @@
 #include <sys/time.h>
 #include "transport_constants.h"
 
-static inline void *light_buffer_by_fd_allocate(void *ctx)
-{
-  return malloc(TRANSPORT_CHANNEL_BUFFER_BY_FD_EXTEND);
-}
-
-static inline void light_buffer_by_fd_free(void *ignore, void *part)
-{
-  free(part);
-}
-
 transport_channel_t *transport_channel_initialize(transport_channel_configuration_t *configuration)
 {
   transport_channel_t *channel = malloc(sizeof(transport_channel_t));
@@ -35,7 +25,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
 
   channel->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   channel->buffers_state = malloc(sizeof(uint64_t) * configuration->buffers_count);
-  light_buffer_by_fd_create(&channel->buffer_by_fd, TRANSPORT_CHANNEL_BUFFER_BY_FD_EXTEND, light_buffer_by_fd_allocate, light_buffer_by_fd_free, NULL, 0);
+  channel->buffer_by_fd = mh_i32_new();
   channel->available_buffer_id = 0;
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
@@ -81,7 +71,7 @@ transport_channel_t *transport_channel_for_ring(transport_channel_configuration_
 
   channel->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   channel->buffers_state = malloc(sizeof(uint64_t) * configuration->buffers_count);
-  light_buffer_by_fd_create(&channel->buffer_by_fd, TRANSPORT_CHANNEL_BUFFER_BY_FD_EXTEND, light_buffer_by_fd_allocate, light_buffer_by_fd_free, NULL, 0);
+  channel->buffer_by_fd = mh_i32_new();
 
   channel->available_buffer_id = 0;
 
@@ -127,7 +117,8 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
 int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
-  light_buffer_by_fd_insert(&channel->buffer_by_fd, fd, buffer_id);
+  struct mh_i32_node_t buffer_by_fd_node = {fd, buffer_id};
+  mh_i32_put(channel->buffer_by_fd, &buffer_by_fd_node, NULL, 0);
   io_uring_prep_write_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, 0, buffer_id);
   io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_EVENT_WRITE));
   return io_uring_submit(channel->ring);
@@ -136,7 +127,8 @@ int transport_channel_write(struct transport_channel *channel, int fd, int buffe
 int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
-  light_buffer_by_fd_insert(&channel->buffer_by_fd, fd, buffer_id);
+  struct mh_i32_node_t buffer_by_fd_node = {fd, buffer_id};
+  mh_i32_put(channel->buffer_by_fd, &buffer_by_fd_node, NULL, 0);
   io_uring_prep_read_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, 0, buffer_id);
   io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_EVENT_READ));
   return io_uring_submit(channel->ring);
@@ -145,7 +137,8 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
 int transport_channel_write_custom_data(struct transport_channel *channel, int fd, int buffer_id, uint64_t offset, int64_t user_data)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
-  light_buffer_by_fd_insert(&channel->buffer_by_fd, fd, buffer_id);
+  struct mh_i32_node_t buffer_by_fd_node = {fd, buffer_id};
+  mh_i32_put(channel->buffer_by_fd, &buffer_by_fd_node, NULL, 0);
   io_uring_prep_write_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, offset, buffer_id);
   io_uring_sqe_set_data64(sqe, user_data);
   return io_uring_submit(channel->ring);
@@ -154,7 +147,8 @@ int transport_channel_write_custom_data(struct transport_channel *channel, int f
 int transport_channel_read_custom_data(struct transport_channel *channel, int fd, int buffer_id, uint64_t offset, int64_t user_data)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
-  light_buffer_by_fd_insert(&channel->buffer_by_fd, fd, buffer_id);
+  struct mh_i32_node_t buffer_by_fd_node = {fd, buffer_id};
+  mh_i32_put(channel->buffer_by_fd, &buffer_by_fd_node, NULL, 0);
   io_uring_prep_read_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, offset, buffer_id);
   io_uring_sqe_set_data64(sqe, user_data);
   return io_uring_submit(channel->ring);
@@ -162,21 +156,21 @@ int transport_channel_read_custom_data(struct transport_channel *channel, int fd
 
 int transport_channel_handle_write(struct transport_channel *channel, int fd, size_t size)
 {
-  int buffer_id = light_buffer_by_fd_find_key(&channel->buffer_by_fd, fd, fd);
+  int buffer_id = mh_i32_node(channel->buffer_by_fd, mh_i32_find(channel->buffer_by_fd, fd, 0))->value;
   channel->buffers[buffer_id].iov_len = size;
   return buffer_id;
 }
 
 int transport_channel_handle_read(struct transport_channel *channel, int fd, size_t size)
 {
-  int buffer_id = light_buffer_by_fd_find_key(&channel->buffer_by_fd, fd, fd);
+  int buffer_id = mh_i32_node(channel->buffer_by_fd, mh_i32_find(channel->buffer_by_fd, fd, 0))->value;
   channel->buffers[buffer_id].iov_len = size;
   return buffer_id;
 }
 
 void transport_channel_free_buffer_by_fd(transport_channel_t *channel, int fd)
 {
-  channel->buffers_state[light_buffer_by_fd_find_key(&channel->buffer_by_fd, fd, fd)] = 1;
+  channel->buffers_state[mh_i32_node(channel->buffer_by_fd, mh_i32_find(channel->buffer_by_fd, fd, 0))->value] = 1;
 }
 
 void transport_channel_free_buffer_by_id(transport_channel_t *channel, int id)
@@ -186,7 +180,7 @@ void transport_channel_free_buffer_by_id(transport_channel_t *channel, int id)
 
 void transport_channel_complete_write_by_fd(transport_channel_t *channel, int fd)
 {
-  int buffer_id = light_buffer_by_fd_find_key(&channel->buffer_by_fd, fd, fd);
+  int buffer_id = mh_i32_node(channel->buffer_by_fd, mh_i32_find(channel->buffer_by_fd, fd, 0))->value;
   channel->buffers_state[buffer_id] = 1;
   transport_channel_read(channel, fd, buffer_id);
 }
@@ -206,7 +200,7 @@ void transport_channel_close(transport_channel_t *channel)
   }
   free(channel->buffers);
   free(channel->buffers_state);
-  light_buffer_by_fd_destroy(&channel->buffer_by_fd);
+  mh_i32_delete(channel->buffer_by_fd);
   io_uring_queue_exit(channel->ring);
   free(channel->ring);
   free(channel);
@@ -222,6 +216,6 @@ void transport_channel_for_ring_close(transport_channel_t *channel)
   }
   free(channel->buffers);
   free(channel->buffers_state);
-  light_buffer_by_fd_destroy(&channel->buffer_by_fd);
+  mh_i32_delete(channel->buffer_by_fd);
   free(channel);
 }
