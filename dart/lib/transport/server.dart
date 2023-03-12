@@ -55,7 +55,7 @@ class TransportServer {
   }
 
   Future<void> serve({
-    required FutureOr<void> Function(TransportServerChannel channel, int descriptor) onAccept,
+    required FutureOr<void> Function(TransportServerChannel channel, TransportProvider provider, int descriptor) onAccept,
     FutureOr<Uint8List> Function(Uint8List input, TransportProvider provider)? onInput,
   }) async {
     final configuration = await fromTransport.take(4).toList();
@@ -84,7 +84,7 @@ class TransportServer {
 
   Future<void> _startServer(
     int ringSize, {
-    required FutureOr<void> Function(TransportServerChannel channel, int descriptor) onAccept,
+    required FutureOr<void> Function(TransportServerChannel channel, TransportProvider provider, int descriptor) onAccept,
     FutureOr<Uint8List> Function(Uint8List input, TransportProvider provider)? onInput,
   }) async {
     final channelPointer = _bindings.transport_add_channel(_transport);
@@ -124,7 +124,7 @@ class TransportServer {
           continue;
         }
         if (userData & transportEventAccept != 0) {
-          await onAccept(channel, result);
+          await onAccept(channel, provider, result);
           continue;
         }
         if (userData & transportEventClose != 0) {

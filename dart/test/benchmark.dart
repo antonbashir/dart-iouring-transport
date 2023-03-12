@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:iouring_transport/transport/defaults.dart';
+import 'package:iouring_transport/transport/file.dart';
+import 'package:iouring_transport/transport/provider.dart';
 import 'package:iouring_transport/transport/server.dart';
 import 'package:iouring_transport/transport/transport.dart';
 
@@ -22,13 +24,19 @@ Future<void> main(List<String> args) async {
     ..listen(
       "0.0.0.0",
       9999,
-      (port) => TransportServer(port).serve(
-        onAccept: (channel, descriptor) => channel.read(descriptor),
-        onInput: (payload, provider) async {
-          await provider.file.open("output.txt").write(fromServer);
-          return fromServer;
-        },
-      ),
+      (port) {
+        late TransportFileChannel file;
+        TransportServer(port).serve(
+          onAccept: (channel, provider, descriptor) {
+            file = provider.file.open("output.txt");
+            channel.read(descriptor);
+          },
+          onInput: (payload, provider) async {
+            unawaited(file.write(fromServer));
+            return fromServer;
+          },
+        );
+      },
       isolates: Platform.numberOfProcessors,
     );
 
