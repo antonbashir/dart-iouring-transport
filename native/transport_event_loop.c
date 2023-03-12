@@ -103,7 +103,7 @@ int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, i
   event->free = true;
   int fd = transport_socket_create(loop->client_max_connections, loop->client_receive_buffer_size, loop->client_send_buffer_size);
   io_uring_prep_connect(sqe, fd, (struct sockaddr *)&address, address_length);
-  io_uring_sqe_set_data64(sqe, (int64_t)event & TRANSPORT_EVENT_CONNECT);
+  io_uring_sqe_set_data64(sqe, (int64_t)event);
   return io_uring_submit(loop->ring);
 }
 
