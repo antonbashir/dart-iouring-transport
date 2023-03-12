@@ -55,26 +55,30 @@ void transport_event_loop_start(transport_event_loop_t *loop, Dart_Port callback
   {
     if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
     {
-      if (unlikely(cqe->user_data & TRANSPORT_EVENT_CLOSE))
+      io_uring_for_each_cqe(ring, head, cqe)
       {
-        io_uring_cqe_seen(ring, cqe);
-        break;
-      }
+        if (unlikely(cqe->user_data & TRANSPORT_EVENT_CLOSE))
+        {
+          io_uring_cqe_seen(ring, cqe);
+          transport_event_loop_stop(loop);
+          return;
+        }
 
-      if (unlikely(cqe->res < 0))
-      {
-        transport_error("[loop]: cqe result error = %d", cqe->res);
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
+        if (unlikely(cqe->res < 0))
+        {
+          transport_error("[loop]: cqe result error = %d", cqe->res);
+          io_uring_cqe_seen(ring, cqe);
+          continue;
+        }
 
-      transport_event_t *event = (transport_event_t *)cqe->user_data;
-      event->result = cqe->res;
-      Dart_CObject dart_object;
-      dart_object.type = Dart_CObject_kInt64;
-      dart_object.value.as_int64 = (int64_t)cqe->user_data;
-      Dart_PostCObject(callback_port, &dart_object);
-      io_uring_cqe_seen(ring, cqe);
+        transport_event_t *event = (transport_event_t *)cqe->user_data;
+        event->result = cqe->res;
+        Dart_CObject dart_object;
+        dart_object.type = Dart_CObject_kInt64;
+        dart_object.value.as_int64 = (int64_t)cqe->user_data;
+        Dart_PostCObject(callback_port, &dart_object);
+        io_uring_cqe_seen(ring, cqe);
+      }
     }
   }
   transport_event_loop_stop(loop);
@@ -97,7 +101,7 @@ int transport_event_loop_connect(transport_event_loop_t *loop, const char *ip, i
   address->sin_addr.s_addr = inet_addr(ip);
   address->sin_port = htons(port);
   address->sin_family = AF_INET;
-  int fd = transport_socket_create(loop->client_max_connections, loop->client_receive_buffer_size, loop->client_send_buffer_size);
+  int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   transport_event_t *event = malloc(sizeof(transport_event_t));
   event->callback = (Dart_Handle *)Dart_NewPersistentHandle(callback);
   event->free = true;
