@@ -101,12 +101,12 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
 int transport_channel_connect(struct transport_channel *channel, int fd, const char *ip, int port)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
-  struct sockaddr_in address;
-  memset(&address, 0, sizeof(address));
-  address.sin_addr.s_addr = inet_addr(ip);
-  address.sin_port = htons(port);
-  address.sin_family = AF_INET;
-  io_uring_prep_connect(sqe, fd, (struct sockaddr *)&address, sizeof(address));
+  struct sockaddr_in* address = malloc(sizeof(struct sockaddr_in));
+  memset(address, 0, sizeof(*address));
+  address->sin_addr.s_addr = inet_addr(ip);
+  address->sin_port = htons(port);
+  address->sin_family = AF_INET;
+  io_uring_prep_connect(sqe, fd, (struct sockaddr *)address, sizeof(*address));
   io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_EVENT_CONNECT));
   return io_uring_submit(channel->ring);
 }

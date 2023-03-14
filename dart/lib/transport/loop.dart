@@ -6,67 +6,13 @@ import 'dart:typed_data';
 import 'package:iouring_transport/transport/client.dart';
 import 'package:iouring_transport/transport/file.dart';
 import 'package:iouring_transport/transport/logger.dart';
+import 'package:iouring_transport/transport/provider.dart';
 
 import 'bindings.dart';
+import 'channels.dart';
 import 'constants.dart';
 import 'lookup.dart';
 import 'payload.dart';
-
-class TransportServerChannel {
-  final Pointer<transport_channel_t> _pointer;
-  final TransportBindings _bindings;
-
-  TransportServerChannel(this._pointer, this._bindings);
-
-  Future<void> read(int fd) async {
-    var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    while (bufferId == -1) {
-      await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    }
-    _bindings.transport_channel_read(_pointer, fd, bufferId, 0, transportEventRead);
-  }
-
-  Future<void> write(Uint8List bytes, int fd) async {
-    var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    while (bufferId == -1) {
-      await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    }
-    final buffer = _pointer.ref.buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
-    _bindings.transport_channel_write(_pointer, fd, bufferId, 0, transportEventWrite);
-  }
-}
-
-class TransportResourceChannel {
-  final Pointer<transport_channel_t> _pointer;
-  final TransportBindings _bindings;
-
-  TransportResourceChannel(this._pointer, this._bindings);
-
-  Future<void> read(int fd, {int offset = 0}) async {
-    var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    while (bufferId == -1) {
-      await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    }
-    _bindings.transport_channel_read(_pointer, fd, bufferId, offset, transportEventReadCallback);
-  }
-
-  Future<void> write(Uint8List bytes, int fd, {int offset = 0}) async {
-    var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    while (bufferId == -1) {
-      await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    }
-    final buffer = _pointer.ref.buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
-    _bindings.transport_channel_write(_pointer, fd, bufferId, offset, transportEventWriteCallback);
-  }
-}
 
 class TransportEventLoopCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
@@ -83,7 +29,7 @@ class TransportEventLoopCallbacks {
 }
 
 class TransportEventLoop {
-  bool _initialized = false;
+  bool _active = false;
 
   final _callbacks = TransportEventLoopCallbacks();
 
@@ -97,44 +43,35 @@ class TransportEventLoop {
   late final TransportResourceChannel _resourceChannel;
   late final int _ringSize;
 
-  late final TransportConnector _connector;
-
   TransportEventLoop(SendPort toTransport) {
     toTransport.send(fromTransport.sendPort);
   }
 
-  Future<TransportEventLoop> initialize() async {
-    if (_initialized) return this;
+  Future<void> run({
+    FutureOr<void> Function(TransportProvider provider)? onRun,
+    FutureOr<void> Function(TransportServerChannel channel, int descriptor)? onAccept,
+    FutureOr<Uint8List> Function(Uint8List input)? onInput,
+  }) async {
+    if (_active) return;
 
-    final configuration = await fromTransport.take(4).toList();
+    final configuration = await fromTransport.take(5).toList();
     _logger = TransportLogger(configuration[0] as TransportLogLevel);
     final libraryPath = configuration[1] as String?;
     _transport = Pointer.fromAddress(configuration[2] as int);
     _ringSize = configuration[3] as int;
+    final activationPort = configuration[4] as SendPort;
     fromTransport.close();
 
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _channelPointer = _bindings.transport_add_channel(_transport);
     _serverChannel = TransportServerChannel(_channelPointer, _bindings);
     _resourceChannel = TransportResourceChannel(_channelPointer, _bindings);
-    _connector = TransportConnector(_callbacks, _channelPointer, _transport, _bindings);
-
-    _initialized = true;
-    return this;
-  }
-
-  TransportConnector get connector => _connector;
-
-  TransportFile file(String path) => TransportFile(_callbacks, _resourceChannel, _bindings, path);
-
-  Future<void> run({
-    void Function()? onRun,
-    FutureOr<void> Function(TransportServerChannel channel, int descriptor)? onAccept,
-    FutureOr<Uint8List> Function(Uint8List input)? onInput,
-  }) async {
-    await initialize();
+    final connector = TransportConnector(_callbacks, _channelPointer, _transport, _bindings);
     final ring = _channelPointer.ref.ring;
     Pointer<Pointer<io_uring_cqe>> cqes = _bindings.transport_allocate_cqes(_ringSize);
+
+    _active = true;
+
     Timer.periodic(Duration.zero, (timer) {
       int cqeCount = _bindings.transport_consume(_ringSize, cqes, ring);
       if (cqeCount == -1) return;
@@ -151,6 +88,7 @@ class TransportEventLoop {
               userData & transportEventWriteCallback != 0) {
             _bindings.transport_close_descritor(userData & ~transportEventAll);
           }
+          _logger.error("CQE result: $result");
           continue;
         }
 
@@ -159,7 +97,7 @@ class TransportEventLoop {
           int fd = _channelPointer.ref.used_buffers[bufferId];
           if (onInput == null) {
             _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-            return;
+            continue;
           }
           final buffer = _channelPointer.ref.buffers[bufferId];
           Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
@@ -216,6 +154,9 @@ class TransportEventLoop {
       }
       _bindings.transport_cqe_advance(ring, cqeCount);
     });
-    onRun?.call();
+
+    await onRun?.call(TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path)));
+
+    activationPort.send(null);
   }
 }

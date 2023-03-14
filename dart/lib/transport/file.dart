@@ -5,6 +5,7 @@ import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/loop.dart';
 
 import 'bindings.dart';
+import 'channels.dart';
 import 'payload.dart';
 
 class TransportFile {

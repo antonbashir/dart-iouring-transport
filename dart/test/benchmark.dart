@@ -23,18 +23,17 @@ Future<void> main(List<String> args) async {
       9999,
       (port) {
         late TransportClient client;
-        TransportEventLoop(port).initialize().then(
-              (loop) => loop.run(
-                onRun: () async {
-                  client = await loop.connector.connect("127.0.0.1", 12345);
-                },
-                onAccept: (channel, descriptor) => channel.read(descriptor),
-                onInput: (payload) {
-                  client.write(fromServer);
-                  return fromServer;
-                },
-              ),
-            );
+        TransportEventLoop(port).run(
+          onRun: (provider) async {
+            client = await provider.connector.connect("127.0.0.1", 12345);
+            print("client connected: ${client.fd}");
+          },
+          onAccept: (channel, descriptor) => channel.read(descriptor),
+          onInput: (payload) {
+            client.write(fromServer);
+            return fromServer;
+          },
+        );
       },
       isolates: 4,
     );

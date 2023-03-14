@@ -26,14 +26,7 @@ class TransportLogger {
   void log(TransportLogLevel level, String message) {
     if (level.index < this.level.index) return;
 
-    if (level.index > TransportLogLevel.warn.index) {
-      stderr.writeln("${transportLogLevels[level.index]} ${DateTime.now()} $message");
-      stderr.flush();
-      return;
-    }
-
-    stdout.writeln("${transportLogLevels[level.index]} ${DateTime.now()} $message");
-    stdout.flush();
+    print("${transportLogLevels[level.index]} ${DateTime.now()} $message");
   }
 
   void trace(String message) => log(TransportLogLevel.trace, message);

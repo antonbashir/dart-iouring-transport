@@ -68,11 +68,28 @@ class Transport {
     await completer.future;
   }
 
-  Future<void> listen(String host, int port, void Function(SendPort port) server, {int isolates = 1}) async {
-    final fromServer = ReceivePort();
+  Future<void> listen(String host, int port, void Function(SendPort port) loop, {int isolates = 1}) async {
+    final fromLoop = ReceivePort();
     final fromAcceptor = ReceivePort();
     final acceptorExit = ReceivePort();
     final serverExit = ReceivePort();
+
+    for (var isolate = 0; isolate < isolates; isolate++) {
+      Isolate.spawn<SendPort>(loop, fromLoop.sendPort, onExit: serverExit.sendPort);
+    }
+
+    final anyLoopActivated = ReceivePort();
+
+    fromLoop.listen((port) {
+      SendPort toLoop = port as SendPort;
+      toLoop.send(_logger.level);
+      toLoop.send(libraryPath);
+      toLoop.send(_transport.address);
+      toLoop.send(_channelConfiguration.ringSize);
+      toLoop.send(anyLoopActivated.sendPort);
+    });
+
+    await anyLoopActivated.first;
 
     Isolate.spawn<SendPort>((port) => TransportAcceptor(port).accept(), fromAcceptor.sendPort, onExit: acceptorExit.sendPort);
 
@@ -84,22 +101,10 @@ class Transport {
       toAcceptor.send(port);
     });
 
-    for (var isolate = 0; isolate < isolates; isolate++) {
-      Isolate.spawn<SendPort>(server, fromServer.sendPort, onExit: serverExit.sendPort);
-    }
-
-    fromServer.listen((port) {
-      SendPort toServer = port as SendPort;
-      toServer.send(_logger.level);
-      toServer.send(libraryPath);
-      toServer.send(_transport.address);
-      toServer.send(_channelConfiguration.ringSize);
-    });
-
     await acceptorExit.first;
     await serverExit.take(isolates).toList();
 
-    fromServer.close();
+    fromLoop.close();
     fromAcceptor.close();
     acceptorExit.close();
     serverExit.close();
