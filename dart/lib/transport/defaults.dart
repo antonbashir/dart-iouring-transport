@@ -10,7 +10,7 @@ class TransportDefaults {
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: 4096,
+        buffersCount: 8192,
         bufferSize: 4096,
         ringSize: 16536,
         ringFlags: ringSetupSqpoll,
@@ -22,13 +22,5 @@ class TransportDefaults {
         sendBufferSize: 2048,
         ringSize: 2048,
         ringFlags: 0,
-      );
-
-  static TransportEventLoopConfiguration loop() => TransportEventLoopConfiguration(
-        ringSize: 16536,
-        ringFlags: ringSetupSqpoll,
-        clientMaxConnections: 1024,
-        clientReceiveBufferSize: 2048,
-        clientSendBufferSize: 2048,
       );
 }

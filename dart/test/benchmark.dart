@@ -26,7 +26,6 @@ Future<void> main(List<String> args) async {
         TransportEventLoop(port).run(
           onRun: (provider) async {
             client = await provider.connector.connect("127.0.0.1", 12345);
-            print("client connected: ${client.fd}");
           },
           onAccept: (channel, descriptor) => channel.read(descriptor),
           onInput: (payload) {

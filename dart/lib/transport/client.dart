@@ -17,17 +17,23 @@ class TransportClient {
 
   TransportClient(this._callbacks, this._channel, this._bindings, this.fd);
 
-  Future<TransportPayload> read() async {
-    final completer = Completer<TransportPayload>();
-    _callbacks.putRead(fd, completer);
-    return _channel.read(fd).then((value) => completer.future);
-  }
+  Future<TransportPayload> read() => _channel.allocate().then(
+        (bufferId) {
+          final completer = Completer<TransportPayload>();
+          _callbacks.putRead(bufferId, completer);
+          _channel.read(fd, bufferId);
+          return completer.future;
+        },
+      );
 
-  Future<void> write(Uint8List bytes) async {
-    final completer = Completer<void>();
-    _callbacks.putWrite(fd, completer);
-    return _channel.write(bytes, fd).then((value) => completer.future);
-  }
+  Future<void> write(Uint8List bytes) => _channel.allocate().then(
+        (bufferId) {
+          final completer = Completer<void>();
+          _callbacks.putWrite(bufferId, completer);
+          _channel.write(bytes, fd, bufferId);
+          return completer.future;
+        },
+      );
 
   void close() => _bindings.transport_close_descritor(fd);
 }

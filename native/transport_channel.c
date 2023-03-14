@@ -62,13 +62,13 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
 
 int transport_channel_allocate_buffer(transport_channel_t *channel)
 {
-  while (unlikely(!(channel->used_buffers[channel->available_buffer_id])))
+  while (unlikely(channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE))
   {
     channel->available_buffer_id++;
-    if (unlikely(channel->available_buffer_id == channel->buffers_count))
+    if (unlikely(channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE))
     {
       channel->available_buffer_id = 0;
-      if (unlikely(!(channel->used_buffers[channel->available_buffer_id])))
+      if (unlikely(channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE))
       {
         return -1;
       }
@@ -101,7 +101,7 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
 int transport_channel_connect(struct transport_channel *channel, int fd, const char *ip, int port)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
-  struct sockaddr_in* address = malloc(sizeof(struct sockaddr_in));
+  struct sockaddr_in *address = malloc(sizeof(struct sockaddr_in));
   memset(address, 0, sizeof(*address));
   address->sin_addr.s_addr = inet_addr(ip);
   address->sin_port = htons(port);

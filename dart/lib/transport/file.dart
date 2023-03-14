@@ -18,17 +18,23 @@ class TransportFile {
     using((Arena arena) => fd = _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
   }
 
-  Future<TransportPayload> readBuffer({int offset = 0}) async {
-    final completer = Completer<TransportPayload>();
-    _callbacks.putRead(fd, completer);
-    return _channel.read(fd).then((value) => completer.future);
-  }
+  Future<TransportPayload> readBuffer({int offset = 0}) => _channel.allocate().then(
+        (bufferId) {
+          final completer = Completer<TransportPayload>();
+          _callbacks.putRead(bufferId, completer);
+          _channel.read(fd, bufferId);
+          return completer.future;
+        },
+      );
 
-  Future<void> write(Uint8List bytes) async {
-    final completer = Completer<void>();
-    _callbacks.putWrite(fd, completer);
-    return _channel.write(bytes, fd).then((value) => completer.future);
-  }
+  Future<void> write(Uint8List bytes) => _channel.allocate().then(
+        (bufferId) {
+          final completer = Completer<void>();
+          _callbacks.putWrite(bufferId, completer);
+          _channel.write(bytes, fd, bufferId);
+          return completer.future;
+        },
+      );
 
   Future<Uint8List> read() async {
     BytesBuilder builder = BytesBuilder();

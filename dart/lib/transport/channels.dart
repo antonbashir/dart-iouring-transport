@@ -38,21 +38,20 @@ class TransportResourceChannel {
 
   TransportResourceChannel(this._pointer, this._bindings);
 
-  Future<void> read(int fd, {int offset = 0}) async {
+  Future<int> allocate() async {
     var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
     while (bufferId == -1) {
       await Future.delayed(Duration.zero);
       bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
     }
+    return bufferId;
+  }
+
+  void read(int fd, int bufferId, {int offset = 0}) {
     _bindings.transport_channel_read(_pointer, fd, bufferId, offset, transportEventReadCallback);
   }
 
-  Future<void> write(Uint8List bytes, int fd, {int offset = 0}) async {
-    var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    while (bufferId == -1) {
-      await Future.delayed(Duration.zero);
-      bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    }
+  void write(Uint8List bytes, int fd, int bufferId, {int offset = 0}) {
     final buffer = _pointer.ref.buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;

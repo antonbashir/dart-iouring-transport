@@ -26,6 +26,10 @@ class TransportEventLoopCallbacks {
   Completer<TransportClient>? getConnect(int fd) => _connectCallbacks[fd];
   Completer<TransportPayload>? getRead(int bufferId) => _readCallbacks[bufferId];
   Completer<void>? getWrite(int bufferId) => _writeCallbacks[bufferId];
+
+  Completer<TransportClient>? removeConnect(int fd) => _connectCallbacks.remove(fd);
+  Completer<TransportPayload>? removeRead(int bufferId) => _readCallbacks.remove(bufferId);
+  Completer<void>? removeWrite(int bufferId) => _writeCallbacks.remove(bufferId);
 }
 
 class TransportEventLoop {
@@ -81,20 +85,39 @@ class TransportEventLoop {
         final userData = cqe.ref.user_data;
 
         if (result < 0) {
-          if (userData & transportEventConnect != 0 ||
-              userData & transportEventRead != 0 ||
-              userData & transportEventWrite != 0 ||
-              userData & transportEventReadCallback != 0 ||
-              userData & transportEventWriteCallback != 0) {
-            _bindings.transport_close_descritor(userData & ~transportEventAll);
+          if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
+            final bufferId = userData & ~transportEventAll;
+            final fd = _channelPointer.ref.used_buffers[bufferId];
+            _bindings.transport_close_descritor(fd);
+            _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
           }
-          _logger.error("CQE result: $result");
+
+          if (userData & transportEventConnect != 0) {
+            _bindings.transport_close_descritor(userData & ~transportEventAll);
+            _callbacks.getConnect(userData & ~transportEventAll)?.completeError(Exception("Connect exception with code $result"));
+            _callbacks.removeConnect(userData & ~transportEventAll);
+          }
+
+          if (userData & transportEventReadCallback != 0 || userData & transportEventWriteCallback != 0) {
+            final bufferId = userData & ~transportEventAll;
+            final fd = _channelPointer.ref.used_buffers[bufferId];
+            _bindings.transport_close_descritor(fd);
+            _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+            if (userData & transportEventReadCallback != 0) {
+              _callbacks.getRead(bufferId)?.completeError(Exception("Read exception with code $result"));
+              _callbacks.removeRead(bufferId);
+            }
+            if (userData & transportEventWriteCallback != 0) {
+              _callbacks.getWrite(bufferId)?.completeError(Exception("Write exception with code $result"));
+              _callbacks.removeWrite(bufferId);
+            }
+          }
           continue;
         }
 
         if (userData & transportEventRead != 0) {
-          int bufferId = userData & ~transportEventAll;
-          int fd = _channelPointer.ref.used_buffers[bufferId];
+          final bufferId = userData & ~transportEventAll;
+          final fd = _channelPointer.ref.used_buffers[bufferId];
           if (onInput == null) {
             _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
             continue;
@@ -110,13 +133,15 @@ class TransportEventLoop {
         }
 
         if (userData & transportEventWrite != 0) {
-          int bufferId = userData & ~transportEventAll;
+          final bufferId = userData & ~transportEventAll;
+          final fd = _channelPointer.ref.used_buffers[bufferId];
           _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          _bindings.transport_channel_read(_channelPointer, fd, bufferId, 0, transportEventRead);
           continue;
         }
 
         if (userData & transportEventReadCallback != 0) {
-          int bufferId = userData & ~transportEventAll;
+          final bufferId = userData & ~transportEventAll;
           final buffer = _channelPointer.ref.buffers[bufferId];
           final callback = _callbacks.getRead(bufferId);
           if (callback == null) {
@@ -128,7 +153,7 @@ class TransportEventLoop {
         }
 
         if (userData & transportEventWriteCallback != 0) {
-          int bufferId = userData & ~transportEventAll;
+          final bufferId = userData & ~transportEventAll;
           final callback = _callbacks.getWrite(bufferId);
           _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
           callback?.complete();
