@@ -31,8 +31,7 @@ extern "C"
     struct iovec *buffers;
     uint32_t buffer_size;
     uint32_t buffers_count;
-    int *buffers_state;
-    struct mh_i32_t *buffer_by_fd;
+    int *used_buffers;
     int available_buffer_id;
     struct rlist channel_pool_link;
   } transport_channel_t;
@@ -47,25 +46,13 @@ extern "C"
   transport_channel_t *transport_channel_initialize(transport_channel_configuration_t *configuration);
   void transport_channel_close(transport_channel_t *channel);
 
-  transport_channel_t *transport_channel_for_ring(transport_channel_configuration_t *configuration, struct io_uring *ring);
-  void transport_channel_for_ring_close(transport_channel_t *channel);
-
-  int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id);
-  int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id);
-
-  int transport_channel_write_custom_data(struct transport_channel *channel, int fd, int buffer_id, uint64_t offset, int64_t user_data);
-  int transport_channel_read_custom_data(struct transport_channel *channel, int fd, int buffer_id, uint64_t offset, int64_t user_data);
-
-  int transport_channel_handle_write(struct transport_channel *channel, int fd, size_t size);
-  int transport_channel_handle_read(struct transport_channel *channel, int fd, size_t size);
+  int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
+  int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
+  int transport_channel_connect(struct transport_channel *channel, int fd, const char *ip, int port);
 
   int transport_channel_allocate_buffer(transport_channel_t *channel);
 
-  void transport_channel_free_buffer_by_id(transport_channel_t *channel, int id);
-  void transport_channel_free_buffer_by_fd(transport_channel_t *channel, int fd);
-
-  void transport_channel_complete_write_by_fd(transport_channel_t *channel, int fd);
-  void transport_channel_complete_write_by_buffer_id(transport_channel_t *channel, int fd, int id);
+  void transport_channel_free_buffer(transport_channel_t *channel, int id);
 #if defined(__cplusplus)
 }
 #endif

@@ -28,7 +28,7 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
   acceptor->server_address.sin_port = htons(port);
   acceptor->server_address.sin_family = AF_INET;
   acceptor->server_address_length = sizeof(acceptor->server_address);
-  acceptor->fd = transport_socket_create(configuration->max_connections, configuration->receive_buffer_size, configuration->send_buffer_size);
+  acceptor->fd = transport_socket_create_server(configuration->max_connections, configuration->receive_buffer_size, configuration->send_buffer_size);
   if (acceptor->fd < 0 || transport_socket_bind(acceptor->fd, ip, port, configuration->max_connections) < 0)
   {
     free(acceptor);

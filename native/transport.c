@@ -19,8 +19,7 @@
 
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                   transport_channel_configuration_t *channel_configuration,
-                                  transport_acceptor_configuration_t *acceptor_configuration,
-                                  transport_event_loop_configuration_t *loop_configuration)
+                                  transport_acceptor_configuration_t *acceptor_configuration)
 {
   transport_logger_initialize(transport_configuration->logging_port);
 
@@ -32,7 +31,6 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 
   transport->acceptor_configuration = acceptor_configuration;
   transport->channel_configuration = channel_configuration;
-  transport->loop_configuration = loop_configuration;
   transport->channels = transport_channel_pool_initialize();
 
   transport_info("[transport]: initialized");
@@ -78,13 +76,27 @@ int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_
   int count = 0;
   if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
   {
-    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
+    struct __kernel_timespec timeout = {
+        .tv_sec = 1,
+        .tv_nsec = 0,
+    };
+    if (likely(io_uring_wait_cqe_timeout(ring, &cqes[0], &timeout) == 0))
     {
       return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
     }
     return -1;
   }
 
+  return count;
+}
+
+int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
+{
+  int count = 0;
+  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
+  {
+    return -1;
+  }
   return count;
 }
 

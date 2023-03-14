@@ -18889,167 +18889,74 @@ class TransportBindings {
   late final _transport_channel_close = _transport_channel_closePtr
       .asFunction<void Function(ffi.Pointer<transport_channel_t>)>();
 
-  ffi.Pointer<transport_channel_t> transport_channel_for_ring(
-    ffi.Pointer<transport_channel_configuration_t> configuration,
-    ffi.Pointer<io_uring> ring,
-  ) {
-    return _transport_channel_for_ring(
-      configuration,
-      ring,
-    );
-  }
-
-  late final _transport_channel_for_ringPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_channel_configuration_t>,
-              ffi.Pointer<io_uring>)>>('transport_channel_for_ring');
-  late final _transport_channel_for_ring =
-      _transport_channel_for_ringPtr.asFunction<
-          ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_channel_configuration_t>,
-              ffi.Pointer<io_uring>)>();
-
-  void transport_channel_for_ring_close(
-    ffi.Pointer<transport_channel_t> channel,
-  ) {
-    return _transport_channel_for_ring_close(
-      channel,
-    );
-  }
-
-  late final _transport_channel_for_ring_closePtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_channel_t>)>>(
-      'transport_channel_for_ring_close');
-  late final _transport_channel_for_ring_close =
-      _transport_channel_for_ring_closePtr
-          .asFunction<void Function(ffi.Pointer<transport_channel_t>)>();
-
   int transport_channel_write(
     ffi.Pointer<transport_channel> channel,
     int fd,
     int buffer_id,
+    int offset,
+    int event,
   ) {
     return _transport_channel_write(
       channel,
       fd,
       buffer_id,
+      offset,
+      event,
     );
   }
 
   late final _transport_channel_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int,
-              ffi.Int)>>('transport_channel_write');
-  late final _transport_channel_write = _transport_channel_writePtr
-      .asFunction<int Function(ffi.Pointer<transport_channel>, int, int)>();
+          ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int, ffi.Int,
+              ffi.Int64, ffi.Int64)>>('transport_channel_write');
+  late final _transport_channel_write = _transport_channel_writePtr.asFunction<
+      int Function(ffi.Pointer<transport_channel>, int, int, int, int)>();
 
   int transport_channel_read(
     ffi.Pointer<transport_channel> channel,
     int fd,
     int buffer_id,
+    int offset,
+    int event,
   ) {
     return _transport_channel_read(
       channel,
       fd,
       buffer_id,
+      offset,
+      event,
     );
   }
 
   late final _transport_channel_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int,
-              ffi.Int)>>('transport_channel_read');
-  late final _transport_channel_read = _transport_channel_readPtr
-      .asFunction<int Function(ffi.Pointer<transport_channel>, int, int)>();
-
-  int transport_channel_write_custom_data(
-    ffi.Pointer<transport_channel> channel,
-    int fd,
-    int buffer_id,
-    int offset,
-    int user_data,
-  ) {
-    return _transport_channel_write_custom_data(
-      channel,
-      fd,
-      buffer_id,
-      offset,
-      user_data,
-    );
-  }
-
-  late final _transport_channel_write_custom_dataPtr = _lookup<
-      ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int, ffi.Int,
-              ffi.Uint64, ffi.Int64)>>('transport_channel_write_custom_data');
-  late final _transport_channel_write_custom_data =
-      _transport_channel_write_custom_dataPtr.asFunction<
-          int Function(ffi.Pointer<transport_channel>, int, int, int, int)>();
+              ffi.Int64, ffi.Int64)>>('transport_channel_read');
+  late final _transport_channel_read = _transport_channel_readPtr.asFunction<
+      int Function(ffi.Pointer<transport_channel>, int, int, int, int)>();
 
-  int transport_channel_read_custom_data(
+  int transport_channel_connect(
     ffi.Pointer<transport_channel> channel,
     int fd,
-    int buffer_id,
-    int offset,
-    int user_data,
+    ffi.Pointer<ffi.Char> ip,
+    int port,
   ) {
-    return _transport_channel_read_custom_data(
+    return _transport_channel_connect(
       channel,
       fd,
-      buffer_id,
-      offset,
-      user_data,
+      ip,
+      port,
     );
   }
 
-  late final _transport_channel_read_custom_dataPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int, ffi.Int,
-              ffi.Uint64, ffi.Int64)>>('transport_channel_read_custom_data');
-  late final _transport_channel_read_custom_data =
-      _transport_channel_read_custom_dataPtr.asFunction<
-          int Function(ffi.Pointer<transport_channel>, int, int, int, int)>();
-
-  int transport_channel_handle_write(
-    ffi.Pointer<transport_channel> channel,
-    int fd,
-    int size,
-  ) {
-    return _transport_channel_handle_write(
-      channel,
-      fd,
-      size,
-    );
-  }
-
-  late final _transport_channel_handle_writePtr = _lookup<
+  late final _transport_channel_connectPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int,
-              ffi.Size)>>('transport_channel_handle_write');
-  late final _transport_channel_handle_write =
-      _transport_channel_handle_writePtr
-          .asFunction<int Function(ffi.Pointer<transport_channel>, int, int)>();
-
-  int transport_channel_handle_read(
-    ffi.Pointer<transport_channel> channel,
-    int fd,
-    int size,
-  ) {
-    return _transport_channel_handle_read(
-      channel,
-      fd,
-      size,
-    );
-  }
-
-  late final _transport_channel_handle_readPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int,
-              ffi.Size)>>('transport_channel_handle_read');
-  late final _transport_channel_handle_read = _transport_channel_handle_readPtr
-      .asFunction<int Function(ffi.Pointer<transport_channel>, int, int)>();
+              ffi.Pointer<ffi.Char>, ffi.Int)>>('transport_channel_connect');
+  late final _transport_channel_connect =
+      _transport_channel_connectPtr.asFunction<
+          int Function(ffi.Pointer<transport_channel>, int,
+              ffi.Pointer<ffi.Char>, int)>();
 
   int transport_channel_allocate_buffer(
     ffi.Pointer<transport_channel_t> channel,
@@ -19067,79 +18974,22 @@ class TransportBindings {
       _transport_channel_allocate_bufferPtr
           .asFunction<int Function(ffi.Pointer<transport_channel_t>)>();
 
-  void transport_channel_free_buffer_by_id(
+  void transport_channel_free_buffer(
     ffi.Pointer<transport_channel_t> channel,
     int id,
   ) {
-    return _transport_channel_free_buffer_by_id(
+    return _transport_channel_free_buffer(
       channel,
       id,
     );
   }
 
-  late final _transport_channel_free_buffer_by_idPtr = _lookup<
+  late final _transport_channel_free_bufferPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<transport_channel_t>,
-              ffi.Int)>>('transport_channel_free_buffer_by_id');
-  late final _transport_channel_free_buffer_by_id =
-      _transport_channel_free_buffer_by_idPtr
-          .asFunction<void Function(ffi.Pointer<transport_channel_t>, int)>();
-
-  void transport_channel_free_buffer_by_fd(
-    ffi.Pointer<transport_channel_t> channel,
-    int fd,
-  ) {
-    return _transport_channel_free_buffer_by_fd(
-      channel,
-      fd,
-    );
-  }
-
-  late final _transport_channel_free_buffer_by_fdPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel_t>,
-              ffi.Int)>>('transport_channel_free_buffer_by_fd');
-  late final _transport_channel_free_buffer_by_fd =
-      _transport_channel_free_buffer_by_fdPtr
-          .asFunction<void Function(ffi.Pointer<transport_channel_t>, int)>();
-
-  void transport_channel_complete_write_by_fd(
-    ffi.Pointer<transport_channel_t> channel,
-    int fd,
-  ) {
-    return _transport_channel_complete_write_by_fd(
-      channel,
-      fd,
-    );
-  }
-
-  late final _transport_channel_complete_write_by_fdPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel_t>,
-              ffi.Int)>>('transport_channel_complete_write_by_fd');
-  late final _transport_channel_complete_write_by_fd =
-      _transport_channel_complete_write_by_fdPtr
-          .asFunction<void Function(ffi.Pointer<transport_channel_t>, int)>();
-
-  void transport_channel_complete_write_by_buffer_id(
-    ffi.Pointer<transport_channel_t> channel,
-    int fd,
-    int id,
-  ) {
-    return _transport_channel_complete_write_by_buffer_id(
-      channel,
-      fd,
-      id,
-    );
-  }
-
-  late final _transport_channel_complete_write_by_buffer_idPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel_t>, ffi.Int,
-              ffi.Int)>>('transport_channel_complete_write_by_buffer_id');
-  late final _transport_channel_complete_write_by_buffer_id =
-      _transport_channel_complete_write_by_buffer_idPtr.asFunction<
-          void Function(ffi.Pointer<transport_channel_t>, int, int)>();
+              ffi.Int)>>('transport_channel_free_buffer');
+  late final _transport_channel_free_buffer = _transport_channel_free_bufferPtr
+      .asFunction<void Function(ffi.Pointer<transport_channel_t>, int)>();
 
   ffi.Pointer<transport_acceptor_t> transport_acceptor_initialize(
     ffi.Pointer<transport_acceptor_configuration_t> configuration,
@@ -19180,168 +19030,6 @@ class TransportBindings {
       'transport_acceptor_shutdown');
   late final _transport_acceptor_shutdown = _transport_acceptor_shutdownPtr
       .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
-
-  ffi.Pointer<transport_event_loop_t> transport_event_loop_initialize(
-    ffi.Pointer<transport_event_loop_configuration_t> loop_configuration,
-    ffi.Pointer<transport_channel_configuration_t> channel_configuration,
-  ) {
-    return _transport_event_loop_initialize(
-      loop_configuration,
-      channel_configuration,
-    );
-  }
-
-  late final _transport_event_loop_initializePtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_event_loop_t> Function(
-                  ffi.Pointer<transport_event_loop_configuration_t>,
-                  ffi.Pointer<transport_channel_configuration_t>)>>(
-      'transport_event_loop_initialize');
-  late final _transport_event_loop_initialize =
-      _transport_event_loop_initializePtr.asFunction<
-          ffi.Pointer<transport_event_loop_t> Function(
-              ffi.Pointer<transport_event_loop_configuration_t>,
-              ffi.Pointer<transport_channel_configuration_t>)>();
-
-  void transport_event_loop_start(
-    ffi.Pointer<transport_event_loop_t> loop,
-    int callback_port,
-  ) {
-    return _transport_event_loop_start(
-      loop,
-      callback_port,
-    );
-  }
-
-  late final _transport_event_loop_startPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_event_loop_t>,
-              Dart_Port)>>('transport_event_loop_start');
-  late final _transport_event_loop_start = _transport_event_loop_startPtr
-      .asFunction<void Function(ffi.Pointer<transport_event_loop_t>, int)>();
-
-  void transport_event_loop_stop(
-    ffi.Pointer<transport_event_loop_t> loop,
-  ) {
-    return _transport_event_loop_stop(
-      loop,
-    );
-  }
-
-  late final _transport_event_loop_stopPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_event_loop_t>)>>(
-      'transport_event_loop_stop');
-  late final _transport_event_loop_stop = _transport_event_loop_stopPtr
-      .asFunction<void Function(ffi.Pointer<transport_event_loop_t>)>();
-
-  int transport_event_loop_connect(
-    ffi.Pointer<transport_event_loop_t> loop,
-    ffi.Pointer<ffi.Char> ip,
-    int port,
-    Object callback,
-  ) {
-    return _transport_event_loop_connect(
-      loop,
-      ip,
-      port,
-      callback,
-    );
-  }
-
-  late final _transport_event_loop_connectPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_event_loop_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int,
-              ffi.Handle)>>('transport_event_loop_connect');
-  late final _transport_event_loop_connect =
-      _transport_event_loop_connectPtr.asFunction<
-          int Function(ffi.Pointer<transport_event_loop_t>,
-              ffi.Pointer<ffi.Char>, int, Object)>();
-
-  int transport_event_loop_read(
-    ffi.Pointer<transport_event_loop_t> loop,
-    int fd,
-    int buffer_id,
-    int offset,
-    Object callback,
-  ) {
-    return _transport_event_loop_read(
-      loop,
-      fd,
-      buffer_id,
-      offset,
-      callback,
-    );
-  }
-
-  late final _transport_event_loop_readPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_event_loop_t>, ffi.Int,
-              ffi.Int, ffi.Uint64, ffi.Handle)>>('transport_event_loop_read');
-  late final _transport_event_loop_read =
-      _transport_event_loop_readPtr.asFunction<
-          int Function(
-              ffi.Pointer<transport_event_loop_t>, int, int, int, Object)>();
-
-  int transport_event_loop_write(
-    ffi.Pointer<transport_event_loop_t> loop,
-    int fd,
-    int buffer_id,
-    int offset,
-    Object callback,
-  ) {
-    return _transport_event_loop_write(
-      loop,
-      fd,
-      buffer_id,
-      offset,
-      callback,
-    );
-  }
-
-  late final _transport_event_loop_writePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_event_loop_t>, ffi.Int,
-              ffi.Int, ffi.Uint64, ffi.Handle)>>('transport_event_loop_write');
-  late final _transport_event_loop_write =
-      _transport_event_loop_writePtr.asFunction<
-          int Function(
-              ffi.Pointer<transport_event_loop_t>, int, int, int, Object)>();
-
-  Object transport_get_handle_from_event(
-    ffi.Pointer<transport_event_t> event,
-  ) {
-    return _transport_get_handle_from_event(
-      event,
-    );
-  }
-
-  late final _transport_get_handle_from_eventPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Handle Function(ffi.Pointer<transport_event_t>)>>(
-      'transport_get_handle_from_event');
-  late final _transport_get_handle_from_event =
-      _transport_get_handle_from_eventPtr
-          .asFunction<Object Function(ffi.Pointer<transport_event_t>)>();
-
-  void transport_delete_handle_from_event(
-    ffi.Pointer<transport_event_t> event,
-  ) {
-    return _transport_delete_handle_from_event(
-      event,
-    );
-  }
-
-  late final _transport_delete_handle_from_eventPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_event_t>)>>(
-      'transport_delete_handle_from_event');
-  late final _transport_delete_handle_from_event =
-      _transport_delete_handle_from_eventPtr
-          .asFunction<void Function(ffi.Pointer<transport_event_t>)>();
 
   ffi.Pointer<transport_channel_pool> transport_channel_pool_initialize() {
     return _transport_channel_pool_initialize();
@@ -19415,13 +19103,11 @@ class TransportBindings {
     ffi.Pointer<transport_configuration_t> transport_configuration,
     ffi.Pointer<transport_channel_configuration_t> channel_configuration,
     ffi.Pointer<transport_acceptor_configuration_t> acceptor_configuration,
-    ffi.Pointer<transport_event_loop_configuration_t> loop_configuration,
   ) {
     return _transport_initialize(
       transport_configuration,
       channel_configuration,
       acceptor_configuration,
-      loop_configuration,
     );
   }
 
@@ -19430,15 +19116,13 @@ class TransportBindings {
               ffi.Pointer<transport_t> Function(
                   ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_channel_configuration_t>,
-                  ffi.Pointer<transport_acceptor_configuration_t>,
-                  ffi.Pointer<transport_event_loop_configuration_t>)>>(
+                  ffi.Pointer<transport_acceptor_configuration_t>)>>(
       'transport_initialize');
   late final _transport_initialize = _transport_initializePtr.asFunction<
       ffi.Pointer<transport_t> Function(
           ffi.Pointer<transport_configuration_t>,
           ffi.Pointer<transport_channel_configuration_t>,
-          ffi.Pointer<transport_acceptor_configuration_t>,
-          ffi.Pointer<transport_event_loop_configuration_t>)>();
+          ffi.Pointer<transport_acceptor_configuration_t>)>();
 
   ffi.Pointer<transport_channel_t> transport_add_channel(
     ffi.Pointer<transport_t> transport,
@@ -19472,6 +19156,26 @@ class TransportBindings {
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
               ffi.Pointer<io_uring>)>>('transport_consume');
   late final _transport_consume = _transport_consumePtr.asFunction<
+      int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+          ffi.Pointer<io_uring>)>();
+
+  int transport_peek(
+    int cqe_count,
+    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
+    ffi.Pointer<io_uring> ring,
+  ) {
+    return _transport_peek(
+      cqe_count,
+      cqes,
+      ring,
+    );
+  }
+
+  late final _transport_peekPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Pointer<io_uring>)>>('transport_peek');
+  late final _transport_peek = _transport_peekPtr.asFunction<
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
           ffi.Pointer<io_uring>)>();
 
@@ -19582,24 +19286,45 @@ class TransportBindings {
   late final _transport_file_open =
       _transport_file_openPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
-  int transport_socket_create(
+  int transport_socket_create_server(
     int max_connections,
     int receive_buffer_size,
     int send_buffer_size,
   ) {
-    return _transport_socket_create(
+    return _transport_socket_create_server(
       max_connections,
       receive_buffer_size,
       send_buffer_size,
     );
   }
 
-  late final _transport_socket_createPtr = _lookup<
+  late final _transport_socket_create_serverPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int32 Function(
-              ffi.Uint32, ffi.Uint32, ffi.Uint32)>>('transport_socket_create');
-  late final _transport_socket_create =
-      _transport_socket_createPtr.asFunction<int Function(int, int, int)>();
+          ffi.Int32 Function(ffi.Uint32, ffi.Uint32,
+              ffi.Uint32)>>('transport_socket_create_server');
+  late final _transport_socket_create_server =
+      _transport_socket_create_serverPtr
+          .asFunction<int Function(int, int, int)>();
+
+  int transport_socket_create_client(
+    int max_connections,
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create_client(
+      max_connections,
+      receive_buffer_size,
+      send_buffer_size,
+    );
+  }
+
+  late final _transport_socket_create_clientPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(ffi.Uint32, ffi.Uint32,
+              ffi.Uint32)>>('transport_socket_create_client');
+  late final _transport_socket_create_client =
+      _transport_socket_create_clientPtr
+          .asFunction<int Function(int, int, int)>();
 
   int transport_socket_bind(
     int server_socket_fd,
@@ -23397,55 +23122,30 @@ class _SymbolAddresses {
       get transport_channel_close => _library._transport_channel_closePtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_channel_configuration_t>,
-              ffi.Pointer<io_uring>)>> get transport_channel_for_ring =>
-      _library._transport_channel_for_ringPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_channel_t>)>>
-      get transport_channel_for_ring_close =>
-          _library._transport_channel_for_ring_closePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_channel>, ffi.Int, ffi.Int)>>
-      get transport_channel_write => _library._transport_channel_writePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_channel>, ffi.Int, ffi.Int)>>
-      get transport_channel_read => _library._transport_channel_readPtr;
+          ffi.Int Function(
+              ffi.Pointer<transport_channel>,
+              ffi.Int,
+              ffi.Int,
+              ffi.Int64,
+              ffi.Int64)>> get transport_channel_write =>
+      _library._transport_channel_writePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Pointer<transport_channel>,
               ffi.Int,
               ffi.Int,
-              ffi.Uint64,
-              ffi.Int64)>> get transport_channel_write_custom_data =>
-      _library._transport_channel_write_custom_dataPtr;
+              ffi.Int64,
+              ffi.Int64)>> get transport_channel_read =>
+      _library._transport_channel_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Pointer<transport_channel>,
               ffi.Int,
-              ffi.Int,
-              ffi.Uint64,
-              ffi.Int64)>> get transport_channel_read_custom_data =>
-      _library._transport_channel_read_custom_dataPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_channel>, ffi.Int, ffi.Size)>>
-      get transport_channel_handle_write =>
-          _library._transport_channel_handle_writePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_channel>, ffi.Int, ffi.Size)>>
-      get transport_channel_handle_read =>
-          _library._transport_channel_handle_readPtr;
+              ffi.Pointer<ffi.Char>,
+              ffi.Int)>> get transport_channel_connect =>
+      _library._transport_channel_connectPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<transport_channel_t>)>>
@@ -23454,24 +23154,8 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_channel_t>, ffi.Int)>>
-      get transport_channel_free_buffer_by_id =>
-          _library._transport_channel_free_buffer_by_idPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_channel_t>, ffi.Int)>>
-      get transport_channel_free_buffer_by_fd =>
-          _library._transport_channel_free_buffer_by_fdPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_channel_t>, ffi.Int)>>
-      get transport_channel_complete_write_by_fd =>
-          _library._transport_channel_complete_write_by_fdPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_channel_t>, ffi.Int, ffi.Int)>>
-      get transport_channel_complete_write_by_buffer_id =>
-          _library._transport_channel_complete_write_by_buffer_idPtr;
+      get transport_channel_free_buffer =>
+          _library._transport_channel_free_bufferPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_acceptor_t> Function(
@@ -23484,57 +23168,6 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
       get transport_acceptor_shutdown =>
           _library._transport_acceptor_shutdownPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_event_loop_t> Function(
-                  ffi.Pointer<transport_event_loop_configuration_t>,
-                  ffi.Pointer<transport_channel_configuration_t>)>>
-      get transport_event_loop_initialize =>
-          _library._transport_event_loop_initializePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_event_loop_t>, Dart_Port)>>
-      get transport_event_loop_start => _library._transport_event_loop_startPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_event_loop_t>)>>
-      get transport_event_loop_stop => _library._transport_event_loop_stopPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_event_loop_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int,
-              ffi.Handle)>> get transport_event_loop_connect =>
-      _library._transport_event_loop_connectPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_event_loop_t>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Uint64,
-              ffi.Handle)>> get transport_event_loop_read =>
-      _library._transport_event_loop_readPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_event_loop_t>,
-              ffi.Int,
-              ffi.Int,
-              ffi.Uint64,
-              ffi.Handle)>> get transport_event_loop_write =>
-      _library._transport_event_loop_writePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Handle Function(ffi.Pointer<transport_event_t>)>>
-      get transport_get_handle_from_event =>
-          _library._transport_get_handle_from_eventPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_event_t>)>>
-      get transport_delete_handle_from_event =>
-          _library._transport_delete_handle_from_eventPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Pointer<transport_channel_pool> Function()>>
       get transport_channel_pool_initialize =>
@@ -23561,8 +23194,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_t> Function(
                   ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_channel_configuration_t>,
-                  ffi.Pointer<transport_acceptor_configuration_t>,
-                  ffi.Pointer<transport_event_loop_configuration_t>)>>
+                  ffi.Pointer<transport_acceptor_configuration_t>)>>
       get transport_initialize => _library._transport_initializePtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -23574,6 +23206,11 @@ class _SymbolAddresses {
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
               ffi.Pointer<io_uring>)>> get transport_consume =>
       _library._transport_consumePtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Pointer<io_uring>)>> get transport_peek =>
+      _library._transport_peekPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(
@@ -23597,7 +23234,13 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int32 Function(ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
-      get transport_socket_create => _library._transport_socket_createPtr;
+      get transport_socket_create_server =>
+          _library._transport_socket_create_serverPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_client =>
+          _library._transport_socket_create_clientPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int32 Function(
@@ -26642,9 +26285,7 @@ class transport_channel extends ffi.Struct {
   @ffi.Uint32()
   external int buffers_count;
 
-  external ffi.Pointer<ffi.Int> buffers_state;
-
-  external ffi.Pointer<mh_i32_t> buffer_by_fd;
+  external ffi.Pointer<ffi.Int> used_buffers;
 
   @ffi.Int()
   external int available_buffer_id;
@@ -26698,58 +26339,6 @@ class transport_acceptor extends ffi.Struct {
 typedef transport_acceptor_t = transport_acceptor;
 typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
 
-class transport_event extends ffi.Struct {
-  external ffi.Pointer<ffi.Handle> callback;
-
-  @ffi.Int32()
-  external int result;
-
-  @ffi.Int32()
-  external int socket_fd;
-
-  @ffi.Bool()
-  external bool free;
-}
-
-class transport_event_loop_configuration extends ffi.Struct {
-  @ffi.Uint32()
-  external int ring_size;
-
-  @ffi.Uint32()
-  external int ring_flags;
-
-  @ffi.Int32()
-  external int client_max_connections;
-
-  @ffi.Uint32()
-  external int client_receive_buffer_size;
-
-  @ffi.Uint32()
-  external int client_send_buffer_size;
-}
-
-class transport_event_loop extends ffi.Struct {
-  external ffi.Pointer<io_uring> ring;
-
-  @ffi.Int32()
-  external int client_max_connections;
-
-  @ffi.Uint32()
-  external int client_receive_buffer_size;
-
-  @ffi.Uint32()
-  external int client_send_buffer_size;
-
-  external ffi.Pointer<transport_channel_t> channel;
-
-  external ffi.Pointer<transport_event_t> events_cache;
-}
-
-typedef transport_event_t = transport_event;
-typedef transport_event_loop_t = transport_event_loop;
-typedef transport_event_loop_configuration_t
-    = transport_event_loop_configuration;
-
 class transport_channel_pool extends ffi.Struct {
   external rlist channels;
 
@@ -26776,8 +26365,6 @@ class transport extends ffi.Struct {
 
   external ffi.Pointer<transport_acceptor_configuration_t>
       acceptor_configuration;
-
-  external ffi.Pointer<transport_event_loop_configuration_t> loop_configuration;
 }
 
 typedef transport_t = transport;
@@ -30744,7 +30331,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
@@ -30810,14 +30397,18 @@ const int ITIMER_PROF = 2;
 
 const int MH_TYPEDEFS = 1;
 
-const int TRANSPORT_EVENT_READ = -9223372036854775808;
+const int TRANSPORT_EVENT_CLOSE = -9223372036854775808;
 
-const int TRANSPORT_EVENT_WRITE = 4611686018427387904;
+const int TRANSPORT_EVENT_READ = 4611686018427387904;
 
-const int TRANSPORT_EVENT_ACCEPT = 2305843009213693952;
+const int TRANSPORT_EVENT_WRITE = 2305843009213693952;
 
-const int TRANSPORT_EVENT_CONNECT = 1152921504606846976;
+const int TRANSPORT_EVENT_ACCEPT = 1152921504606846976;
 
-const int TRANSPORT_EVENT_CLOSE = 576460752303423488;
+const int TRANSPORT_EVENT_CONNECT = 576460752303423488;
+
+const int TRANSPORT_EVENT_READ_CALLBACK = 288230376151711744;
+
+const int TRANSPORT_EVENT_WRITE_CALLBACK = 144115188075855872;
 
 const int TRANSPORT_NATIVE_LOG_BUFFER = 2048;

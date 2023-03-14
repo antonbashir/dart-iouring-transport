@@ -16,7 +16,6 @@ class Transport {
   late final TransportConfiguration _transportConfiguration;
   late final TransportAcceptorConfiguration _acceptorConfiguration;
   late final TransportChannelConfiguration _channelConfiguration;
-  late final TransportEventLoopConfiguration _loopConfiguration;
   late final String? libraryPath;
   late final TransportLogger _logger;
   late final TransportBindings _bindings;
@@ -33,24 +32,15 @@ class Transport {
     TransportConfiguration transportConfiguration,
     TransportAcceptorConfiguration acceptorConfiguration,
     TransportChannelConfiguration channelConfiguration,
-    TransportEventLoopConfiguration loopConfiguration,
   ) {
     _transportConfiguration = transportConfiguration;
     _acceptorConfiguration = acceptorConfiguration;
     _channelConfiguration = channelConfiguration;
-    _loopConfiguration = loopConfiguration;
 
     _logger = TransportLogger(transportConfiguration.logLevel);
 
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
     nativeTransportConfiguration.ref.logging_port = _logger.listenNative();
-
-    final nativeLoopConfiguration = calloc<transport_event_loop_configuration_t>();
-    nativeLoopConfiguration.ref.ring_size = loopConfiguration.ringSize;
-    nativeLoopConfiguration.ref.ring_flags = loopConfiguration.ringFlags;
-    nativeLoopConfiguration.ref.client_max_connections = loopConfiguration.clientMaxConnections;
-    nativeLoopConfiguration.ref.client_receive_buffer_size = loopConfiguration.clientReceiveBufferSize;
-    nativeLoopConfiguration.ref.client_send_buffer_size = loopConfiguration.clientSendBufferSize;
 
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
@@ -69,7 +59,6 @@ class Transport {
       nativeTransportConfiguration,
       nativeChannelConfiguration,
       nativeAcceptorConfiguration,
-      nativeLoopConfiguration,
     );
   }
 

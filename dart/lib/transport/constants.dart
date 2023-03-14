@@ -101,12 +101,17 @@ const transportLogLevels = [
   "FATAL",
 ];
 
-const transportEventRead = 1 << (64 - 1 - 0);
-const transportEventWrite = 1 << (64 - 1 - 1);
-const transportEventAccept = 1 << (64 - 1 - 2);
-const transportEventConnect = 1 << (64 - 1 - 3);
-const transportEventClose = 1 << (64 - 1 - 4);
-const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose;
+const transportBufferAvailable = -2;
+const transportBufferUsed = -1;
+
+const transportEventClose = 1 << (64 - 1 - 0);
+const transportEventRead = 1 << (64 - 1 - 1);
+const transportEventWrite = 1 << (64 - 1 - 2);
+const transportEventAccept = 1 << (64 - 1 - 3);
+const transportEventConnect = 1 << (64 - 1 - 4);
+const transportEventReadCallback = 1 << (64 - 1 - 5);
+const transportEventWriteCallback = 1 << (64 - 1 - 6);
+const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose | transportEventReadCallback | transportEventWriteCallback;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;

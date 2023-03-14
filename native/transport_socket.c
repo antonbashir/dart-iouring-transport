@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-int32_t transport_socket_create(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size)
+int32_t transport_socket_create_server(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size)
 {
   int32_t option = 1;
 
@@ -33,6 +33,48 @@ int32_t transport_socket_create(uint32_t max_connections, uint32_t receive_buffe
   }
 
   result = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &receive_buffer_size, sizeof(receive_buffer_size));
+  if (result == -1)
+  {
+    return -1;
+  }
+
+  result = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &send_buffer_size, sizeof(send_buffer_size));
+  if (result == -1)
+  {
+    return -1;
+  }
+
+  result = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &option, sizeof(option));
+  if (result == -1)
+  {
+    return -1;
+  }
+
+  result = setsockopt(fd, IPPROTO_TCP, TCP_QUICKACK, &option, sizeof(option));
+  if (result == -1)
+  {
+    return -1;
+  }
+
+  result = setsockopt(fd, IPPROTO_TCP, TCP_FASTOPEN, &max_connections, sizeof(max_connections));
+  if (result == -1)
+  {
+    return -1;
+  }
+  return (uint32_t)fd;
+}
+
+int32_t transport_socket_create_client(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size)
+{
+  int32_t option = 1;
+
+  int32_t fd = socket(AF_INET, SOCK_STREAM | O_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+  if (fd == -1)
+  {
+    return -1;
+  }
+
+  int32_t result = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &receive_buffer_size, sizeof(receive_buffer_size));
   if (result == -1)
   {
     return -1;
