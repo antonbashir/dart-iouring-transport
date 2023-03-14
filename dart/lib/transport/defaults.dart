@@ -13,11 +13,11 @@ class TransportDefaults {
         buffersCount: 8192,
         bufferSize: 4096,
         ringSize: 16536,
-        ringFlags: ringSetupSqpoll,
+        ringFlags: 0,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
-        maxConnections: 1024,
+        maxConnections: 8192,
         receiveBufferSize: 2048,
         sendBufferSize: 2048,
         ringSize: 2048,

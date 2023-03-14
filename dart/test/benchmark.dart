@@ -10,7 +10,7 @@ import 'package:iouring_transport/transport/transport.dart';
 
 Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
-  final fromServer = encoder.convert("from server");
+  final fromServer = encoder.convert("from server\n");
 
   final transport = Transport()
     ..initialize(
@@ -25,10 +25,10 @@ Future<void> main(List<String> args) async {
         late TransportClient client;
         TransportEventLoop(port).run(
           onRun: (provider) async {
-            client = await provider.connector.connect("127.0.0.1", 12345);
+            client = await provider.connector.connect("35.202.158.55", 12345);
           },
           onAccept: (channel, descriptor) => channel.read(descriptor),
-          onInput: (payload) {
+          onInput: (payload) async {
             client.write(fromServer);
             return fromServer;
           },

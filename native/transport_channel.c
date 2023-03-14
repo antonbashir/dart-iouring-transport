@@ -62,13 +62,13 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
 
 int transport_channel_allocate_buffer(transport_channel_t *channel)
 {
-  while (unlikely(channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE))
+  while (channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE)
   {
     channel->available_buffer_id++;
-    if (unlikely(channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE))
+    if (channel->available_buffer_id == channel->buffers_count)
     {
       channel->available_buffer_id = 0;
-      if (unlikely(channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE))
+      if (channel->used_buffers[channel->available_buffer_id] != BUFFER_AVAILABLE)
       {
         return -1;
       }

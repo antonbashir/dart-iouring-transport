@@ -68,7 +68,7 @@ int32_t transport_socket_create_client(uint32_t max_connections, uint32_t receiv
 {
   int32_t option = 1;
 
-  int32_t fd = socket(AF_INET, SOCK_STREAM | O_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+  int32_t fd = socket(AF_INET, SOCK_STREAM | O_NONBLOCK, IPPROTO_TCP);
   if (fd == -1)
   {
     return -1;
@@ -86,23 +86,6 @@ int32_t transport_socket_create_client(uint32_t max_connections, uint32_t receiv
     return -1;
   }
 
-  result = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &option, sizeof(option));
-  if (result == -1)
-  {
-    return -1;
-  }
-
-  result = setsockopt(fd, IPPROTO_TCP, TCP_QUICKACK, &option, sizeof(option));
-  if (result == -1)
-  {
-    return -1;
-  }
-
-  result = setsockopt(fd, IPPROTO_TCP, TCP_FASTOPEN, &max_connections, sizeof(max_connections));
-  if (result == -1)
-  {
-    return -1;
-  }
   return (uint32_t)fd;
 }
 

@@ -46,7 +46,7 @@ class TransportConnector {
 
   TransportConnector(this._callbacks, this._channelPointer, this._transport, this._bindings);
 
-  Future<TransportClient> connect(String host, int port) async {
+  Future<TransportClient> connect(String host, int port) {
     final completer = Completer<TransportClient>();
     final fd = _bindings.transport_socket_create_client(
       _transport.ref.acceptor_configuration.ref.max_connections,

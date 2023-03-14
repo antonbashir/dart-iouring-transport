@@ -123,12 +123,12 @@ class TransportEventLoop {
             continue;
           }
           final buffer = _channelPointer.ref.buffers[bufferId];
-          Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
+          unawaited(Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
             _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
             buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
             buffer.iov_len = answer.length;
             _bindings.transport_channel_write(_channelPointer, fd, bufferId, 0, transportEventWrite);
-          });
+          }));
           continue;
         }
 
@@ -167,7 +167,7 @@ class TransportEventLoop {
         }
 
         if (userData & transportEventAccept != 0) {
-          onAccept?.call(_serverChannel, result);
+          unawaited(Future.value(onAccept?.call(_serverChannel, result)));
           continue;
         }
 
