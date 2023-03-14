@@ -19143,19 +19143,47 @@ class TransportBindings {
     int cqe_count,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     ffi.Pointer<io_uring> ring,
+    int timeout_seconds,
+    int timeout_nanos,
   ) {
     return _transport_consume(
+      cqe_count,
+      cqes,
+      ring,
+      timeout_seconds,
+      timeout_nanos,
+    );
+  }
+
+  late final _transport_consumePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Uint32,
+              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Pointer<io_uring>,
+              ffi.Int64,
+              ffi.Int64)>>('transport_consume');
+  late final _transport_consume = _transport_consumePtr.asFunction<
+      int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+          ffi.Pointer<io_uring>, int, int)>();
+
+  int transport_wait(
+    int cqe_count,
+    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
+    ffi.Pointer<io_uring> ring,
+  ) {
+    return _transport_wait(
       cqe_count,
       cqes,
       ring,
     );
   }
 
-  late final _transport_consumePtr = _lookup<
+  late final _transport_waitPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>>('transport_consume');
-  late final _transport_consume = _transport_consumePtr.asFunction<
+              ffi.Pointer<io_uring>)>>('transport_wait');
+  late final _transport_wait = _transport_waitPtr.asFunction<
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
           ffi.Pointer<io_uring>)>();
 
@@ -23203,9 +23231,18 @@ class _SymbolAddresses {
       _library._transport_add_channelPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>> get transport_consume =>
+          ffi.Int Function(
+              ffi.Uint32,
+              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Pointer<io_uring>,
+              ffi.Int64,
+              ffi.Int64)>> get transport_consume =>
       _library._transport_consumePtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Pointer<io_uring>)>> get transport_wait =>
+      _library._transport_waitPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,

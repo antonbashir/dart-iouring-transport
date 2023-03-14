@@ -76,112 +76,120 @@ class TransportEventLoop {
 
     _active = true;
 
-    Timer.periodic(Duration.zero, (timer) {
-      int cqeCount = _bindings.transport_consume(_ringSize, cqes, ring);
-      if (cqeCount == -1) return;
-      for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-        final cqe = cqes[cqeIndex];
-        final result = cqe.ref.res;
-        final userData = cqe.ref.user_data;
+    for (var i = 0; i < 1; i++) {
+      Timer.periodic(Duration.zero, (timer) {
+        int cqeCount = _bindings.transport_consume(_ringSize, cqes, ring, 0, 1);
+        if (cqeCount == -1) return;
+        for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+          Future.microtask(() {
+            final cqe = cqes[cqeIndex];
+            final result = cqe.ref.res;
+            final userData = cqe.ref.user_data;
 
-        if (result < 0) {
-          if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
-            final bufferId = userData & ~transportEventAll;
-            final fd = _channelPointer.ref.used_buffers[bufferId];
-            _bindings.transport_close_descritor(fd);
-            _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-          }
+            if (result < 0) {
+              if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
+                final bufferId = userData & ~transportEventAll;
+                final fd = _channelPointer.ref.used_buffers[bufferId];
+                _bindings.transport_close_descritor(fd);
+                _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+              }
 
-          if (userData & transportEventConnect != 0) {
-            _bindings.transport_close_descritor(userData & ~transportEventAll);
-            _callbacks.getConnect(userData & ~transportEventAll)?.completeError(Exception("Connect exception with code $result"));
-            _callbacks.removeConnect(userData & ~transportEventAll);
-          }
+              if (userData & transportEventConnect != 0) {
+                _bindings.transport_close_descritor(userData & ~transportEventAll);
+                _callbacks.getConnect(userData & ~transportEventAll)?.completeError(Exception("Connect exception with code $result"));
+                _callbacks.removeConnect(userData & ~transportEventAll);
+              }
 
-          if (userData & transportEventReadCallback != 0 || userData & transportEventWriteCallback != 0) {
-            final bufferId = userData & ~transportEventAll;
-            final fd = _channelPointer.ref.used_buffers[bufferId];
-            _bindings.transport_close_descritor(fd);
-            _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+              if (userData & transportEventReadCallback != 0 || userData & transportEventWriteCallback != 0) {
+                final bufferId = userData & ~transportEventAll;
+                final fd = _channelPointer.ref.used_buffers[bufferId];
+                if (userData & transportEventReadCallback != 0) {
+                  _bindings.transport_close_descritor(fd);
+                  _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+                  _callbacks.getRead(bufferId)?.completeError(Exception("Read exception with code $result"));
+                  _callbacks.removeRead(bufferId);
+                }
+                if (userData & transportEventWriteCallback != 0) {
+                  if (result == -11) {
+                    _bindings.transport_channel_write(_channelPointer, fd, bufferId, 0, transportEventWriteCallback);
+                    return;
+                  }
+                  _bindings.transport_close_descritor(fd);
+                  _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+                  _callbacks.getWrite(bufferId)?.completeError(Exception("Write exception with code $result"));
+                  _callbacks.removeWrite(bufferId);
+                }
+              }
+              return;
+            }
+
+            if (userData & transportEventRead != 0) {
+              final bufferId = userData & ~transportEventAll;
+              final fd = _channelPointer.ref.used_buffers[bufferId];
+              if (onInput == null) {
+                _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+                return;
+              }
+              final buffer = _channelPointer.ref.buffers[bufferId];
+              unawaited(Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
+                _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+                buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+                buffer.iov_len = answer.length;
+                _bindings.transport_channel_write(_channelPointer, fd, bufferId, 0, transportEventWrite);
+              }));
+              return;
+            }
+
+            if (userData & transportEventWrite != 0) {
+              final bufferId = userData & ~transportEventAll;
+              final fd = _channelPointer.ref.used_buffers[bufferId];
+              _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+              _bindings.transport_channel_read(_channelPointer, fd, bufferId, 0, transportEventRead);
+              return;
+            }
+
             if (userData & transportEventReadCallback != 0) {
-              _callbacks.getRead(bufferId)?.completeError(Exception("Read exception with code $result"));
-              _callbacks.removeRead(bufferId);
+              final bufferId = userData & ~transportEventAll;
+              final buffer = _channelPointer.ref.buffers[bufferId];
+              final callback = _callbacks.getRead(bufferId);
+              if (callback == null) {
+                _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+                return;
+              }
+              callback.complete(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), () => _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable));
+              return;
             }
+
             if (userData & transportEventWriteCallback != 0) {
-              _callbacks.getWrite(bufferId)?.completeError(Exception("Write exception with code $result"));
-              _callbacks.removeWrite(bufferId);
+              final bufferId = userData & ~transportEventAll;
+              final callback = _callbacks.getWrite(bufferId);
+              _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+              callback?.complete();
+              return;
             }
-          }
-          continue;
-        }
 
-        if (userData & transportEventRead != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final fd = _channelPointer.ref.used_buffers[bufferId];
-          if (onInput == null) {
-            _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-            continue;
-          }
-          final buffer = _channelPointer.ref.buffers[bufferId];
-          unawaited(Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
-            _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-            buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-            buffer.iov_len = answer.length;
-            _bindings.transport_channel_write(_channelPointer, fd, bufferId, 0, transportEventWrite);
-          }));
-          continue;
-        }
+            if (userData & transportEventConnect != 0) {
+              final fd = userData & ~transportEventAll;
+              _callbacks.getConnect(fd)?.complete(TransportClient(_callbacks, _resourceChannel, _bindings, fd));
+              return;
+            }
 
-        if (userData & transportEventWrite != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final fd = _channelPointer.ref.used_buffers[bufferId];
-          _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-          _bindings.transport_channel_read(_channelPointer, fd, bufferId, 0, transportEventRead);
-          continue;
-        }
+            if (userData & transportEventAccept != 0) {
+              unawaited(Future.value(onAccept?.call(_serverChannel, result)));
+              return;
+            }
 
-        if (userData & transportEventReadCallback != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final buffer = _channelPointer.ref.buffers[bufferId];
-          final callback = _callbacks.getRead(bufferId);
-          if (callback == null) {
-            _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-            continue;
-          }
-          callback.complete(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), () => _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable));
-          continue;
+            if (userData & transportEventClose != 0) {
+              _bindings.transport_channel_close(_channelPointer);
+              Isolate.exit();
+            }
+          });
         }
-
-        if (userData & transportEventWriteCallback != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final callback = _callbacks.getWrite(bufferId);
-          _channelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-          callback?.complete();
-          continue;
-        }
-
-        if (userData & transportEventConnect != 0) {
-          final fd = userData & ~transportEventAll;
-          _callbacks.getConnect(fd)?.complete(TransportClient(_callbacks, _resourceChannel, _bindings, fd));
-          continue;
-        }
-
-        if (userData & transportEventAccept != 0) {
-          unawaited(Future.value(onAccept?.call(_serverChannel, result)));
-          continue;
-        }
-
-        if (userData & transportEventClose != 0) {
-          _bindings.transport_channel_close(_channelPointer);
-          timer.cancel();
-          Isolate.exit();
-        }
-      }
-      _bindings.transport_cqe_advance(ring, cqeCount);
-    });
+        _bindings.transport_cqe_advance(ring, cqeCount);
+      });
+    }
 
     await onRun?.call(TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path)));
-
     activationPort.send(null);
   }
 }

@@ -34,7 +34,9 @@ extern "C"
 
   transport_channel_t *transport_add_channel(transport_t *transport);
 
-  int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
+  int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring, int64_t timeout_seconds, int64_t timeout_nanos);
+  
+  int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
   int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
