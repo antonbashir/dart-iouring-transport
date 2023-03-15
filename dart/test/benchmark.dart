@@ -23,7 +23,8 @@ Future<void> main(List<String> args) async {
         9000,
         onAccept: (channel, descriptor) => channel.read(descriptor),
         onInput: (payload) async {
-          await client.write(fromServer);
+          await Future.delayed(Duration(seconds: 1));
+          print("response");
           return fromServer;
         },
       );

@@ -1,21 +1,18 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:isolate';
-import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/client.dart';
-import 'package:iouring_transport/transport/file.dart';
-import 'package:iouring_transport/transport/logger.dart';
-import 'package:iouring_transport/transport/provider.dart';
 import 'package:tuple/tuple.dart';
 
 import 'acceptor.dart';
 import 'bindings.dart';
 import 'channels.dart';
+import 'client.dart';
 import 'constants.dart';
-import 'lookup.dart';
+import 'file.dart';
 import 'payload.dart';
+import 'provider.dart';
 
 class TransportEventLoopCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
@@ -24,23 +21,30 @@ class TransportEventLoopCallbacks {
 
   @pragma(preferInlinePragma)
   void putConnect(int fd, Completer<TransportClient> completer) => _connectCallbacks[fd] = completer;
+
   @pragma(preferInlinePragma)
   void putRead(Tuple2<int, int> key, Completer<TransportPayload> completer) => _readCallbacks[key] = completer;
+
   @pragma(preferInlinePragma)
   void putWrite(Tuple2<int, int> key, Completer<void> completer) => _writeCallbacks[key] = completer;
 
   @pragma(preferInlinePragma)
   void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)?.complete(client);
+
   @pragma(preferInlinePragma)
   void notifyRead(Tuple2<int, int> key, TransportPayload payload) => _readCallbacks.remove(key)?.complete(payload);
+
   @pragma(preferInlinePragma)
   void notifyWrite(Tuple2<int, int> key) => _writeCallbacks.remove(key)?.complete();
 
+  @pragma(preferInlinePragma)
   void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)?.completeError(error);
-  void notifyReadError(Tuple2<int, int> key, Exception error) => _readCallbacks.remove(key)?.completeError(error);
-  void notifyWriteError(Tuple2<int, int> key, Exception error) => _writeCallbacks.remove(key)?.completeError(error);
 
-  bool isWaiting() => _connectCallbacks.isNotEmpty || _readCallbacks.isNotEmpty || _writeCallbacks.isNotEmpty;
+  @pragma(preferInlinePragma)
+  void notifyReadError(Tuple2<int, int> key, Exception error) => _readCallbacks.remove(key)?.completeError(error);
+
+  @pragma(preferInlinePragma)
+  void notifyWriteError(Tuple2<int, int> key, Exception error) => _writeCallbacks.remove(key)?.completeError(error);
 }
 
 class TransportEventLoop {
@@ -113,7 +117,7 @@ class TransportEventLoop {
     _onExit.send(null);
   }
 
-  void _handleOutbound(int result, int userData, Pointer<transport_channel_t> channel) {
+  Future<void> _handleOutbound(int result, int userData, Pointer<transport_channel_t> channel) async {
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         _bindings.transport_close_descritor(userData & ~transportEventAll);
@@ -175,7 +179,7 @@ class TransportEventLoop {
     }
   }
 
-  void _handleInbound(int result, int userData, Pointer<transport_channel_t> channel) {
+  Future<void> _handleInbound(int result, int userData, Pointer<transport_channel_t> channel) async {
     if (result < 0) {
       if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
         final bufferId = userData & ~transportEventAll;
@@ -194,11 +198,10 @@ class TransportEventLoop {
         return;
       }
       final buffer = channel.ref.buffers[bufferId];
-      unawaited(Future.value(onInput!.call(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
-        buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-        buffer.iov_len = answer.length;
-        _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
-      }));
+      final answer = await onInput!.call(buffer.iov_base.cast<Uint8>().asTypedList(result));
+      buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+      buffer.iov_len = answer.length;
+      _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
       return;
     }
 
