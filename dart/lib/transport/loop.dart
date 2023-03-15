@@ -146,7 +146,7 @@ class TransportEventLoop {
         final userData = cqe.ref.user_data;
 
         if (result & transportEventAwake != 0) {
-          _handleCallback(result & ~transportEventAll, userData);
+          Future.microtask(() => _handleCallback(result & ~transportEventAll, userData));
           continue;
         }
 
