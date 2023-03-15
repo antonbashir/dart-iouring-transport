@@ -22,7 +22,8 @@ extern "C"
 
   typedef struct transport
   {
-    struct transport_channel_pool *channels;
+    struct transport_channel_pool *inbound_channels;
+    struct transport_channel_pool *outbound_channels;
     transport_acceptor_t *acceptor;
     transport_channel_configuration_t *channel_configuration;
     transport_acceptor_configuration_t *acceptor_configuration;
@@ -32,10 +33,14 @@ extern "C"
                                     transport_channel_configuration_t *channel_configuration,
                                     transport_acceptor_configuration_t *acceptor_configuration);
 
-  transport_channel_t *transport_add_channel(transport_t *transport);
+  transport_channel_t *transport_add_inbound_channel(transport_t *transport);
+
+  transport_channel_t *transport_add_outbound_channel(transport_t *transport);
+
+  transport_channel_t *transport_select_outbound_channel(transport_t *transport);
 
   int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring, int64_t timeout_seconds, int64_t timeout_nanos);
-  
+
   int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
   int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);

@@ -16,20 +16,18 @@ Future<void> main(List<String> args) async {
       TransportDefaults.acceptor(),
       TransportDefaults.channel(),
     )
-    ..listen().then(
-      (loop) async {
-        final client = await loop.provider.connector.connect("35.202.158.55", 12345);
-        loop.serve(
-          "0.0.0.0",
-          9999,
-          onAccept: (channel, descriptor) => channel.read(descriptor),
-          onInput: (payload) async {
-            client.write(fromServer);
-            return fromServer;
-          },
-        );
-      },
-    );
+    ..listen(isolates: 4).then((loop) async {
+      final client = await loop.provider.connector().connect("35.202.158.55", 12345);
+      loop.serve(
+        "0.0.0.0",
+        9000,
+        onAccept: (channel, descriptor) => channel.read(descriptor),
+        onInput: (payload) async {
+          client.write(fromServer);
+          return fromServer;
+        },
+      );
+    });
 
   await Future.delayed(Duration(days: 1));
 }

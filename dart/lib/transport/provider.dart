@@ -2,10 +2,12 @@ import 'package:iouring_transport/transport/client.dart';
 import 'package:iouring_transport/transport/file.dart';
 
 class TransportProvider {
-  final TransportConnector connector;
-  final TransportFile Function(String path) fileFactory;
+  final TransportConnector Function() _connectorFactory;
+  final TransportFile Function(String path) _fileFactory;
 
-  TransportProvider(this.connector, this.fileFactory);
+  TransportProvider(this._connectorFactory, this._fileFactory);
 
-  file(String path) => fileFactory(path);
+  TransportFile file(String path) => _fileFactory(path);
+
+  TransportConnector connector() => _connectorFactory();
 }

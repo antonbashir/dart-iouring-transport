@@ -76,33 +76,67 @@ class Transport {
   Future<TransportEventLoop> listen({int isolates = 1}) async {
     isolatesCount = isolates;
 
-    final fromIncoming = ReceivePort();
-    final fromOutgoing = ReceivePort();
-    final completer = StreamController();
+    final fromInbound = ReceivePort();
+    final fromOutbound = ReceivePort();
+    final fromInboundActivator = ReceivePort();
+    final fromOutboundActivator = ReceivePort();
+    final completer = Completer();
+    var completionCounter = 0;
 
     loop = TransportEventLoop(_libraryPath, _bindings, _transport, loopExit.sendPort);
 
     for (var isolate = 0; isolate < isolates; isolate++) {
-      Isolate.spawn<SendPort>((toTransport) => TransportIncomingListener(toTransport).listen(), fromIncoming.sendPort, onExit: listenerExit.sendPort);
-      Isolate.spawn<SendPort>((toTransport) => TransportOutgoingListener(toTransport).listen(), fromOutgoing.sendPort, onExit: listenerExit.sendPort);
+      Isolate.spawn<SendPort>(
+        (toTransport) => TransportInboundListener(toTransport).listen(),
+        fromInbound.sendPort,
+        onExit: listenerExit.sendPort,
+      );
+      Isolate.spawn<SendPort>(
+        (toTransport) => TransportOutboundListener(toTransport).listen(),
+        fromOutbound.sendPort,
+        onExit: listenerExit.sendPort,
+      );
     }
 
-    fromIncoming.listen((port) {
-      SendPort toIncoming = port as SendPort;
-      toIncoming.send([_libraryPath, _transport.address, _channelConfiguration.ringSize, loop.onIncoming.sendPort]);
-      completer.add(null);
+    fromInbound.listen((port) {
+      SendPort toInbound = port as SendPort;
+      toInbound.send([
+        _libraryPath,
+        _transport.address,
+        _channelConfiguration.ringSize,
+        loop.onInbound.sendPort,
+        fromInboundActivator.sendPort,
+      ]);
     });
 
-    fromOutgoing.listen((port) {
-      SendPort toOutgoing = port as SendPort;
-      toOutgoing.send([_libraryPath, _transport.address, _channelConfiguration.ringSize, loop.onOutgoing.sendPort]);
-      completer.add(null);
+    fromInboundActivator.listen((message) {
+      if (++completionCounter == isolates * 2) {
+        completer.complete();
+      }
     });
 
-    return completer.stream.take(isolates * 2).toList().then((value) {
-      fromIncoming.close();
-      fromOutgoing.close();
-      completer.close();
+    fromOutbound.listen((port) {
+      SendPort toOutbound = port as SendPort;
+      toOutbound.send([
+        _libraryPath,
+        _transport.address,
+        _channelConfiguration.ringSize,
+        loop.onOutbound.sendPort,
+        fromOutboundActivator.sendPort,
+      ]);
+    });
+
+    fromOutboundActivator.listen((message) {
+      if (++completionCounter == isolates * 2) {
+        completer.complete();
+      }
+    });
+
+    return completer.future.then((value) {
+      fromInbound.close();
+      fromOutbound.close();
+      fromInboundActivator.close();
+      fromOutboundActivator.close();
       return loop;
     });
   }

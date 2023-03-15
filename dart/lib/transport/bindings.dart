@@ -19150,20 +19150,56 @@ class TransportBindings {
           ffi.Pointer<transport_channel_configuration_t>,
           ffi.Pointer<transport_acceptor_configuration_t>)>();
 
-  ffi.Pointer<transport_channel_t> transport_add_channel(
+  ffi.Pointer<transport_channel_t> transport_add_inbound_channel(
     ffi.Pointer<transport_t> transport,
   ) {
-    return _transport_add_channel(
+    return _transport_add_inbound_channel(
       transport,
     );
   }
 
-  late final _transport_add_channelPtr = _lookup<
+  late final _transport_add_inbound_channelPtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_t>)>>('transport_add_channel');
-  late final _transport_add_channel = _transport_add_channelPtr.asFunction<
-      ffi.Pointer<transport_channel_t> Function(ffi.Pointer<transport_t>)>();
+              ffi.Pointer<transport_t>)>>('transport_add_inbound_channel');
+  late final _transport_add_inbound_channel =
+      _transport_add_inbound_channelPtr.asFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>();
+
+  ffi.Pointer<transport_channel_t> transport_add_outbound_channel(
+    ffi.Pointer<transport_t> transport,
+  ) {
+    return _transport_add_outbound_channel(
+      transport,
+    );
+  }
+
+  late final _transport_add_outbound_channelPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>>('transport_add_outbound_channel');
+  late final _transport_add_outbound_channel =
+      _transport_add_outbound_channelPtr.asFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>();
+
+  ffi.Pointer<transport_channel_t> transport_select_outbound_channel(
+    ffi.Pointer<transport_t> transport,
+  ) {
+    return _transport_select_outbound_channel(
+      transport,
+    );
+  }
+
+  late final _transport_select_outbound_channelPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>>('transport_select_outbound_channel');
+  late final _transport_select_outbound_channel =
+      _transport_select_outbound_channelPtr.asFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>();
 
   int transport_consume(
     int cqe_count,
@@ -23279,8 +23315,19 @@ class _SymbolAddresses {
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_channel_t> Function(
-              ffi.Pointer<transport_t>)>> get transport_add_channel =>
-      _library._transport_add_channelPtr;
+              ffi.Pointer<transport_t>)>> get transport_add_inbound_channel =>
+      _library._transport_add_inbound_channelPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_channel_t> Function(
+              ffi.Pointer<transport_t>)>> get transport_add_outbound_channel =>
+      _library._transport_add_outbound_channelPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<transport_channel_t> Function(
+                  ffi.Pointer<transport_t>)>>
+      get transport_select_outbound_channel =>
+          _library._transport_select_outbound_channelPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -26451,7 +26498,9 @@ class transport_configuration extends ffi.Struct {
 }
 
 class transport extends ffi.Struct {
-  external ffi.Pointer<transport_channel_pool> channels;
+  external ffi.Pointer<transport_channel_pool> inbound_channels;
+
+  external ffi.Pointer<transport_channel_pool> outbound_channels;
 
   external ffi.Pointer<transport_acceptor_t> acceptor;
 

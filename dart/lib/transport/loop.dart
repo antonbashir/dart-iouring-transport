@@ -47,17 +47,12 @@ class TransportEventLoop {
 
   final SendPort _onExit;
 
-  late final RawReceivePort onIncoming;
-  late final RawReceivePort onOutgoing;
+  late final RawReceivePort onInbound;
+  late final RawReceivePort onOutbound;
 
   final String? _libraryPath;
   final TransportBindings _bindings;
   final Pointer<transport_t> _transport;
-
-  late final Pointer<transport_channel> _serverChannelPointer;
-  late final Pointer<transport_channel> _resourceChannelPointer;
-  late final TransportServerChannel _serverChannel;
-  late final TransportResourceChannel _resourceChannel;
 
   late final void Function(TransportServerChannel channel, int descriptor)? onAccept;
   late final FutureOr<Uint8List> Function(Uint8List input)? onInput;
@@ -71,24 +66,20 @@ class TransportEventLoop {
     this._transport,
     this._onExit,
   ) {
-    _serverChannelPointer = _bindings.transport_add_channel(_transport);
-    _serverChannel = TransportServerChannel(_serverChannelPointer, _bindings);
+    provider = TransportProvider(
+      () => TransportConnector(_callbacks, _bindings.transport_select_outbound_channel(_transport), _transport, _bindings),
+      (path) => TransportFile(_callbacks, TransportResourceChannel(_bindings.transport_select_outbound_channel(_transport), _bindings), _bindings, path),
+    );
 
-    _resourceChannelPointer = _bindings.transport_channel_initialize(_transport.ref.channel_configuration);
-    _resourceChannel = TransportResourceChannel(_resourceChannelPointer, _bindings);
-
-    final connector = TransportConnector(_callbacks, _resourceChannelPointer, _transport, _bindings);
-    provider = TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path));
-
-    onIncoming = RawReceivePort((List<dynamic> input) {
+    onInbound = RawReceivePort((List<dynamic> input) {
       for (var element in input) {
-        _handleIncoming(element[0], element[1]);
+        _handleInbound(element[0], element[1], Pointer.fromAddress(element[2]));
       }
     });
 
-    onOutgoing = RawReceivePort((List<dynamic> input) {
+    onOutbound = RawReceivePort((List<dynamic> input) {
       for (var element in input) {
-        _handleOutgoing(element[0], element[1]);
+        _handleOutbound(element[0], element[1], Pointer.fromAddress(element[2]));
       }
     });
   }
@@ -119,7 +110,7 @@ class TransportEventLoop {
     _onExit.send(null);
   }
 
-  void _handleOutgoing(int result, int userData) {
+  void _handleOutbound(int result, int userData, Pointer<transport_channel_t> channel) {
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         _bindings.transport_close_descritor(userData & ~transportEventAll);
@@ -128,23 +119,23 @@ class TransportEventLoop {
 
       if (userData & transportEventReadCallback != 0 || userData & transportEventWriteCallback != 0) {
         final bufferId = userData & ~transportEventAll;
-        final fd = _resourceChannelPointer.ref.used_buffers[bufferId];
+        final fd = channel.ref.used_buffers[bufferId];
         if (userData & transportEventReadCallback != 0) {
           if (result == -EAGAIN) {
-            _bindings.transport_channel_read(_resourceChannelPointer, fd, bufferId, 0, transportEventReadCallback);
+            _bindings.transport_channel_read(channel, fd, bufferId, 0, transportEventReadCallback);
             return;
           }
           _bindings.transport_close_descritor(fd);
-          _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
           _callbacks.notifyReadError(bufferId, Exception("Read exception with code $result"));
         }
         if (userData & transportEventWriteCallback != 0) {
           if (result == -EAGAIN) {
-            _bindings.transport_channel_write(_resourceChannelPointer, fd, bufferId, 0, transportEventWriteCallback);
+            _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWriteCallback);
             return;
           }
           _bindings.transport_close_descritor(fd);
-          _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
           _callbacks.notifyWriteError(bufferId, Exception("Write exception with code $result"));
         }
       }
@@ -153,62 +144,62 @@ class TransportEventLoop {
 
     if (userData & transportEventReadCallback != 0) {
       final bufferId = userData & ~transportEventAll;
-      final buffer = _resourceChannelPointer.ref.buffers[bufferId];
-      _callbacks.notifyRead(bufferId, TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), () => _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable));
+      final buffer = channel.ref.buffers[bufferId];
+      _callbacks.notifyRead(bufferId, TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), () => channel.ref.used_buffers[bufferId] = transportBufferAvailable));
       return;
     }
 
     if (userData & transportEventWriteCallback != 0) {
       final bufferId = userData & ~transportEventAll;
-      _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+      channel.ref.used_buffers[bufferId] = transportBufferAvailable;
       _callbacks.notifyWrite(bufferId);
       return;
     }
 
     if (userData & transportEventConnect != 0) {
       final fd = userData & ~transportEventAll;
-      _callbacks.notifyConnect(fd, TransportClient(_callbacks, _resourceChannel, _bindings, fd));
+      _callbacks.notifyConnect(fd, TransportClient(_callbacks, TransportResourceChannel(channel, _bindings), _bindings, fd));
       return;
     }
   }
 
-  void _handleIncoming(int result, int userData) {
+  void _handleInbound(int result, int userData, Pointer<transport_channel_t> channel) {
     if (result & transportEventAwake != 0) {
       if (result < 0) {
         if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
           final bufferId = userData & ~transportEventAll;
-          final fd = _serverChannelPointer.ref.used_buffers[bufferId];
+          final fd = channel.ref.used_buffers[bufferId];
           _bindings.transport_close_descritor(fd);
-          _serverChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
         }
         return;
       }
 
       if (userData & transportEventRead != 0) {
         final bufferId = userData & ~transportEventAll;
-        final fd = _serverChannelPointer.ref.used_buffers[bufferId];
+        final fd = channel.ref.used_buffers[bufferId];
         if (onInput == null) {
-          _serverChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
           return;
         }
-        final buffer = _serverChannelPointer.ref.buffers[bufferId];
+        final buffer = channel.ref.buffers[bufferId];
         unawaited(Future.value(onInput!.call(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
-          _bindings.transport_channel_write(_serverChannelPointer, fd, bufferId, 0, transportEventWrite);
+          _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
         }));
         return;
       }
 
       if (userData & transportEventWrite != 0) {
         final bufferId = userData & ~transportEventAll;
-        final fd = _serverChannelPointer.ref.used_buffers[bufferId];
-        _bindings.transport_channel_read(_serverChannelPointer, fd, bufferId, 0, transportEventRead);
+        final fd = channel.ref.used_buffers[bufferId];
+        _bindings.transport_channel_read(channel, fd, bufferId, 0, transportEventRead);
         return;
       }
 
       if (userData & transportEventAccept != 0) {
-        onAccept?.call(_serverChannel, result);
+        onAccept?.call(TransportServerChannel(channel, _bindings), result);
         return;
       }
     }

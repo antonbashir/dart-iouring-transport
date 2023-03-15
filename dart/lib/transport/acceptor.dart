@@ -18,7 +18,7 @@ class TransportAcceptor {
   }
 
   Future<void> accept() async {
-    final configuration = await fromTransport.take(4).toList();
+    final configuration = await fromTransport.first;
     final libraryPath = configuration[0] as String?;
     _transport = Pointer.fromAddress(configuration[1] as int);
     String host = configuration[2] as String;
