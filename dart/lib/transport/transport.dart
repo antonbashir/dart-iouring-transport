@@ -84,7 +84,7 @@ class Transport {
     final completer = Completer();
     var completionCounter = 0;
 
-    loop = TransportEventLoop(_libraryPath, _bindings, _transport, loopExit.sendPort);
+    loop = TransportEventLoop(_libraryPath, _bindings, _transport, loopExit.sendPort, outboundIsolates);
 
     for (var isolate = 0; isolate < inboundIsolates; isolate++) {
       Isolate.spawn<SendPort>(

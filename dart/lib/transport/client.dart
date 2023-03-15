@@ -53,13 +53,14 @@ class TransportClientPool {
 }
 
 class TransportConnector {
+  final int pool;
   final TransportBindings _bindings;
   final TransportEventLoopCallbacks _callbacks;
   final Pointer<transport_t> _transport;
 
-  TransportConnector(this._callbacks, this._transport, this._bindings);
+  TransportConnector(this._callbacks, this._transport, this._bindings, this.pool);
 
-  Future<TransportClientPool> connect(String host, int port, {int pool = 1}) async {
+  Future<TransportClientPool> connect(String host, int port) async {
     final clients = <TransportClient>[];
     for (var i = 0; i < pool; i++) {
       final completer = Completer<TransportClient>();

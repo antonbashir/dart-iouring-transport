@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:tuple/tuple.dart';
 
@@ -66,14 +65,18 @@ class TransportEventLoop {
 
   final _inputStream = StreamController<TransportPayload>();
 
+  final int _outboundPool;
+
   TransportEventLoop(
     this._libraryPath,
     this._bindings,
     this._transport,
     this._onExit,
+    this._outboundPool,
   ) {
+    final connector = TransportConnector(_callbacks, _transport, _bindings, _outboundPool);
     provider = TransportProvider(
-      () => TransportConnector(_callbacks, _transport, _bindings),
+      connector,
       (path) => TransportFile(_callbacks, TransportResourceChannel(_bindings.transport_select_outbound_channel(_transport), _bindings), _bindings, path),
     );
 
