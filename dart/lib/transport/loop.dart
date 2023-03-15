@@ -63,7 +63,7 @@ class TransportEventLoop {
 
   bool serving = false;
 
-  final _inputStream = StreamController<TransportPayload>();
+  final _inputStream = StreamController<TransportPayload>(sync: true);
 
   final int _outboundPool;
 
