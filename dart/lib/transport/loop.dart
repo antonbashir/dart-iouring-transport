@@ -92,6 +92,8 @@ class TransportEventLoop {
   }) async {
     if (serving) return;
 
+    this.onAccept = onAccept;
+    this.onInput = onInput;
     serving = true;
 
     final fromAcceptor = ReceivePort();
@@ -164,44 +166,42 @@ class TransportEventLoop {
   }
 
   void _handleInbound(int result, int userData, Pointer<transport_channel_t> channel) {
-    if (result & transportEventAwake != 0) {
-      if (result < 0) {
-        if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final fd = channel.ref.used_buffers[bufferId];
-          _bindings.transport_close_descritor(fd);
-          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-        }
-        return;
-      }
-
-      if (userData & transportEventRead != 0) {
+    if (result < 0) {
+      if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
         final bufferId = userData & ~transportEventAll;
         final fd = channel.ref.used_buffers[bufferId];
-        if (onInput == null) {
-          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-          return;
-        }
-        final buffer = channel.ref.buffers[bufferId];
-        unawaited(Future.value(onInput!.call(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
-          buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-          buffer.iov_len = answer.length;
-          _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
-        }));
-        return;
+        _bindings.transport_close_descritor(fd);
+        channel.ref.used_buffers[bufferId] = transportBufferAvailable;
       }
+      return;
+    }
 
-      if (userData & transportEventWrite != 0) {
-        final bufferId = userData & ~transportEventAll;
-        final fd = channel.ref.used_buffers[bufferId];
-        _bindings.transport_channel_read(channel, fd, bufferId, 0, transportEventRead);
+    if (userData & transportEventRead != 0) {
+      final bufferId = userData & ~transportEventAll;
+      final fd = channel.ref.used_buffers[bufferId];
+      if (onInput == null) {
+        channel.ref.used_buffers[bufferId] = transportBufferAvailable;
         return;
       }
+      final buffer = channel.ref.buffers[bufferId];
+      unawaited(Future.value(onInput!.call(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
+        buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+        buffer.iov_len = answer.length;
+        _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
+      }));
+      return;
+    }
 
-      if (userData & transportEventAccept != 0) {
-        onAccept?.call(TransportServerChannel(channel, _bindings), result);
-        return;
-      }
+    if (userData & transportEventWrite != 0) {
+      final bufferId = userData & ~transportEventAll;
+      final fd = channel.ref.used_buffers[bufferId];
+      _bindings.transport_channel_read(channel, fd, bufferId, 0, transportEventRead);
+      return;
+    }
+
+    if (userData & transportEventAccept != 0) {
+      onAccept?.call(TransportServerChannel(channel, _bindings), result);
+      return;
     }
   }
 }
