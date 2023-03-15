@@ -38,6 +38,7 @@ class TransportInboundListener {
           events.add([cqe.ref.res, cqe.ref.user_data, channelPointer.address]);
         }
         out.send(events);
+        _bindings.transport_cqe_advance(ring, cqeCount);
       }
     }
   }
@@ -77,6 +78,7 @@ class TransportOutboundListener {
           events.add([cqe.ref.res, cqe.ref.user_data, channelPointer.address]);
         }
         out.send(events);
+        _bindings.transport_cqe_advance(ring, cqeCount);
       }
     }
   }
