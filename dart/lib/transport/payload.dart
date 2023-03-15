@@ -2,12 +2,11 @@ import 'dart:typed_data';
 
 class TransportPayload {
   final Uint8List bytes;
-  final void Function() _releaser;
+  final void Function(Uint8List answer) _responder;
 
-  TransportPayload(this.bytes, this._releaser);
+  TransportPayload(this.bytes, this._responder);
 
-  Uint8List release() {
-    _releaser();
-    return bytes;
+  void respond(Uint8List answer) {
+    _responder(answer);
   }
 }

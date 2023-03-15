@@ -60,10 +60,11 @@ class TransportEventLoop {
   final Pointer<transport_t> _transport;
 
   late final void Function(TransportServerChannel channel, int descriptor)? onAccept;
-  late final FutureOr<Uint8List> Function(Uint8List input)? onInput;
   late final TransportProvider provider;
 
   bool serving = false;
+
+  final _inputStream = StreamController<TransportPayload>();
 
   TransportEventLoop(
     this._libraryPath,
@@ -72,7 +73,7 @@ class TransportEventLoop {
     this._onExit,
   ) {
     provider = TransportProvider(
-      () => TransportConnector(_callbacks, _bindings.transport_select_outbound_channel(_transport), _transport, _bindings),
+      () => TransportConnector(_callbacks, _transport, _bindings),
       (path) => TransportFile(_callbacks, TransportResourceChannel(_bindings.transport_select_outbound_channel(_transport), _bindings), _bindings, path),
     );
 
@@ -89,16 +90,15 @@ class TransportEventLoop {
     });
   }
 
-  Future<void> serve(
+  Stream<TransportPayload> serve(
     String host,
     int port, {
     void Function(TransportServerChannel channel, int descriptor)? onAccept,
-    FutureOr<Uint8List> Function(Uint8List input)? onInput,
-  }) async {
-    if (serving) return;
+  }) {
+    if (serving) return _inputStream.stream;
 
     this.onAccept = onAccept;
-    this.onInput = onInput;
+
     serving = true;
 
     final fromAcceptor = ReceivePort();
@@ -111,13 +111,10 @@ class TransportEventLoop {
       toAcceptor.send([_libraryPath, _transport.address, host, port]);
     });
 
-    await acceptorExit.first;
-    acceptorExit.close();
-
-    _onExit.send(null);
+    return _inputStream.stream;
   }
 
-  Future<void> _handleOutbound(int result, int userData, Pointer<transport_channel_t> channel) async {
+  void _handleOutbound(int result, int userData, Pointer<transport_channel_t> channel) {
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         _bindings.transport_close_descritor(userData & ~transportEventAll);
@@ -156,7 +153,7 @@ class TransportEventLoop {
         Tuple2(channel.address, bufferId),
         TransportPayload(
           buffer.iov_base.cast<Uint8>().asTypedList(result),
-          () => channel.ref.used_buffers[bufferId] = transportBufferAvailable,
+          (_) => channel.ref.used_buffers[bufferId] = transportBufferAvailable,
         ),
       );
       return;
@@ -171,6 +168,7 @@ class TransportEventLoop {
 
     if (userData & transportEventConnect != 0) {
       final fd = userData & ~transportEventAll;
+      print("connect: $fd");
       _callbacks.notifyConnect(
         fd,
         TransportClient(_callbacks, TransportResourceChannel(channel, _bindings), _bindings, fd),
@@ -179,7 +177,7 @@ class TransportEventLoop {
     }
   }
 
-  Future<void> _handleInbound(int result, int userData, Pointer<transport_channel_t> channel) async {
+  void _handleInbound(int result, int userData, Pointer<transport_channel_t> channel) {
     if (result < 0) {
       if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
         final bufferId = userData & ~transportEventAll;
@@ -193,15 +191,16 @@ class TransportEventLoop {
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;
       final fd = channel.ref.used_buffers[bufferId];
-      if (onInput == null) {
+      if (!_inputStream.hasListener) {
         channel.ref.used_buffers[bufferId] = transportBufferAvailable;
         return;
       }
       final buffer = channel.ref.buffers[bufferId];
-      final answer = await onInput!.call(buffer.iov_base.cast<Uint8>().asTypedList(result));
-      buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-      buffer.iov_len = answer.length;
-      _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
+      _inputStream.add(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer) {
+        buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+        buffer.iov_len = answer.length;
+        _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
+      }));
       return;
     }
 

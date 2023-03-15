@@ -15,7 +15,8 @@ class Transport {
   final listenerExit = ReceivePort();
   final loopExit = ReceivePort();
 
-  late final int isolatesCount;
+  late final int inboundIsolates;
+  late final int outboundIsolates;
   late final TransportEventLoop loop;
   late final TransportConfiguration _transportConfiguration;
   late final TransportAcceptorConfiguration _acceptorConfiguration;
@@ -68,13 +69,13 @@ class Transport {
 
   Future<void> shutdown() async {
     _bindings.transport_shutdown(_transport);
-    await listenerExit.take(isolatesCount * 2).toList();
+    await listenerExit.take(inboundIsolates + outboundIsolates).toList();
     if (loop.serving) await loopExit.first;
     _bindings.transport_destroy(_transport);
   }
 
-  Future<TransportEventLoop> listen({int isolates = 1}) async {
-    isolatesCount = isolates;
+  Future<TransportEventLoop> listen({int inboundIsolates = 1, int outboundIsolates = 1}) async {
+    inboundIsolates = inboundIsolates;
 
     final fromInbound = ReceivePort();
     final fromOutbound = ReceivePort();
@@ -85,12 +86,15 @@ class Transport {
 
     loop = TransportEventLoop(_libraryPath, _bindings, _transport, loopExit.sendPort);
 
-    for (var isolate = 0; isolate < isolates; isolate++) {
+    for (var isolate = 0; isolate < inboundIsolates; isolate++) {
       Isolate.spawn<SendPort>(
         (toTransport) => TransportInboundListener(toTransport).listen(),
         fromInbound.sendPort,
         onExit: listenerExit.sendPort,
       );
+    }
+
+    for (var isolate = 0; isolate < outboundIsolates; isolate++) {
       Isolate.spawn<SendPort>(
         (toTransport) => TransportOutboundListener(toTransport).listen(),
         fromOutbound.sendPort,
@@ -110,7 +114,7 @@ class Transport {
     });
 
     fromInboundActivator.listen((message) {
-      if (++completionCounter == isolates * 2) {
+      if (++completionCounter == inboundIsolates + outboundIsolates) {
         completer.complete();
       }
     });
@@ -127,7 +131,7 @@ class Transport {
     });
 
     fromOutboundActivator.listen((message) {
-      if (++completionCounter == isolates * 2) {
+      if (++completionCounter == inboundIsolates + outboundIsolates) {
         completer.complete();
       }
     });

@@ -39,23 +39,39 @@ class TransportClient {
   void close() => _bindings.transport_close_descritor(fd);
 }
 
+class TransportClientPool {
+  final List<TransportClient> clients;
+  var next = 0;
+
+  TransportClientPool(this.clients);
+
+  TransportClient select() {
+    final client = clients[next];
+    if (++next == clients.length) next = 0;
+    return client;
+  }
+}
+
 class TransportConnector {
   final TransportBindings _bindings;
   final TransportEventLoopCallbacks _callbacks;
-  final Pointer<transport_channel_t> _channelPointer;
   final Pointer<transport_t> _transport;
 
-  TransportConnector(this._callbacks, this._channelPointer, this._transport, this._bindings);
+  TransportConnector(this._callbacks, this._transport, this._bindings);
 
-  Future<TransportClient> connect(String host, int port) {
-    final completer = Completer<TransportClient>();
-    final fd = _bindings.transport_socket_create_client(
-      _transport.ref.acceptor_configuration.ref.max_connections,
-      _transport.ref.acceptor_configuration.ref.receive_buffer_size,
-      _transport.ref.acceptor_configuration.ref.send_buffer_size,
-    );
-    _callbacks.putConnect(fd, completer);
-    using((arena) => _bindings.transport_channel_connect(_channelPointer, fd, host.toNativeUtf8(allocator: arena).cast(), port));
-    return completer.future;
+  Future<TransportClientPool> connect(String host, int port, {int pool = 1}) async {
+    final clients = <TransportClient>[];
+    for (var i = 0; i < pool; i++) {
+      final completer = Completer<TransportClient>();
+      final fd = _bindings.transport_socket_create_client(
+        _transport.ref.acceptor_configuration.ref.max_connections,
+        _transport.ref.acceptor_configuration.ref.receive_buffer_size,
+        _transport.ref.acceptor_configuration.ref.send_buffer_size,
+      );
+      _callbacks.putConnect(fd, completer);
+      using((arena) => _bindings.transport_channel_connect(_bindings.transport_select_outbound_channel(_transport), fd, host.toNativeUtf8(allocator: arena).cast(), port));
+      clients.add(await completer.future);
+    }
+    return TransportClientPool(clients);
   }
 }

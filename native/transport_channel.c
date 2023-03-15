@@ -86,7 +86,6 @@ int transport_channel_write(struct transport_channel *channel, int fd, int buffe
   channel->used_buffers[buffer_id] = fd;
   io_uring_prep_write_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, offset, buffer_id);
   io_uring_sqe_set_data64(sqe, (int64_t)(buffer_id | event));
-  // transport_debug("transport_channel_write: %d, %d", fd, buffer_id);
   return io_uring_submit(channel->ring);
 }
 
@@ -96,7 +95,6 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
   channel->used_buffers[buffer_id] = fd;
   io_uring_prep_read_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, offset, buffer_id);
   io_uring_sqe_set_data64(sqe, (int64_t)(buffer_id | event));
-  // transport_debug("transport_channel_read: %d, %d", fd, buffer_id);
   return io_uring_submit(channel->ring);
 }
 
