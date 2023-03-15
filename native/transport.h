@@ -51,6 +51,8 @@ extern "C"
   void transport_destroy(transport_t *transport);
 
   int transport_close_descritor(int fd);
+
+  void transport_handle_dart_messages();
 #if defined(__cplusplus)
 }
 #endif

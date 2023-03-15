@@ -174,3 +174,13 @@ int transport_close_descritor(int fd)
 {
   return shutdown(fd, SHUT_RDWR);
 }
+
+void transport_handle_dart_messages()
+{
+  Dart_EnterScope();
+  Dart_Handle result = Dart_HandleMessage();
+  if (unlikely(Dart_IsError(result))) {
+    transport_error(Dart_GetError(result));
+  }
+  Dart_ExitScope();
+}

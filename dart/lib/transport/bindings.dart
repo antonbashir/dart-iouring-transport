@@ -18958,6 +18958,20 @@ class TransportBindings {
           int Function(ffi.Pointer<transport_channel>, int,
               ffi.Pointer<ffi.Char>, int)>();
 
+  int transport_channel_awake(
+    ffi.Pointer<transport_channel> channel,
+  ) {
+    return _transport_channel_awake(
+      channel,
+    );
+  }
+
+  late final _transport_channel_awakePtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_channel>)>>(
+      'transport_channel_awake');
+  late final _transport_channel_awake = _transport_channel_awakePtr
+      .asFunction<int Function(ffi.Pointer<transport_channel>)>();
+
   int transport_channel_allocate_buffer(
     ffi.Pointer<transport_channel_t> channel,
   ) {
@@ -19299,6 +19313,16 @@ class TransportBindings {
           'transport_close_descritor');
   late final _transport_close_descritor =
       _transport_close_descritorPtr.asFunction<int Function(int)>();
+
+  void transport_handle_dart_messages() {
+    return _transport_handle_dart_messages();
+  }
+
+  late final _transport_handle_dart_messagesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>(
+          'transport_handle_dart_messages');
+  late final _transport_handle_dart_messages =
+      _transport_handle_dart_messagesPtr.asFunction<void Function()>();
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
@@ -23175,6 +23199,9 @@ class _SymbolAddresses {
               ffi.Int)>> get transport_channel_connect =>
       _library._transport_channel_connectPtr;
   ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_channel>)>>
+      get transport_channel_awake => _library._transport_channel_awakePtr;
+  ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<transport_channel_t>)>>
       get transport_channel_allocate_buffer =>
@@ -23266,6 +23293,9 @@ class _SymbolAddresses {
       get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>
+      get transport_handle_dart_messages =>
+          _library._transport_handle_dart_messagesPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<
@@ -30447,5 +30477,7 @@ const int TRANSPORT_EVENT_CONNECT = 576460752303423488;
 const int TRANSPORT_EVENT_READ_CALLBACK = 288230376151711744;
 
 const int TRANSPORT_EVENT_WRITE_CALLBACK = 144115188075855872;
+
+const int TRANSPORT_EVENT_AWAKE = 72057594037927936;
 
 const int TRANSPORT_NATIVE_LOG_BUFFER = 2048;
