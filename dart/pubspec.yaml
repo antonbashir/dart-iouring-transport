@@ -11,6 +11,7 @@ dev_dependencies:
 dependencies:
   ffi: ^2.0.1
   path: ^1.8.3
+  tuple: ^2.0.1
 
 ffigen:
   name: "TransportBindings"

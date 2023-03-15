@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/loop.dart';
+import 'package:tuple/tuple.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -21,7 +22,7 @@ class TransportFile {
   Future<TransportPayload> readBuffer({int offset = 0}) => _channel.allocate().then(
         (bufferId) {
           final completer = Completer<TransportPayload>();
-          _callbacks.putRead(bufferId, completer);
+          _callbacks.putRead(Tuple2(_channel.pointer.address, bufferId), completer);
           _channel.read(fd, bufferId);
           return completer.future;
         },
@@ -30,7 +31,7 @@ class TransportFile {
   Future<void> write(Uint8List bytes) => _channel.allocate().then(
         (bufferId) {
           final completer = Completer<void>();
-          _callbacks.putWrite(bufferId, completer);
+          _callbacks.putWrite(Tuple2(_channel.pointer.address, bufferId), completer);
           _channel.write(bytes, fd, bufferId);
           return completer.future;
         },

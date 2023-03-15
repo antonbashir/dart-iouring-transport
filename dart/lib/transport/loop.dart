@@ -8,6 +8,7 @@ import 'package:iouring_transport/transport/client.dart';
 import 'package:iouring_transport/transport/file.dart';
 import 'package:iouring_transport/transport/logger.dart';
 import 'package:iouring_transport/transport/provider.dart';
+import 'package:tuple/tuple.dart';
 
 import 'acceptor.dart';
 import 'bindings.dart';
@@ -18,26 +19,26 @@ import 'payload.dart';
 
 class TransportEventLoopCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
-  final _readCallbacks = <int, Completer<TransportPayload>>{};
-  final _writeCallbacks = <int, Completer<void>>{};
+  final _readCallbacks = <Tuple2<int, int>, Completer<TransportPayload>>{};
+  final _writeCallbacks = <Tuple2<int, int>, Completer<void>>{};
 
   @pragma(preferInlinePragma)
   void putConnect(int fd, Completer<TransportClient> completer) => _connectCallbacks[fd] = completer;
   @pragma(preferInlinePragma)
-  void putRead(int bufferId, Completer<TransportPayload> completer) => _readCallbacks[bufferId] = completer;
+  void putRead(Tuple2<int, int> key, Completer<TransportPayload> completer) => _readCallbacks[key] = completer;
   @pragma(preferInlinePragma)
-  void putWrite(int bufferId, Completer<void> completer) => _writeCallbacks[bufferId] = completer;
+  void putWrite(Tuple2<int, int> key, Completer<void> completer) => _writeCallbacks[key] = completer;
 
   @pragma(preferInlinePragma)
   void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)?.complete(client);
   @pragma(preferInlinePragma)
-  void notifyRead(int bufferId, TransportPayload payload) => _readCallbacks.remove(bufferId)?.complete(payload);
+  void notifyRead(Tuple2<int, int> key, TransportPayload payload) => _readCallbacks.remove(key)?.complete(payload);
   @pragma(preferInlinePragma)
-  void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)?.complete();
+  void notifyWrite(Tuple2<int, int> key) => _writeCallbacks.remove(key)?.complete();
 
   void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)?.completeError(error);
-  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)?.completeError(error);
-  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)?.completeError(error);
+  void notifyReadError(Tuple2<int, int> key, Exception error) => _readCallbacks.remove(key)?.completeError(error);
+  void notifyWriteError(Tuple2<int, int> key, Exception error) => _writeCallbacks.remove(key)?.completeError(error);
 
   bool isWaiting() => _connectCallbacks.isNotEmpty || _readCallbacks.isNotEmpty || _writeCallbacks.isNotEmpty;
 }
@@ -129,7 +130,7 @@ class TransportEventLoop {
           }
           _bindings.transport_close_descritor(fd);
           channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-          _callbacks.notifyReadError(bufferId, Exception("Read exception with code $result"));
+          _callbacks.notifyReadError(Tuple2(channel.address, bufferId), Exception("Read exception with code $result"));
         }
         if (userData & transportEventWriteCallback != 0) {
           if (result == -EAGAIN) {
@@ -138,7 +139,7 @@ class TransportEventLoop {
           }
           _bindings.transport_close_descritor(fd);
           channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-          _callbacks.notifyWriteError(bufferId, Exception("Write exception with code $result"));
+          _callbacks.notifyWriteError(Tuple2(channel.address, bufferId), Exception("Write exception with code $result"));
         }
       }
       return;
@@ -147,20 +148,29 @@ class TransportEventLoop {
     if (userData & transportEventReadCallback != 0) {
       final bufferId = userData & ~transportEventAll;
       final buffer = channel.ref.buffers[bufferId];
-      _callbacks.notifyRead(bufferId, TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), () => channel.ref.used_buffers[bufferId] = transportBufferAvailable));
+      _callbacks.notifyRead(
+        Tuple2(channel.address, bufferId),
+        TransportPayload(
+          buffer.iov_base.cast<Uint8>().asTypedList(result),
+          () => channel.ref.used_buffers[bufferId] = transportBufferAvailable,
+        ),
+      );
       return;
     }
 
     if (userData & transportEventWriteCallback != 0) {
       final bufferId = userData & ~transportEventAll;
       channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-      _callbacks.notifyWrite(bufferId);
+      _callbacks.notifyWrite(Tuple2(channel.address, bufferId));
       return;
     }
 
     if (userData & transportEventConnect != 0) {
       final fd = userData & ~transportEventAll;
-      _callbacks.notifyConnect(fd, TransportClient(_callbacks, TransportResourceChannel(channel, _bindings), _bindings, fd));
+      _callbacks.notifyConnect(
+        fd,
+        TransportClient(_callbacks, TransportResourceChannel(channel, _bindings), _bindings, fd),
+      );
       return;
     }
   }
