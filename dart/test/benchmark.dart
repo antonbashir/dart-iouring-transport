@@ -3,9 +3,7 @@ library iouring_transport;
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:iouring_transport/transport/client.dart';
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/loop.dart';
 import 'package:iouring_transport/transport/transport.dart';
 
 Future<void> main(List<String> args) async {
@@ -18,15 +16,12 @@ Future<void> main(List<String> args) async {
       TransportDefaults.acceptor(),
       TransportDefaults.channel(),
     )
-    ..listen(
-      "0.0.0.0",
-      9000,
-      (port) {
-        late TransportClient client;
-        TransportEventLoop(port).run(
-          onRun: (provider) async {
-            client = await provider.connector.connect("35.202.158.55", 12345);
-          },
+    ..listen().then(
+      (loop) async {
+        final client = await loop.provider.connector.connect("35.202.158.55", 12345);
+        loop.serve(
+          "0.0.0.0",
+          9999,
           onAccept: (channel, descriptor) => channel.read(descriptor),
           onInput: (payload) async {
             client.write(fromServer);
@@ -34,7 +29,6 @@ Future<void> main(List<String> args) async {
           },
         );
       },
-      isolates: 4,
     );
 
   await Future.delayed(Duration(days: 1));

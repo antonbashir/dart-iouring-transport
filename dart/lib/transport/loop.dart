@@ -9,6 +9,7 @@ import 'package:iouring_transport/transport/file.dart';
 import 'package:iouring_transport/transport/logger.dart';
 import 'package:iouring_transport/transport/provider.dart';
 
+import 'acceptor.dart';
 import 'bindings.dart';
 import 'channels.dart';
 import 'constants.dart';
@@ -42,162 +43,83 @@ class TransportEventLoopCallbacks {
 }
 
 class TransportEventLoop {
-  bool _active = false;
-
   final _callbacks = TransportEventLoopCallbacks();
 
-  final fromTransport = ReceivePort();
+  final SendPort _onExit;
 
-  late final TransportBindings _bindings;
-  late final Pointer<transport_t> _transport;
-  late final TransportLogger _logger;
+  late final RawReceivePort onIncoming;
+  late final RawReceivePort onOutgoing;
+
+  final String? _libraryPath;
+  final TransportBindings _bindings;
+  final Pointer<transport_t> _transport;
+
   late final Pointer<transport_channel> _serverChannelPointer;
   late final Pointer<transport_channel> _resourceChannelPointer;
   late final TransportServerChannel _serverChannel;
   late final TransportResourceChannel _resourceChannel;
-  late final int _ringSize;
 
-  TransportEventLoop(SendPort toTransport) {
-    toTransport.send(fromTransport.sendPort);
-  }
+  late final void Function(TransportServerChannel channel, int descriptor)? onAccept;
+  late final FutureOr<Uint8List> Function(Uint8List input)? onInput;
+  late final TransportProvider provider;
 
-  Future<void> run({
-    FutureOr<void> Function(TransportProvider provider)? onRun,
-    FutureOr<void> Function(TransportServerChannel channel, int descriptor)? onAccept,
-    FutureOr<Uint8List> Function(Uint8List input)? onInput,
-  }) async {
-    if (_active) return;
+  bool serving = false;
 
-    final configuration = await fromTransport.take(5).toList();
-    _logger = TransportLogger(configuration[0] as TransportLogLevel);
-    final libraryPath = configuration[1] as String?;
-    _transport = Pointer.fromAddress(configuration[2] as int);
-    _ringSize = configuration[3] as int;
-    final activationPort = configuration[4] as SendPort;
-    fromTransport.close();
-
-    _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
-
+  TransportEventLoop(
+    this._libraryPath,
+    this._bindings,
+    this._transport,
+    this._onExit,
+  ) {
     _serverChannelPointer = _bindings.transport_add_channel(_transport);
     _serverChannel = TransportServerChannel(_serverChannelPointer, _bindings);
-    final serverRing = _serverChannelPointer.ref.ring;
-    Pointer<Pointer<io_uring_cqe>> serverCqes = _bindings.transport_allocate_cqes(_ringSize);
 
     _resourceChannelPointer = _bindings.transport_channel_initialize(_transport.ref.channel_configuration);
     _resourceChannel = TransportResourceChannel(_resourceChannelPointer, _bindings);
-    final resourceRing = _resourceChannelPointer.ref.ring;
-    Pointer<Pointer<io_uring_cqe>> resourceCqes = _bindings.transport_allocate_cqes(_ringSize);
+
     final connector = TransportConnector(_callbacks, _resourceChannelPointer, _transport, _bindings);
+    provider = TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path));
 
-    _active = true;
-
-    final run = Future.microtask(() => onRun?.call(TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path))));
-    final runTimer = Timer.periodic(Duration.zero, (timer) {
-      int cqeCount = _bindings.transport_consume(_ringSize, resourceCqes, resourceRing, 1, 0);
-      if (cqeCount != -1) {
-        for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-          final cqe = resourceCqes[cqeIndex];
-          _handleCallback(cqe.ref.res, cqe.ref.user_data);
-        }
-        _bindings.transport_cqe_advance(resourceRing, cqeCount);
+    onIncoming = RawReceivePort((List<dynamic> input) {
+      for (var element in input) {
+        _handleIncoming(element[0], element[1]);
       }
     });
-    await run;
-    runTimer.cancel();
-    activationPort.send(null);
 
-    Isolate.spawn((List<dynamic> configuration) {
-      final libraryPath = configuration[0] as String?;
-      final ringSize = configuration[1] as int;
-      final cqes = Pointer.fromAddress(configuration[2]).cast<Pointer<io_uring_cqe>>();
-      final ring = Pointer.fromAddress(configuration[3]).cast<io_uring>();
-      final serverChannel = Pointer.fromAddress(configuration[4]).cast<transport_channel_t>();
-      final resourceChannel = Pointer.fromAddress(configuration[5]).cast<transport_channel_t>();
-      final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
-      Timer.periodic(Duration.zero, (timer) {
-        final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
-        if (cqeCount != -1) {
-          for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-            final cqe = cqes[cqeIndex];
-            if (cqe.ref.res != 0) {
-              bindings.transport_channel_message(resourceChannel, serverChannel, cqe.ref.res | transportEventAwake, cqe.ref.user_data);
-            }
-          }
-          bindings.transport_cqe_advance(ring, cqeCount);
-        }
-      });
-    }, [
-      libraryPath,
-      _ringSize,
-      resourceCqes.address,
-      resourceRing.address,
-      _serverChannelPointer.address,
-      _resourceChannelPointer.address,
-    ]);
-
-    Timer.periodic(Duration.zero, (timer) async {
-      int cqeCount = _bindings.transport_wait(_ringSize, serverCqes, serverRing);
-      if (cqeCount == -1) {
-        return;
+    onOutgoing = RawReceivePort((List<dynamic> input) {
+      for (var element in input) {
+        _handleOutgoing(element[0], element[1]);
       }
-      for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-        final cqe = serverCqes[cqeIndex];
-        final result = cqe.ref.res;
-        final userData = cqe.ref.user_data;
-
-        if (result & transportEventAwake != 0) {
-          Future.microtask(() => _handleCallback(result & ~transportEventAll, userData));
-          continue;
-        }
-
-        if (result < 0) {
-          if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
-            final bufferId = userData & ~transportEventAll;
-            final fd = _serverChannelPointer.ref.used_buffers[bufferId];
-            _bindings.transport_close_descritor(fd);
-            _serverChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-          }
-          continue;
-        }
-
-        if (userData & transportEventRead != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final fd = _serverChannelPointer.ref.used_buffers[bufferId];
-          if (onInput == null) {
-            _serverChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-            continue;
-          }
-          final buffer = _serverChannelPointer.ref.buffers[bufferId];
-          Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
-            buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-            buffer.iov_len = answer.length;
-            _bindings.transport_channel_write(_serverChannelPointer, fd, bufferId, 0, transportEventWrite);
-          });
-          continue;
-        }
-
-        if (userData & transportEventWrite != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final fd = _serverChannelPointer.ref.used_buffers[bufferId];
-          _bindings.transport_channel_read(_serverChannelPointer, fd, bufferId, 0, transportEventRead);
-          continue;
-        }
-
-        if (userData & transportEventAccept != 0) {
-          onAccept?.call(_serverChannel, result);
-          continue;
-        }
-
-        if (userData & transportEventClose != 0) {
-          _bindings.transport_channel_close(_serverChannelPointer);
-          Isolate.exit();
-        }
-      }
-      _bindings.transport_cqe_advance(serverRing, cqeCount);
     });
   }
 
-  void _handleCallback(int result, int userData) {
+  Future<void> serve(
+    String host,
+    int port, {
+    void Function(TransportServerChannel channel, int descriptor)? onAccept,
+    FutureOr<Uint8List> Function(Uint8List input)? onInput,
+  }) async {
+    if (serving) return;
+
+    serving = true;
+
+    final fromAcceptor = ReceivePort();
+    final acceptorExit = ReceivePort();
+
+    Isolate.spawn<SendPort>((port) => TransportAcceptor(port).accept(), fromAcceptor.sendPort, onExit: acceptorExit.sendPort);
+
+    fromAcceptor.listen((acceptorPort) {
+      SendPort toAcceptor = acceptorPort as SendPort;
+      toAcceptor.send([_libraryPath, _transport.address, host, port]);
+    });
+
+    await acceptorExit.first;
+    acceptorExit.close();
+
+    _onExit.send(null);
+  }
+
+  void _handleOutgoing(int result, int userData) {
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         _bindings.transport_close_descritor(userData & ~transportEventAll);
@@ -248,10 +170,47 @@ class TransportEventLoop {
       _callbacks.notifyConnect(fd, TransportClient(_callbacks, _resourceChannel, _bindings, fd));
       return;
     }
+  }
 
-    if (userData & transportEventClose != 0) {
-      _bindings.transport_channel_close(_resourceChannelPointer);
-      Isolate.exit();
+  void _handleIncoming(int result, int userData) {
+    if (result & transportEventAwake != 0) {
+      if (result < 0) {
+        if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
+          final bufferId = userData & ~transportEventAll;
+          final fd = _serverChannelPointer.ref.used_buffers[bufferId];
+          _bindings.transport_close_descritor(fd);
+          _serverChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+        }
+        return;
+      }
+
+      if (userData & transportEventRead != 0) {
+        final bufferId = userData & ~transportEventAll;
+        final fd = _serverChannelPointer.ref.used_buffers[bufferId];
+        if (onInput == null) {
+          _serverChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          return;
+        }
+        final buffer = _serverChannelPointer.ref.buffers[bufferId];
+        unawaited(Future.value(onInput!.call(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
+          buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+          buffer.iov_len = answer.length;
+          _bindings.transport_channel_write(_serverChannelPointer, fd, bufferId, 0, transportEventWrite);
+        }));
+        return;
+      }
+
+      if (userData & transportEventWrite != 0) {
+        final bufferId = userData & ~transportEventAll;
+        final fd = _serverChannelPointer.ref.used_buffers[bufferId];
+        _bindings.transport_channel_read(_serverChannelPointer, fd, bufferId, 0, transportEventRead);
+        return;
+      }
+
+      if (userData & transportEventAccept != 0) {
+        onAccept?.call(_serverChannel, result);
+        return;
+      }
     }
   }
 }
