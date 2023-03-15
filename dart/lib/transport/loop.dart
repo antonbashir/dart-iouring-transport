@@ -91,11 +91,29 @@ class TransportEventLoop {
 
     _active = true;
 
-    Timer.periodic(Duration.zero, (timer) {
-      if (_callbacks.isWaiting()) {
-        _drainResources(resourceCqes, resourceRing);
-      }
-    });
+    final resourceNotifier = RawReceivePort((_) => _drainResources(resourceCqes, resourceRing));
+    Isolate.spawn((List<dynamic> configuration) {
+      final libraryPath = configuration[0] as String?;
+      final ringSize = configuration[1] as int;
+      final cqes = Pointer.fromAddress(configuration[2]);
+      final ring = Pointer.fromAddress(configuration[3]);
+      final notifier = configuration[4] as SendPort;
+      final serverChannel = Pointer.fromAddress(configuration[5]);
+      final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
+      Timer.periodic(Duration.zero, (timer) {
+        if (bindings.transport_wait(ringSize, cqes.cast(), ring.cast()) != -1) {
+          notifier.send(null);
+          bindings.transport_channel_awake(serverChannel.cast());
+        }
+      });
+    }, [
+      libraryPath,
+      _ringSize,
+      resourceCqes.address,
+      resourceRing.address,
+      resourceNotifier.sendPort,
+      _serverChannelPointer.address,
+    ]);
 
     await Future.value(onRun?.call(TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path))));
     activationPort.send(null);
@@ -105,11 +123,14 @@ class TransportEventLoop {
       if (cqeCount == -1) {
         return;
       }
-      final futures = <Future>[];
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = serverCqes[cqeIndex];
         final result = cqe.ref.res;
         final userData = cqe.ref.user_data;
+
+        if (userData & transportEventAwake != 0) {
+          _drainResources(resourceCqes, resourceRing);
+        }
 
         if (result < 0) {
           if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
@@ -129,11 +150,11 @@ class TransportEventLoop {
             continue;
           }
           final buffer = _serverChannelPointer.ref.buffers[bufferId];
-          futures.add(Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
+          Future.value(onInput(buffer.iov_base.cast<Uint8>().asTypedList(result))).then((answer) {
             buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
             buffer.iov_len = answer.length;
             _bindings.transport_channel_write(_serverChannelPointer, fd, bufferId, 0, transportEventWrite);
-          }));
+          });
           continue;
         }
 
@@ -155,12 +176,11 @@ class TransportEventLoop {
         }
       }
       _bindings.transport_cqe_advance(serverRing, cqeCount);
-      await Future.wait(futures);
     });
   }
 
   void _drainResources(Pointer<Pointer<io_uring_cqe>> cqes, Pointer<io_uring> ring) {
-    int cqeCount = _bindings.transport_wait(_ringSize, cqes, ring);
+    int cqeCount = _bindings.transport_peek(_ringSize, cqes, ring);
     if (cqeCount == -1) {
       return;
     }
