@@ -60,8 +60,9 @@ class TransportConnector {
 
   TransportConnector(this._callbacks, this._transport, this._bindings, this.pool);
 
-  Future<TransportClientPool> connect(String host, int port) async {
-    final clients = <TransportClient>[];
+  Future<TransportClientPool> connect(String host, int port, {int? pool}) async {
+    final clients = <Future<TransportClient>>[];
+    if (pool == null) pool = this.pool;
     for (var i = 0; i < pool; i++) {
       final completer = Completer<TransportClient>();
       final fd = _bindings.transport_socket_create_client(
@@ -71,8 +72,8 @@ class TransportConnector {
       );
       _callbacks.putConnect(fd, completer);
       using((arena) => _bindings.transport_channel_connect(_bindings.transport_select_outbound_channel(_transport), fd, host.toNativeUtf8(allocator: arena).cast(), port));
-      clients.add(await completer.future);
+      clients.add(completer.future);
     }
-    return TransportClientPool(clients);
+    return TransportClientPool(await Future.wait(clients));
   }
 }
