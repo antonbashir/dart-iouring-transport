@@ -19336,6 +19336,14 @@ class TransportBindings {
   late final _transport_handle_dart_messages =
       _transport_handle_dart_messagesPtr.asFunction<void Function()>();
 
+  void transport_test() {
+    return _transport_test();
+  }
+
+  late final _transport_testPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('transport_test');
+  late final _transport_test = _transport_testPtr.asFunction<void Function()>();
+
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
   ) {
@@ -23313,6 +23321,8 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>
       get transport_handle_dart_messages =>
           _library._transport_handle_dart_messagesPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get transport_test =>
+      _library._transport_testPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<

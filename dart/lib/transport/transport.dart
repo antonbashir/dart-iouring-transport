@@ -18,13 +18,13 @@ class Transport {
   late final TransportChannelConfiguration _channelConfiguration;
   late final String? libraryPath;
   late final TransportLogger _logger;
-  late final TransportBindings _bindings;
+  late final TransportBindings bindings;
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transport;
 
   Transport({String? libraryPath}) {
     _library = TransportLibrary.load(libraryPath: libraryPath);
-    _bindings = TransportBindings(_library.library);
+    bindings = TransportBindings(_library.library);
     this.libraryPath = libraryPath;
   }
 
@@ -55,7 +55,7 @@ class Transport {
     nativeChannelConfiguration.ref.ring_flags = channelConfiguration.ringFlags;
     nativeChannelConfiguration.ref.ring_size = channelConfiguration.ringSize;
 
-    _transport = _bindings.transport_initialize(
+    _transport = bindings.transport_initialize(
       nativeTransportConfiguration,
       nativeChannelConfiguration,
       nativeAcceptorConfiguration,
@@ -63,8 +63,8 @@ class Transport {
   }
 
   Future<void> shutdown() async {
-    _bindings.transport_shutdown(_transport);
-    _bindings.transport_destroy(_transport);
+    bindings.transport_shutdown(_transport);
+    bindings.transport_destroy(_transport);
     await completer.future;
   }
 

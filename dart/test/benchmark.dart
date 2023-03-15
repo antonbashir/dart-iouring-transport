@@ -12,7 +12,7 @@ Future<void> main(List<String> args) async {
   final encoder = Utf8Encoder();
   final fromServer = encoder.convert("from server\n");
 
-  final transport = Transport()
+  Transport()
     ..initialize(
       TransportDefaults.transport(),
       TransportDefaults.acceptor(),

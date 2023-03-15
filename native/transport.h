@@ -53,6 +53,8 @@ extern "C"
   int transport_close_descritor(int fd);
 
   void transport_handle_dart_messages();
+
+  void transport_test();
 #if defined(__cplusplus)
 }
 #endif

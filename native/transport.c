@@ -184,3 +184,10 @@ void transport_handle_dart_messages()
   }
   Dart_ExitScope();
 }
+
+void transport_test() {
+  Dart_Isolate current = Dart_CurrentIsolate();
+  Dart_ExitIsolate();
+  sleep(10);
+  Dart_EnterIsolate(current);
+}
