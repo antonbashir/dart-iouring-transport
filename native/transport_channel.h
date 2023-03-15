@@ -49,7 +49,7 @@ extern "C"
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
   int transport_channel_connect(struct transport_channel *channel, int fd, const char *ip, int port);
-  int transport_channel_awake(struct transport_channel *channel);
+  int transport_channel_message(struct transport_channel *fromChannel, struct transport_channel *toChannel, int64_t result, int64_t user_data);
 
   int transport_channel_allocate_buffer(transport_channel_t *channel);
 

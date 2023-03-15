@@ -91,19 +91,39 @@ class TransportEventLoop {
 
     _active = true;
 
-    final resourceNotifier = RawReceivePort((_) => _drainResources(resourceCqes, resourceRing));
+    final run = Future.microtask(() => onRun?.call(TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path))));
+    final runTimer = Timer.periodic(Duration.zero, (timer) {
+      int cqeCount = _bindings.transport_consume(_ringSize, resourceCqes, resourceRing, 1, 0);
+      if (cqeCount != -1) {
+        for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+          final cqe = resourceCqes[cqeIndex];
+          _handleCallback(cqe.ref.res, cqe.ref.user_data);
+        }
+        _bindings.transport_cqe_advance(resourceRing, cqeCount);
+      }
+    });
+    await run;
+    runTimer.cancel();
+    activationPort.send(null);
+
     Isolate.spawn((List<dynamic> configuration) {
       final libraryPath = configuration[0] as String?;
       final ringSize = configuration[1] as int;
-      final cqes = Pointer.fromAddress(configuration[2]);
-      final ring = Pointer.fromAddress(configuration[3]);
-      final notifier = configuration[4] as SendPort;
-      final serverChannel = Pointer.fromAddress(configuration[5]);
+      final cqes = Pointer.fromAddress(configuration[2]).cast<Pointer<io_uring_cqe>>();
+      final ring = Pointer.fromAddress(configuration[3]).cast<io_uring>();
+      final serverChannel = Pointer.fromAddress(configuration[4]).cast<transport_channel_t>();
+      final resourceChannel = Pointer.fromAddress(configuration[5]).cast<transport_channel_t>();
       final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
       Timer.periodic(Duration.zero, (timer) {
-        if (bindings.transport_wait(ringSize, cqes.cast(), ring.cast()) != -1) {
-          notifier.send(null);
-          bindings.transport_channel_awake(serverChannel.cast());
+        final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
+        if (cqeCount != -1) {
+          for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+            final cqe = cqes[cqeIndex];
+            if (cqe.ref.res != 0) {
+              bindings.transport_channel_message(resourceChannel, serverChannel, cqe.ref.res | transportEventAwake, cqe.ref.user_data);
+            }
+          }
+          bindings.transport_cqe_advance(ring, cqeCount);
         }
       });
     }, [
@@ -111,12 +131,9 @@ class TransportEventLoop {
       _ringSize,
       resourceCqes.address,
       resourceRing.address,
-      resourceNotifier.sendPort,
       _serverChannelPointer.address,
+      _resourceChannelPointer.address,
     ]);
-
-    await Future.value(onRun?.call(TransportProvider(connector, (path) => TransportFile(_callbacks, _resourceChannel, _bindings, path))));
-    activationPort.send(null);
 
     Timer.periodic(Duration.zero, (timer) async {
       int cqeCount = _bindings.transport_wait(_ringSize, serverCqes, serverRing);
@@ -128,8 +145,9 @@ class TransportEventLoop {
         final result = cqe.ref.res;
         final userData = cqe.ref.user_data;
 
-        if (userData & transportEventAwake != 0) {
-          _drainResources(resourceCqes, resourceRing);
+        if (result & transportEventAwake != 0) {
+          _handleCallback(result & ~transportEventAll, userData);
+          continue;
         }
 
         if (result < 0) {
@@ -179,72 +197,61 @@ class TransportEventLoop {
     });
   }
 
-  void _drainResources(Pointer<Pointer<io_uring_cqe>> cqes, Pointer<io_uring> ring) {
-    int cqeCount = _bindings.transport_peek(_ringSize, cqes, ring);
-    if (cqeCount == -1) {
+  void _handleCallback(int result, int userData) {
+    if (result < 0) {
+      if (userData & transportEventConnect != 0) {
+        _bindings.transport_close_descritor(userData & ~transportEventAll);
+        _callbacks.notifyConnectError(userData & ~transportEventAll, Exception("Connect exception with code $result"));
+      }
+
+      if (userData & transportEventReadCallback != 0 || userData & transportEventWriteCallback != 0) {
+        final bufferId = userData & ~transportEventAll;
+        final fd = _resourceChannelPointer.ref.used_buffers[bufferId];
+        if (userData & transportEventReadCallback != 0) {
+          if (result == -EAGAIN) {
+            _bindings.transport_channel_read(_resourceChannelPointer, fd, bufferId, 0, transportEventReadCallback);
+            return;
+          }
+          _bindings.transport_close_descritor(fd);
+          _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          _callbacks.notifyReadError(bufferId, Exception("Read exception with code $result"));
+        }
+        if (userData & transportEventWriteCallback != 0) {
+          if (result == -EAGAIN) {
+            _bindings.transport_channel_write(_resourceChannelPointer, fd, bufferId, 0, transportEventWriteCallback);
+            return;
+          }
+          _bindings.transport_close_descritor(fd);
+          _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+          _callbacks.notifyWriteError(bufferId, Exception("Write exception with code $result"));
+        }
+      }
       return;
     }
-    for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-      final cqe = cqes[cqeIndex];
-      final result = cqe.ref.res;
-      final userData = cqe.ref.user_data;
 
-      if (result < 0) {
-        if (userData & transportEventConnect != 0) {
-          _bindings.transport_close_descritor(userData & ~transportEventAll);
-          _callbacks.notifyConnectError(userData & ~transportEventAll, Exception("Connect exception with code $result"));
-        }
-
-        if (userData & transportEventReadCallback != 0 || userData & transportEventWriteCallback != 0) {
-          final bufferId = userData & ~transportEventAll;
-          final fd = _resourceChannelPointer.ref.used_buffers[bufferId];
-          if (userData & transportEventReadCallback != 0) {
-            if (result == -EAGAIN) {
-              _bindings.transport_channel_read(_resourceChannelPointer, fd, bufferId, 0, transportEventReadCallback);
-              continue;
-            }
-            _bindings.transport_close_descritor(fd);
-            _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-            _callbacks.notifyReadError(bufferId, Exception("Read exception with code $result"));
-          }
-          if (userData & transportEventWriteCallback != 0) {
-            if (result == -EAGAIN) {
-              _bindings.transport_channel_write(_resourceChannelPointer, fd, bufferId, 0, transportEventWriteCallback);
-              continue;
-            }
-            _bindings.transport_close_descritor(fd);
-            _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-            _callbacks.notifyWriteError(bufferId, Exception("Write exception with code $result"));
-          }
-        }
-        continue;
-      }
-
-      if (userData & transportEventReadCallback != 0) {
-        final bufferId = userData & ~transportEventAll;
-        final buffer = _resourceChannelPointer.ref.buffers[bufferId];
-        _callbacks.notifyRead(bufferId, TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), () => _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable));
-        continue;
-      }
-
-      if (userData & transportEventWriteCallback != 0) {
-        final bufferId = userData & ~transportEventAll;
-        _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-        _callbacks.notifyWrite(bufferId);
-        continue;
-      }
-
-      if (userData & transportEventConnect != 0) {
-        final fd = userData & ~transportEventAll;
-        _callbacks.notifyConnect(fd, TransportClient(_callbacks, _resourceChannel, _bindings, fd));
-        continue;
-      }
-
-      if (userData & transportEventClose != 0) {
-        _bindings.transport_channel_close(_resourceChannelPointer);
-        Isolate.exit();
-      }
+    if (userData & transportEventReadCallback != 0) {
+      final bufferId = userData & ~transportEventAll;
+      final buffer = _resourceChannelPointer.ref.buffers[bufferId];
+      _callbacks.notifyRead(bufferId, TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), () => _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable));
+      return;
     }
-    _bindings.transport_cqe_advance(ring, cqeCount);
+
+    if (userData & transportEventWriteCallback != 0) {
+      final bufferId = userData & ~transportEventAll;
+      _resourceChannelPointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+      _callbacks.notifyWrite(bufferId);
+      return;
+    }
+
+    if (userData & transportEventConnect != 0) {
+      final fd = userData & ~transportEventAll;
+      _callbacks.notifyConnect(fd, TransportClient(_callbacks, _resourceChannel, _bindings, fd));
+      return;
+    }
+
+    if (userData & transportEventClose != 0) {
+      _bindings.transport_channel_close(_resourceChannelPointer);
+      Isolate.exit();
+    }
   }
 }

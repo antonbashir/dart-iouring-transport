@@ -29,7 +29,7 @@ Future<void> main(List<String> args) async {
           },
           onAccept: (channel, descriptor) => channel.read(descriptor),
           onInput: (payload) async {
-            await client.write(fromServer);
+            client.write(fromServer);
             return fromServer;
           },
         );

@@ -18958,19 +18958,31 @@ class TransportBindings {
           int Function(ffi.Pointer<transport_channel>, int,
               ffi.Pointer<ffi.Char>, int)>();
 
-  int transport_channel_awake(
-    ffi.Pointer<transport_channel> channel,
+  int transport_channel_message(
+    ffi.Pointer<transport_channel> fromChannel,
+    ffi.Pointer<transport_channel> toChannel,
+    int result,
+    int user_data,
   ) {
-    return _transport_channel_awake(
-      channel,
+    return _transport_channel_message(
+      fromChannel,
+      toChannel,
+      result,
+      user_data,
     );
   }
 
-  late final _transport_channel_awakePtr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_channel>)>>(
-      'transport_channel_awake');
-  late final _transport_channel_awake = _transport_channel_awakePtr
-      .asFunction<int Function(ffi.Pointer<transport_channel>)>();
+  late final _transport_channel_messagePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_channel>,
+              ffi.Pointer<transport_channel>,
+              ffi.Int64,
+              ffi.Int64)>>('transport_channel_message');
+  late final _transport_channel_message =
+      _transport_channel_messagePtr.asFunction<
+          int Function(ffi.Pointer<transport_channel>,
+              ffi.Pointer<transport_channel>, int, int)>();
 
   int transport_channel_allocate_buffer(
     ffi.Pointer<transport_channel_t> channel,
@@ -23199,8 +23211,13 @@ class _SymbolAddresses {
               ffi.Int)>> get transport_channel_connect =>
       _library._transport_channel_connectPtr;
   ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_channel>)>>
-      get transport_channel_awake => _library._transport_channel_awakePtr;
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_channel>,
+              ffi.Pointer<transport_channel>,
+              ffi.Int64,
+              ffi.Int64)>> get transport_channel_message =>
+      _library._transport_channel_messagePtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<transport_channel_t>)>>
