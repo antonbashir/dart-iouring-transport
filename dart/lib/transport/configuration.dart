@@ -2,16 +2,24 @@ import 'package:iouring_transport/transport/constants.dart';
 
 class TransportConfiguration {
   final TransportLogLevel logLevel;
+  final int inboundIsolates;
+  final int outboundIsolates;
 
   TransportConfiguration({
     required this.logLevel,
+    required this.inboundIsolates,
+    required this.outboundIsolates,
   });
 
   TransportConfiguration copyWith({
     TransportLogLevel? logLevel,
+    int? inboundIsolates,
+    int? outboundInsolates,
   }) =>
       TransportConfiguration(
         logLevel: logLevel ?? this.logLevel,
+        inboundIsolates: inboundIsolates ?? this.inboundIsolates,
+        outboundIsolates: outboundInsolates ?? this.outboundIsolates,
       );
 }
 
@@ -70,5 +78,32 @@ class TransportAcceptorConfiguration {
         maxConnections: maxConnections ?? this.maxConnections,
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
+      );
+}
+
+class TransportConnectorConfiguration {
+  final int maxConnections;
+  final int receiveBufferSize;
+  final int sendBufferSize;
+  final int defaultPool;
+
+  TransportConnectorConfiguration({
+    required this.maxConnections,
+    required this.receiveBufferSize,
+    required this.sendBufferSize,
+    required this.defaultPool,
+  });
+
+  TransportConnectorConfiguration copyWith({
+    int? maxConnections,
+    int? receiveBufferSize,
+    int? sendBufferSize,
+    int? defaultPool,
+  }) =>
+      TransportConnectorConfiguration(
+        maxConnections: maxConnections ?? this.maxConnections,
+        receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
+        sendBufferSize: sendBufferSize ?? this.sendBufferSize,
+        defaultPool: defaultPool ?? this.defaultPool,
       );
 }

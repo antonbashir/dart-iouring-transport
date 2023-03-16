@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
@@ -12,17 +13,18 @@ import 'payload.dart';
 class TransportFile {
   final TransportBindings _bindings;
   final TransportResourceChannel _channel;
+  final Pointer<transport_channel_t> _channelPointer;
   final TransportEventLoopCallbacks _callbacks;
   late final int fd;
 
-  TransportFile(this._callbacks, this._channel, this._bindings, String path) {
+  TransportFile(this._callbacks, this._channel, this._channelPointer, this._bindings, String path) {
     using((Arena arena) => fd = _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
   }
 
   Future<TransportPayload> readBuffer({int offset = 0}) => _channel.allocate().then(
         (bufferId) {
           final completer = Completer<TransportPayload>();
-          _callbacks.putRead(Tuple2(_channel.pointer.address, bufferId), completer);
+          _callbacks.putRead(Tuple2(_channelPointer.address, bufferId), completer);
           _channel.read(fd, bufferId);
           return completer.future;
         },
@@ -31,7 +33,7 @@ class TransportFile {
   Future<void> write(Uint8List bytes) => _channel.allocate().then(
         (bufferId) {
           final completer = Completer<void>();
-          _callbacks.putWrite(Tuple2(_channel.pointer.address, bufferId), completer);
+          _callbacks.putWrite(Tuple2(_channelPointer.address, bufferId), completer);
           _channel.write(bytes, fd, bufferId);
           return completer.future;
         },

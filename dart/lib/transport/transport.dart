@@ -12,40 +12,30 @@ import 'configuration.dart';
 import 'lookup.dart';
 
 class Transport {
-  final listenerExit = ReceivePort();
-  final loopExit = ReceivePort();
+  final TransportConfiguration transportConfiguration;
+  final TransportAcceptorConfiguration acceptorConfiguration;
+  final TransportChannelConfiguration channelConfiguration;
+  final TransportConnectorConfiguration connectorConfiguration;
+  late final TransportLogger logger;
 
-  late final int inboundIsolates;
-  late final int outboundIsolates;
-  late final TransportEventLoop loop;
-  late final TransportConfiguration _transportConfiguration;
-  late final TransportAcceptorConfiguration _acceptorConfiguration;
-  late final TransportChannelConfiguration _channelConfiguration;
+  final _listenerExit = ReceivePort();
+  final _loopExit = ReceivePort();
+
+  late final TransportEventLoop _loop;
   late final String? _libraryPath;
-  late final TransportLogger _logger;
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transport;
 
-  Transport({String? libraryPath}) {
+  Transport(this.transportConfiguration, this.acceptorConfiguration, this.channelConfiguration, this.connectorConfiguration, {String? libraryPath}) {
     _library = TransportLibrary.load(libraryPath: libraryPath);
     _bindings = TransportBindings(_library.library);
     this._libraryPath = libraryPath;
-  }
 
-  void initialize(
-    TransportConfiguration transportConfiguration,
-    TransportAcceptorConfiguration acceptorConfiguration,
-    TransportChannelConfiguration channelConfiguration,
-  ) {
-    _transportConfiguration = transportConfiguration;
-    _acceptorConfiguration = acceptorConfiguration;
-    _channelConfiguration = channelConfiguration;
-
-    _logger = TransportLogger(transportConfiguration.logLevel);
+    logger = TransportLogger(transportConfiguration.logLevel);
 
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
-    nativeTransportConfiguration.ref.logging_port = _logger.listenNative();
+    nativeTransportConfiguration.ref.logging_port = logger.listenNative();
 
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
@@ -69,71 +59,68 @@ class Transport {
 
   Future<void> shutdown() async {
     _bindings.transport_shutdown(_transport);
-    await listenerExit.take(inboundIsolates + outboundIsolates).toList();
-    if (loop.serving) await loopExit.first;
+    await _listenerExit.take(transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates).toList();
+    if (_loop.serving) await _loopExit.first;
     _bindings.transport_destroy(_transport);
   }
 
-  Future<TransportEventLoop> run({int inboundIsolates = 1, int outboundIsolates = 1}) async {
-    inboundIsolates = inboundIsolates;
-
+  Future<TransportEventLoop> run() async {
     final fromInbound = ReceivePort();
     final fromOutbound = ReceivePort();
     final fromInboundActivator = ReceivePort();
     final fromOutboundActivator = ReceivePort();
     final completer = Completer();
     var completionCounter = 0;
-
-    loop = TransportEventLoop(_libraryPath, _bindings, _transport, loopExit.sendPort, outboundIsolates);
-
-    for (var isolate = 0; isolate < inboundIsolates; isolate++) {
-      Isolate.spawn<SendPort>(
-        (toTransport) => TransportInboundListener(toTransport).listen(),
-        fromInbound.sendPort,
-        onExit: listenerExit.sendPort,
-      );
-    }
-
-    for (var isolate = 0; isolate < outboundIsolates; isolate++) {
-      Isolate.spawn<SendPort>(
-        (toTransport) => TransportOutboundListener(toTransport).listen(),
-        fromOutbound.sendPort,
-        onExit: listenerExit.sendPort,
-      );
-    }
-
-    fromInbound.listen((port) {
-      SendPort toInbound = port as SendPort;
-      toInbound.send([
-        _libraryPath,
-        _transport.address,
-        _channelConfiguration.ringSize,
-        loop.onInbound.sendPort,
-        fromInboundActivator.sendPort,
-      ]);
-    });
-
-    fromInboundActivator.listen((message) {
-      if (++completionCounter == inboundIsolates + outboundIsolates) {
-        completer.complete();
+    _loop = TransportEventLoop(_libraryPath, _bindings, _transport, this, _loopExit.sendPort, (inbound, outbound) {
+      for (var isolate = 0; isolate < transportConfiguration.inboundIsolates; isolate++) {
+        Isolate.spawn<SendPort>(
+          (toTransport) => TransportInboundListener(toTransport).listen(),
+          fromInbound.sendPort,
+          onExit: _listenerExit.sendPort,
+        );
       }
-    });
 
-    fromOutbound.listen((port) {
-      SendPort toOutbound = port as SendPort;
-      toOutbound.send([
-        _libraryPath,
-        _transport.address,
-        _channelConfiguration.ringSize,
-        loop.onOutbound.sendPort,
-        fromOutboundActivator.sendPort,
-      ]);
-    });
-
-    fromOutboundActivator.listen((message) {
-      if (++completionCounter == inboundIsolates + outboundIsolates) {
-        completer.complete();
+      for (var isolate = 0; isolate < transportConfiguration.outboundIsolates; isolate++) {
+        Isolate.spawn<SendPort>(
+          (toTransport) => TransportOutboundListener(toTransport).listen(),
+          fromOutbound.sendPort,
+          onExit: _listenerExit.sendPort,
+        );
       }
+
+      fromInbound.listen((port) {
+        SendPort toInbound = port as SendPort;
+        toInbound.send([
+          _libraryPath,
+          _transport.address,
+          channelConfiguration.ringSize,
+          inbound.sendPort,
+          fromInboundActivator.sendPort,
+        ]);
+      });
+
+      fromInboundActivator.listen((message) {
+        if (++completionCounter == transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates) {
+          completer.complete();
+        }
+      });
+
+      fromOutbound.listen((port) {
+        SendPort toOutbound = port as SendPort;
+        toOutbound.send([
+          _libraryPath,
+          _transport.address,
+          channelConfiguration.ringSize,
+          outbound.sendPort,
+          fromOutboundActivator.sendPort,
+        ]);
+      });
+
+      fromOutboundActivator.listen((message) {
+        if (++completionCounter == transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates) {
+          completer.complete();
+        }
+      });
     });
 
     return completer.future.then((value) {
@@ -141,7 +128,7 @@ class Transport {
       fromOutbound.close();
       fromInboundActivator.close();
       fromOutboundActivator.close();
-      return loop;
+      return _loop;
     });
   }
 }

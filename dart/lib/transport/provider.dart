@@ -1,4 +1,4 @@
-import 'package:iouring_transport/transport/client.dart';
+import 'package:iouring_transport/transport/connector.dart';
 import 'package:iouring_transport/transport/file.dart';
 
 class TransportProvider {
