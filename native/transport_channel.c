@@ -28,6 +28,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
 
   channel->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   channel->used_buffers = malloc(sizeof(uint64_t) * configuration->buffers_count);
+  channel->used_buffers_offsets = malloc(sizeof(uint64_t) * configuration->buffers_count);
   channel->available_buffer_id = 0;
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
@@ -41,6 +42,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
     channel->buffers[index].iov_base = buffer_memory;
     channel->buffers[index].iov_len = configuration->buffer_size;
     channel->used_buffers[index] = BUFFER_AVAILABLE;
+    channel->used_buffers_offsets[index] = 0;
   }
 
   struct io_uring *ring = malloc(sizeof(struct io_uring));

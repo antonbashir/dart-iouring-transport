@@ -31,6 +31,7 @@ class TransportChannel {
   @pragma(preferInlinePragma)
   void free(int bufferId) {
     pointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+    pointer.ref.used_buffers_offsets[bufferId] = 0;
     _availableBuffersController.add(bufferId);
   }
 
