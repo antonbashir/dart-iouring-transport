@@ -14,23 +14,23 @@ class TransportDefaults {
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: 8192,
+        buffersCount: 1024,
         bufferSize: 4096,
-        ringSize: 16536,
+        ringSize: 16384,
         ringFlags: ringSetupSqpoll,
       );
 
   static TransportConnectorConfiguration connector() => TransportConnectorConfiguration(
         maxConnections: 8192,
-        receiveBufferSize: 2048,
-        sendBufferSize: 2048,
+        receiveBufferSize: 4096,
+        sendBufferSize: 4096,
         defaultPool: Platform.numberOfProcessors * 2,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
         maxConnections: 8192,
-        receiveBufferSize: 2048,
-        sendBufferSize: 2048,
+        receiveBufferSize: 4096,
+        sendBufferSize: 4096,
         ringSize: 2048,
         ringFlags: 0,
       );

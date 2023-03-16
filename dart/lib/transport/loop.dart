@@ -3,8 +3,6 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/logger.dart';
-import 'package:iouring_transport/transport/transport.dart';
 import 'package:tuple/tuple.dart';
 
 import 'acceptor.dart';
@@ -16,6 +14,7 @@ import 'exception.dart';
 import 'file.dart';
 import 'payload.dart';
 import 'provider.dart';
+import 'transport.dart';
 
 class TransportEventLoopCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
@@ -48,6 +47,17 @@ class TransportEventLoopCallbacks {
 
   @pragma(preferInlinePragma)
   void notifyWriteError(Tuple2<int, int> key, Exception error) => _writeCallbacks.remove(key)?.completeError(error);
+}
+
+String _event(int userdata) {
+  if (userdata & transportEventClose != 0) return "transportEventClose";
+  if (userdata & transportEventRead != 0) return "transportEventRead";
+  if (userdata & transportEventWrite != 0) return "transportEventWrite";
+  if (userdata & transportEventAccept != 0) return "transportEventAccept";
+  if (userdata & transportEventConnect != 0) return "transportEventConnect";
+  if (userdata & transportEventReadCallback != 0) return "transportEventReadCallback";
+  if (userdata & transportEventWriteCallback != 0) return "transportEventWriteCallback";
+  return "unkown";
 }
 
 class TransportEventLoop {
@@ -149,6 +159,7 @@ class TransportEventLoop {
   }
 
   void _handleOutbound(int result, int userData, Pointer<transport_channel_t> pointer) {
+    _transport.logger.info("[resource] code = $result, event = ${_event(userData)}");
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}";
@@ -199,18 +210,15 @@ class TransportEventLoop {
       final fd = pointer.ref.used_buffers[bufferId];
       _callbacks.notifyRead(
         Tuple2(pointer.address, bufferId),
-        TransportPayload(
-          buffer.iov_base.cast<Uint8>().asTypedList(result),
-          (answer, offset) {
-            if (answer != null) {
-              buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-              buffer.iov_len = answer.length;
-              _bindings.transport_channel_write(pointer, fd, bufferId, 0, transportEventWrite);
-              return;
-            }
-            channel.free(bufferId);
-          },
-        ),
+        TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
+          if (answer != null) {
+            buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+            buffer.iov_len = answer.length;
+            _bindings.transport_channel_write(pointer, fd, bufferId, 0, transportEventWrite);
+            return;
+          }
+          channel.free(bufferId);
+        }),
       );
       return;
     }
@@ -240,6 +248,7 @@ class TransportEventLoop {
   }
 
   void _handleInbound(int result, int userData, Pointer<transport_channel_t> pointer) {
+    _transport.logger.info("[server] code = $result, event = ${_event(userData)}");
     if (result < 0) {
       if (userData & transportEventRead != 0) {
         final channel = TransportChannel.channel(pointer.address);
