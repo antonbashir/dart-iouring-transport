@@ -117,46 +117,60 @@ class TransportEventLoop {
     return _inputStream.stream;
   }
 
-  void _handleOutbound(int result, int userData, Pointer<transport_channel_t> channel) {
+  void _handleOutbound(int result, int userData, Pointer<transport_channel_t> pointer) {
+    final channel = TransportChannel.channel(pointer.address);
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         _bindings.transport_close_descritor(userData & ~transportEventAll);
         _callbacks.notifyConnectError(userData & ~transportEventAll, Exception("Connect exception with code $result"));
+        return;
       }
 
-      if (userData & transportEventReadCallback != 0 || userData & transportEventWriteCallback != 0) {
+      if (userData & transportEventReadCallback != 0) {
         final bufferId = userData & ~transportEventAll;
-        final fd = channel.ref.used_buffers[bufferId];
-        if (userData & transportEventReadCallback != 0) {
-          if (result == -EAGAIN) {
-            _bindings.transport_channel_read(channel, fd, bufferId, 0, transportEventReadCallback);
-            return;
-          }
-          _bindings.transport_close_descritor(fd);
-          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-          _callbacks.notifyReadError(Tuple2(channel.address, bufferId), Exception("Read exception with code $result"));
+        final fd = pointer.ref.used_buffers[bufferId];
+        if (result == -EAGAIN) {
+          _bindings.transport_channel_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventReadCallback);
+          return;
         }
-        if (userData & transportEventWriteCallback != 0) {
-          if (result == -EAGAIN) {
-            _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWriteCallback);
-            return;
-          }
-          _bindings.transport_close_descritor(fd);
-          channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-          _callbacks.notifyWriteError(Tuple2(channel.address, bufferId), Exception("Write exception with code $result"));
+        _bindings.transport_close_descritor(fd);
+        channel.free(bufferId);
+        _callbacks.notifyReadError(Tuple2(pointer.address, bufferId), Exception("Read exception with code $result"));
+        return;
+      }
+
+      if (userData & transportEventWriteCallback != 0) {
+        final bufferId = userData & ~transportEventAll;
+        final fd = pointer.ref.used_buffers[bufferId];
+        if (result == -EAGAIN) {
+          _bindings.transport_channel_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWriteCallback);
+          return;
         }
+        _bindings.transport_close_descritor(fd);
+        channel.free(bufferId);
+        _callbacks.notifyWriteError(Tuple2(pointer.address, bufferId), Exception("Write exception with code $result"));
+        return;
       }
       return;
     }
 
     if (userData & transportEventReadCallback != 0) {
       final bufferId = userData & ~transportEventAll;
-      final buffer = channel.ref.buffers[bufferId];
+      final buffer = pointer.ref.buffers[bufferId];
+      final fd = pointer.ref.used_buffers[bufferId];
       _callbacks.notifyRead(
-        Tuple2(channel.address, bufferId),
+        Tuple2(pointer.address, bufferId),
         TransportPayload(
           buffer.iov_base.cast<Uint8>().asTypedList(result),
-          (_) => channel.ref.used_buffers[bufferId] = transportBufferAvailable,
+          (answer, offset) {
+            if (answer != null) {
+              buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+              buffer.iov_len = answer.length;
+              _bindings.transport_channel_write(pointer, fd, bufferId, 0, transportEventWrite);
+              return;
+            }
+            channel.free(bufferId);
+          },
         ),
       );
       return;
@@ -164,58 +178,79 @@ class TransportEventLoop {
 
     if (userData & transportEventWriteCallback != 0) {
       final bufferId = userData & ~transportEventAll;
-      channel.ref.used_buffers[bufferId] = transportBufferAvailable;
-      _callbacks.notifyWrite(Tuple2(channel.address, bufferId));
+      channel.free(bufferId);
+      _callbacks.notifyWrite(Tuple2(pointer.address, bufferId));
       return;
     }
 
     if (userData & transportEventConnect != 0) {
       final fd = userData & ~transportEventAll;
-      print("connect: $fd");
       _callbacks.notifyConnect(
         fd,
-        TransportClient(_callbacks, TransportResourceChannel(channel, _bindings), _bindings, fd),
+        TransportClient(_callbacks, TransportResourceChannel(pointer, _bindings), _bindings, fd),
       );
       return;
     }
   }
 
-  void _handleInbound(int result, int userData, Pointer<transport_channel_t> channel) {
+  void _handleInbound(int result, int userData, Pointer<transport_channel_t> pointer) {
+    final channel = TransportChannel.channel(pointer.address);
     if (result < 0) {
-      if (userData & transportEventRead != 0 || userData & transportEventWrite != 0) {
+      if (userData & transportEventRead != 0) {
         final bufferId = userData & ~transportEventAll;
-        final fd = channel.ref.used_buffers[bufferId];
+        final fd = pointer.ref.used_buffers[bufferId];
+        if (result == -EAGAIN) {
+          _bindings.transport_channel_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventRead);
+          return;
+        }
         _bindings.transport_close_descritor(fd);
-        channel.ref.used_buffers[bufferId] = transportBufferAvailable;
+        channel.free(bufferId);
+        return;
+      }
+
+      if (userData & transportEventWrite != 0) {
+        final bufferId = userData & ~transportEventAll;
+        final fd = pointer.ref.used_buffers[bufferId];
+        if (result == -EAGAIN) {
+          _bindings.transport_channel_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWrite);
+          return;
+        }
+        _bindings.transport_close_descritor(fd);
+        channel.free(bufferId);
+        return;
       }
       return;
     }
 
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;
-      final fd = channel.ref.used_buffers[bufferId];
+      final fd = pointer.ref.used_buffers[bufferId];
       if (!_inputStream.hasListener) {
-        channel.ref.used_buffers[bufferId] = transportBufferAvailable;
+        channel.free(bufferId);
         return;
       }
-      final buffer = channel.ref.buffers[bufferId];
-      _inputStream.add(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer) {
-        buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-        buffer.iov_len = answer.length;
-        _bindings.transport_channel_write(channel, fd, bufferId, 0, transportEventWrite);
+      final buffer = pointer.ref.buffers[bufferId];
+      _inputStream.add(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
+        if (answer != null) {
+          buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
+          buffer.iov_len = answer.length;
+          _bindings.transport_channel_write(pointer, fd, bufferId, offset, transportEventWrite);
+          return;
+        }
+        channel.free(bufferId);
       }));
       return;
     }
 
     if (userData & transportEventWrite != 0) {
       final bufferId = userData & ~transportEventAll;
-      final fd = channel.ref.used_buffers[bufferId];
-      _bindings.transport_channel_read(channel, fd, bufferId, 0, transportEventRead);
+      final fd = pointer.ref.used_buffers[bufferId];
+      _bindings.transport_channel_read(pointer, fd, bufferId, 0, transportEventRead);
       return;
     }
 
     if (userData & transportEventAccept != 0) {
-      onAccept?.call(TransportServerChannel(channel, _bindings), result);
+      onAccept?.call(TransportServerChannel(pointer, _bindings), result);
       return;
     }
   }

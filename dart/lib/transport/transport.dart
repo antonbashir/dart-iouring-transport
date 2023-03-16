@@ -74,7 +74,7 @@ class Transport {
     _bindings.transport_destroy(_transport);
   }
 
-  Future<TransportEventLoop> listen({int inboundIsolates = 1, int outboundIsolates = 1}) async {
+  Future<TransportEventLoop> run({int inboundIsolates = 1, int outboundIsolates = 1}) async {
     inboundIsolates = inboundIsolates;
 
     final fromInbound = ReceivePort();

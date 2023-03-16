@@ -32,6 +32,7 @@ extern "C"
     uint32_t buffer_size;
     uint32_t buffers_count;
     int *used_buffers;
+    int *used_buffers_offsets;
     int available_buffer_id;
     struct rlist channel_pool_link;
   } transport_channel_t;

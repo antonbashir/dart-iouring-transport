@@ -26428,6 +26428,8 @@ class transport_channel extends ffi.Struct {
 
   external ffi.Pointer<ffi.Int> used_buffers;
 
+  external ffi.Pointer<ffi.Int> used_buffers_offsets;
+
   @ffi.Int()
   external int available_buffer_id;
 
