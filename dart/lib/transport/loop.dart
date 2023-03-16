@@ -118,7 +118,6 @@ class TransportEventLoop {
   }
 
   void _handleOutbound(int result, int userData, Pointer<transport_channel_t> pointer) {
-    final channel = TransportChannel.channel(pointer.address);
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         _bindings.transport_close_descritor(userData & ~transportEventAll);
@@ -127,6 +126,7 @@ class TransportEventLoop {
       }
 
       if (userData & transportEventReadCallback != 0) {
+        final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
         if (result == -EAGAIN) {
@@ -140,6 +140,7 @@ class TransportEventLoop {
       }
 
       if (userData & transportEventWriteCallback != 0) {
+        final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
         if (result == -EAGAIN) {
@@ -155,6 +156,7 @@ class TransportEventLoop {
     }
 
     if (userData & transportEventReadCallback != 0) {
+      final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
       final buffer = pointer.ref.buffers[bufferId];
       final fd = pointer.ref.used_buffers[bufferId];
@@ -177,6 +179,7 @@ class TransportEventLoop {
     }
 
     if (userData & transportEventWriteCallback != 0) {
+      final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
       channel.free(bufferId);
       _callbacks.notifyWrite(Tuple2(pointer.address, bufferId));
@@ -194,9 +197,9 @@ class TransportEventLoop {
   }
 
   void _handleInbound(int result, int userData, Pointer<transport_channel_t> pointer) {
-    final channel = TransportChannel.channel(pointer.address);
     if (result < 0) {
       if (userData & transportEventRead != 0) {
+        final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
         if (result == -EAGAIN) {
@@ -209,6 +212,7 @@ class TransportEventLoop {
       }
 
       if (userData & transportEventWrite != 0) {
+        final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
         if (result == -EAGAIN) {
@@ -223,6 +227,7 @@ class TransportEventLoop {
     }
 
     if (userData & transportEventRead != 0) {
+      final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (!_inputStream.hasListener) {

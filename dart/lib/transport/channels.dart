@@ -40,7 +40,7 @@ class TransportChannel {
 }
 
 class TransportServerChannel extends TransportChannel {
-  TransportServerChannel(super.pointer, super._bindings);
+  TransportServerChannel(super.pointer, super._bindings) : super();
 
   void read(int fd, {int offset = 0}) {
     allocate().then((bufferId) => _bindings.transport_channel_read(pointer, fd, bufferId, offset, transportEventRead));
@@ -57,7 +57,7 @@ class TransportServerChannel extends TransportChannel {
 }
 
 class TransportResourceChannel extends TransportChannel {
-  TransportResourceChannel(super.pointer, super._bindings);
+  TransportResourceChannel(super.pointer, super._bindings) : super();
 
   void read(int fd, int bufferId, {int offset = 0}) {
     _bindings.transport_channel_read(pointer, fd, bufferId, offset, transportEventReadCallback);

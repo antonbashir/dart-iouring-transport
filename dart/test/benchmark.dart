@@ -17,9 +17,7 @@ Future<void> main(List<String> args) async {
       TransportDefaults.channel(),
     )
     ..run(inboundIsolates: 4, outboundIsolates: 4).then((loop) async {
-      final clients = await loop.provider.connector.connect("35.202.158.55", 12345, pool: 128);
       loop.serve("0.0.0.0", 9000, onAccept: (channel, descriptor) => channel.read(descriptor)).listen((event) async {
-        clients.select().write(fromServer);
         event.respond(fromServer);
       });
     });
