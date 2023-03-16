@@ -31,7 +31,7 @@ extern "C"
   transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configuration_t *configuration,
                                                       const char *ip,
                                                       int32_t port);
-
+  int transport_prepare_accept(struct transport_acceptor *acceptor);
   void transport_acceptor_shutdown(transport_acceptor_t *acceptor);
 #if defined(__cplusplus)
 }

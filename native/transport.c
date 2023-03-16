@@ -127,19 +127,11 @@ int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uri
   return count;
 }
 
-static inline int transport_acceptor_accept(struct transport_acceptor *acceptor)
+void transport_accept(transport_t *transport, transport_acceptor_t *acceptor)
 {
-  struct io_uring_sqe *sqe = provide_sqe(acceptor->ring);
-  io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
-  return io_uring_submit(acceptor->ring);
-}
-
-void transport_accept(transport_t *transport, const char *ip, int port)
-{
-  transport_acceptor_t *acceptor = transport_acceptor_initialize(transport->acceptor_configuration, ip, port);
   transport->acceptor = acceptor;
   struct io_uring *ring = acceptor->ring;
-  transport_acceptor_accept(acceptor);
+  transport_prepare_accept(acceptor);
   struct io_uring_cqe *cqe;
   while (true)
   {
@@ -160,7 +152,7 @@ void transport_accept(transport_t *transport, const char *ip, int port)
 
       if (unlikely(cqe->res < 0))
       {
-        transport_acceptor_accept(acceptor);
+        transport_prepare_accept(acceptor);
         io_uring_cqe_seen(ring, cqe);
         continue;
       }
@@ -176,7 +168,7 @@ void transport_accept(transport_t *transport, const char *ip, int port)
       io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, cqe->res, TRANSPORT_EVENT_ACCEPT, 0);
       io_uring_submit(ring);
       io_uring_cqe_seen(ring, cqe);
-      transport_acceptor_accept(acceptor);
+      transport_prepare_accept(acceptor);
     }
   }
   transport_acceptor_shutdown(acceptor);

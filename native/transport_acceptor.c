@@ -48,6 +48,13 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
   return acceptor;
 }
 
+int transport_prepare_accept(struct transport_acceptor *acceptor)
+{
+  struct io_uring_sqe *sqe = provide_sqe(acceptor->ring);
+  io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
+  return io_uring_submit(acceptor->ring);
+}
+
 void transport_acceptor_shutdown(transport_acceptor_t *acceptor)
 {
   io_uring_queue_exit(acceptor->ring);

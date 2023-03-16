@@ -45,7 +45,7 @@ extern "C"
 
   int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
-  void transport_accept(transport_t *transport, const char *ip, int port);
+  void transport_accept(transport_t *transport, transport_acceptor_t* acceptor);
 
   struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count);
 

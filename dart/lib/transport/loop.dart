@@ -120,6 +120,10 @@ class TransportEventLoop {
 
     final fromAcceptor = ReceivePort();
     final acceptorExit = ReceivePort();
+    final accepted = RawReceivePort((_) async {
+      _serving = true;
+      _servingCompleter.complete();
+    });
 
     Isolate.spawn<SendPort>((port) => TransportAcceptor(port).accept(), fromAcceptor.sendPort, onExit: acceptorExit.sendPort);
 
@@ -130,14 +134,13 @@ class TransportEventLoop {
         _transportPointer.address,
         host,
         port,
-        RawReceivePort((_) async {
-          await Future.delayed(Duration(milliseconds: 1));
-          _serving = true;
-          _servingCompleter.complete();
-        })
+        accepted.sendPort,
       ]);
     });
 
+    accepted.close();
+    fromAcceptor.close();
+    
     return _inputStream.stream;
   }
 

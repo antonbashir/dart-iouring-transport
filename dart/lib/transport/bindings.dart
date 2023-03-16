@@ -19042,6 +19042,21 @@ class TransportBindings {
               ffi.Pointer<ffi.Char>,
               int)>();
 
+  int transport_prepare_accept(
+    ffi.Pointer<transport_acceptor> acceptor,
+  ) {
+    return _transport_prepare_accept(
+      acceptor,
+    );
+  }
+
+  late final _transport_prepare_acceptPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_acceptor>)>>('transport_prepare_accept');
+  late final _transport_prepare_accept = _transport_prepare_acceptPtr
+      .asFunction<int Function(ffi.Pointer<transport_acceptor>)>();
+
   void transport_acceptor_shutdown(
     ffi.Pointer<transport_acceptor_t> acceptor,
   ) {
@@ -19271,22 +19286,21 @@ class TransportBindings {
 
   void transport_accept(
     ffi.Pointer<transport_t> transport,
-    ffi.Pointer<ffi.Char> ip,
-    int port,
+    ffi.Pointer<transport_acceptor_t> acceptor,
   ) {
     return _transport_accept(
       transport,
-      ip,
-      port,
+      acceptor,
     );
   }
 
   late final _transport_acceptPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_t>, ffi.Pointer<ffi.Char>,
-              ffi.Int)>>('transport_accept');
+          ffi.Void Function(ffi.Pointer<transport_t>,
+              ffi.Pointer<transport_acceptor_t>)>>('transport_accept');
   late final _transport_accept = _transport_acceptPtr.asFunction<
-      void Function(ffi.Pointer<transport_t>, ffi.Pointer<ffi.Char>, int)>();
+      void Function(
+          ffi.Pointer<transport_t>, ffi.Pointer<transport_acceptor_t>)>();
 
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     int cqe_count,
@@ -23280,6 +23294,9 @@ class _SymbolAddresses {
               ffi.Int32)>> get transport_acceptor_initialize =>
       _library._transport_acceptor_initializePtr;
   ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_acceptor>)>>
+      get transport_prepare_accept => _library._transport_prepare_acceptPtr;
+  ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
       get transport_acceptor_shutdown =>
@@ -23350,7 +23367,7 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(
-                  ffi.Pointer<transport_t>, ffi.Pointer<ffi.Char>, ffi.Int)>>
+                  ffi.Pointer<transport_t>, ffi.Pointer<transport_acceptor_t>)>>
       get transport_accept => _library._transport_acceptPtr;
   ffi.Pointer<
           ffi.NativeFunction<
