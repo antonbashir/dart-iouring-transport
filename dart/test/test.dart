@@ -15,8 +15,9 @@ final Transport _transport = Transport(
 void main() {
   test("simple", () async {
     final loop = await _transport.run();
+    var acceptCounter = 0;
     loop.serve("0.0.0.0", 12345, onAccept: (channel, descriptor) {
-      _transport.logger.info("Accepted: $descriptor");
+      _transport.logger.info("Accepted [${++acceptCounter}]: $descriptor");
       channel.read(descriptor);
     }).listen((event) {
       final request = Utf8Decoder().convert(event.bytes);

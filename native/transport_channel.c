@@ -49,14 +49,21 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   int32_t status = io_uring_queue_init(configuration->ring_size, ring, configuration->ring_flags);
   if (status)
   {
-    transport_error("[channel]: io_urig init error = %d", status);
+    transport_error("[channel]: io_urig init error code = %d, message = %s", status, strerror(-status));
     free(ring);
     free(channel);
     return NULL;
   }
 
   channel->ring = ring;
-  io_uring_register_buffers(ring, channel->buffers, configuration->buffers_count);
+  status = io_uring_register_buffers(ring, channel->buffers, configuration->buffers_count);
+  if (status)
+  {
+    transport_error("[channel]: io_urig buffer register error code = %d, message = %s",status, strerror(-status));
+    free(ring);
+    free(channel);
+    return NULL;
+  }
 
   transport_info("[channel] initialized");
   return channel;

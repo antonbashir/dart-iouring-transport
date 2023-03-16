@@ -58,6 +58,7 @@ void transport_destroy(transport_t *transport)
 transport_channel_t *transport_add_inbound_channel(transport_t *transport)
 {
   transport_channel_t *channel = transport_channel_initialize(transport->channel_configuration);
+  if (!channel) return NULL;
   transport_channel_pool_add(transport->inbound_channels, channel);
   return channel;
 }
@@ -65,6 +66,7 @@ transport_channel_t *transport_add_inbound_channel(transport_t *transport)
 transport_channel_t *transport_add_outbound_channel(transport_t *transport)
 {
   transport_channel_t *channel = transport_channel_initialize(transport->channel_configuration);
+  if (!channel) return NULL;
   transport_channel_pool_add(transport->outbound_channels, channel);
   return channel;
 }

@@ -1,6 +1,8 @@
 import 'dart:ffi';
 import 'dart:isolate';
 
+import 'package:iouring_transport/transport/exception.dart';
+
 import 'bindings.dart';
 import 'lookup.dart';
 
@@ -24,6 +26,7 @@ class TransportInboundListener {
     fromTransport.close();
 
     final channelPointer = _bindings.transport_add_inbound_channel(_transport);
+    if (channelPointer == nullptr) throw TransportException("Unable to create channel");
     final ring = channelPointer.ref.ring;
     final cqes = _bindings.transport_allocate_cqes(_ringSize);
 
@@ -64,6 +67,7 @@ class TransportOutboundListener {
     fromTransport.close();
 
     final channelPointer = _bindings.transport_add_outbound_channel(_transport);
+    if (channelPointer == nullptr) throw TransportException("Unable to create channel");
     final ring = channelPointer.ref.ring;
     final cqes = _bindings.transport_allocate_cqes(_ringSize);
 

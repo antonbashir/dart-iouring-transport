@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/logger.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:tuple/tuple.dart';
 
@@ -150,8 +151,10 @@ class TransportEventLoop {
   void _handleOutbound(int result, int userData, Pointer<transport_channel_t> pointer) {
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
+        final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}";
+        _transport.logger.error(message);
         _bindings.transport_close_descritor(userData & ~transportEventAll);
-        _callbacks.notifyConnectError(userData & ~transportEventAll, TransportException("[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}"));
+        _callbacks.notifyConnectError(userData & ~transportEventAll, TransportException(message));
         return;
       }
 
@@ -159,13 +162,15 @@ class TransportEventLoop {
         final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
+        final message = "[resource read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
+        _transport.logger.error(message);
         if (result == -EAGAIN) {
           _bindings.transport_channel_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventReadCallback);
           return;
         }
         _bindings.transport_close_descritor(fd);
         channel.free(bufferId);
-        _callbacks.notifyReadError(Tuple2(pointer.address, bufferId), TransportException("[read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}"));
+        _callbacks.notifyReadError(Tuple2(pointer.address, bufferId), TransportException(message));
         return;
       }
 
@@ -173,13 +178,15 @@ class TransportEventLoop {
         final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
+        final message = "[resource write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
+        _transport.logger.error(message);
         if (result == -EAGAIN) {
           _bindings.transport_channel_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWriteCallback);
           return;
         }
         _bindings.transport_close_descritor(fd);
         channel.free(bufferId);
-        _callbacks.notifyWriteError(Tuple2(pointer.address, bufferId), TransportException("[write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}"));
+        _callbacks.notifyWriteError(Tuple2(pointer.address, bufferId), TransportException(message));
         return;
       }
       return;
@@ -238,6 +245,7 @@ class TransportEventLoop {
         final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
+        _transport.logger.error("[server read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
         if (result == -EAGAIN) {
           _bindings.transport_channel_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventRead);
           return;
@@ -251,6 +259,7 @@ class TransportEventLoop {
         final channel = TransportChannel.channel(pointer.address);
         final bufferId = userData & ~transportEventAll;
         final fd = pointer.ref.used_buffers[bufferId];
+        _transport.logger.error("[server write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
         if (result == -EAGAIN) {
           _bindings.transport_channel_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWrite);
           return;
@@ -259,6 +268,12 @@ class TransportEventLoop {
         channel.free(bufferId);
         return;
       }
+
+      if (userData & transportEventAccept != 0) {
+        _transport.logger.error("[server connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}");
+        return;
+      }
+
       return;
     }
 

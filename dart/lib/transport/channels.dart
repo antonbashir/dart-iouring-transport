@@ -21,10 +21,8 @@ class TransportChannel {
 
   @pragma(preferInlinePragma)
   Future<int> allocate() async {
-    var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
-    if (bufferId == -1) {
-      return _availableBuffers.last;
-    }
+    final bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
+    if (bufferId == -1) return _availableBuffers.last;
     return bufferId;
   }
 
