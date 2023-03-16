@@ -108,10 +108,17 @@ int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uri
   int count = 0;
   if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
   {
+    Dart_EnterScope();
+    Dart_Isolate current = Dart_CurrentIsolate();
+    Dart_ExitIsolate();
     if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
     {
+      Dart_EnterIsolate(current);
+      Dart_ExitScope();
       return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
     }
+    Dart_EnterIsolate(current);
+    Dart_ExitScope();
     return -1;
   }
   return count;
@@ -132,6 +139,9 @@ void transport_accept(transport_t *transport, transport_acceptor_t *acceptor)
   transport->acceptor = acceptor;
   struct io_uring *ring = acceptor->ring;
   transport_prepare_accept(acceptor);
+  Dart_EnterScope();
+  Dart_Isolate current = Dart_CurrentIsolate();
+  Dart_ExitIsolate();
   struct io_uring_cqe *cqe;
   while (true)
   {
@@ -171,6 +181,8 @@ void transport_accept(transport_t *transport, transport_acceptor_t *acceptor)
       transport_prepare_accept(acceptor);
     }
   }
+  Dart_EnterIsolate(current);
+  Dart_ExitScope();
   transport_acceptor_shutdown(acceptor);
 }
 

@@ -29,7 +29,6 @@ class TransportAcceptor {
     final acceptor = using((Arena arena) => _bindings.transport_acceptor_initialize(_transport.ref.acceptor_configuration, host.toNativeUtf8(allocator: arena).cast(), port));
     _bindings.transport_prepare_accept(acceptor);
     waiter.send(null);
-    await Future.delayed(Duration(milliseconds: 1));
     _bindings.transport_accept(_transport, acceptor);
     Isolate.exit();
   }

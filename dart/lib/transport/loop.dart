@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:isolate';
 
+import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:tuple/tuple.dart';
 
@@ -10,6 +11,7 @@ import 'bindings.dart';
 import 'channels.dart';
 import 'connector.dart';
 import 'constants.dart';
+import 'exception.dart';
 import 'file.dart';
 import 'payload.dart';
 import 'provider.dart';
@@ -49,32 +51,32 @@ class TransportEventLoopCallbacks {
 
 class TransportEventLoop {
   final _callbacks = TransportEventLoopCallbacks();
-
-  final SendPort _onExit;
-
-  late final RawReceivePort _onInbound;
-  late final RawReceivePort _onOutbound;
+  final _onServerExit = ReceivePort();
+  final _servingCompleter = Completer<void>();
+  var _serving = false;
 
   final String? _libraryPath;
   final TransportBindings _bindings;
   final Pointer<transport_t> _transportPointer;
+  final SendPort _onShutdown;
   final Transport _transport;
 
+  late final RawReceivePort _onInbound;
+  late final RawReceivePort _onOutbound;
   late final void Function(TransportServerChannel channel, int descriptor)? _onAccept;
-  late final TransportProvider provider;
+  late final StreamController<TransportPayload> _inputStream;
 
-  bool _serving = false;
-  final _servingCompleter = Completer<void>();
-  final _inputStream = StreamController<TransportPayload>(sync: true);
+  late final TransportProvider provider;
 
   TransportEventLoop(
     this._libraryPath,
     this._bindings,
     this._transportPointer,
     this._transport,
-    this._onExit,
+    this._onShutdown,
     void Function(RawReceivePort inboud, RawReceivePort outbound) completer,
   ) {
+    _inputStream = StreamController(sync: true, onCancel: () => _onServerExit.close());
     final connector = TransportConnector(_callbacks, _transportPointer, _bindings, _transport);
     provider = TransportProvider(
       connector,
@@ -113,42 +115,43 @@ class TransportEventLoop {
     String host,
     int port, {
     void Function(TransportServerChannel channel, int descriptor)? onAccept,
-  }) {
-    if (_serving) return _inputStream.stream;
+  }) async* {
+    if (_serving) yield* _inputStream.stream;
 
     this._onAccept = onAccept;
 
     final fromAcceptor = ReceivePort();
-    final acceptorExit = ReceivePort();
-    final accepted = RawReceivePort((_) async {
-      _serving = true;
-      _servingCompleter.complete();
+    final waiter = ReceivePort();
+
+    _onServerExit.listen((_) {
+      _onShutdown.send(null);
+      _inputStream.close();
     });
 
-    Isolate.spawn<SendPort>((port) => TransportAcceptor(port).accept(), fromAcceptor.sendPort, onExit: acceptorExit.sendPort);
+    Isolate.spawn<SendPort>((port) => TransportAcceptor(port).accept(), fromAcceptor.sendPort, onExit: _onServerExit.sendPort);
 
-    fromAcceptor.listen((acceptorPort) {
-      SendPort toAcceptor = acceptorPort as SendPort;
-      toAcceptor.send([
-        _libraryPath,
-        _transportPointer.address,
-        host,
-        port,
-        accepted.sendPort,
-      ]);
-    });
-
-    accepted.close();
+    SendPort toAcceptor = await fromAcceptor.first;
+    toAcceptor.send([
+      _libraryPath,
+      _transportPointer.address,
+      host,
+      port,
+      waiter.sendPort,
+    ]);
     fromAcceptor.close();
-    
-    return _inputStream.stream;
+    await waiter.first;
+    await Future.delayed(Duration(milliseconds: 1));
+    _serving = true;
+    _servingCompleter.complete();
+    waiter.close();
+    yield* _inputStream.stream;
   }
 
   void _handleOutbound(int result, int userData, Pointer<transport_channel_t> pointer) {
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         _bindings.transport_close_descritor(userData & ~transportEventAll);
-        _callbacks.notifyConnectError(userData & ~transportEventAll, Exception("Connect exception with code $result"));
+        _callbacks.notifyConnectError(userData & ~transportEventAll, TransportException("[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}"));
         return;
       }
 
@@ -162,7 +165,7 @@ class TransportEventLoop {
         }
         _bindings.transport_close_descritor(fd);
         channel.free(bufferId);
-        _callbacks.notifyReadError(Tuple2(pointer.address, bufferId), Exception("Read exception with code $result"));
+        _callbacks.notifyReadError(Tuple2(pointer.address, bufferId), TransportException("[read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}"));
         return;
       }
 
@@ -176,7 +179,7 @@ class TransportEventLoop {
         }
         _bindings.transport_close_descritor(fd);
         channel.free(bufferId);
-        _callbacks.notifyWriteError(Tuple2(pointer.address, bufferId), Exception("Write exception with code $result"));
+        _callbacks.notifyWriteError(Tuple2(pointer.address, bufferId), TransportException("[write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}"));
         return;
       }
       return;

@@ -13,15 +13,25 @@ final Transport _transport = Transport(
 );
 
 void main() {
-  test("simple", timeout: Timeout(Duration(seconds: 5)), () async {
+  test("simple", () async {
     final loop = await _transport.run();
-    loop.serve("0.0.0.0", 12345, onAccept: (channel, descriptor) => channel.read(descriptor)).listen((event) => event.respond(Utf8Encoder().convert("${Utf8Decoder().convert(event.bytes)}, world")));
+    loop.serve("0.0.0.0", 12345, onAccept: (channel, descriptor) {
+      _transport.logger.info("Accepted: $descriptor");
+      channel.read(descriptor);
+    }).listen((event) {
+      final request = Utf8Decoder().convert(event.bytes);
+      _transport.logger.info("Recevied: '$request'");
+      event.respond(Utf8Encoder().convert("$request, world"));
+    });
     await loop.awaitServer();
     _transport.logger.info("Served");
     final connector = await loop.provider.connector.connect("127.0.0.1", 12345);
     await connector.select().write(Utf8Encoder().convert("Hello"));
+    _transport.logger.info("Sent: 'Hello'");
     final response = await connector.select().read();
-    expect(Utf8Decoder().convert(response.release()), "Hello, wolrd");
+    final responseMessage = Utf8Decoder().convert(response.release());
+    _transport.logger.info("Responded: '$responseMessage'");
+    expect(responseMessage, "Hello, world");
     exit(0);
   });
 }
