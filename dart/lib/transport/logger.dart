@@ -1,5 +1,4 @@
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
@@ -23,6 +22,7 @@ class TransportLogger {
     return nativePort.sendPort.nativePort;
   }
 
+  @pragma(preferInlinePragma)
   void log(TransportLogLevel level, String message) {
     if (level.index < this.level.index) return;
 

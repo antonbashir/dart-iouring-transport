@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:iouring_transport/transport/configuration.dart';
 
@@ -9,8 +10,8 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        inboundIsolates: Platform.numberOfProcessors,
-        outboundIsolates: Platform.numberOfProcessors,
+        inboundIsolates: Platform.numberOfProcessors ~/ 2,
+        outboundIsolates: Platform.numberOfProcessors ~/2,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
