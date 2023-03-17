@@ -6,9 +6,8 @@ class TransportPayload {
 
   TransportPayload(this.bytes, this._responder);
 
-  Uint8List release() {
+  void release() {
     _responder(null, 0);
-    return bytes;
   }
 
   void respond(Uint8List answer, {int offset = 0}) {

@@ -159,7 +159,7 @@ class TransportEventLoop {
   }
 
   void _handleOutbound(int result, int userData, Pointer<transport_channel_t> pointer) {
-    _transport.logger.info("[resource] code = $result, event = ${_event(userData)}");
+    _transport.logger.info("[resource] result = $result, event = ${_event(userData)}");
     if (result < 0) {
       if (userData & transportEventConnect != 0) {
         final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}";
@@ -208,6 +208,7 @@ class TransportEventLoop {
       final bufferId = userData & ~transportEventAll;
       final buffer = pointer.ref.buffers[bufferId];
       final fd = pointer.ref.used_buffers[bufferId];
+      _transport.logger.info("[resource read] result = $result, bufferId = $bufferId, fd = $fd");
       _callbacks.notifyRead(
         Tuple2(pointer.address, bufferId),
         TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
@@ -226,12 +227,15 @@ class TransportEventLoop {
     if (userData & transportEventWriteCallback != 0) {
       final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
+      final fd = pointer.ref.used_buffers[bufferId];
+      _transport.logger.info("[resource write] result = $result, bufferId = $bufferId, fd = $fd");
       channel.free(bufferId);
       _callbacks.notifyWrite(Tuple2(pointer.address, bufferId));
       return;
     }
 
     if (userData & transportEventConnect != 0) {
+      _transport.logger.info("[connect] result = $result, fd = ${userData & ~transportEventAll}");
       final fd = userData & ~transportEventAll;
       _callbacks.notifyConnect(
         fd,
@@ -248,7 +252,7 @@ class TransportEventLoop {
   }
 
   void _handleInbound(int result, int userData, Pointer<transport_channel_t> pointer) {
-    _transport.logger.info("[server] code = $result, event = ${_event(userData)}");
+    _transport.logger.info("[server] result = $result, event = ${_event(userData)}");
     if (result < 0) {
       if (userData & transportEventRead != 0) {
         final channel = TransportChannel.channel(pointer.address);
@@ -290,6 +294,7 @@ class TransportEventLoop {
       final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
+      _transport.logger.info("[server read] result = $result, bufferId = $bufferId, fd = $fd");
       if (!_inputStream.hasListener) {
         channel.free(bufferId);
         return;
@@ -310,6 +315,7 @@ class TransportEventLoop {
     if (userData & transportEventWrite != 0) {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
+      _transport.logger.info("[server write] result = $result, bufferId = $bufferId, fd = $fd");
       _bindings.transport_channel_read(pointer, fd, bufferId, 0, transportEventRead);
       return;
     }

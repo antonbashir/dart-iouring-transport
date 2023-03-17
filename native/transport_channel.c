@@ -59,7 +59,7 @@ transport_channel_t *transport_channel_initialize(transport_channel_configuratio
   status = io_uring_register_buffers(ring, channel->buffers, configuration->buffers_count);
   if (status)
   {
-    transport_error("[channel]: io_urig buffer register error code = %d, message = %s",status, strerror(-status));
+    transport_error("[channel]: io_urig buffer register error code = %d, message = %s", status, strerror(-status));
     free(ring);
     free(channel);
     return NULL;

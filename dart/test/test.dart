@@ -27,12 +27,13 @@ void main() {
     await loop.awaitServer();
     _transport.logger.info("Served");
     final connector = await loop.provider.connector.connect("127.0.0.1", 12345);
-    final clinet = connector.select();
-    await clinet.write(Utf8Encoder().convert("Hello"));
+    final client = connector.select();
+    await client.write(Utf8Encoder().convert("Hello"));
     _transport.logger.info("Sent: 'Hello'");
-    final response = await clinet.read();
-    final responseMessage = Utf8Decoder().convert(response.release());
+    final response = await client.read();
+    final responseMessage = Utf8Decoder().convert(response.bytes);
     _transport.logger.info("Responded: '$responseMessage'");
+    response.release();
     expect(responseMessage, "Hello, world");
     exit(0);
   });

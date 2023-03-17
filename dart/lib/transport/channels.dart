@@ -35,6 +35,9 @@ class TransportChannel {
   void free(int bufferId) {
     _pointer.ref.used_buffers[bufferId] = transportBufferAvailable;
     _pointer.ref.used_buffers_offsets[bufferId] = 0;
+    _bindings.memset(_pointer.ref.buffers[bufferId].iov_base, 0, _pointer.ref.buffer_size);
+    _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
+    _pointer.ref.used_buffers_offsets[bufferId] = 0;
     _availableBuffersController.add(bufferId);
   }
 
