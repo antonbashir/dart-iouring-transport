@@ -113,7 +113,7 @@ int transport_channel_connect(struct transport_channel *channel, transport_conne
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
   struct sockaddr_in *address = &connector->client_address;
-  io_uring_prep_connect(sqe, connector->fd, (struct sockaddr *)address, sizeof(*address));
+  io_uring_prep_connect(sqe, connector->fd, (struct sockaddr *)address, connector->client_address_length);
   io_uring_sqe_set_data64(sqe, (int64_t)(connector->fd | TRANSPORT_EVENT_CONNECT));
   return io_uring_submit(channel->ring);
 }
@@ -122,7 +122,7 @@ int transport_channel_accept(struct transport_channel *channel, transport_accept
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
   struct sockaddr_in *address = &acceptor->server_address;
-  io_uring_prep_connect(sqe, acceptor->fd, (struct sockaddr *)address, sizeof(*address));
+  io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)address, &acceptor->server_address_length, 0);
   io_uring_sqe_set_data64(sqe, (int64_t)(acceptor->fd | TRANSPORT_EVENT_ACCEPT));
   return io_uring_submit(channel->ring);
 }

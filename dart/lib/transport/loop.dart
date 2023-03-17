@@ -308,7 +308,7 @@ class TransportEventLoop {
 
     if (userData & transportEventAccept != 0) {
       _onAccept?.call(TransportServerChannel(pointer, _bindings), result);
-      _bindings.transport_channel_accept(pointer, _acceptor.pointer);
+      _bindings.transport_channel_accept(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), _acceptor.pointer);
       return;
     }
   }
