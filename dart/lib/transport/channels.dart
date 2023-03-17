@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ffi';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'bindings.dart';
@@ -10,12 +11,9 @@ class TransportChannel {
 
   final Pointer<transport_channel_t> _pointer;
   final TransportBindings _bindings;
-  late final StreamController<int> _availableBuffersController;
-  late final Stream<int> _availableBuffers;
+  final ReceivePort availabileBufferSignal = ReceivePort();
 
   TransportChannel(this._pointer, this._bindings) {
-    _availableBuffersController = StreamController();
-    _availableBuffers = _availableBuffersController.stream;
     _channels[_pointer.address] = this;
   }
 
@@ -23,10 +21,10 @@ class TransportChannel {
   Future<int> allocate() async {
     var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
     if (bufferId == -1) {
-      bufferId = await _availableBuffers.last;
-      while (_pointer.ref.used_buffers[bufferId] != transportBufferAvailable) {
-        bufferId = await _availableBuffers.last;
-      }
+      return Future.doWhile(() {
+        bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
+        return bufferId == -1;
+      }).then((value) => bufferId);
     }
     return bufferId;
   }
@@ -38,7 +36,6 @@ class TransportChannel {
     _bindings.memset(_pointer.ref.buffers[bufferId].iov_base, 0, _pointer.ref.buffer_size);
     _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
     _pointer.ref.used_buffers_offsets[bufferId] = 0;
-    _availableBuffersController.add(bufferId);
   }
 
   @pragma(preferInlinePragma)
