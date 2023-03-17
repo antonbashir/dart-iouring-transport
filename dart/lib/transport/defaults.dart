@@ -10,14 +10,14 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        inboundIsolates: max(Platform.numberOfProcessors ~/ 2, 1),
-        outboundIsolates: max(Platform.numberOfProcessors ~/ 2, 1),
+        inboundIsolates: max(Platform.numberOfProcessors ~/ 2, 2),
+        outboundIsolates: max(Platform.numberOfProcessors ~/ 2, 2),
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: min(256 * max(Platform.numberOfProcessors ~/ 2, 1), 4096),
+        buffersCount: min(256 * max(Platform.numberOfProcessors ~/ 2, 2), 4096),
         bufferSize: 4096,
-        ringSize: min(4096 * max(Platform.numberOfProcessors ~/ 2, 1), 32768),
+        ringSize: min(4096 * max(Platform.numberOfProcessors ~/ 2, 2), 32768),
         ringFlags: ringSetupSqpoll,
       );
 
