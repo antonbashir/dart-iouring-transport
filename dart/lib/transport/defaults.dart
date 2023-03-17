@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:iouring_transport/transport/configuration.dart';
 
@@ -10,29 +9,29 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        inboundIsolates: max(Platform.numberOfProcessors ~/ 2, 2),
-        outboundIsolates: max(Platform.numberOfProcessors ~/ 2, 2),
+        inboundIsolates: Platform.numberOfProcessors,
+        outboundIsolates: Platform.numberOfProcessors,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: min(256 * max(Platform.numberOfProcessors ~/ 2, 2), 4096),
+        buffersCount: 1024,
         bufferSize: 4096,
-        ringSize: min(4096 * max(Platform.numberOfProcessors ~/ 2, 2), 32768),
+        ringSize: 16384,
         ringFlags: ringSetupSqpoll,
       );
 
   static TransportConnectorConfiguration connector() => TransportConnectorConfiguration(
-        maxConnections: min(512 * Platform.numberOfProcessors, 32768),
+        maxConnections: 8192,
         receiveBufferSize: 4096,
         sendBufferSize: 4096,
-        defaultPool: min(16 * max(Platform.numberOfProcessors ~/ 2, 1), 1024),
+        defaultPool: 1,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
-        maxConnections: min(512 * Platform.numberOfProcessors, 32768),
+        maxConnections: 8192,
         receiveBufferSize: 4096,
         sendBufferSize: 4096,
-        ringSize: min(512 * Platform.numberOfProcessors, 32768),
+        ringSize: 2048,
         ringFlags: 0,
       );
 }
