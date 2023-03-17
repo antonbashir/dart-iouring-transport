@@ -38,6 +38,8 @@ class TransportClient {
         },
       );
 
+  void send(Uint8List bytes, {int offset = 0}) => _channel.allocate().then((bufferId) => _channel.write(bytes, _fd, bufferId, offset: offset));
+
   void close() => _bindings.transport_close_descritor(_fd);
 }
 

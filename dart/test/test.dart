@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -35,14 +36,5 @@ void main() {
   //   _transport.logger.info("Responded: '$responseMessage'");
   //   response.release();
   //   expect(responseMessage, "Hello, world");
-  // });
-
-  // test("file", () async {
-  //   final loop = await _transport.run();
-  //   final file = await loop.provider.file("file.txt");
-  //   final response = await file.write(Utf8Encoder().convert("Hello")).then((_) => file.read());
-  //   final responseMessage = Utf8Decoder().convert(response.bytes);
-  //   response.release();
-  //   expect(responseMessage, "Hello");
   // });
 }
