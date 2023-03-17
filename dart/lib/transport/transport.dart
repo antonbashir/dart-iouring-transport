@@ -41,8 +41,11 @@ class Transport {
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
     nativeAcceptorConfiguration.ref.receive_buffer_size = acceptorConfiguration.receiveBufferSize;
     nativeAcceptorConfiguration.ref.send_buffer_size = acceptorConfiguration.sendBufferSize;
-    nativeAcceptorConfiguration.ref.ring_flags = acceptorConfiguration.ringFlags;
-    nativeAcceptorConfiguration.ref.ring_size = acceptorConfiguration.ringSize;
+
+    final nativeConnectorConfiguration = calloc<transport_connector_configuration_t>();
+    nativeConnectorConfiguration.ref.max_connections = connectorConfiguration.maxConnections;
+    nativeConnectorConfiguration.ref.receive_buffer_size = connectorConfiguration.receiveBufferSize;
+    nativeConnectorConfiguration.ref.send_buffer_size = connectorConfiguration.sendBufferSize;
 
     final nativeChannelConfiguration = calloc<transport_channel_configuration_t>();
     nativeChannelConfiguration.ref.buffers_count = channelConfiguration.buffersCount;
@@ -53,83 +56,53 @@ class Transport {
     _transport = _bindings.transport_initialize(
       nativeTransportConfiguration,
       nativeChannelConfiguration,
+      nativeConnectorConfiguration,
       nativeAcceptorConfiguration,
     );
   }
 
   Future<void> shutdown() async {
-    _bindings.transport_shutdown(_transport);
-    await _listenerExit.take(transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates).toList();
+    await _listenerExit.take(transportConfiguration.isolates).toList();
     if (_loop.serving) await _loopExit.first;
     _bindings.transport_destroy(_transport);
   }
 
   Future<TransportEventLoop> run() async {
-    final fromInbound = ReceivePort();
-    final fromOutbound = ReceivePort();
-    final fromInboundActivator = ReceivePort();
-    final fromOutboundActivator = ReceivePort();
+    final fromListener = ReceivePort();
+    final fromListenerActivator = ReceivePort();
     final completer = Completer();
     var completionCounter = 0;
-    _loop = TransportEventLoop(_libraryPath, _bindings, _transport, this, _loopExit.sendPort, (listener) {
-      for (var isolate = 0; isolate < transportConfiguration.inboundIsolates; isolate++) {
+    _loop = TransportEventLoop(_bindings, _transport, this, _loopExit.sendPort, (listener) {
+      for (var isolate = 0; isolate < transportConfiguration.isolates; isolate++) {
         Isolate.spawn<SendPort>(
           (toTransport) => TransportListener(toTransport).listen(),
-          fromInbound.sendPort,
+          fromListener.sendPort,
           onExit: _listenerExit.sendPort,
         );
       }
 
-      for (var isolate = 0; isolate < transportConfiguration.outboundIsolates; isolate++) {
-        Isolate.spawn<SendPort>(
-          (toTransport) => TransportListener(toTransport).listen(),
-          fromOutbound.sendPort,
-          onExit: _listenerExit.sendPort,
-        );
-      }
-
-      fromInbound.listen((port) {
-        SendPort toInbound = port as SendPort;
-        toInbound.send([
+      fromListener.listen((port) {
+        SendPort toListener = port as SendPort;
+        toListener.send([
           _libraryPath,
           _transport.address,
           channelConfiguration.ringSize,
           listener.sendPort,
-          fromInboundActivator.sendPort,
+          fromListenerActivator.sendPort,
         ]);
       });
 
-      fromInboundActivator.listen((channel) {
-        _bindings.transport_channel_pool_add(_transport.ref.inbound_channels, Pointer.fromAddress(channel));
-        if (++completionCounter == transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates) {
-          completer.complete();
-        }
-      });
-
-      fromOutbound.listen((port) {
-        SendPort toOutbound = port as SendPort;
-        toOutbound.send([
-          _libraryPath,
-          _transport.address,
-          channelConfiguration.ringSize,
-          listener.sendPort,
-          fromOutboundActivator.sendPort,
-        ]);
-      });
-
-      fromOutboundActivator.listen((channel) {
-        _bindings.transport_channel_pool_add(_transport.ref.outbound_channels, Pointer.fromAddress(channel));
-        if (++completionCounter == transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates) {
+      fromListenerActivator.listen((channel) {
+        _bindings.transport_channel_pool_add(_transport.ref.channels, Pointer.fromAddress(channel));
+        if (++completionCounter == transportConfiguration.isolates) {
           completer.complete();
         }
       });
     });
 
     return completer.future.then((value) {
-      fromInbound.close();
-      fromOutbound.close();
-      fromInboundActivator.close();
-      fromOutboundActivator.close();
+      fromListener.close();
+      fromListenerActivator.close();
       return _loop;
     });
   }

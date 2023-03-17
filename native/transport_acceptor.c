@@ -34,32 +34,13 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
     free(acceptor);
     return NULL;
   }
-  struct io_uring *ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(configuration->ring_size, ring, configuration->ring_flags);
-  if (status)
-  {
-    transport_error("[acceptor]: io_urig init error = %d", status);
-    free(ring);
-    free(acceptor);
-    return NULL;
-  }
-  acceptor->ring = ring;
   transport_info("[acceptor]: initialized");
   return acceptor;
 }
 
-int transport_prepare_accept(struct transport_acceptor *acceptor)
-{
-  struct io_uring_sqe *sqe = provide_sqe(acceptor->ring);
-  io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
-  return io_uring_submit(acceptor->ring);
-}
-
 void transport_acceptor_shutdown(transport_acceptor_t *acceptor)
 {
-  io_uring_queue_exit(acceptor->ring);
   shutdown(acceptor->fd, SHUT_RDWR);
-  free(acceptor->ring);
   free(acceptor);
   transport_info("[acceptor]: shutdown");
 }

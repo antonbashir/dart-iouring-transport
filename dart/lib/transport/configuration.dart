@@ -2,24 +2,21 @@ import 'package:iouring_transport/transport/constants.dart';
 
 class TransportConfiguration {
   final TransportLogLevel logLevel;
-  final int inboundIsolates;
-  final int outboundIsolates;
+  final int isolates;
 
   TransportConfiguration({
     required this.logLevel,
-    required this.inboundIsolates,
-    required this.outboundIsolates,
+    required this.isolates,
   });
 
   TransportConfiguration copyWith({
     TransportLogLevel? logLevel,
-    int? inboundIsolates,
+    int? isolates,
     int? outboundInsolates,
   }) =>
       TransportConfiguration(
         logLevel: logLevel ?? this.logLevel,
-        inboundIsolates: inboundIsolates ?? this.inboundIsolates,
-        outboundIsolates: outboundInsolates ?? this.outboundIsolates,
+        isolates: isolates ?? this.isolates,
       );
 }
 
@@ -51,30 +48,22 @@ class TransportChannelConfiguration {
 }
 
 class TransportAcceptorConfiguration {
-  final int ringSize;
-  final int ringFlags;
   final int maxConnections;
   final int receiveBufferSize;
   final int sendBufferSize;
 
   TransportAcceptorConfiguration({
-    required this.ringSize,
-    required this.ringFlags,
     required this.maxConnections,
     required this.receiveBufferSize,
     required this.sendBufferSize,
   });
 
   TransportAcceptorConfiguration copyWith({
-    int? ringSize,
-    int? ringFlags,
     int? maxConnections,
     int? receiveBufferSize,
     int? sendBufferSize,
   }) =>
       TransportAcceptorConfiguration(
-        ringSize: ringSize ?? this.ringSize,
-        ringFlags: ringFlags ?? this.ringFlags,
         maxConnections: maxConnections ?? this.maxConnections,
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,

@@ -109,24 +109,30 @@ int transport_channel_read(struct transport_channel *channel, int fd, int buffer
   return io_uring_submit(channel->ring);
 }
 
-int transport_channel_connect(struct transport_channel *channel, int fd, const char *ip, int port)
+int transport_channel_connect(struct transport_channel *channel, transport_connector_t *connector)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
-  struct sockaddr_in *address = malloc(sizeof(struct sockaddr_in));
-  memset(address, 0, sizeof(*address));
-  address->sin_addr.s_addr = inet_addr(ip);
-  address->sin_port = htons(port);
-  address->sin_family = AF_INET;
-  io_uring_prep_connect(sqe, fd, (struct sockaddr *)address, sizeof(*address));
-  io_uring_sqe_set_data64(sqe, (int64_t)(fd | TRANSPORT_EVENT_CONNECT));
+  struct sockaddr_in *address = &connector->client_address;
+  io_uring_prep_connect(sqe, connector->fd, (struct sockaddr *)address, sizeof(*address));
+  io_uring_sqe_set_data64(sqe, (int64_t)(connector->fd | TRANSPORT_EVENT_CONNECT));
   return io_uring_submit(channel->ring);
 }
 
-int transport_channel_message(struct transport_channel *fromChannel, struct transport_channel *toChannel, int64_t result, int64_t user_data)
+int transport_channel_accept(struct transport_channel *channel, transport_acceptor_t *acceptor)
 {
-  struct io_uring_sqe *sqe = provide_sqe(fromChannel->ring);
-  io_uring_prep_msg_ring(sqe, toChannel->ring->ring_fd, result, (int64_t)user_data, 0);
-  return io_uring_submit(fromChannel->ring);
+  struct io_uring_sqe *sqe = provide_sqe(channel->ring);
+  struct sockaddr_in *address = &acceptor->server_address;
+  io_uring_prep_connect(sqe, acceptor->fd, (struct sockaddr *)address, sizeof(*address));
+  io_uring_sqe_set_data64(sqe, (int64_t)(acceptor->fd | TRANSPORT_EVENT_ACCEPT));
+  return io_uring_submit(channel->ring);
+}
+
+int transport_channel_shutdown(struct transport_channel *channel)
+{
+  struct io_uring_sqe *sqe = provide_sqe(channel->ring);
+  io_uring_prep_nop(sqe);
+  io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_EVENT_CLOSE);
+  return io_uring_submit(channel->ring);
 }
 
 void transport_channel_close(transport_channel_t *channel)

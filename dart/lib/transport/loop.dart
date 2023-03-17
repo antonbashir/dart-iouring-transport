@@ -66,7 +66,6 @@ class TransportEventLoop {
   final _servingCompleter = Completer<void>();
   var _serving = false;
 
-  final String? _libraryPath;
   final TransportBindings _bindings;
   final Pointer<transport_t> _transportPointer;
   final SendPort _onShutdown;
@@ -75,11 +74,12 @@ class TransportEventLoop {
   late final RawReceivePort _listener;
   late final void Function(TransportServerChannel channel, int descriptor)? _onAccept;
   late final StreamController<TransportPayload> _inputStream;
+  late final TransportAcceptor _acceptor;
+  late final TransportConnector _connector;
 
   late final TransportProvider provider;
 
   TransportEventLoop(
-    this._libraryPath,
     this._bindings,
     this._transportPointer,
     this._transport,
@@ -87,11 +87,12 @@ class TransportEventLoop {
     void Function(RawReceivePort listener) completer,
   ) {
     _inputStream = StreamController(sync: true, onCancel: () => _onServerExit.close());
-    final connector = TransportConnector(_callbacks, _transportPointer, _bindings, _transport);
+    _acceptor = TransportAcceptor(_transportPointer, _bindings);
+    _connector = TransportConnector(_callbacks, _transportPointer, _bindings, _transport);
     provider = TransportProvider(
-      connector,
+      _connector,
       (path) {
-        final channelPointer = _bindings.transport_channel_pool_next(_transportPointer.ref.outbound_channels);
+        final channelPointer = _bindings.transport_channel_pool_next(_transportPointer.ref.channels);
         return TransportFile(
           _callbacks,
           TransportResourceChannel(channelPointer, _bindings),
@@ -128,30 +129,16 @@ class TransportEventLoop {
 
     this._onAccept = onAccept;
 
-    final fromAcceptor = ReceivePort();
-    final waiter = ReceivePort();
-
     _onServerExit.listen((_) {
       _onShutdown.send(null);
       _inputStream.close();
     });
 
-    Isolate.spawn<SendPort>((port) => TransportAcceptor(port).accept(), fromAcceptor.sendPort, onExit: _onServerExit.sendPort);
+    _acceptor.accept(host, port);
 
-    SendPort toAcceptor = await fromAcceptor.first;
-    toAcceptor.send([
-      _libraryPath,
-      _transportPointer.address,
-      host,
-      port,
-      waiter.sendPort,
-    ]);
-    fromAcceptor.close();
-    await waiter.first;
-    await Future.delayed(Duration(milliseconds: 1));
     _serving = true;
     _servingCompleter.complete();
-    waiter.close();
+
     yield* _inputStream.stream;
   }
 
@@ -195,7 +182,8 @@ class TransportEventLoop {
     }
 
     if (userData & transportEventAccept != 0) {
-      _transport.logger.error("[server connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}");
+      _transport.logger.error("[server accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}");
+      _bindings.transport_channel_accept(pointer, _acceptor.pointer);
       return;
     }
     if (userData & transportEventConnect != 0) {
@@ -320,6 +308,7 @@ class TransportEventLoop {
 
     if (userData & transportEventAccept != 0) {
       _onAccept?.call(TransportServerChannel(pointer, _bindings), result);
+      _bindings.transport_channel_accept(pointer, _acceptor.pointer);
       return;
     }
   }

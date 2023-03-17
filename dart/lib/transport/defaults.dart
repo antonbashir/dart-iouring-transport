@@ -7,8 +7,7 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        inboundIsolates: 1,
-        outboundIsolates: 1,
+        isolates: 1,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
@@ -29,7 +28,5 @@ class TransportDefaults {
         maxConnections: 1024,
         receiveBufferSize: 4096,
         sendBufferSize: 4096,
-        ringSize: 2048,
-        ringFlags: 0,
       );
 }

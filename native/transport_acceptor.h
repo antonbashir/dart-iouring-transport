@@ -16,13 +16,10 @@ extern "C"
     int32_t max_connections;
     uint32_t receive_buffer_size;
     uint32_t send_buffer_size;
-    uint32_t ring_size;
-    int ring_flags;
   } transport_acceptor_configuration_t;
 
   typedef struct transport_acceptor
   {
-    struct io_uring *ring;
     int fd;
     struct sockaddr_in server_address;
     socklen_t server_address_length;
@@ -31,7 +28,6 @@ extern "C"
   transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configuration_t *configuration,
                                                       const char *ip,
                                                       int32_t port);
-  int transport_prepare_accept(struct transport_acceptor *acceptor);
   void transport_acceptor_shutdown(transport_acceptor_t *acceptor);
 #if defined(__cplusplus)
 }

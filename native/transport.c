@@ -19,6 +19,7 @@
 
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                   transport_channel_configuration_t *channel_configuration,
+                                  transport_connector_configuration_t *connector_configuration,
                                   transport_acceptor_configuration_t *acceptor_configuration)
 {
   transport_logger_initialize(transport_configuration->logging_port);
@@ -31,28 +32,19 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 
   transport->acceptor_configuration = acceptor_configuration;
   transport->channel_configuration = channel_configuration;
-  transport->inbound_channels = transport_channel_pool_initialize();
-  transport->outbound_channels = transport_channel_pool_initialize();
+  transport->connector_configuration = connector_configuration;
+  transport->channels = transport_channel_pool_initialize();
 
   transport_info("[transport]: initialized");
   return transport;
-}
-
-void transport_shutdown(transport_t *transport)
-{
-  struct io_uring_sqe *sqe = provide_sqe(transport->acceptor->ring);
-  io_uring_prep_nop(sqe);
-  io_uring_sqe_set_data64(sqe, (uint64_t)TRANSPORT_EVENT_CLOSE);
-  io_uring_submit(transport->acceptor->ring);
-  transport_info("[transport]: shutdown");
 }
 
 void transport_destroy(transport_t *transport)
 {
   free(transport->acceptor_configuration);
   free(transport->channel_configuration);
-  free(transport->inbound_channels);
-  free(transport->outbound_channels);
+  free(transport->connector_configuration);
+  free(transport->channels);
   transport_info("[transport]: destroy");
 }
 
@@ -116,78 +108,7 @@ int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uri
   return count;
 }
 
-void transport_accept(transport_t *transport, transport_acceptor_t *acceptor)
-{
-  transport->acceptor = acceptor;
-  struct io_uring *ring = acceptor->ring;
-  transport_prepare_accept(acceptor);
-  Dart_EnterScope();
-  Dart_Isolate current = Dart_CurrentIsolate();
-  Dart_ExitIsolate();
-  struct io_uring_cqe *cqe;
-  while (true)
-  {
-    if (likely(io_uring_wait_cqe(ring, &cqe) == 0))
-    {
-      if (unlikely(cqe->user_data & TRANSPORT_EVENT_CLOSE))
-      {
-        io_uring_cqe_seen(ring, cqe);
-        transport_channel_t *channel, *temp;
-        rlist_foreach_entry_safe(channel, &transport->inbound_channels->channels, channel_pool_link, temp)
-        {
-          struct io_uring_sqe *sqe = provide_sqe(ring);
-          io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, 0, TRANSPORT_EVENT_CLOSE, 0);
-        }
-        io_uring_submit_and_wait(ring, transport->inbound_channels->count);
-        break;
-      }
-
-      if (unlikely(cqe->res < 0))
-      {
-        transport_prepare_accept(acceptor);
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
-
-      if (cqe->res == 0)
-      {
-        io_uring_cqe_seen(ring, cqe);
-        continue;
-      }
-
-      transport_channel_t *channel = transport_channel_pool_next(transport->inbound_channels);
-      struct io_uring_sqe *sqe = provide_sqe(ring);
-      io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, cqe->res, TRANSPORT_EVENT_ACCEPT, 0);
-      io_uring_submit(ring);
-      io_uring_cqe_seen(ring, cqe);
-      transport_prepare_accept(acceptor);
-    }
-  }
-  Dart_EnterIsolate(current);
-  Dart_ExitScope();
-  transport_acceptor_shutdown(acceptor);
-}
-
 int transport_close_descritor(int fd)
 {
   return shutdown(fd, SHUT_RDWR);
-}
-
-void transport_handle_dart_messages()
-{
-  Dart_EnterScope();
-  Dart_Handle result = Dart_HandleMessage();
-  if (unlikely(Dart_IsError(result)))
-  {
-    transport_error(Dart_GetError(result));
-  }
-  Dart_ExitScope();
-}
-
-void transport_test()
-{
-  Dart_Isolate current = Dart_CurrentIsolate();
-  Dart_ExitIsolate();
-  sleep(10);
-  Dart_EnterIsolate(current);
 }

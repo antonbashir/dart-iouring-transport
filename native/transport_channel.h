@@ -11,6 +11,8 @@
 #include "small/include/small/rlist.h"
 #include "dart/dart_api_dl.h"
 #include "transport_constants.h"
+#include "transport_connector.h"
+#include "transport_acceptor.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -49,8 +51,9 @@ extern "C"
 
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
-  int transport_channel_connect(struct transport_channel *channel, int fd, const char *ip, int port);
-  int transport_channel_message(struct transport_channel *fromChannel, struct transport_channel *toChannel, int64_t result, int64_t user_data);
+  int transport_channel_connect(struct transport_channel *channel, transport_connector_t* connector);
+  int transport_channel_accept(struct transport_channel *channel, transport_acceptor_t* acceptor);
+  int transport_channel_shutdown(struct transport_channel *channel);
 
   int transport_channel_allocate_buffer(transport_channel_t *channel);
 

@@ -22,15 +22,15 @@ extern "C"
 
   typedef struct transport
   {
-    struct transport_channel_pool *inbound_channels;
-    struct transport_channel_pool *outbound_channels;
-    transport_acceptor_t *acceptor;
+    struct transport_channel_pool *channels;
     transport_channel_configuration_t *channel_configuration;
+    transport_connector_configuration_t *connector_configuration;
     transport_acceptor_configuration_t *acceptor_configuration;
   } transport_t;
 
   transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                     transport_channel_configuration_t *channel_configuration,
+                                    transport_connector_configuration_t *connector_configuration,
                                     transport_acceptor_configuration_t *acceptor_configuration);
 
   int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring, int64_t timeout_seconds, int64_t timeout_nanos);
@@ -39,21 +39,13 @@ extern "C"
 
   int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
-  void transport_accept(transport_t *transport, transport_acceptor_t* acceptor);
-
   struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count);
 
   void transport_cqe_advance(struct io_uring *ring, int count);
 
-  void transport_shutdown(transport_t *transport);
-
   void transport_destroy(transport_t *transport);
 
   int transport_close_descritor(int fd);
-
-  void transport_handle_dart_messages();
-
-  void transport_test();
 #if defined(__cplusplus)
 }
 #endif

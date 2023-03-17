@@ -68,14 +68,14 @@ class TransportConnector {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transport.connectorConfiguration.defaultPool;
     for (var i = 0; i < pool; i++) {
+      final connector = using((arena) => _bindings.transport_connector_initialize(
+            _transportPointer.ref.connector_configuration,
+            host.toNativeUtf8(allocator: arena).cast(),
+            port,
+          ));
       final completer = Completer<TransportClient>();
-      final fd = _bindings.transport_socket_create_client(
-        _transport.connectorConfiguration.maxConnections,
-        _transport.connectorConfiguration.receiveBufferSize,
-        _transport.connectorConfiguration.sendBufferSize,
-      );
-      _callbacks.putConnect(fd, completer);
-      using((arena) => _bindings.transport_channel_connect(_bindings.transport_channel_pool_next(_transportPointer.ref.outbound_channels), fd, host.toNativeUtf8(allocator: arena).cast(), port));
+      _callbacks.putConnect(connector.ref.fd, completer);
+      _bindings.transport_channel_connect(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), connector);
       clients.add(completer.future);
     }
     return TransportClientPool(await Future.wait(clients));

@@ -18856,6 +18856,86 @@ class TransportBindings {
   set TRANSPORT_EVENT_ALL_FLAGS(int value) =>
       _TRANSPORT_EVENT_ALL_FLAGS.value = value;
 
+  ffi.Pointer<transport_connector_t> transport_connector_initialize(
+    ffi.Pointer<transport_connector_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> ip,
+    int port,
+  ) {
+    return _transport_connector_initialize(
+      configuration,
+      ip,
+      port,
+    );
+  }
+
+  late final _transport_connector_initializePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_connector_t> Function(
+              ffi.Pointer<transport_connector_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>>('transport_connector_initialize');
+  late final _transport_connector_initialize =
+      _transport_connector_initializePtr.asFunction<
+          ffi.Pointer<transport_connector_t> Function(
+              ffi.Pointer<transport_connector_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  void transport_connector_shutdown(
+    ffi.Pointer<transport_connector_t> connector,
+  ) {
+    return _transport_connector_shutdown(
+      connector,
+    );
+  }
+
+  late final _transport_connector_shutdownPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_connector_t>)>>(
+      'transport_connector_shutdown');
+  late final _transport_connector_shutdown = _transport_connector_shutdownPtr
+      .asFunction<void Function(ffi.Pointer<transport_connector_t>)>();
+
+  ffi.Pointer<transport_acceptor_t> transport_acceptor_initialize(
+    ffi.Pointer<transport_acceptor_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> ip,
+    int port,
+  ) {
+    return _transport_acceptor_initialize(
+      configuration,
+      ip,
+      port,
+    );
+  }
+
+  late final _transport_acceptor_initializePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_acceptor_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>>('transport_acceptor_initialize');
+  late final _transport_acceptor_initialize =
+      _transport_acceptor_initializePtr.asFunction<
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_acceptor_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  void transport_acceptor_shutdown(
+    ffi.Pointer<transport_acceptor_t> acceptor,
+  ) {
+    return _transport_acceptor_shutdown(
+      acceptor,
+    );
+  }
+
+  late final _transport_acceptor_shutdownPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>(
+      'transport_acceptor_shutdown');
+  late final _transport_acceptor_shutdown = _transport_acceptor_shutdownPtr
+      .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
+
   ffi.Pointer<transport_channel_t> transport_channel_initialize(
     ffi.Pointer<transport_channel_configuration_t> configuration,
   ) {
@@ -18937,52 +19017,56 @@ class TransportBindings {
 
   int transport_channel_connect(
     ffi.Pointer<transport_channel> channel,
-    int fd,
-    ffi.Pointer<ffi.Char> ip,
-    int port,
+    ffi.Pointer<transport_connector_t> connector,
   ) {
     return _transport_channel_connect(
       channel,
-      fd,
-      ip,
-      port,
+      connector,
     );
   }
 
   late final _transport_channel_connectPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_channel>, ffi.Int,
-              ffi.Pointer<ffi.Char>, ffi.Int)>>('transport_channel_connect');
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<transport_channel>,
+                  ffi.Pointer<transport_connector_t>)>>(
+      'transport_channel_connect');
   late final _transport_channel_connect =
       _transport_channel_connectPtr.asFunction<
-          int Function(ffi.Pointer<transport_channel>, int,
-              ffi.Pointer<ffi.Char>, int)>();
+          int Function(ffi.Pointer<transport_channel>,
+              ffi.Pointer<transport_connector_t>)>();
 
-  int transport_channel_message(
-    ffi.Pointer<transport_channel> fromChannel,
-    ffi.Pointer<transport_channel> toChannel,
-    int result,
-    int user_data,
+  int transport_channel_accept(
+    ffi.Pointer<transport_channel> channel,
+    ffi.Pointer<transport_acceptor_t> acceptor,
   ) {
-    return _transport_channel_message(
-      fromChannel,
-      toChannel,
-      result,
-      user_data,
+    return _transport_channel_accept(
+      channel,
+      acceptor,
     );
   }
 
-  late final _transport_channel_messagePtr = _lookup<
+  late final _transport_channel_acceptPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_channel>,
-              ffi.Pointer<transport_channel>,
-              ffi.Int64,
-              ffi.Int64)>>('transport_channel_message');
-  late final _transport_channel_message =
-      _transport_channel_messagePtr.asFunction<
+          ffi.Int Function(ffi.Pointer<transport_channel>,
+              ffi.Pointer<transport_acceptor_t>)>>('transport_channel_accept');
+  late final _transport_channel_accept =
+      _transport_channel_acceptPtr.asFunction<
           int Function(ffi.Pointer<transport_channel>,
-              ffi.Pointer<transport_channel>, int, int)>();
+              ffi.Pointer<transport_acceptor_t>)>();
+
+  int transport_channel_shutdown(
+    ffi.Pointer<transport_channel> channel,
+  ) {
+    return _transport_channel_shutdown(
+      channel,
+    );
+  }
+
+  late final _transport_channel_shutdownPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_channel>)>>(
+      'transport_channel_shutdown');
+  late final _transport_channel_shutdown = _transport_channel_shutdownPtr
+      .asFunction<int Function(ffi.Pointer<transport_channel>)>();
 
   int transport_channel_allocate_buffer(
     ffi.Pointer<transport_channel_t> channel,
@@ -19016,61 +19100,6 @@ class TransportBindings {
               ffi.Int)>>('transport_channel_free_buffer');
   late final _transport_channel_free_buffer = _transport_channel_free_bufferPtr
       .asFunction<void Function(ffi.Pointer<transport_channel_t>, int)>();
-
-  ffi.Pointer<transport_acceptor_t> transport_acceptor_initialize(
-    ffi.Pointer<transport_acceptor_configuration_t> configuration,
-    ffi.Pointer<ffi.Char> ip,
-    int port,
-  ) {
-    return _transport_acceptor_initialize(
-      configuration,
-      ip,
-      port,
-    );
-  }
-
-  late final _transport_acceptor_initializePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_acceptor_configuration_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int32)>>('transport_acceptor_initialize');
-  late final _transport_acceptor_initialize =
-      _transport_acceptor_initializePtr.asFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_acceptor_configuration_t>,
-              ffi.Pointer<ffi.Char>,
-              int)>();
-
-  int transport_prepare_accept(
-    ffi.Pointer<transport_acceptor> acceptor,
-  ) {
-    return _transport_prepare_accept(
-      acceptor,
-    );
-  }
-
-  late final _transport_prepare_acceptPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_acceptor>)>>('transport_prepare_accept');
-  late final _transport_prepare_accept = _transport_prepare_acceptPtr
-      .asFunction<int Function(ffi.Pointer<transport_acceptor>)>();
-
-  void transport_acceptor_shutdown(
-    ffi.Pointer<transport_acceptor_t> acceptor,
-  ) {
-    return _transport_acceptor_shutdown(
-      acceptor,
-    );
-  }
-
-  late final _transport_acceptor_shutdownPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>(
-      'transport_acceptor_shutdown');
-  late final _transport_acceptor_shutdown = _transport_acceptor_shutdownPtr
-      .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
 
   ffi.Pointer<transport_channel_pool> transport_channel_pool_initialize() {
     return _transport_channel_pool_initialize();
@@ -19143,11 +19172,13 @@ class TransportBindings {
   ffi.Pointer<transport_t> transport_initialize(
     ffi.Pointer<transport_configuration_t> transport_configuration,
     ffi.Pointer<transport_channel_configuration_t> channel_configuration,
+    ffi.Pointer<transport_connector_configuration_t> connector_configuration,
     ffi.Pointer<transport_acceptor_configuration_t> acceptor_configuration,
   ) {
     return _transport_initialize(
       transport_configuration,
       channel_configuration,
+      connector_configuration,
       acceptor_configuration,
     );
   }
@@ -19157,12 +19188,14 @@ class TransportBindings {
               ffi.Pointer<transport_t> Function(
                   ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_channel_configuration_t>,
+                  ffi.Pointer<transport_connector_configuration_t>,
                   ffi.Pointer<transport_acceptor_configuration_t>)>>(
       'transport_initialize');
   late final _transport_initialize = _transport_initializePtr.asFunction<
       ffi.Pointer<transport_t> Function(
           ffi.Pointer<transport_configuration_t>,
           ffi.Pointer<transport_channel_configuration_t>,
+          ffi.Pointer<transport_connector_configuration_t>,
           ffi.Pointer<transport_acceptor_configuration_t>)>();
 
   int transport_consume(
@@ -19233,24 +19266,6 @@ class TransportBindings {
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
           ffi.Pointer<io_uring>)>();
 
-  void transport_accept(
-    ffi.Pointer<transport_t> transport,
-    ffi.Pointer<transport_acceptor_t> acceptor,
-  ) {
-    return _transport_accept(
-      transport,
-      acceptor,
-    );
-  }
-
-  late final _transport_acceptPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_t>,
-              ffi.Pointer<transport_acceptor_t>)>>('transport_accept');
-  late final _transport_accept = _transport_acceptPtr.asFunction<
-      void Function(
-          ffi.Pointer<transport_t>, ffi.Pointer<transport_acceptor_t>)>();
-
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     int cqe_count,
   ) {
@@ -19283,20 +19298,6 @@ class TransportBindings {
   late final _transport_cqe_advance = _transport_cqe_advancePtr
       .asFunction<void Function(ffi.Pointer<io_uring>, int)>();
 
-  void transport_shutdown(
-    ffi.Pointer<transport_t> transport,
-  ) {
-    return _transport_shutdown(
-      transport,
-    );
-  }
-
-  late final _transport_shutdownPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>(
-          'transport_shutdown');
-  late final _transport_shutdown = _transport_shutdownPtr
-      .asFunction<void Function(ffi.Pointer<transport_t>)>();
-
   void transport_destroy(
     ffi.Pointer<transport_t> transport,
   ) {
@@ -19324,24 +19325,6 @@ class TransportBindings {
           'transport_close_descritor');
   late final _transport_close_descritor =
       _transport_close_descritorPtr.asFunction<int Function(int)>();
-
-  void transport_handle_dart_messages() {
-    return _transport_handle_dart_messages();
-  }
-
-  late final _transport_handle_dart_messagesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>(
-          'transport_handle_dart_messages');
-  late final _transport_handle_dart_messages =
-      _transport_handle_dart_messagesPtr.asFunction<void Function()>();
-
-  void transport_test() {
-    return _transport_test();
-  }
-
-  late final _transport_testPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('transport_test');
-  late final _transport_test = _transport_testPtr.asFunction<void Function()>();
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
@@ -23182,6 +23165,30 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.Uint64> get TRANSPORT_EVENT_ALL_FLAGS =>
       _library._TRANSPORT_EVENT_ALL_FLAGS;
   ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_connector_t> Function(
+              ffi.Pointer<transport_connector_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>> get transport_connector_initialize =>
+      _library._transport_connector_initializePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_connector_t>)>>
+      get transport_connector_shutdown =>
+          _library._transport_connector_shutdownPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_acceptor_t> Function(
+              ffi.Pointer<transport_acceptor_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>> get transport_acceptor_initialize =>
+      _library._transport_acceptor_initializePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
+      get transport_acceptor_shutdown =>
+          _library._transport_acceptor_shutdownPtr;
+  ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_channel_t> Function(
                   ffi.Pointer<transport_channel_configuration_t>)>>
@@ -23210,21 +23217,18 @@ class _SymbolAddresses {
               ffi.Int64)>> get transport_channel_read =>
       _library._transport_channel_readPtr;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_channel>,
-              ffi.Int,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int)>> get transport_channel_connect =>
-      _library._transport_channel_connectPtr;
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<transport_channel>,
+                  ffi.Pointer<transport_connector_t>)>>
+      get transport_channel_connect => _library._transport_channel_connectPtr;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_channel>,
-              ffi.Pointer<transport_channel>,
-              ffi.Int64,
-              ffi.Int64)>> get transport_channel_message =>
-      _library._transport_channel_messagePtr;
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<transport_channel>,
+                  ffi.Pointer<transport_acceptor_t>)>>
+      get transport_channel_accept => _library._transport_channel_acceptPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_channel>)>>
+      get transport_channel_shutdown => _library._transport_channel_shutdownPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<transport_channel_t>)>>
@@ -23235,21 +23239,6 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_channel_t>, ffi.Int)>>
       get transport_channel_free_buffer =>
           _library._transport_channel_free_bufferPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_acceptor_configuration_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int32)>> get transport_acceptor_initialize =>
-      _library._transport_acceptor_initializePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_acceptor>)>>
-      get transport_prepare_accept => _library._transport_prepare_acceptPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
-      get transport_acceptor_shutdown =>
-          _library._transport_acceptor_shutdownPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Pointer<transport_channel_pool> Function()>>
       get transport_channel_pool_initialize =>
@@ -23276,6 +23265,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_t> Function(
                   ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_channel_configuration_t>,
+                  ffi.Pointer<transport_connector_configuration_t>,
                   ffi.Pointer<transport_acceptor_configuration_t>)>>
       get transport_initialize => _library._transport_initializePtr;
   ffi.Pointer<
@@ -23299,27 +23289,15 @@ class _SymbolAddresses {
       _library._transport_peekPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_t>, ffi.Pointer<transport_acceptor_t>)>>
-      get transport_accept => _library._transport_acceptPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
               ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(ffi.Uint32)>>
       get transport_allocate_cqes => _library._transport_allocate_cqesPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Void Function(ffi.Pointer<io_uring>, ffi.Int)>>
       get transport_cqe_advance => _library._transport_cqe_advancePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
-      get transport_shutdown => _library._transport_shutdownPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
       get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>
-      get transport_handle_dart_messages =>
-          _library._transport_handle_dart_messagesPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get transport_test =>
-      _library._transport_testPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<
@@ -26351,6 +26329,54 @@ class mh_i32_t extends ffi.Struct {
 
 typedef mh_int_t = ffi.Uint32;
 
+class transport_connector_configuration extends ffi.Struct {
+  @ffi.Int32()
+  external int max_connections;
+
+  @ffi.Uint32()
+  external int receive_buffer_size;
+
+  @ffi.Uint32()
+  external int send_buffer_size;
+}
+
+class transport_connector extends ffi.Struct {
+  @ffi.Int()
+  external int fd;
+
+  external sockaddr_in client_address;
+
+  @socklen_t()
+  external int client_address_length;
+}
+
+typedef transport_connector_t = transport_connector;
+typedef transport_connector_configuration_t = transport_connector_configuration;
+
+class transport_acceptor_configuration extends ffi.Struct {
+  @ffi.Int32()
+  external int max_connections;
+
+  @ffi.Uint32()
+  external int receive_buffer_size;
+
+  @ffi.Uint32()
+  external int send_buffer_size;
+}
+
+class transport_acceptor extends ffi.Struct {
+  @ffi.Int()
+  external int fd;
+
+  external sockaddr_in server_address;
+
+  @socklen_t()
+  external int server_address_length;
+}
+
+typedef transport_acceptor_t = transport_acceptor;
+typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
+
 class transport_channel_configuration extends ffi.Struct {
   @ffi.Uint32()
   external int buffers_count;
@@ -26400,38 +26426,6 @@ class transport_message extends ffi.Struct {
 typedef transport_channel_t = transport_channel;
 typedef transport_channel_configuration_t = transport_channel_configuration;
 
-class transport_acceptor_configuration extends ffi.Struct {
-  @ffi.Int32()
-  external int max_connections;
-
-  @ffi.Uint32()
-  external int receive_buffer_size;
-
-  @ffi.Uint32()
-  external int send_buffer_size;
-
-  @ffi.Uint32()
-  external int ring_size;
-
-  @ffi.Int()
-  external int ring_flags;
-}
-
-class transport_acceptor extends ffi.Struct {
-  external ffi.Pointer<io_uring> ring;
-
-  @ffi.Int()
-  external int fd;
-
-  external sockaddr_in server_address;
-
-  @socklen_t()
-  external int server_address_length;
-}
-
-typedef transport_acceptor_t = transport_acceptor;
-typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
-
 class transport_channel_pool extends ffi.Struct {
   external rlist channels;
 
@@ -26450,13 +26444,12 @@ class transport_configuration extends ffi.Struct {
 }
 
 class transport extends ffi.Struct {
-  external ffi.Pointer<transport_channel_pool> inbound_channels;
-
-  external ffi.Pointer<transport_channel_pool> outbound_channels;
-
-  external ffi.Pointer<transport_acceptor_t> acceptor;
+  external ffi.Pointer<transport_channel_pool> channels;
 
   external ffi.Pointer<transport_channel_configuration_t> channel_configuration;
+
+  external ffi.Pointer<transport_connector_configuration_t>
+      connector_configuration;
 
   external ffi.Pointer<transport_acceptor_configuration_t>
       acceptor_configuration;
@@ -30426,7 +30419,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 
