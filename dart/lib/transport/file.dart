@@ -25,7 +25,7 @@ class TransportFile {
         (bufferId) {
           final completer = Completer<TransportPayload>();
           _callbacks.putRead(Tuple2(_channelPointer.address, bufferId), completer);
-          _channel.read(fd, bufferId);
+          _channel.read(fd, bufferId, offset: offset);
           return completer.future;
         },
       );
@@ -39,16 +39,26 @@ class TransportFile {
         },
       );
 
-  Future<Uint8List> read() async {
+  Future<TransportPayload> read() async {
     BytesBuilder builder = BytesBuilder();
     var offset = 0;
     var payload = await readBuffer(offset: offset);
-    while (payload.bytes.isNotEmpty) {
+    final payloads = <TransportPayload>[];
+    payloads.add(payload);
+    builder.add(payload.bytes);
+    offset += payload.bytes.length;
+    payload.release();
+    while (true) {
+      payload = await readBuffer(offset: offset);
+      if (payload.bytes.isEmpty) {
+        break;
+      }
+      payloads.add(payload);
       builder.add(payload.bytes);
       offset += payload.bytes.length;
-      payload = await readBuffer(offset: offset);
+      payload.release();
     }
-    return builder.takeBytes();
+    return TransportPayload(builder.takeBytes(), (answer, offset) => payloads.forEach((payload) => payload.release()));
   }
 
   void close() => _bindings.transport_close_descritor(fd);
