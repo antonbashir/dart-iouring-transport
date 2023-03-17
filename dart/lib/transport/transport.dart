@@ -71,10 +71,10 @@ class Transport {
     final fromOutboundActivator = ReceivePort();
     final completer = Completer();
     var completionCounter = 0;
-    _loop = TransportEventLoop(_libraryPath, _bindings, _transport, this, _loopExit.sendPort, (inbound, outbound) {
+    _loop = TransportEventLoop(_libraryPath, _bindings, _transport, this, _loopExit.sendPort, (listener) {
       for (var isolate = 0; isolate < transportConfiguration.inboundIsolates; isolate++) {
         Isolate.spawn<SendPort>(
-          (toTransport) => TransportInboundListener(toTransport).listen(),
+          (toTransport) => TransportListener(toTransport).listen(),
           fromInbound.sendPort,
           onExit: _listenerExit.sendPort,
         );
@@ -82,7 +82,7 @@ class Transport {
 
       for (var isolate = 0; isolate < transportConfiguration.outboundIsolates; isolate++) {
         Isolate.spawn<SendPort>(
-          (toTransport) => TransportOutboundListener(toTransport).listen(),
+          (toTransport) => TransportListener(toTransport).listen(),
           fromOutbound.sendPort,
           onExit: _listenerExit.sendPort,
         );
@@ -94,12 +94,13 @@ class Transport {
           _libraryPath,
           _transport.address,
           channelConfiguration.ringSize,
-          inbound.sendPort,
+          listener.sendPort,
           fromInboundActivator.sendPort,
         ]);
       });
 
-      fromInboundActivator.listen((message) {
+      fromInboundActivator.listen((channel) {
+        _bindings.transport_channel_pool_add(_transport.ref.inbound_channels, Pointer.fromAddress(channel));
         if (++completionCounter == transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates) {
           completer.complete();
         }
@@ -111,12 +112,13 @@ class Transport {
           _libraryPath,
           _transport.address,
           channelConfiguration.ringSize,
-          outbound.sendPort,
+          listener.sendPort,
           fromOutboundActivator.sendPort,
         ]);
       });
 
-      fromOutboundActivator.listen((message) {
+      fromOutboundActivator.listen((channel) {
+        _bindings.transport_channel_pool_add(_transport.ref.outbound_channels, Pointer.fromAddress(channel));
         if (++completionCounter == transportConfiguration.inboundIsolates + transportConfiguration.outboundIsolates) {
           completer.complete();
         }

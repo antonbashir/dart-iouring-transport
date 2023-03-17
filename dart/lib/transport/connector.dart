@@ -75,7 +75,7 @@ class TransportConnector {
         _transport.connectorConfiguration.sendBufferSize,
       );
       _callbacks.putConnect(fd, completer);
-      using((arena) => _bindings.transport_channel_connect(_bindings.transport_select_outbound_channel(_transportPointer), fd, host.toNativeUtf8(allocator: arena).cast(), port));
+      using((arena) => _bindings.transport_channel_connect(_bindings.transport_channel_pool_next(_transportPointer.ref.outbound_channels), fd, host.toNativeUtf8(allocator: arena).cast(), port));
       clients.add(completer.future);
     }
     return TransportClientPool(await Future.wait(clients));

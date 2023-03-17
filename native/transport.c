@@ -52,28 +52,8 @@ void transport_destroy(transport_t *transport)
   free(transport->acceptor_configuration);
   free(transport->channel_configuration);
   free(transport->inbound_channels);
+  free(transport->outbound_channels);
   transport_info("[transport]: destroy");
-}
-
-transport_channel_t *transport_add_inbound_channel(transport_t *transport)
-{
-  transport_channel_t *channel = transport_channel_initialize(transport->channel_configuration);
-  if (!channel) return NULL;
-  transport_channel_pool_add(transport->inbound_channels, channel);
-  return channel;
-}
-
-transport_channel_t *transport_add_outbound_channel(transport_t *transport)
-{
-  transport_channel_t *channel = transport_channel_initialize(transport->channel_configuration);
-  if (!channel) return NULL;
-  transport_channel_pool_add(transport->outbound_channels, channel);
-  return channel;
-}
-
-transport_channel_t *transport_select_outbound_channel(transport_t *transport)
-{
-  return transport_channel_pool_next(transport->outbound_channels);
 }
 
 void transport_cqe_advance(struct io_uring *ring, int count)
