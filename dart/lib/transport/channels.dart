@@ -3,8 +3,6 @@ import 'dart:collection';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/transport.dart';
-
 import 'bindings.dart';
 import 'constants.dart';
 
@@ -29,7 +27,7 @@ class TransportChannel {
     return bufferId;
   }
 
-  void reset(int bufferId) {
+  void reuse(int bufferId) {
     _bindings.memset(_pointer.ref.buffers[bufferId].iov_base, 0, _pointer.ref.buffer_size);
     _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
     _pointer.ref.used_buffers_offsets[bufferId] = 0;

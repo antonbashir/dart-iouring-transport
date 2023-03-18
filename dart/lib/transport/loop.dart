@@ -28,7 +28,6 @@ String _event(int userdata) {
 
 class TransportEventLoopCallbacks {
   final int _maxCallbacks;
-  final TransportLogger _logger;
 
   final _connectCallbacks = <int, Completer<TransportClient>>{};
   final _readCallbacks = <int, Completer<TransportPayload>>{};
@@ -38,20 +37,19 @@ class TransportEventLoopCallbacks {
   final _usedCallbacks = <int, int>{};
   var _availableCallbackId = 0;
 
-  TransportEventLoopCallbacks(this._maxCallbacks, this._logger);
+  TransportEventLoopCallbacks(this._maxCallbacks);
 
   @pragma(preferInlinePragma)
   Future<int> _allocateCallback(int bufferId) async {
     while (_usedCallbacks.containsKey(_availableCallbackId)) {
-      if (++_availableCallbackId >= _maxCallbacks) {
+      if (++_availableCallbackId == _maxCallbacks) {
         _availableCallbackId = 0;
         if (_usedCallbacks.containsKey(_availableCallbackId)) {
-          _logger.info("callback overflow, await");
           final completer = Completer<int>();
           _callbackFinalizers.add(completer);
           _availableCallbackId = await completer.future;
-          break;
         }
+        break;
       }
     }
 
@@ -144,7 +142,6 @@ class TransportEventLoop {
   ) {
     _callbacks = TransportEventLoopCallbacks(
       (_transport.channelConfiguration.buffersCount * _transport.transportConfiguration.isolates) - 1,
-      _transport.logger,
     );
     _serverController = StreamController();
     _serverStream = _serverController.stream;
@@ -298,7 +295,7 @@ class TransportEventLoop {
       final buffer = pointer.ref.buffers[bufferId];
       _serverController.add(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
         if (answer != null) {
-          _inboundChannels[fd]!.reset(bufferId);
+          _inboundChannels[fd]!.reuse(bufferId);
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
           _bindings.transport_channel_write(pointer, fd, bufferId, offset, bufferId | transportEventWrite);
@@ -312,7 +309,7 @@ class TransportEventLoop {
     if (userData & transportEventWrite != 0) {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
-      _inboundChannels[fd]!.reset(bufferId);
+      _inboundChannels[fd]!.reuse(bufferId);
       _bindings.transport_channel_read(pointer, fd, bufferId, 0, bufferId | transportEventRead);
       return;
     }

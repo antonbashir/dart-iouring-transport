@@ -48,7 +48,7 @@ class TransportClientPool {
   }
 
   void forEach(FutureOr<void> Function(TransportClient client) action) => _clients.forEach(action);
-  
+
   Iterable<Future<void>> map(Future<void> Function(TransportClient client) mapper) => _clients.map(mapper);
 }
 

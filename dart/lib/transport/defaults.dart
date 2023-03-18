@@ -1,7 +1,4 @@
-import 'dart:io';
-
-import 'package:iouring_transport/transport/configuration.dart';
-
+import 'configuration.dart';
 import 'constants.dart';
 
 class TransportDefaults {
@@ -9,7 +6,7 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        isolates: 4,
+        isolates: 2,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
