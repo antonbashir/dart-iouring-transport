@@ -17,7 +17,6 @@ extern "C"
 
   typedef struct transport_configuration
   {
-    Dart_Port logging_port;
   } transport_configuration_t;
 
   typedef struct transport

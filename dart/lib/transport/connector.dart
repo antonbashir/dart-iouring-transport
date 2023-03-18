@@ -3,13 +3,12 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/loop.dart';
-import 'package:iouring_transport/transport/transport.dart';
-import 'package:tuple/tuple.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
+import 'loop.dart';
 import 'payload.dart';
+import 'transport.dart';
 
 class TransportClient {
   final TransportEventLoopCallbacks _callbacks;

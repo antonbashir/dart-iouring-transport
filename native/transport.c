@@ -22,8 +22,6 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
                                   transport_connector_configuration_t *connector_configuration,
                                   transport_acceptor_configuration_t *acceptor_configuration)
 {
-  transport_logger_initialize(transport_configuration->logging_port);
-
   transport_t *transport = malloc(sizeof(transport_t));
   if (!transport)
   {
