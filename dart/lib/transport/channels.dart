@@ -9,21 +9,19 @@ import 'bindings.dart';
 import 'constants.dart';
 
 class TransportChannel {
-  final Transport _transport;
   final int descriptor;
   final Pointer<transport_channel_t> _pointer;
   final TransportBindings _bindings;
 
   static final _bufferFinalizers = <int, Queue<Completer<int>>>{};
 
-  TransportChannel(this._pointer, this._transport, this.descriptor, this._bindings) {
+  TransportChannel(this._pointer, this.descriptor, this._bindings) {
     _bufferFinalizers[this._pointer.address] = Queue();
   }
 
   Future<int> allocate() async {
     var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
     if (bufferId == -1) {
-      //_transport.logger.info("[channel $descriptor] buffer overflow, await");
       final completer = Completer<int>();
       _bufferFinalizers[_pointer.address]!.add(completer);
       return await completer.future;
@@ -42,16 +40,15 @@ class TransportChannel {
     _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
     _pointer.ref.used_buffers_offsets[bufferId] = 0;
     _pointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-    if (_bufferFinalizers[_pointer.address]!.isNotEmpty) {
-      _bufferFinalizers[_pointer.address]!.removeFirst().complete(bufferId);
-    }
+    final finalizer = _bufferFinalizers[_pointer.address]!;
+    if (finalizer.isNotEmpty) finalizer.removeFirst().complete(bufferId);
   }
 
   void close() => _bindings.transport_close_descritor(descriptor);
 }
 
 class TransportInboundChannel extends TransportChannel {
-  TransportInboundChannel(super.pointer, super.transport, super.descriptor, super._fd) : super();
+  TransportInboundChannel(super.pointer, super.descriptor, super._bindings) : super();
 
   Future<void> read({int offset = 0}) async {
     final bufferId = await allocate();
@@ -68,7 +65,7 @@ class TransportInboundChannel extends TransportChannel {
 }
 
 class TransportOutboundChannel extends TransportChannel {
-  TransportOutboundChannel(super.pointer, super.transport, super.descriptor, super._bindings) : super();
+  TransportOutboundChannel(super.pointer, super.descriptor, super._bindings) : super();
 
   void read(int bufferId, int callbackId, {int offset = 0}) {
     _bindings.transport_channel_read(_pointer, descriptor, bufferId, offset, callbackId | transportEventReadCallback);

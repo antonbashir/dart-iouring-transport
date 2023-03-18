@@ -188,10 +188,7 @@ class TransportEventLoop {
   Future<TransportFile> open(String path) async {
     final channelPointer = _bindings.transport_channel_pool_next(_transportPointer.ref.channels);
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(
-      _callbacks,
-      TransportOutboundChannel(channelPointer, _transport, fd, _bindings),
-    );
+    return TransportFile(_callbacks, TransportOutboundChannel(channelPointer, fd, _bindings));
   }
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
@@ -346,7 +343,7 @@ class TransportEventLoop {
     if (userData & transportEventConnect != 0) {
       final fd = userData & ~transportEventAll;
       _transport.logger.info("[client]: connected, fd = $fd");
-      _outboundChannels[fd] = TransportOutboundChannel(pointer, _transport, fd, _bindings);
+      _outboundChannels[fd] = TransportOutboundChannel(pointer, fd, _bindings);
       _callbacks.notifyConnect(
         fd,
         TransportClient(
@@ -360,12 +357,7 @@ class TransportEventLoop {
     if (userData & transportEventAccept != 0) {
       _bindings.transport_channel_accept(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), _acceptorPointer);
       _transport.logger.info("[server] accepted fd = $result");
-      _inboundChannels[result] = TransportInboundChannel(
-        pointer,
-        _transport,
-        result,
-        _bindings,
-      );
+      _inboundChannels[result] = TransportInboundChannel(pointer, result, _bindings);
       _onAccept?.call(_inboundChannels[result]!);
       return;
     }
