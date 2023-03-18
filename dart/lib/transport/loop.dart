@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:tuple/tuple.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -35,17 +33,17 @@ class TransportEventLoopCallbacks {
   final _writeCallbacks = <int, Completer<void>>{};
   final _callbackFinalizers = Queue<Completer<int>>();
 
-  final usedCallbacks = <int, int>{};
+  final _usedCallbacks = <int, int>{};
   var _availableCallbackId = 0;
 
   TransportEventLoopCallbacks(this._maxCallbacks);
 
   @pragma(preferInlinePragma)
   Future<int> _allocateCallback(int bufferId) async {
-    while (usedCallbacks.containsKey(_availableCallbackId)) {
+    while (_usedCallbacks.containsKey(_availableCallbackId)) {
       if (++_availableCallbackId >= _maxCallbacks) {
         _availableCallbackId = 0;
-        if (usedCallbacks.containsKey(_availableCallbackId)) {
+        if (_usedCallbacks.containsKey(_availableCallbackId)) {
           final completer = Completer<int>();
           _callbackFinalizers.add(completer);
           _availableCallbackId = await completer.future;
@@ -54,13 +52,13 @@ class TransportEventLoopCallbacks {
       }
     }
 
-    usedCallbacks[_availableCallbackId] = bufferId;
+    _usedCallbacks[_availableCallbackId] = bufferId;
     return _availableCallbackId;
   }
 
   @pragma(preferInlinePragma)
   int _freeCallback(int id) {
-    int bufferId = usedCallbacks.remove(id)!;
+    int bufferId = _usedCallbacks.remove(id)!;
     if (_callbackFinalizers.isNotEmpty) _callbackFinalizers.removeFirst().complete(id);
     return bufferId;
   }
@@ -83,30 +81,33 @@ class TransportEventLoopCallbacks {
   }
 
   @pragma(preferInlinePragma)
-  void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)?.complete(client);
+  void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)!.complete(client);
 
   @pragma(preferInlinePragma)
-  void notifyRead(int id, TransportPayload payload) {
-    _readCallbacks.remove(id)?.complete(payload);
-    _freeCallback(id);
+  int notifyRead(int id, TransportPayload payload) {
+    _readCallbacks.remove(id)!.complete(payload);
+    return _freeCallback(id);
   }
 
   @pragma(preferInlinePragma)
-  void notifyWrite(int id) => _writeCallbacks.remove(id)?.complete();
-
-  @pragma(preferInlinePragma)
-  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)?.completeError(error);
-
-  @pragma(preferInlinePragma)
-  void notifyReadError(int id, Exception error) {
-    _readCallbacks.remove(id)?.completeError(error);
-    _freeCallback(id);
+  int notifyWrite(int id) {
+    _writeCallbacks.remove(id)!.complete();
+    return _freeCallback(id);
   }
 
   @pragma(preferInlinePragma)
-  void notifyWriteError(int id, Exception error) {
-    _writeCallbacks.remove(id)?.completeError(error);
-    _freeCallback(id);
+  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)!.completeError(error);
+
+  @pragma(preferInlinePragma)
+  int notifyReadError(int id, Exception error) {
+    _readCallbacks.remove(id)!.completeError(error);
+    return _freeCallback(id);
+  }
+
+  @pragma(preferInlinePragma)
+  int notifyWriteError(int id, Exception error) {
+    _writeCallbacks.remove(id)!.completeError(error);
+    return _freeCallback(id);
   }
 }
 
@@ -202,7 +203,7 @@ class TransportEventLoop {
         channel.close();
         return;
       }
-      _transport.logger.error("[server read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
+      _transport.logger.error("[inbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
       final channel = _inboundChannels.remove(fd)!;
       channel.free(bufferId);
       channel.close();
@@ -222,7 +223,7 @@ class TransportEventLoop {
         channel.close();
         return;
       }
-      _transport.logger.error("[server write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
+      _transport.logger.error("[inbound write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
       final channel = _inboundChannels.remove(fd)!;
       channel.free(bufferId);
       channel.close();
@@ -230,7 +231,7 @@ class TransportEventLoop {
     }
 
     if (userData & transportEventAccept != 0) {
-      _transport.logger.error("[server accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}");
+      _transport.logger.error("[inbound accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}");
       _bindings.transport_channel_accept(pointer, _acceptorPointer);
       return;
     }
@@ -250,13 +251,12 @@ class TransportEventLoop {
         _bindings.transport_channel_read(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], transportEventReadCallback);
         return;
       }
-      if (result == -EPIPE) {
-        _bindings.transport_close_descritor(fd);
-        return;
-      }
-      final message = "[resource read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
+      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
       _transport.logger.error(message);
-      _callbacks.notifyReadError(callbackId, TransportException(message));
+      final channel = _outboundChannels[fd]!;
+      final bufferId = _callbacks.notifyReadError(callbackId, TransportException(message));
+      channel.free(bufferId);
+      channel.close();
       return;
     }
 
@@ -267,13 +267,11 @@ class TransportEventLoop {
         _bindings.transport_channel_write(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], transportEventWriteCallback);
         return;
       }
-      if (result == -EPIPE) {
-        _bindings.transport_close_descritor(fd);
-        return;
-      }
-      final message = "[resource write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
-      _transport.logger.error(message);
-      _callbacks.notifyWriteError(callbackId, TransportException(message));
+      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
+      final channel = _outboundChannels[fd]!;
+      final bufferId = _callbacks.notifyWriteError(callbackId, TransportException(message));
+      channel.free(bufferId);
+      channel.close();
       return;
     }
   }
@@ -312,30 +310,24 @@ class TransportEventLoop {
 
     if (userData & transportEventReadCallback != 0) {
       final callbackId = userData & ~transportEventAll;
-      final bufferId = _callbacks.usedCallbacks[callbackId]!;
+      final bufferId = _callbacks._usedCallbacks[callbackId]!;
+      final fd = pointer.ref.used_buffers[bufferId];
       final buffer = pointer.ref.buffers[callbackId];
-      final fd = pointer.ref.used_buffers[callbackId];
       _callbacks.notifyRead(
         callbackId,
-        TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
-          if (answer != null) {
-            _outboundChannels[callbackId]!.reset(bufferId);
-            buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
-            buffer.iov_len = answer.length;
-            _bindings.transport_channel_write(pointer, fd, callbackId, 0, transportEventWrite);
-            return;
-          }
-          _outboundChannels[callbackId]!.free(bufferId);
-        }),
+        TransportPayload(
+          buffer.iov_base.cast<Uint8>().asTypedList(result),
+          (answer, offset) => _outboundChannels[fd]!.free(bufferId),
+        ),
       );
       return;
     }
 
     if (userData & transportEventWriteCallback != 0) {
       final callbackId = userData & ~transportEventAll;
-      final bufferId = _callbacks.usedCallbacks[callbackId]!;
-      _outboundChannels[callbackId]!.free(bufferId);
-      _callbacks.notifyWrite(callbackId);
+      final bufferId = _callbacks.notifyWrite(callbackId);
+      final fd = pointer.ref.used_buffers[bufferId];
+      _outboundChannels[fd]!.free(bufferId);
       return;
     }
 
