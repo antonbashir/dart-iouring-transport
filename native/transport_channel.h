@@ -47,17 +47,15 @@ extern "C"
   } transport_message_t;
 
   transport_channel_t *transport_channel_initialize(transport_channel_configuration_t *configuration);
-  void transport_channel_close(transport_channel_t *channel);
+  void transport_channel_destroy(transport_channel_t *channel);
 
   int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
   int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
-  int transport_channel_connect(struct transport_channel *channel, transport_connector_t* connector);
-  int transport_channel_accept(struct transport_channel *channel, transport_acceptor_t* acceptor);
+  int transport_channel_connect(struct transport_channel *channel, transport_connector_t *connector);
+  int transport_channel_accept(struct transport_channel *channel, transport_acceptor_t *acceptor);
   int transport_channel_shutdown(struct transport_channel *channel);
 
   int transport_channel_allocate_buffer(transport_channel_t *channel);
-
-  void transport_channel_free_buffer(transport_channel_t *channel, int id);
 #if defined(__cplusplus)
 }
 #endif

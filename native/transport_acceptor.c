@@ -34,7 +34,6 @@ transport_acceptor_t *transport_acceptor_initialize(transport_acceptor_configura
     free(acceptor);
     return NULL;
   }
-  transport_info("[acceptor]: initialized");
   return acceptor;
 }
 
@@ -42,5 +41,4 @@ void transport_acceptor_shutdown(transport_acceptor_t *acceptor)
 {
   shutdown(acceptor->fd, SHUT_RDWR);
   free(acceptor);
-  transport_info("[acceptor]: shutdown");
 }

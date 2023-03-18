@@ -18954,19 +18954,19 @@ class TransportBindings {
           ffi.Pointer<transport_channel_t> Function(
               ffi.Pointer<transport_channel_configuration_t>)>();
 
-  void transport_channel_close(
+  void transport_channel_destroy(
     ffi.Pointer<transport_channel_t> channel,
   ) {
-    return _transport_channel_close(
+    return _transport_channel_destroy(
       channel,
     );
   }
 
-  late final _transport_channel_closePtr = _lookup<
+  late final _transport_channel_destroyPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<transport_channel_t>)>>('transport_channel_close');
-  late final _transport_channel_close = _transport_channel_closePtr
+              ffi.Pointer<transport_channel_t>)>>('transport_channel_destroy');
+  late final _transport_channel_destroy = _transport_channel_destroyPtr
       .asFunction<void Function(ffi.Pointer<transport_channel_t>)>();
 
   int transport_channel_write(
@@ -19083,23 +19083,6 @@ class TransportBindings {
   late final _transport_channel_allocate_buffer =
       _transport_channel_allocate_bufferPtr
           .asFunction<int Function(ffi.Pointer<transport_channel_t>)>();
-
-  void transport_channel_free_buffer(
-    ffi.Pointer<transport_channel_t> channel,
-    int id,
-  ) {
-    return _transport_channel_free_buffer(
-      channel,
-      id,
-    );
-  }
-
-  late final _transport_channel_free_bufferPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_channel_t>,
-              ffi.Int)>>('transport_channel_free_buffer');
-  late final _transport_channel_free_buffer = _transport_channel_free_bufferPtr
-      .asFunction<void Function(ffi.Pointer<transport_channel_t>, int)>();
 
   ffi.Pointer<transport_channel_pool> transport_channel_pool_initialize() {
     return _transport_channel_pool_initialize();
@@ -19400,41 +19383,6 @@ class TransportBindings {
               ffi.Int32)>>('transport_socket_bind');
   late final _transport_socket_bind = _transport_socket_bindPtr
       .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
-
-  void transport_logger_initialize(
-    int port,
-  ) {
-    return _transport_logger_initialize(
-      port,
-    );
-  }
-
-  late final _transport_logger_initializePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(Dart_Port)>>(
-          'transport_logger_initialize');
-  late final _transport_logger_initialize =
-      _transport_logger_initializePtr.asFunction<void Function(int)>();
-
-  void transport_logger_log(
-    int level,
-    ffi.Pointer<ffi.Char> file,
-    int line,
-    ffi.Pointer<ffi.Char> fmt,
-  ) {
-    return _transport_logger_log(
-      level,
-      file,
-      line,
-      fmt,
-    );
-  }
-
-  late final _transport_logger_logPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int, ffi.Pointer<ffi.Char>, ffi.Int,
-              ffi.Pointer<ffi.Char>)>>('transport_logger_log');
-  late final _transport_logger_log = _transport_logger_logPtr.asFunction<
-      void Function(int, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
 
   late final addresses = _SymbolAddresses(this);
 }
@@ -23197,7 +23145,7 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_channel_t>)>>
-      get transport_channel_close => _library._transport_channel_closePtr;
+      get transport_channel_destroy => _library._transport_channel_destroyPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -23234,11 +23182,6 @@ class _SymbolAddresses {
               ffi.Int Function(ffi.Pointer<transport_channel_t>)>>
       get transport_channel_allocate_buffer =>
           _library._transport_channel_allocate_bufferPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_channel_t>, ffi.Int)>>
-      get transport_channel_free_buffer =>
-          _library._transport_channel_free_bufferPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Pointer<transport_channel_pool> Function()>>
       get transport_channel_pool_initialize =>
@@ -23315,14 +23258,6 @@ class _SymbolAddresses {
               ffi.Int32 Function(
                   ffi.Int32, ffi.Pointer<ffi.Char>, ffi.Int32, ffi.Int32)>>
       get transport_socket_bind => _library._transport_socket_bindPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(Dart_Port)>>
-      get transport_logger_initialize =>
-          _library._transport_logger_initializePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Int, ffi.Pointer<ffi.Char>, ffi.Int,
-              ffi.Pointer<ffi.Char>)>> get transport_logger_log =>
-      _library._transport_logger_logPtr;
 }
 
 class iovec extends ffi.Struct {
@@ -26460,13 +26395,6 @@ typedef transport_configuration_t = transport_configuration;
 
 class _Dart_Handle extends ffi.Opaque {}
 
-class transport_logging_event_t extends ffi.Struct {
-  external ffi.Pointer<ffi.Char> message;
-
-  @ffi.Int()
-  external int level;
-}
-
 const int MSG_OOB = 1;
 
 const int MSG_PEEK = 2;
@@ -27540,18 +27468,6 @@ const int _CS_V7_ENV = 1149;
 const int FPCONV_G_FMT_BUFSIZE = 32;
 
 const int FPCONV_G_FMT_MAX_PRECISION = 14;
-
-const int LOG_TRACE = 0;
-
-const int LOG_DEBUG = 1;
-
-const int LOG_INFO = 2;
-
-const int LOG_WARN = 3;
-
-const int LOG_ERROR = 4;
-
-const int LOG_FATAL = 5;
 
 const int LITTLE_ENDIAN = 1234;
 
@@ -30419,7 +30335,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

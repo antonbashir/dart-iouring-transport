@@ -21,21 +21,21 @@ class Transport {
   final _listenerExit = ReceivePort();
   final _loopExit = ReceivePort();
 
-  late final TransportEventLoop _loop;
   late final String? _libraryPath;
+  late final TransportEventLoop _loop;
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transport;
 
   Transport(this.transportConfiguration, this.acceptorConfiguration, this.channelConfiguration, this.connectorConfiguration, {String? libraryPath}) {
+    this._libraryPath = libraryPath;
+
     _library = TransportLibrary.load(libraryPath: libraryPath);
     _bindings = TransportBindings(_library.library);
-    this._libraryPath = libraryPath;
 
     logger = TransportLogger(transportConfiguration.logLevel);
 
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
-    nativeTransportConfiguration.ref.logging_port = logger.listenNative();
 
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
@@ -59,12 +59,14 @@ class Transport {
       nativeConnectorConfiguration,
       nativeAcceptorConfiguration,
     );
+    logger.info("Transport initialized");
   }
 
   Future<void> shutdown() async {
     await _listenerExit.take(transportConfiguration.isolates).toList();
     if (_loop.serving) await _loopExit.first;
     _bindings.transport_destroy(_transport);
+    logger.info("Transport destroyed");
   }
 
   Future<TransportEventLoop> run() async {
@@ -94,6 +96,7 @@ class Transport {
 
       fromListenerActivator.listen((channel) {
         _bindings.transport_channel_pool_add(_transport.ref.channels, Pointer.fromAddress(channel));
+        logger.info("Listener channel activated");
         if (++completionCounter == transportConfiguration.isolates) {
           completer.complete();
         }

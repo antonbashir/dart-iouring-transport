@@ -1,9 +1,5 @@
-import 'dart:ffi';
 import 'dart:isolate';
 
-import 'package:ffi/ffi.dart';
-
-import 'bindings.dart';
 import 'constants.dart';
 
 class TransportLogger {
@@ -12,20 +8,9 @@ class TransportLogger {
 
   TransportLogger(this.level);
 
-  int listenNative() {
-    nativePort = RawReceivePort((event) {
-      Pointer<transport_logging_event_t> pointer = Pointer.fromAddress(event);
-      log(TransportLogLevel.values[pointer.ref.level], pointer.ref.message.cast<Utf8>().toDartString());
-      malloc.free(pointer.ref.message);
-      malloc.free(pointer);
-    });
-    return nativePort.sendPort.nativePort;
-  }
-
   @pragma(preferInlinePragma)
   void log(TransportLogLevel level, String message) {
     if (level.index < this.level.index) return;
-
     print("${transportLogLevels[level.index]} ${DateTime.now()} $message");
   }
 

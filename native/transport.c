@@ -35,7 +35,6 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
   transport->connector_configuration = connector_configuration;
   transport->channels = transport_channel_pool_initialize();
 
-  transport_info("[transport]: initialized");
   return transport;
 }
 
@@ -45,7 +44,6 @@ void transport_destroy(transport_t *transport)
   free(transport->channel_configuration);
   free(transport->connector_configuration);
   free(transport->channels);
-  transport_info("[transport]: destroy");
 }
 
 void transport_cqe_advance(struct io_uring *ring, int count)

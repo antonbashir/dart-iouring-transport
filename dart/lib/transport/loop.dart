@@ -5,7 +5,6 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 import 'package:tuple/tuple.dart';
 
-import 'acceptor.dart';
 import 'bindings.dart';
 import 'channels.dart';
 import 'connector.dart';
@@ -13,8 +12,18 @@ import 'constants.dart';
 import 'exception.dart';
 import 'file.dart';
 import 'payload.dart';
-import 'provider.dart';
 import 'transport.dart';
+
+String _event(int userdata) {
+  if (userdata & transportEventClose != 0) return "transportEventClose";
+  if (userdata & transportEventRead != 0) return "transportEventRead";
+  if (userdata & transportEventWrite != 0) return "transportEventWrite";
+  if (userdata & transportEventAccept != 0) return "transportEventAccept";
+  if (userdata & transportEventConnect != 0) return "transportEventConnect";
+  if (userdata & transportEventReadCallback != 0) return "transportEventReadCallback";
+  if (userdata & transportEventWriteCallback != 0) return "transportEventWriteCallback";
+  return "unkown";
+}
 
 class TransportEventLoopCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
@@ -49,22 +58,8 @@ class TransportEventLoopCallbacks {
   void notifyWriteError(Tuple2<int, int> key, Exception error) => _writeCallbacks.remove(key)?.completeError(error);
 }
 
-String _event(int userdata) {
-  if (userdata & transportEventClose != 0) return "transportEventClose";
-  if (userdata & transportEventRead != 0) return "transportEventRead";
-  if (userdata & transportEventWrite != 0) return "transportEventWrite";
-  if (userdata & transportEventAccept != 0) return "transportEventAccept";
-  if (userdata & transportEventConnect != 0) return "transportEventConnect";
-  if (userdata & transportEventReadCallback != 0) return "transportEventReadCallback";
-  if (userdata & transportEventWriteCallback != 0) return "transportEventWriteCallback";
-  return "unkown";
-}
-
 class TransportEventLoop {
   final _callbacks = TransportEventLoopCallbacks();
-  final _onServerExit = ReceivePort();
-  final _servingCompleter = Completer<void>();
-  var _serving = false;
 
   final TransportBindings _bindings;
   final Pointer<transport_t> _transportPointer;
@@ -72,12 +67,15 @@ class TransportEventLoop {
   final Transport _transport;
 
   late final RawReceivePort _listener;
-  late final void Function(TransportServerChannel channel, int descriptor)? _onAccept;
-  late final StreamController<TransportPayload> _inputStream;
-  late final TransportAcceptor _acceptor;
+  late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final TransportConnector _connector;
 
-  late final TransportProvider provider;
+  late final StreamController<TransportPayload> _serverController;
+  late final Stream<TransportPayload> _serverStream;
+  late final void Function(TransportServerChannel channel, int descriptor)? _onAccept;
+
+  var _serving = false;
+  bool get serving => _serving;
 
   TransportEventLoop(
     this._bindings,
@@ -86,23 +84,9 @@ class TransportEventLoop {
     this._onShutdown,
     void Function(RawReceivePort listener) completer,
   ) {
-    _inputStream = StreamController(sync: true, onCancel: () => _onServerExit.close());
-    _acceptor = TransportAcceptor(_transportPointer, _bindings);
+    _serverController = StreamController();
+    _serverStream = _serverController.stream;
     _connector = TransportConnector(_callbacks, _transportPointer, _bindings, _transport);
-    provider = TransportProvider(
-      _connector,
-      (path) {
-        final channelPointer = _bindings.transport_channel_pool_next(_transportPointer.ref.channels);
-        return TransportFile(
-          _callbacks,
-          TransportResourceChannel(channelPointer, _bindings),
-          channelPointer,
-          _bindings,
-          path,
-        );
-      },
-    );
-
     _listener = RawReceivePort((List<dynamic> input) {
       for (var element in input) {
         if (element[0] < 0) {
@@ -112,37 +96,45 @@ class TransportEventLoop {
         _handle(element[0], element[1], Pointer.fromAddress(element[2]));
       }
     });
-
     completer(_listener);
   }
-
-  bool get serving => _serving;
-
-  Future<void> awaitServer() => _servingCompleter.future;
 
   Stream<TransportPayload> serve(
     String host,
     int port, {
     void Function(TransportServerChannel channel, int descriptor)? onAccept,
   }) async* {
-    if (_serving) yield* _inputStream.stream;
-
+    if (_serving) yield* _serverStream;
     this._onAccept = onAccept;
-
-    _onServerExit.listen((_) {
-      _onShutdown.send(null);
-      _inputStream.close();
-    });
-
-    _acceptor.accept(host, port);
-
+    _acceptorPointer = using((arena) => _bindings.transport_acceptor_initialize(
+          _transportPointer.ref.acceptor_configuration,
+          host.toNativeUtf8(allocator: arena).cast(),
+          port,
+        ));
+    _bindings.transport_channel_accept(
+      _bindings.transport_channel_pool_next(_transportPointer.ref.channels),
+      _acceptorPointer,
+    );
     _serving = true;
-    _servingCompleter.complete();
-
-    yield* _inputStream.stream;
+    _transport.logger.info("Server accepting");
+    yield* _serverStream;
   }
 
+  TransportFile open(String path) {
+    final channelPointer = _bindings.transport_channel_pool_next(_transportPointer.ref.channels);
+    return TransportFile(
+      _callbacks,
+      TransportResourceChannel(channelPointer, _bindings, _transport),
+      channelPointer,
+      _bindings,
+      path,
+    );
+  }
+
+  Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
+
   void _handleError(int result, int userData, Pointer<transport_channel_t> pointer) {
+    _transport.logger.info("[handle] result = $result, event = ${_event(userData)}");
     if (userData & transportEventRead != 0) {
       final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
@@ -183,9 +175,10 @@ class TransportEventLoop {
 
     if (userData & transportEventAccept != 0) {
       _transport.logger.error("[server accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}");
-      _bindings.transport_channel_accept(pointer, _acceptor.pointer);
+      _bindings.transport_channel_accept(pointer, _acceptorPointer);
       return;
     }
+
     if (userData & transportEventConnect != 0) {
       final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}";
       _transport.logger.error(message);
@@ -235,16 +228,17 @@ class TransportEventLoop {
 
   void _handle(int result, int userData, Pointer<transport_channel_t> pointer) {
     _transport.logger.info("[handle] result = $result, event = ${_event(userData)}");
+    
     if (userData & transportEventRead != 0) {
       final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
-      if (!_inputStream.hasListener) {
+      if (!_serverController.hasListener) {
         channel.free(bufferId);
         return;
       }
       final buffer = pointer.ref.buffers[bufferId];
-      _inputStream.add(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
+      _serverController.add(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
         if (answer != null) {
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
@@ -257,8 +251,10 @@ class TransportEventLoop {
     }
 
     if (userData & transportEventWrite != 0) {
+      final channel = TransportChannel.channel(pointer.address);
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
+      channel.free(bufferId);
       _bindings.transport_channel_read(pointer, fd, bufferId, 0, transportEventRead);
       return;
     }
@@ -293,13 +289,15 @@ class TransportEventLoop {
 
     if (userData & transportEventConnect != 0) {
       final fd = userData & ~transportEventAll;
+      _transport.logger.info("Client connected: $fd");
       _callbacks.notifyConnect(
         fd,
         TransportClient(
           _callbacks,
-          TransportResourceChannel(pointer, _bindings),
+          TransportResourceChannel(pointer, _bindings, _transport),
           _bindings,
           fd,
+          _bindings.transport_channel_allocate_buffer(pointer),
           pointer,
         ),
       );
@@ -307,8 +305,16 @@ class TransportEventLoop {
     }
 
     if (userData & transportEventAccept != 0) {
-      _onAccept?.call(TransportServerChannel(pointer, _bindings), result);
-      _bindings.transport_channel_accept(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), _acceptor.pointer);
+      _bindings.transport_channel_accept(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), _acceptorPointer);
+      _transport.logger.info("Server accepted: $result");
+      _onAccept?.call(
+          TransportServerChannel(
+            pointer,
+            _bindings.transport_channel_allocate_buffer(pointer),
+            _bindings,
+            _transport,
+          ),
+          result);
       return;
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:iouring_transport/transport/configuration.dart';
 
 import 'constants.dart';
@@ -11,7 +13,7 @@ class TransportDefaults {
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: 1024,
+        buffersCount: 2048,
         bufferSize: 4096,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,

@@ -17,28 +17,25 @@ class TransportClient {
   final Pointer<transport_channel_t> _channelPointer;
   final TransportBindings _bindings;
   final int _fd;
+  final int _bufferId;
 
-  TransportClient(this._callbacks, this._channel, this._bindings, this._fd, this._channelPointer);
+  TransportClient(this._callbacks, this._channel, this._bindings, this._fd, this._bufferId, this._channelPointer);
 
-  Future<TransportPayload> read() => _channel.allocate().then(
-        (bufferId) {
-          final completer = Completer<TransportPayload>();
-          _callbacks.putRead(Tuple2(_channelPointer.address, bufferId), completer);
-          _channel.read(_fd, bufferId);
-          return completer.future;
-        },
-      );
+  Future<TransportPayload> read() {
+    final completer = Completer<TransportPayload>();
+    _callbacks.putRead(Tuple2(_channelPointer.address, _bufferId), completer);
+    _channel.read(_fd, _bufferId);
+    return completer.future;
+  }
 
-  Future<void> write(Uint8List bytes) => _channel.allocate().then(
-        (bufferId) {
-          final completer = Completer<void>();
-          _callbacks.putWrite(Tuple2(_channelPointer.address, bufferId), completer);
-          _channel.write(bytes, _fd, bufferId);
-          return completer.future;
-        },
-      );
+  Future<void> write(Uint8List bytes) {
+    final completer = Completer<void>();
+    _callbacks.putWrite(Tuple2(_channelPointer.address, _bufferId), completer);
+    _channel.write(bytes, _fd, _bufferId);
+    return completer.future;
+  }
 
-  void send(Uint8List bytes, {int offset = 0}) => _channel.allocate().then((bufferId) => _channel.write(bytes, _fd, bufferId, offset: offset));
+  void send(Uint8List bytes, {int offset = 0}) => _channel.write(bytes, _fd, _bufferId, offset: offset);
 
   void close() => _bindings.transport_close_descritor(_fd);
 }
@@ -67,7 +64,7 @@ class TransportConnector {
   Future<TransportClientPool> connect(String host, int port, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transport.connectorConfiguration.defaultPool;
-    for (var i = 0; i < pool; i++) {
+    for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
       final connector = using((arena) => _bindings.transport_connector_initialize(
             _transportPointer.ref.connector_configuration,
             host.toNativeUtf8(allocator: arena).cast(),

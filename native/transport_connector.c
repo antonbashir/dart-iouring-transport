@@ -34,7 +34,6 @@ transport_connector_t *transport_connector_initialize(transport_connector_config
     free(connector);
     return NULL;
   }
-  transport_info("[connector]: initialized");
   return connector;
 }
 
@@ -42,5 +41,4 @@ void transport_connector_shutdown(transport_connector_t *connector)
 {
   shutdown(connector->fd, SHUT_RDWR);
   free(connector);
-  transport_info("[connector]: shutdown");
 }
