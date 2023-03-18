@@ -2,6 +2,7 @@ library iouring_transport;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
@@ -22,16 +23,19 @@ Future<void> main(List<String> args) async {
       );
   await loop.awaitServer();
   transport.logger.info("Served");
-  final connector = await loop.connect("127.0.0.1", 12345);
-  final client = connector.select();
+  final connector = await loop.connect("127.0.0.1", 12345, pool: 1000);
   transport.logger.info("Connected");
   final time = Stopwatch();
-  final futures = <Future>[];
   time.start();
-  for (var i = 0; i < 10; i++) {
-    futures.add(client.write(fromServer).then((value) => client.read()).then((value) => value.release()));
-  }
-  await Future.wait(futures);
-  print("Done ${futures.length / time.elapsed.inSeconds}");
-  await Future.delayed(Duration(days: 1));
+  var done = false;
+  var count = 0;
+  Timer.run(() async {
+    while (!done) {
+      count += (await Future.wait(connector.map((client) => client.write(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
+    }
+  });
+  await Future.delayed(Duration(seconds: 10));
+  done = true;
+  print("Done ${count / time.elapsed.inSeconds}");
+  exit(0);
 }

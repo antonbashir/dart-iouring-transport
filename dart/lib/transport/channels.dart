@@ -14,16 +14,18 @@ class TransportChannel {
   final Pointer<transport_channel_t> _pointer;
   final TransportBindings _bindings;
 
-  final _bufferFinalizers = Queue<Completer<int>>();
+  static final _bufferFinalizers = <int, Queue<Completer<int>>>{};
 
-  TransportChannel(this._pointer, this._transport, this.descriptor, this._bindings);
+  TransportChannel(this._pointer, this._transport, this.descriptor, this._bindings) {
+    _bufferFinalizers[this._pointer.address] = Queue();
+  }
 
   Future<int> allocate() async {
     var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
     if (bufferId == -1) {
-      _transport.logger.info("[channel $descriptor] buffer overflow, await");
+      //_transport.logger.info("[channel $descriptor] buffer overflow, await");
       final completer = Completer<int>();
-      _bufferFinalizers.add(completer);
+      _bufferFinalizers[_pointer.address]!.add(completer);
       return await completer.future;
     }
     return bufferId;
@@ -40,7 +42,9 @@ class TransportChannel {
     _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
     _pointer.ref.used_buffers_offsets[bufferId] = 0;
     _pointer.ref.used_buffers[bufferId] = transportBufferAvailable;
-    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeFirst().complete(bufferId);
+    if (_bufferFinalizers[_pointer.address]!.isNotEmpty) {
+      _bufferFinalizers[_pointer.address]!.removeFirst().complete(bufferId);
+    }
   }
 
   void close() => _bindings.transport_close_descritor(descriptor);

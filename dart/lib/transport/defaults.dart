@@ -9,11 +9,11 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        isolates: 1,
+        isolates: 4,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
-        buffersCount: 2048,
+        buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,

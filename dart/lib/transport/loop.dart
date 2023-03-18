@@ -197,7 +197,7 @@ class TransportEventLoop {
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
   void _handleError(int result, int userData, Pointer<transport_channel_t> pointer) {
-    _transport.logger.info("[handle error] result = $result, event = ${_event(userData)}");
+    //_transport.logger.info("[handle error] result = $result, event = ${_event(userData)}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;
@@ -288,12 +288,13 @@ class TransportEventLoop {
   }
 
   Future<void> _handle(int result, int userData, Pointer<transport_channel_t> pointer) async {
-    _transport.logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
+    //_transport.logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (!_serverController.hasListener) {
+        _transport.logger.warn("[server] no listeners for fd = $fd");
         _inboundChannels[fd]!.free(bufferId);
         return;
       }
@@ -358,7 +359,7 @@ class TransportEventLoop {
 
     if (userData & transportEventAccept != 0) {
       _bindings.transport_channel_accept(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), _acceptorPointer);
-      _transport.logger.info("[server] accepted: $result");
+      _transport.logger.info("[server] accepted fd = $result");
       _inboundChannels[result] = TransportInboundChannel(
         pointer,
         _transport,
