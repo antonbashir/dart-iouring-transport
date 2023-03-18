@@ -4,6 +4,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/logger.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -27,6 +28,7 @@ String _event(int userdata) {
 
 class TransportEventLoopCallbacks {
   final int _maxCallbacks;
+  final TransportLogger _logger;
 
   final _connectCallbacks = <int, Completer<TransportClient>>{};
   final _readCallbacks = <int, Completer<TransportPayload>>{};
@@ -36,7 +38,7 @@ class TransportEventLoopCallbacks {
   final _usedCallbacks = <int, int>{};
   var _availableCallbackId = 0;
 
-  TransportEventLoopCallbacks(this._maxCallbacks);
+  TransportEventLoopCallbacks(this._maxCallbacks, this._logger);
 
   @pragma(preferInlinePragma)
   Future<int> _allocateCallback(int bufferId) async {
@@ -44,6 +46,7 @@ class TransportEventLoopCallbacks {
       if (++_availableCallbackId >= _maxCallbacks) {
         _availableCallbackId = 0;
         if (_usedCallbacks.containsKey(_availableCallbackId)) {
+          _logger.info("callback overflow, await");
           final completer = Completer<int>();
           _callbackFinalizers.add(completer);
           _availableCallbackId = await completer.future;
@@ -114,6 +117,7 @@ class TransportEventLoopCallbacks {
 class TransportEventLoop {
   final _inboundChannels = <int, TransportInboundChannel>{};
   final _outboundChannels = <int, TransportOutboundChannel>{};
+  final _servingComplter = Completer();
 
   final TransportBindings _bindings;
   final Pointer<transport_t> _transportPointer;
@@ -140,6 +144,7 @@ class TransportEventLoop {
   ) {
     _callbacks = TransportEventLoopCallbacks(
       (_transport.channelConfiguration.buffersCount * _transport.transportConfiguration.isolates) - 1,
+      _transport.logger,
     );
     _serverController = StreamController();
     _serverStream = _serverController.stream;
@@ -155,6 +160,8 @@ class TransportEventLoop {
     });
     completer(_listener);
   }
+
+  Future<void> awaitServer() => _servingComplter.future;
 
   Stream<TransportPayload> serve(
     String host,
@@ -173,7 +180,8 @@ class TransportEventLoop {
       _acceptorPointer,
     );
     _serving = true;
-    _transport.logger.info("Server accepting");
+    _transport.logger.info("[server] accepting");
+    _servingComplter.complete();
     yield* _serverStream;
   }
 
@@ -189,7 +197,8 @@ class TransportEventLoop {
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
   void _handleError(int result, int userData, Pointer<transport_channel_t> pointer) {
-    _transport.logger.info("[handle] result = $result, event = ${_event(userData)}");
+    _transport.logger.info("[handle error] result = $result, event = ${_event(userData)}");
+
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
@@ -246,15 +255,16 @@ class TransportEventLoop {
 
     if (userData & transportEventReadCallback != 0) {
       final callbackId = userData & ~transportEventAll;
-      final fd = pointer.ref.used_buffers[callbackId];
+      final bufferId = _callbacks._usedCallbacks[callbackId]!;
+      final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_channel_read(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], callbackId | transportEventReadCallback);
+        _bindings.transport_channel_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], callbackId | transportEventReadCallback);
         return;
       }
-      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
+      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
       _transport.logger.error(message);
       final channel = _outboundChannels[fd]!;
-      final bufferId = _callbacks.notifyReadError(callbackId, TransportException(message));
+      _callbacks.notifyReadError(callbackId, TransportException(message));
       channel.free(bufferId);
       channel.close();
       return;
@@ -262,14 +272,15 @@ class TransportEventLoop {
 
     if (userData & transportEventWriteCallback != 0) {
       final callbackId = userData & ~transportEventAll;
-      final fd = pointer.ref.used_buffers[callbackId];
+      final bufferId = _callbacks._usedCallbacks[callbackId]!;
+      final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_channel_write(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], callbackId | transportEventWriteCallback);
+        _bindings.transport_channel_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], callbackId | transportEventWriteCallback);
         return;
       }
-      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
+      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
       final channel = _outboundChannels[fd]!;
-      final bufferId = _callbacks.notifyWriteError(callbackId, TransportException(message));
+      _callbacks.notifyWriteError(callbackId, TransportException(message));
       channel.free(bufferId);
       channel.close();
       return;
@@ -277,7 +288,7 @@ class TransportEventLoop {
   }
 
   Future<void> _handle(int result, int userData, Pointer<transport_channel_t> pointer) async {
-    _transport.logger.info("[handle] result = $result, event = ${_event(userData)}");
+    _transport.logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;

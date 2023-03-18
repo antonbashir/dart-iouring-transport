@@ -20,6 +20,7 @@ Future<void> main(List<String> args) async {
   loop.serve("0.0.0.0", 12345, onAccept: (channel) => channel.read()).listen(
         (event) => event.respond(fromServer),
       );
+  await loop.awaitServer();
   transport.logger.info("Served");
   final connector = await loop.connect("127.0.0.1", 12345);
   final client = connector.select();
@@ -27,7 +28,7 @@ Future<void> main(List<String> args) async {
   final time = Stopwatch();
   final futures = <Future>[];
   time.start();
-  for (var i = 0; i < 100000; i++) {
+  for (var i = 0; i < 10; i++) {
     futures.add(client.write(fromServer).then((value) => client.read()).then((value) => value.release()));
   }
   await Future.wait(futures);

@@ -21,7 +21,7 @@ class TransportChannel {
   Future<int> allocate() async {
     var bufferId = _bindings.transport_channel_allocate_buffer(_pointer);
     if (bufferId == -1) {
-      _transport.logger.info("Await buffer");
+      _transport.logger.info("[channel $descriptor] buffer overflow, await");
       final completer = Completer<int>();
       _bufferFinalizers.add(completer);
       return await completer.future;
