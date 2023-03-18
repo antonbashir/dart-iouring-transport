@@ -13,31 +13,27 @@ import 'payload.dart';
 
 class TransportClient {
   final TransportEventLoopCallbacks _callbacks;
-  final TransportResourceChannel _channel;
-  final Pointer<transport_channel_t> _channelPointer;
-  final TransportBindings _bindings;
-  final int _fd;
-  final int _bufferId;
+  final TransportOutboundChannel _channel;
 
-  TransportClient(this._callbacks, this._channel, this._bindings, this._fd, this._bufferId, this._channelPointer);
+  TransportClient(this._callbacks, this._channel);
 
-  Future<TransportPayload> read() {
+  Future<TransportPayload> read() async {
     final completer = Completer<TransportPayload>();
-    _callbacks.putRead(Tuple2(_channelPointer.address, _bufferId), completer);
-    _channel.read(_fd, _bufferId);
+    final bufferId = await _channel.allocate();
+    final callbackId = await _callbacks.putRead(bufferId, completer);
+    _channel.read(bufferId, callbackId, offset: 0);
     return completer.future;
   }
 
-  Future<void> write(Uint8List bytes) {
+  Future<void> write(Uint8List bytes) async {
     final completer = Completer<void>();
-    _callbacks.putWrite(Tuple2(_channelPointer.address, _bufferId), completer);
-    _channel.write(bytes, _fd, _bufferId);
+    final bufferId = await _channel.allocate();
+    final callbackId = await _callbacks.putWrite(bufferId, completer);
+    _channel.write(bytes, bufferId, callbackId);
     return completer.future;
   }
 
-  void send(Uint8List bytes, {int offset = 0}) => _channel.write(bytes, _fd, _bufferId, offset: offset);
-
-  void close() => _bindings.transport_close_descritor(_fd);
+  void close() => _channel.close();
 }
 
 class TransportClientPool {

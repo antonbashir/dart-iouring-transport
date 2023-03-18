@@ -86,23 +86,23 @@ int transport_channel_allocate_buffer(transport_channel_t *channel)
   return channel->available_buffer_id;
 }
 
-int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event)
+int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t user_data)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
   channel->used_buffers[buffer_id] = fd;
   channel->used_buffers_offsets[buffer_id] = offset;
   io_uring_prep_write_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, offset, buffer_id);
-  io_uring_sqe_set_data64(sqe, (int64_t)(buffer_id | event));
+  io_uring_sqe_set_data64(sqe, user_data);
   return io_uring_submit(channel->ring);
 }
 
-int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event)
+int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t user_data)
 {
   struct io_uring_sqe *sqe = provide_sqe(channel->ring);
   channel->used_buffers[buffer_id] = fd;
   channel->used_buffers_offsets[buffer_id] = offset;
   io_uring_prep_read_fixed(sqe, fd, channel->buffers[buffer_id].iov_base, channel->buffers[buffer_id].iov_len, offset, buffer_id);
-  io_uring_sqe_set_data64(sqe, (int64_t)(buffer_id | event));
+  io_uring_sqe_set_data64(sqe, user_data);
   return io_uring_submit(channel->ring);
 }
 

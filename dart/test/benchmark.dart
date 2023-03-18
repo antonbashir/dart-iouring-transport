@@ -17,7 +17,7 @@ Future<void> main(List<String> args) async {
     TransportDefaults.connector(),
   );
   final loop = await transport.run();
-  loop.serve("0.0.0.0", 12345, onAccept: (channel, descriptor) => channel.read(descriptor)).listen(
+  loop.serve("0.0.0.0", 12345, onAccept: (channel) => channel.read()).listen(
         (event) => event.respond(fromServer),
       );
   transport.logger.info("Served");
