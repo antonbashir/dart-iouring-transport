@@ -26,6 +26,7 @@ void main() {
       event.respond(Utf8Encoder().convert("$request, world"));
     });
     _transport.logger.info("Served");
+    await Future.delayed(Duration(seconds: 1));
     final connector = await loop.connect("127.0.0.1", 12345);
     final client = connector.select();
     await client.write(Utf8Encoder().convert("Hello"));

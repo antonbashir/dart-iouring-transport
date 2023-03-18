@@ -194,7 +194,7 @@ class TransportEventLoop {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_channel_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventRead);
+        _bindings.transport_channel_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], bufferId | transportEventRead);
         return;
       }
       if (result == -EPIPE) {
@@ -214,7 +214,7 @@ class TransportEventLoop {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_channel_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWrite);
+        _bindings.transport_channel_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], bufferId | transportEventWrite);
         return;
       }
       if (result == -EPIPE) {
@@ -248,7 +248,7 @@ class TransportEventLoop {
       final callbackId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[callbackId];
       if (result == -EAGAIN) {
-        _bindings.transport_channel_read(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], transportEventReadCallback);
+        _bindings.transport_channel_read(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], callbackId | transportEventReadCallback);
         return;
       }
       final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
@@ -264,7 +264,7 @@ class TransportEventLoop {
       final callbackId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[callbackId];
       if (result == -EAGAIN) {
-        _bindings.transport_channel_write(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], transportEventWriteCallback);
+        _bindings.transport_channel_write(pointer, fd, callbackId, pointer.ref.used_buffers_offsets[callbackId], callbackId | transportEventWriteCallback);
         return;
       }
       final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $callbackId, fd = $fd";
@@ -292,7 +292,7 @@ class TransportEventLoop {
           _inboundChannels[fd]!.reset(bufferId);
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
-          _bindings.transport_channel_write(pointer, fd, bufferId, offset, transportEventWrite);
+          _bindings.transport_channel_write(pointer, fd, bufferId, offset, bufferId | transportEventWrite);
           return;
         }
         _inboundChannels[fd]!.free(bufferId);
@@ -304,7 +304,7 @@ class TransportEventLoop {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       _inboundChannels[fd]!.reset(bufferId);
-      _bindings.transport_channel_read(pointer, fd, bufferId, 0, transportEventRead);
+      _bindings.transport_channel_read(pointer, fd, bufferId, 0, bufferId | transportEventRead);
       return;
     }
 
@@ -312,7 +312,7 @@ class TransportEventLoop {
       final callbackId = userData & ~transportEventAll;
       final bufferId = _callbacks._usedCallbacks[callbackId]!;
       final fd = pointer.ref.used_buffers[bufferId];
-      final buffer = pointer.ref.buffers[callbackId];
+      final buffer = pointer.ref.buffers[bufferId];
       _callbacks.notifyRead(
         callbackId,
         TransportPayload(
@@ -333,7 +333,7 @@ class TransportEventLoop {
 
     if (userData & transportEventConnect != 0) {
       final fd = userData & ~transportEventAll;
-      _transport.logger.info("Client connected: $fd");
+      _transport.logger.info("[client]: connected, fd = $fd");
       _outboundChannels[fd] = TransportOutboundChannel(pointer, _transport, fd, _bindings);
       _callbacks.notifyConnect(
         fd,
@@ -347,7 +347,7 @@ class TransportEventLoop {
 
     if (userData & transportEventAccept != 0) {
       _bindings.transport_channel_accept(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), _acceptorPointer);
-      _transport.logger.info("Server accepted: $result");
+      _transport.logger.info("[server] accepted: $result");
       _inboundChannels[result] = TransportInboundChannel(
         pointer,
         _transport,

@@ -59,14 +59,14 @@ class Transport {
       nativeConnectorConfiguration,
       nativeAcceptorConfiguration,
     );
-    logger.info("Transport initialized");
+    logger.info("[ransport]: initialized");
   }
 
   Future<void> shutdown() async {
     await _listenerExit.take(transportConfiguration.isolates).toList();
     if (_loop.serving) await _loopExit.first;
     _bindings.transport_destroy(_transport);
-    logger.info("Transport destroyed");
+    logger.info("[transport]: destroyed");
   }
 
   Future<TransportEventLoop> run() async {
@@ -96,7 +96,7 @@ class Transport {
 
       fromListenerActivator.listen((channel) {
         _bindings.transport_channel_pool_add(_transport.ref.channels, Pointer.fromAddress(channel));
-        logger.info("Listener channel activated");
+        logger.info("[listener]: activated");
         if (++completionCounter == transportConfiguration.isolates) {
           completer.complete();
         }
