@@ -62,7 +62,6 @@ class Transport {
       nativeConnectorConfiguration,
       nativeAcceptorConfiguration,
     );
-    logger.info("[ransport]: initialized");
   }
 
   Future<void> shutdown() async {
@@ -71,18 +70,18 @@ class Transport {
     logger.info("[transport]: destroyed");
   }
 
-  Future<void> serve(String host, int port, void Function(SendPort input) worker) async {
-    final acceptor = using((Arena arena) => _bindings.transport_acceptor_initialize(
-          _transport.ref.acceptor_configuration,
-          host.toNativeUtf8(allocator: arena).cast(),
-          port,
-        ));
-    _run(worker, acceptor: acceptor);
-  }
+  Future<void> serve(String host, int port, void Function(SendPort input) worker) => _run(
+        worker,
+        acceptor: using((Arena arena) => _bindings.transport_acceptor_initialize(
+              _transport.ref.acceptor_configuration,
+              host.toNativeUtf8(allocator: arena).cast(),
+              port,
+            )),
+      );
 
-  Future<void> run(void Function(SendPort input) worker) => _run(worker);
+  Future<void> run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor}) => _run(worker);
 
-  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor_t>? acceptor = null}) async {
+  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor}) async {
     final fromTransportToListener = ReceivePort();
     final fromTransportToWorker = ReceivePort();
     var listeners = 0;
@@ -98,10 +97,13 @@ class Transport {
       workersActivators.add(ports[2]);
       final workerConfiguration = [
         _libraryPath,
-        _bindings.transport_worker_initialize(
-          _transport.ref.worker_configuration,
-          1 << transportEventMax - workerMeessagePorts.length,
-        ),
+        _transport.address,
+        _bindings
+            .transport_worker_initialize(
+              _transport.ref.worker_configuration,
+              1 << transportEventMax - workerMeessagePorts.length,
+            )
+            .address,
       ];
       if (acceptor != null) workerConfiguration.add(acceptor.address);
       toWorker.send(workerConfiguration);

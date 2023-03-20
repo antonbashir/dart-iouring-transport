@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
@@ -14,10 +15,9 @@ final Transport _transport = Transport(
 );
 
 void main() {
-  int value = 2523623;
+  void Function(SendPort) worker = (port) async => print("initizlied");
 
-  int flag1 = 1 << 63;
-  int flag2 = 1 << 62;
+  void spawn(void Function(SendPort) worker) => Isolate.spawn(worker, ReceivePort().sendPort);
 
-  int valueWithFlags = value | flag1 | flag2;
+  spawn(worker);
 }

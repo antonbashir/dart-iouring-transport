@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -15,7 +14,6 @@ import 'exception.dart';
 import 'file.dart';
 import 'lookup.dart';
 import 'payload.dart';
-import 'transport.dart';
 
 String _event(int userdata) {
   if (userdata & transportEventClose != 0) return "transportEventClose";
@@ -62,6 +60,8 @@ class TransportWorkerCallbacks {
 }
 
 class TransportWorker {
+  final _initializer = Completer();
+
   final _fromTransport = ReceivePort();
 
   final _inboundChannels = <int, TransportInboundChannel>{};
@@ -73,6 +73,7 @@ class TransportWorker {
   late final Pointer<transport_worker_t> _workerPointer;
 
   late final RawReceivePort _listener;
+  late final RawReceivePort _activator;
   late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final TransportConnector _connector;
   late final TransportWorkerCallbacks _callbacks;
@@ -87,26 +88,6 @@ class TransportWorker {
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
-    toTransport.send(_fromTransport.sendPort);
-  }
-
-  Future<void> initialize() async {
-    final configuration = await _fromTransport.first as List;
-
-    final libraryPath = configuration[0] as String?;
-    _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
-    if (configuration.length == 3) {
-      _acceptorPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_acceptor_t>();
-      _hasServer = true;
-    }
-    _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
-
-    _fromTransport.close();
-
-    _callbacks = TransportWorkerCallbacks();
-    _serverController = StreamController();
-    _serverStream = _serverController.stream;
-    _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
     _listener = RawReceivePort((List<dynamic> input) {
       for (var element in input) {
         if (element[0] < 0) {
@@ -116,6 +97,29 @@ class TransportWorker {
         _handle(element[0], element[1], Pointer.fromAddress(element[2]));
       }
     });
+    _activator = RawReceivePort((listener) {
+      _bindings.transport_listener_pool_add(_workerPointer.ref.listener, Pointer.fromAddress(listener).cast());
+      _initializer.complete();
+    });
+    toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
+  }
+
+  Future<void> initialize() async {
+    final configuration = await _fromTransport.first as List;
+    final libraryPath = configuration[0] as String?;
+    _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
+    _workerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
+    if (configuration.length == 4) {
+      _acceptorPointer = Pointer.fromAddress(configuration[3] as int).cast<transport_acceptor_t>();
+      _hasServer = true;
+    }
+    _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
+    _fromTransport.close();
+    _callbacks = TransportWorkerCallbacks();
+    _serverController = StreamController();
+    _serverStream = _serverController.stream;
+    _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
+    await _initializer.future;
   }
 
   Future<void> awaitServer() => _servingComplter.future;
