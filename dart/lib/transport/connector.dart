@@ -6,12 +6,11 @@ import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
-import 'loop.dart';
 import 'payload.dart';
-import 'transport.dart';
+import 'worker.dart';
 
 class TransportClient {
-  final TransportEventLoopCallbacks _callbacks;
+  final TransportWorkerCallbacks _callbacks;
   final TransportOutboundChannel _channel;
 
   TransportClient(this._callbacks, this._channel);
@@ -19,16 +18,16 @@ class TransportClient {
   Future<TransportPayload> read() async {
     final completer = Completer<TransportPayload>();
     final bufferId = await _channel.allocate();
-    final callbackId = await _callbacks.putRead(bufferId, completer);
-    _channel.read(bufferId, callbackId, offset: 0);
+    _callbacks.putRead(bufferId, completer);
+    _channel.read(bufferId, offset: 0);
     return completer.future;
   }
 
   Future<void> write(Uint8List bytes) async {
     final completer = Completer<void>();
     final bufferId = await _channel.allocate();
-    final callbackId = await _callbacks.putWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, callbackId);
+    _callbacks.putWrite(bufferId, completer);
+    _channel.write(bytes, bufferId);
     return completer.future;
   }
 
@@ -54,15 +53,15 @@ class TransportClientPool {
 
 class TransportConnector {
   final TransportBindings _bindings;
-  final TransportEventLoopCallbacks _callbacks;
+  final TransportWorkerCallbacks _callbacks;
   final Pointer<transport_t> _transportPointer;
-  final Transport _transport;
+  final Pointer<transport_worker_t> _workerPointer;
 
-  TransportConnector(this._callbacks, this._transportPointer, this._bindings, this._transport);
+  TransportConnector(this._callbacks, this._transportPointer, this._workerPointer, this._bindings);
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
-    if (pool == null) pool = _transport.connectorConfiguration.defaultPool;
+    if (pool == null) pool = _transportPointer.ref.connector_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
       final connector = using((arena) => _bindings.transport_connector_initialize(
             _transportPointer.ref.connector_configuration,
@@ -71,7 +70,7 @@ class TransportConnector {
           ));
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(connector.ref.fd, completer);
-      _bindings.transport_channel_connect(_bindings.transport_channel_pool_next(_transportPointer.ref.channels), connector);
+      _bindings.transport_worker_connect(_workerPointer, connector);
       clients.add(completer.future);
     }
     return TransportClientPool(await Future.wait(clients));

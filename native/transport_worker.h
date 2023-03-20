@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "transport_channel_pool.h"
+#include "transport_listener_pool.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -22,7 +22,7 @@ extern "C"
   {
     int64_t id;
     struct io_uring *ring;
-    transport_channel_pool_t *channels;
+    transport_listener_pool_t *listener;
     struct iovec *buffers;
     uint32_t buffer_size;
     uint32_t buffers_count;

@@ -11,7 +11,6 @@ dev_dependencies:
 dependencies:
   ffi: ^2.0.1
   path: ^1.8.3
-  tuple: ^2.0.1
 
 ffigen:
   name: "TransportBindings"
@@ -21,7 +20,7 @@ ffigen:
     entry-points:
       - "../native/transport.h"
       - "../native/transport_constants.h"
-      - "../native/transport_channel.h"
+      - "../native/transport_listener.h"
       - "../native/transport_acceptor.h"
       - "../native/transport_event_loop.h"
       - "../native/transport_file.h"

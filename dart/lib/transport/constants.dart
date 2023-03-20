@@ -104,13 +104,16 @@ const transportLogLevels = [
 const transportBufferAvailable = -2;
 const transportBufferUsed = -1;
 
-const transportEventClose = 1 << (64 - 1 - 0);
-const transportEventRead = 1 << (64 - 1 - 1);
-const transportEventWrite = 1 << (64 - 1 - 2);
-const transportEventAccept = 1 << (64 - 1 - 3);
-const transportEventConnect = 1 << (64 - 1 - 4);
-const transportEventReadCallback = 1 << (64 - 1 - 5);
-const transportEventWriteCallback = 1 << (64 - 1 - 6);
+const transportEventClose = 1 << (64 - 1);
+const transportEventRead = 1 << (64 - 2);
+const transportEventWrite = 1 << (64 - 3);
+const transportEventAccept = 1 << (64 - 4);
+const transportEventConnect = 1 << (64 - 5);
+const transportEventReadCallback = 1 << (64 - 6);
+const transportEventWriteCallback = 1 << (64 - 7);
+const transportEventMessage = 1 << (64 - 8);
+
+const transportEventMax = 8;
 
 const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose | transportEventReadCallback | transportEventWriteCallback;
 

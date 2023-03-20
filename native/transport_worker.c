@@ -24,7 +24,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   }
 
   worker->id = id;
-  worker->channels = transport_channel_pool_initialize();
+  worker->listener = transport_listener_pool_initialize();
 
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
@@ -84,7 +84,7 @@ int transport_worker_select_buffer(transport_worker_t *worker)
 int transport_worker_write(struct transport_worker *worker, int fd, int buffer_id, int64_t offset, int64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_channel_t *channel = transport_channel_pool_next(worker->channels);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
   io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, fd, buffer_id | worker->id | event, 0);
@@ -99,7 +99,7 @@ int transport_worker_write(struct transport_worker *worker, int fd, int buffer_i
 int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id, int64_t offset, int64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_channel_t *channel = transport_channel_pool_next(worker->channels);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
   io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, fd, buffer_id | worker->id | event, 0);
@@ -114,7 +114,7 @@ int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id
 int transport_worker_connect(struct transport_worker *worker, transport_connector_t *connector)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_channel_t *channel = transport_channel_pool_next(worker->channels);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
   io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, 0, (intptr_t)connector | worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_CONNECT, 0);
   if (likely(io_uring_submit_and_wait(worker->ring, 1) != -1))
   {
@@ -127,7 +127,7 @@ int transport_worker_connect(struct transport_worker *worker, transport_connecto
 int transport_worker_accept(struct transport_worker *worker, transport_acceptor_t *acceptor)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_channel_t *channel = transport_channel_pool_next(worker->channels);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
   io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, 0, (intptr_t)acceptor | worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_ACCEPT, 0);
   if (likely(io_uring_submit_and_wait(worker->ring, 1) != -1))
   {
@@ -140,7 +140,7 @@ int transport_worker_accept(struct transport_worker *worker, transport_acceptor_
 int transport_worker_close(struct transport_worker *worker)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_channel_t *channel = transport_channel_pool_next(worker->channels);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
   io_uring_prep_msg_ring(sqe, channel->ring->ring_fd, 0, worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_CLOSE, 0);
   if (likely(io_uring_submit_and_wait(worker->ring, 1) != -1))
   {

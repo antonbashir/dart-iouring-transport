@@ -1,30 +1,30 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/loop.dart';
+import 'package:iouring_transport/transport/worker.dart';
 
 import 'channels.dart';
 import 'payload.dart';
 
 class TransportFile {
   final TransportOutboundChannel _channel;
-  final TransportEventLoopCallbacks _callbacks;
+  final TransportWorkerCallbacks _callbacks;
 
   TransportFile(this._callbacks, this._channel);
 
   Future<TransportPayload> readBuffer({int offset = 0}) async {
     final completer = Completer<TransportPayload>();
     final bufferId = await _channel.allocate();
-    final callbackId = await _callbacks.putRead(bufferId, completer);
-    _channel.read(bufferId, callbackId, offset: offset);
+    _callbacks.putRead(bufferId, completer);
+    _channel.read(bufferId, offset: offset);
     return completer.future;
   }
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
     final completer = Completer<void>();
     final bufferId = await _channel.allocate();
-    final callbackId = await _callbacks.putWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, callbackId, offset: offset);
+    _callbacks.putWrite(bufferId, completer);
+    _channel.write(bytes, bufferId, offset: offset);
     return completer.future;
   }
 

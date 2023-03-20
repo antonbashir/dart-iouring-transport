@@ -5,9 +5,11 @@
 #include <netinet/in.h>
 #include <stdint.h>
 #include <liburing.h>
-#include "transport_channel.h"
+#include "transport_listener.h"
 #include "transport_acceptor.h"
-#include "transport_channel_pool.h"
+#include "transport_worker.h"
+#include "transport_connector.h"
+#include "transport_listener_pool.h"
 #include "dart/dart_api.h"
 
 #if defined(__cplusplus)
@@ -21,14 +23,15 @@ extern "C"
 
   typedef struct transport
   {
-    transport_channel_pool_t *channels;
-    transport_channel_configuration_t *channel_configuration;
+    transport_listener_configuration_t *listener_configuration;
     transport_connector_configuration_t *connector_configuration;
     transport_acceptor_configuration_t *acceptor_configuration;
+    transport_worker_configuration_t *worker_configuration;
   } transport_t;
 
   transport_t *transport_initialize(transport_configuration_t *transport_configuration,
-                                    transport_channel_configuration_t *channel_configuration,
+                                    transport_listener_configuration_t *listener_configuration,
+                                    transport_worker_configuration_t *worker_configuration,
                                     transport_connector_configuration_t *connector_configuration,
                                     transport_acceptor_configuration_t *acceptor_configuration);
 

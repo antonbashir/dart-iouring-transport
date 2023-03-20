@@ -3,9 +3,10 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/listener.dart';
 import 'package:iouring_transport/transport/logger.dart';
-import 'package:iouring_transport/transport/loop.dart';
+import 'package:iouring_transport/transport/worker.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -19,10 +20,9 @@ class Transport {
   late final TransportLogger logger;
 
   final _listenerExit = ReceivePort();
-  final _loopExit = ReceivePort();
+  final _workerExit = ReceivePort();
 
   late final String? _libraryPath;
-  late final TransportEventLoop _loop;
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transport;
@@ -47,15 +47,21 @@ class Transport {
     nativeConnectorConfiguration.ref.receive_buffer_size = connectorConfiguration.receiveBufferSize;
     nativeConnectorConfiguration.ref.send_buffer_size = connectorConfiguration.sendBufferSize;
 
-    final nativeChannelConfiguration = calloc<transport_channel_configuration_t>();
-    nativeChannelConfiguration.ref.buffers_count = channelConfiguration.buffersCount;
-    nativeChannelConfiguration.ref.buffer_size = channelConfiguration.bufferSize;
+    final nativeChannelConfiguration = calloc<transport_listener_configuration_t>();
     nativeChannelConfiguration.ref.ring_flags = channelConfiguration.ringFlags;
     nativeChannelConfiguration.ref.ring_size = channelConfiguration.ringSize;
+    nativeChannelConfiguration.ref.workers_count = transportConfiguration.workerInsolates;
+
+    final nativeWorkerConfiguration = calloc<transport_worker_configuration_t>();
+    nativeWorkerConfiguration.ref.ring_flags = channelConfiguration.ringFlags;
+    nativeWorkerConfiguration.ref.ring_size = channelConfiguration.ringSize;
+    nativeWorkerConfiguration.ref.buffer_size = channelConfiguration.bufferSize;
+    nativeWorkerConfiguration.ref.buffers_count = channelConfiguration.buffersCount;
 
     _transport = _bindings.transport_initialize(
       nativeTransportConfiguration,
       nativeChannelConfiguration,
+      nativeWorkerConfiguration,
       nativeConnectorConfiguration,
       nativeAcceptorConfiguration,
     );
@@ -63,50 +69,84 @@ class Transport {
   }
 
   Future<void> shutdown() async {
-    await _listenerExit.take(transportConfiguration.isolates).toList();
-    if (_loop.serving) await _loopExit.first;
+    await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
     _bindings.transport_destroy(_transport);
     logger.info("[transport]: destroyed");
   }
 
-  Future<TransportEventLoop> run() async {
-    final fromListener = ReceivePort();
-    final fromListenerActivator = ReceivePort();
-    final completer = Completer();
-    var completionCounter = 0;
-    _loop = TransportEventLoop(_bindings, _transport, this, _loopExit.sendPort, (listener) {
-      for (var isolate = 0; isolate < transportConfiguration.isolates; isolate++) {
-        Isolate.spawn<SendPort>(
-          (toTransport) => TransportListener(toTransport).listen(),
-          fromListener.sendPort,
-          onExit: _listenerExit.sendPort,
-        );
+  Future<void> serve(String host, int port, void Function(SendPort input) worker) async {
+    final acceptor = using((Arena arena) => _bindings.transport_acceptor_initialize(
+          _transport.ref.acceptor_configuration,
+          host.toNativeUtf8(allocator: arena).cast(),
+          port,
+        ));
+    _run(worker, acceptor: acceptor);
+  }
+
+  Future<void> run(void Function(SendPort input) worker) => _run(worker);
+
+  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor_t>? acceptor = null}) async {
+    final fromTransportToListener = ReceivePort();
+    final fromTransportToWorker = ReceivePort();
+    var listeners = 0;
+    final listenerCompleter = Completer();
+    final workersCompleter = Completer();
+    final workerMeessagePorts = <SendPort>[];
+    final workersActivators = <SendPort>[];
+
+    fromTransportToWorker.listen((ports) {
+      logger.info("[worker]: initialized");
+      SendPort toWorker = ports[0];
+      workerMeessagePorts.add(ports[1]);
+      workersActivators.add(ports[2]);
+      final workerConfiguration = [
+        _libraryPath,
+        _bindings.transport_worker_initialize(
+          _transport.ref.worker_configuration,
+          1 << transportEventMax - workerMeessagePorts.length,
+        ),
+      ];
+      if (acceptor != null) workerConfiguration.add(acceptor.address);
+      toWorker.send(workerConfiguration);
+      if (workerMeessagePorts.length == transportConfiguration.workerInsolates) {
+        workersCompleter.complete();
       }
-
-      fromListener.listen((port) {
-        SendPort toListener = port as SendPort;
-        toListener.send([
-          _libraryPath,
-          _transport.address,
-          channelConfiguration.ringSize,
-          listener.sendPort,
-          fromListenerActivator.sendPort,
-        ]);
-      });
-
-      fromListenerActivator.listen((channel) {
-        _bindings.transport_channel_pool_add(_transport.ref.channels, Pointer.fromAddress(channel));
-        logger.info("[listener]: activated");
-        if (++completionCounter == transportConfiguration.isolates) {
-          completer.complete();
-        }
-      });
     });
 
-    return completer.future.then((value) {
-      fromListener.close();
-      fromListenerActivator.close();
-      return _loop;
+    fromTransportToListener.listen((port) async {
+      await workersCompleter.future;
+      logger.info("[listener]: initialized");
+      final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
+      SendPort toListener = port as SendPort;
+      toListener.send([
+        _libraryPath,
+        listenerPointer.address,
+        channelConfiguration.ringSize,
+        workerMeessagePorts,
+      ]);
+      workersActivators.forEach((port) => port.send(listenerPointer.address));
+      if (++listeners == transportConfiguration.listenerIsolates) {
+        listenerCompleter.complete();
+      }
     });
+
+    for (var isolate = 0; isolate < transportConfiguration.workerInsolates; isolate++) {
+      Isolate.spawn<SendPort>(
+        worker,
+        fromTransportToWorker.sendPort,
+        onExit: _workerExit.sendPort,
+      );
+    }
+
+    for (var isolate = 0; isolate < transportConfiguration.listenerIsolates; isolate++) {
+      Isolate.spawn<SendPort>(
+        (toTransport) => TransportListener(toTransport).listen(),
+        fromTransportToListener.sendPort,
+        onExit: _listenerExit.sendPort,
+      );
+    }
+
+    await listenerCompleter.future;
+    logger.info("[transport]: ready");
   }
 }

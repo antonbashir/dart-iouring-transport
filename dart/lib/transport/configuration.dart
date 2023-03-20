@@ -2,21 +2,24 @@ import 'package:iouring_transport/transport/constants.dart';
 
 class TransportConfiguration {
   final TransportLogLevel logLevel;
-  final int isolates;
+  final int listenerIsolates;
+  final int workerInsolates;
 
   TransportConfiguration({
     required this.logLevel,
-    required this.isolates,
+    required this.listenerIsolates,
+    required this.workerInsolates,
   });
 
   TransportConfiguration copyWith({
     TransportLogLevel? logLevel,
-    int? isolates,
-    int? outboundInsolates,
+    int? listenerIsolates,
+    int? workerInsolates,
   }) =>
       TransportConfiguration(
         logLevel: logLevel ?? this.logLevel,
-        isolates: isolates ?? this.isolates,
+        listenerIsolates: listenerIsolates ?? this.listenerIsolates,
+        workerInsolates: workerInsolates ?? this.workerInsolates,
       );
 }
 

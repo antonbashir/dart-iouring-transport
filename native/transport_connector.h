@@ -16,6 +16,7 @@ extern "C"
     int32_t max_connections;
     uint32_t receive_buffer_size;
     uint32_t send_buffer_size;
+    uint32_t default_pool;
   } transport_connector_configuration_t;
 
   typedef struct transport_connector

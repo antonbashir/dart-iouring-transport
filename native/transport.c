@@ -13,12 +13,13 @@
 #include "transport.h"
 #include "transport_common.h"
 #include "transport_constants.h"
-#include "transport_channel.h"
+#include "transport_listener.h"
 #include "transport_acceptor.h"
 #include "small/include/small/rlist.h"
 
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
-                                  transport_channel_configuration_t *channel_configuration,
+                                  transport_listener_configuration_t *listener_configuration,
+                                  transport_worker_configuration_t *worker_configuration,
                                   transport_connector_configuration_t *connector_configuration,
                                   transport_acceptor_configuration_t *acceptor_configuration)
 {
@@ -29,9 +30,9 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
   }
 
   transport->acceptor_configuration = acceptor_configuration;
-  transport->channel_configuration = channel_configuration;
+  transport->listener_configuration = listener_configuration;
   transport->connector_configuration = connector_configuration;
-  transport->channels = transport_channel_pool_initialize();
+  transport->worker_configuration = worker_configuration;
 
   return transport;
 }
@@ -39,9 +40,8 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 void transport_destroy(transport_t *transport)
 {
   free(transport->acceptor_configuration);
-  free(transport->channel_configuration);
+  free(transport->listener_configuration);
   free(transport->connector_configuration);
-  free(transport->channels);
 }
 
 void transport_cqe_advance(struct io_uring *ring, int count)

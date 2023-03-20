@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'configuration.dart';
 import 'constants.dart';
 
@@ -6,7 +8,8 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        isolates: 2,
+        listenerIsolates: 2,
+        workerInsolates: Platform.numberOfProcessors - 2,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(
