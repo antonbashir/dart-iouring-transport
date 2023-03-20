@@ -35,8 +35,6 @@ class Transport {
 
     logger = TransportLogger(transportConfiguration.logLevel);
 
-    final nativeTransportConfiguration = calloc<transport_configuration_t>();
-
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
     nativeAcceptorConfiguration.ref.receive_buffer_size = acceptorConfiguration.receiveBufferSize;
@@ -59,7 +57,6 @@ class Transport {
     nativeWorkerConfiguration.ref.buffers_count = channelConfiguration.buffersCount;
 
     _transport = _bindings.transport_initialize(
-      nativeTransportConfiguration,
       nativeChannelConfiguration,
       nativeWorkerConfiguration,
       nativeConnectorConfiguration,

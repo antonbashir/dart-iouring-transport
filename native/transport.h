@@ -17,10 +17,6 @@ extern "C"
 {
 #endif
 
-  typedef struct transport_configuration
-  {
-  } transport_configuration_t;
-
   typedef struct transport
   {
     transport_listener_configuration_t *listener_configuration;
@@ -29,8 +25,7 @@ extern "C"
     transport_worker_configuration_t *worker_configuration;
   } transport_t;
 
-  transport_t *transport_initialize(transport_configuration_t *transport_configuration,
-                                    transport_listener_configuration_t *listener_configuration,
+  transport_t *transport_initialize(transport_listener_configuration_t *listener_configuration,
                                     transport_worker_configuration_t *worker_configuration,
                                     transport_connector_configuration_t *connector_configuration,
                                     transport_acceptor_configuration_t *acceptor_configuration);

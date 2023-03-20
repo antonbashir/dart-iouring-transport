@@ -19226,14 +19226,12 @@ class TransportBindings {
       .asFunction<void Function(ffi.Pointer<transport_worker_t>)>();
 
   ffi.Pointer<transport_t> transport_initialize(
-    ffi.Pointer<transport_configuration_t> transport_configuration,
     ffi.Pointer<transport_listener_configuration_t> listener_configuration,
     ffi.Pointer<transport_worker_configuration_t> worker_configuration,
     ffi.Pointer<transport_connector_configuration_t> connector_configuration,
     ffi.Pointer<transport_acceptor_configuration_t> acceptor_configuration,
   ) {
     return _transport_initialize(
-      transport_configuration,
       listener_configuration,
       worker_configuration,
       connector_configuration,
@@ -19244,7 +19242,6 @@ class TransportBindings {
   late final _transport_initializePtr = _lookup<
           ffi.NativeFunction<
               ffi.Pointer<transport_t> Function(
-                  ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_listener_configuration_t>,
                   ffi.Pointer<transport_worker_configuration_t>,
                   ffi.Pointer<transport_connector_configuration_t>,
@@ -19252,7 +19249,6 @@ class TransportBindings {
       'transport_initialize');
   late final _transport_initialize = _transport_initializePtr.asFunction<
       ffi.Pointer<transport_t> Function(
-          ffi.Pointer<transport_configuration_t>,
           ffi.Pointer<transport_listener_configuration_t>,
           ffi.Pointer<transport_worker_configuration_t>,
           ffi.Pointer<transport_connector_configuration_t>,
@@ -23303,7 +23299,6 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_t> Function(
-                  ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_listener_configuration_t>,
                   ffi.Pointer<transport_worker_configuration_t>,
                   ffi.Pointer<transport_connector_configuration_t>,
@@ -26498,8 +26493,6 @@ class transport_worker extends ffi.Struct {
 typedef transport_worker_t = transport_worker;
 typedef transport_worker_configuration_t = transport_worker_configuration;
 
-class transport_configuration extends ffi.Opaque {}
-
 class transport extends ffi.Struct {
   external ffi.Pointer<transport_listener_configuration_t>
       listener_configuration;
@@ -26514,7 +26507,6 @@ class transport extends ffi.Struct {
 }
 
 typedef transport_t = transport;
-typedef transport_configuration_t = transport_configuration;
 
 class _Dart_Handle extends ffi.Opaque {}
 
