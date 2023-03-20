@@ -36,5 +36,6 @@ void main() {
     _transport.logger.info("Responded: '$responseMessage'");
     response.release();
     expect(responseMessage, "Hello, world");
+    exit(0);
   });
 }
