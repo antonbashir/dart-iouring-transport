@@ -18,44 +18,26 @@
 extern "C"
 {
 #endif
-
   typedef struct transport_channel_configuration
   {
-    uint32_t buffers_count;
-    uint32_t buffer_size;
     size_t ring_size;
     int ring_flags;
+    size_t workers_count;
   } transport_channel_configuration_t;
 
   typedef struct transport_channel
   {
     struct io_uring *ring;
-    struct iovec *buffers;
-    uint32_t buffer_size;
-    uint32_t buffers_count;
-    int *used_buffers;
-    int *used_buffers_offsets;
-    int available_buffer_id;
     struct rlist channel_pool_link;
+    intptr_t *workers;
+    uint64_t *worker_ids;
+    size_t workers_count;
+    size_t worker_mask;
   } transport_channel_t;
-
-  typedef struct transport_message
-  {
-    int fd;
-    int buffer_id;
-    size_t size;
-  } transport_message_t;
 
   transport_channel_t *transport_channel_initialize(transport_channel_configuration_t *configuration);
   void transport_channel_destroy(transport_channel_t *channel);
-
-  int transport_channel_write(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
-  int transport_channel_read(struct transport_channel *channel, int fd, int buffer_id, int64_t offset, int64_t event);
-  int transport_channel_connect(struct transport_channel *channel, transport_connector_t *connector);
-  int transport_channel_accept(struct transport_channel *channel, transport_acceptor_t *acceptor);
-  int transport_channel_shutdown(struct transport_channel *channel);
-
-  int transport_channel_allocate_buffer(transport_channel_t *channel);
+  int transport_channel_submit(struct transport_channel *channel, int worker_result, int64_t worker_data);
 #if defined(__cplusplus)
 }
 #endif

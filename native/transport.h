@@ -21,7 +21,7 @@ extern "C"
 
   typedef struct transport
   {
-    struct transport_channel_pool *channels;
+    transport_channel_pool_t *channels;
     transport_channel_configuration_t *channel_configuration;
     transport_connector_configuration_t *connector_configuration;
     transport_acceptor_configuration_t *acceptor_configuration;
