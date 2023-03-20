@@ -22,13 +22,13 @@ transport_listener_t *transport_listener_pool_next(transport_listener_pool_t *po
 
 void transport_listener_pool_add(transport_listener_pool_t *pool, transport_listener_t *listener)
 {
-  rlist_add_entry(&pool->listener, channel, listener_pool_link);
+  rlist_add_entry(&pool->listener, listener, listener_pool_link);
   pool->count++;
 }
 
 void transport_listener_pool_remove(transport_listener_pool_t *pool, transport_listener_t *listener)
 {
-  rlist_del_entry(channel, listener_pool_link);
+  rlist_del_entry(listener, listener_pool_link);
   pool->count--;
 }
 
