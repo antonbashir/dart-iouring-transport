@@ -99,7 +99,7 @@ class TransportWorker {
     });
     _activator = RawReceivePort((listener) {
       _bindings.transport_listener_pool_add(_workerPointer.ref.listener, Pointer.fromAddress(listener).cast());
-      _initializer.complete();
+      if (!_initializer.isCompleted) _initializer.complete();
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
   }
