@@ -18,10 +18,10 @@ jobs:
           cmake-version: '3.16.x'
 
       - name: Native configure
-        run: cd binding && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+        run: cd native && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
 
       - name: Native build
-        run: cd binding &&  make -j 
+        run: cd native &&  make -j 
 
       - name: Dart dependencies
         run: cd dart && dart pub get
