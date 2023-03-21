@@ -40,11 +40,12 @@ class TransportListener {
         for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
           final cqe = cqes[cqeIndex];
           if (cqe.ref.user_data & transportEventMessage != 0) {
-            bindings.transport_listener_submit(listenerPointer, cqe.ref.res, cqe.ref.user_data & ~transportEventMessage);
+            bindings.transport_listener_prepare(listenerPointer, cqe.ref.res, cqe.ref.user_data & ~transportEventMessage);
             continue;
           }
           events[bindings.transport_listener_get_worker_index(listenerPointer, cqe.ref.user_data)].add([cqe.ref.res, cqe.ref.user_data & ~listenerPointer.ref.worker_mask]);
         }
+        bindings.transport_listener_submit(listenerPointer);
         for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
           final event = events[workerIndex];
           if (event.isNotEmpty) workerPorts[workerIndex].send(event);

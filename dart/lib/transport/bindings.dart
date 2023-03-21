@@ -18987,24 +18987,39 @@ class TransportBindings {
       _transport_listener_get_worker_indexPtr
           .asFunction<int Function(ffi.Pointer<transport_listener_t>, int)>();
 
-  int transport_listener_submit(
+  int transport_listener_prepare(
     ffi.Pointer<transport_listener> listener,
     int worker_result,
     int worker_data,
   ) {
-    return _transport_listener_submit(
+    return _transport_listener_prepare(
       listener,
       worker_result,
       worker_data,
     );
   }
 
-  late final _transport_listener_submitPtr = _lookup<
+  late final _transport_listener_preparePtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_listener>, ffi.Int,
-              ffi.Int64)>>('transport_listener_submit');
-  late final _transport_listener_submit = _transport_listener_submitPtr
+              ffi.Int64)>>('transport_listener_prepare');
+  late final _transport_listener_prepare = _transport_listener_preparePtr
       .asFunction<int Function(ffi.Pointer<transport_listener>, int, int)>();
+
+  int transport_listener_submit(
+    ffi.Pointer<transport_listener> listener,
+  ) {
+    return _transport_listener_submit(
+      listener,
+    );
+  }
+
+  late final _transport_listener_submitPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_listener>)>>('transport_listener_submit');
+  late final _transport_listener_submit = _transport_listener_submitPtr
+      .asFunction<int Function(ffi.Pointer<transport_listener>)>();
 
   ffi.Pointer<transport_listener_pool_t> transport_listener_pool_initialize() {
     return _transport_listener_pool_initialize();
@@ -23228,6 +23243,9 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Int Function(
                   ffi.Pointer<transport_listener>, ffi.Int, ffi.Int64)>>
+      get transport_listener_prepare => _library._transport_listener_preparePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_listener>)>>
       get transport_listener_submit => _library._transport_listener_submitPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Pointer<transport_listener_pool_t> Function()>>
@@ -26431,7 +26449,7 @@ class transport_listener extends ffi.Struct {
   @ffi.Size()
   external int workers_count;
 
-  @ffi.Size()
+  @ffi.Uint64()
   external int worker_mask;
 }
 
@@ -26467,7 +26485,7 @@ class transport_worker_configuration extends ffi.Struct {
 }
 
 class transport_worker extends ffi.Struct {
-  @ffi.Int64()
+  @ffi.Uint64()
   external int id;
 
   external ffi.Pointer<io_uring> ring;
@@ -26484,7 +26502,7 @@ class transport_worker extends ffi.Struct {
 
   external ffi.Pointer<ffi.Int> used_buffers;
 
-  external ffi.Pointer<ffi.Int> used_buffers_offsets;
+  external ffi.Pointer<ffi.Uint64> used_buffers_offsets;
 
   @ffi.Int()
   external int available_buffer_id;
@@ -30450,7 +30468,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

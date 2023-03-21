@@ -38,7 +38,8 @@ extern "C"
   transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration);
   void transport_listener_destroy(transport_listener_t *listener);
   int transport_listener_get_worker_index(transport_listener_t *listener, int64_t worker_data);
-  int transport_listener_submit(struct transport_listener *listener, int worker_result, int64_t worker_data);
+  int transport_listener_prepare(struct transport_listener *listener, int worker_result, int64_t worker_data);
+  int transport_listener_submit(struct transport_listener *listener);
 #if defined(__cplusplus)
 }
 #endif
