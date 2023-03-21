@@ -17,32 +17,37 @@ class TransportListener {
 
     final libraryPath = configuration[0] as String?;
     final listenerPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_listener_t>();
-    final _ringSize = configuration[2] as int;
-    final _workerPorts = configuration[3] as List<SendPort>;
-    final _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
+    final ringSize = configuration[2] as int;
+    final workerPorts = configuration[3] as List<SendPort>;
+    final workers = configuration[4] as List<int>;
+    final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
 
     _fromTransport.close();
 
+    for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
+      listenerPointer.ref.workers[workerIndex] = workers[workerIndex];
+    }
+
     final ring = listenerPointer.ref.ring;
-    final cqes = _bindings.transport_allocate_cqes(_ringSize);
+    final cqes = bindings.transport_allocate_cqes(ringSize);
     while (true) {
-      final cqeCount = _bindings.transport_wait(_ringSize, cqes, ring);
+      final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
       final events = {};
       if (cqeCount != -1) {
         for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
           final cqe = cqes[cqeIndex];
           if (cqe.ref.user_data & transportEventMessage != 0) {
-            _bindings.transport_listener_submit(listenerPointer, cqe.ref.res, cqe.ref.user_data & ~transportEventMessage);
+            bindings.transport_listener_submit(listenerPointer, cqe.ref.res, cqe.ref.user_data & ~transportEventMessage);
             continue;
           }
-          events[_bindings.transport_listener_get_worker_index(listenerPointer, cqe.ref.user_data)] = [
+          events[bindings.transport_listener_get_worker_index(listenerPointer, cqe.ref.user_data)] = [
             cqe.ref.res,
             cqe.ref.user_data & ~listenerPointer.ref.worker_mask,
             listenerPointer.address,
           ];
         }
-        events.forEach((key, value) => _workerPorts[key].send(value));
-        _bindings.transport_cqe_advance(ring, cqeCount);
+        events.forEach((key, value) => workerPorts[key].send(value));
+        bindings.transport_cqe_advance(ring, cqeCount);
       }
     }
   }

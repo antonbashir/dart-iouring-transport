@@ -87,23 +87,26 @@ class Transport {
     var listeners = 0;
     final listenerCompleter = Completer();
     final workersCompleter = Completer();
+    final workers = <int>[];
     final workerMeessagePorts = <SendPort>[];
     final workersActivators = <SendPort>[];
+    var workersMask = 0;
+    for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
+      workersMask |= 1 << (64 - transportEventMax - workerIndex - 1);
+    }
 
     fromTransportToWorker.listen((ports) {
       logger.info("[worker]: initialized");
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
       workersActivators.add(ports[2]);
+      int worker = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, 1 << (64 - transportEventMax - workerMeessagePorts.length)).address;
+      workers.add(worker);
       final workerConfiguration = [
         _libraryPath,
         _transport.address,
-        _bindings
-            .transport_worker_initialize(
-              _transport.ref.worker_configuration,
-              1 << transportEventMax - workerMeessagePorts.length,
-            )
-            .address,
+        worker,
+        workersMask,
       ];
       if (acceptor != null) workerConfiguration.add(acceptor.address);
       toWorker.send(workerConfiguration);
@@ -117,12 +120,7 @@ class Transport {
       logger.info("[listener]: initialized");
       final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
       SendPort toListener = port as SendPort;
-      toListener.send([
-        _libraryPath,
-        listenerPointer.address,
-        channelConfiguration.ringSize,
-        workerMeessagePorts,
-      ]);
+      toListener.send([_libraryPath, listenerPointer.address, channelConfiguration.ringSize, workerMeessagePorts, workers]);
       workersActivators.forEach((port) => port.send(listenerPointer.address));
       if (++listeners == transportConfiguration.listenerIsolates) {
         listenerCompleter.complete();

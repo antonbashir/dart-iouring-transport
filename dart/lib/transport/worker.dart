@@ -80,6 +80,7 @@ class TransportWorker {
   late final StreamController<TransportPayload> _serverController;
   late final Stream<TransportPayload> _serverStream;
   late final void Function(TransportInboundChannel channel)? _onAccept;
+  late final int _workersMask;
 
   final _logger = TransportLogger(TransportDefaults.transport().logLevel);
 
@@ -89,13 +90,11 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((List<dynamic> input) {
-      for (var element in input) {
-        if (element[0] < 0) {
-          _handleError(element[0], element[1], Pointer.fromAddress(element[2]));
-          continue;
-        }
-        _handle(element[0], element[1], Pointer.fromAddress(element[2]));
+      if (input[0] < 0) {
+        _handleError(input[0], input[1], Pointer.fromAddress(input[2]));
+        return;
       }
+      _handle(input[0], input[1], Pointer.fromAddress(input[2]));
     });
     _activator = RawReceivePort((listener) {
       _bindings.transport_listener_pool_add(_workerPointer.ref.listener, Pointer.fromAddress(listener).cast());
@@ -109,8 +108,9 @@ class TransportWorker {
     final libraryPath = configuration[0] as String?;
     _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
     _workerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
-    if (configuration.length == 4) {
-      _acceptorPointer = Pointer.fromAddress(configuration[3] as int).cast<transport_acceptor_t>();
+    _workersMask = configuration[3] as int;
+    if (configuration.length == 5) {
+      _acceptorPointer = Pointer.fromAddress(configuration[4] as int).cast<transport_acceptor_t>();
       _hasServer = true;
     }
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
@@ -149,7 +149,7 @@ class TransportWorker {
     _logger.info("[handle error] result = $result, event = ${_event(userData)}");
 
     if (userData & transportEventRead != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
         _bindings.transport_worker_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventRead);
@@ -169,7 +169,7 @@ class TransportWorker {
     }
 
     if (userData & transportEventWrite != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
         _bindings.transport_worker_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWrite);
@@ -189,21 +189,21 @@ class TransportWorker {
     }
 
     if (userData & transportEventAccept != 0) {
-      _logger.error("[inbound accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}");
+      _logger.error("[inbound accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll & ~_workersMask}");
       _bindings.transport_worker_accept(pointer, _acceptorPointer);
       return;
     }
 
     if (userData & transportEventConnect != 0) {
-      final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll}";
+      final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${userData & ~transportEventAll & ~_workersMask}";
       _logger.error(message);
-      _bindings.transport_close_descritor(userData & ~transportEventAll);
-      _callbacks.notifyConnectError(userData & ~transportEventAll, TransportException(message));
+      _bindings.transport_close_descritor(userData & ~transportEventAll & ~_workersMask);
+      _callbacks.notifyConnectError(userData & ~transportEventAll & ~_workersMask, TransportException(message));
       return;
     }
 
     if (userData & transportEventReadCallback != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
         _bindings.transport_worker_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventReadCallback);
@@ -219,10 +219,10 @@ class TransportWorker {
     }
 
     if (userData & transportEventWriteCallback != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_worker_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId],transportEventWriteCallback);
+        _bindings.transport_worker_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWriteCallback);
         return;
       }
       final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
@@ -235,10 +235,10 @@ class TransportWorker {
   }
 
   Future<void> _handle(int result, int userData, Pointer<transport_worker_t> pointer) async {
-    _logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
+    _logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll & ~_workersMask}");
 
     if (userData & transportEventRead != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       if (!_serverController.hasListener) {
         _logger.warn("[server] no listeners for fd = $fd");
@@ -260,7 +260,7 @@ class TransportWorker {
     }
 
     if (userData & transportEventWrite != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       _inboundChannels[fd]!.reuse(bufferId);
       _bindings.transport_worker_read(pointer, fd, bufferId, 0, transportEventRead);
@@ -268,7 +268,7 @@ class TransportWorker {
     }
 
     if (userData & transportEventReadCallback != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       final buffer = pointer.ref.buffers[bufferId];
       _callbacks.notifyRead(
@@ -282,7 +282,7 @@ class TransportWorker {
     }
 
     if (userData & transportEventWriteCallback != 0) {
-      final bufferId = userData & ~transportEventAll;
+      final bufferId = userData & ~transportEventAll & ~_workersMask;
       final fd = pointer.ref.used_buffers[bufferId];
       _outboundChannels[fd]!.free(bufferId);
       _callbacks.notifyWrite(bufferId);
@@ -290,7 +290,7 @@ class TransportWorker {
     }
 
     if (userData & transportEventConnect != 0) {
-      final fd = userData & ~transportEventAll;
+      final fd = userData & ~transportEventAll & ~_workersMask;
       _logger.info("[client]: connected, fd = $fd");
       _outboundChannels[fd] = TransportOutboundChannel(pointer, fd, _bindings);
       _callbacks.notifyConnect(

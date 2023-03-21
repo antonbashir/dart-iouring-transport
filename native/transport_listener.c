@@ -90,7 +90,7 @@ int transport_listener_submit(transport_listener_t *listener, int worker_result,
     transport_worker_t *worker = transport_listener_get_worker(listener, worker_data);
     transport_acceptor_t *acceptor = (transport_acceptor_t *)(worker_data & ~TRANSPORT_EVENT_ALL_FLAGS & ~listener->worker_mask);
     io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
-    io_uring_sqe_set_data64(sqe, worker_data & TRANSPORT_EVENT_ACCEPT);
+    io_uring_sqe_set_data64(sqe, worker_data);
     return io_uring_submit(listener->ring);
   }
   if (worker_data & TRANSPORT_EVENT_CONNECT)
@@ -98,7 +98,7 @@ int transport_listener_submit(transport_listener_t *listener, int worker_result,
     transport_worker_t *worker = transport_listener_get_worker(listener, worker_data);
     transport_connector_t *connector = (transport_connector_t *)(worker_data & ~TRANSPORT_EVENT_ALL_FLAGS & ~listener->worker_mask);
     io_uring_prep_connect(sqe, connector->fd, (struct sockaddr *)&connector->client_address, connector->client_address_length);
-    io_uring_sqe_set_data64(sqe, worker_data);
+    io_uring_sqe_set_data64(sqe, connector->fd | worker->id | TRANSPORT_EVENT_CONNECT);
     return io_uring_submit(listener->ring);
   }
   if (worker_data & TRANSPORT_EVENT_CLOSE)
