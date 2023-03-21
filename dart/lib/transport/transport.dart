@@ -70,18 +70,19 @@ class Transport {
     logger.info("[transport]: destroyed");
   }
 
-  Future<void> serve(String host, int port, void Function(SendPort input) worker) => _run(
+  Future<void> serve(String host, int port, void Function(SendPort input) worker, {SendPort? receiver}) => _run(
         worker,
         acceptor: using((Arena arena) => _bindings.transport_acceptor_initialize(
               _transport.ref.acceptor_configuration,
               host.toNativeUtf8(allocator: arena).cast(),
               port,
             )),
+        receiver: receiver,
       );
 
-  Future<void> run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor}) => _run(worker);
+  Future<void> run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? receiver}) => _run(worker, receiver: receiver);
 
-  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor}) async {
+  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? receiver}) async {
     final fromTransportToListener = ReceivePort();
     final fromTransportToWorker = ReceivePort();
     var listeners = 0;
@@ -90,10 +91,6 @@ class Transport {
     final workers = <int>[];
     final workerMeessagePorts = <SendPort>[];
     final workersActivators = <SendPort>[];
-    var workersMask = 0;
-    for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
-      workersMask |= 1 << (64 - transportEventMax - workerIndex - 1);
-    }
 
     fromTransportToWorker.listen((ports) {
       logger.info("[worker]: initialized");
@@ -106,8 +103,8 @@ class Transport {
         _libraryPath,
         _transport.address,
         worker,
-        workersMask,
         transportConfiguration.listenerIsolates,
+        receiver,
       ];
       if (acceptor != null) workerConfiguration.add(acceptor.address);
       toWorker.send(workerConfiguration);

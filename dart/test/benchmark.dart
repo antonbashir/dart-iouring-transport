@@ -3,6 +3,7 @@ library iouring_transport;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
@@ -10,12 +11,14 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 
 Future<void> main(List<String> args) async {
+  final ReceivePort receiver = ReceivePort();
   Transport(
     TransportDefaults.transport().copyWith(logLevel: TransportLogLevel.info),
     TransportDefaults.acceptor(),
     TransportDefaults.channel(),
     TransportDefaults.connector(),
   ).serve(
+    receiver: receiver.sendPort,
     "0.0.0.0",
     12345,
     (input) async {
@@ -42,9 +45,11 @@ Future<void> main(List<String> args) async {
       while (!done) {
         count += (await Future.wait(connector.map((client) => client.write(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
       }
-      print("Done ${count / time.elapsed.inSeconds}");
+      print("Send $count");
+      worker.receiver!.send(count);
     },
   );
-  await Future.delayed(Duration(seconds: 20));
+  final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
+  print("Done: ${count / 10}");
   exit(0);
 }

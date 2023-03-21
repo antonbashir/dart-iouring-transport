@@ -81,7 +81,7 @@ class TransportWorker {
   late final StreamController<TransportPayload> _serverController;
   late final Stream<TransportPayload> _serverStream;
   late final void Function(TransportInboundChannel channel)? _onAccept;
-  late final int _workersMask;
+  late final SendPort? receiver;
   late final int _listenersCount;
 
   final _logger = TransportLogger(TransportDefaults.transport().logLevel);
@@ -93,6 +93,7 @@ class TransportWorker {
   TransportWorker(SendPort toTransport) {
     var listenerCounter = 0;
     _listener = RawReceivePort((List<dynamic> input) {
+      _bindings.transport_cqe_advance(_workerPointer.ref.ring, input.length);
       for (var event in input) {
         if (event[0] < 0) {
           _handleError(event[0], event[1]);
@@ -113,8 +114,8 @@ class TransportWorker {
     final libraryPath = configuration[0] as String?;
     _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
     _workerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
-    _workersMask = configuration[3] as int;
-    _listenersCount = configuration[4] as int;
+    _listenersCount = configuration[3] as int;
+    receiver = configuration[4] as SendPort?;
     if (configuration.length == 6) {
       _acceptorPointer = Pointer.fromAddress(configuration[5] as int).cast<transport_acceptor_t>();
       _hasServer = true;
