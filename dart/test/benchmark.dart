@@ -32,18 +32,19 @@ Future<void> main(List<String> args) async {
       worker.serve((channel) => channel.read()).listen((event) => event.respond(fromServer));
       await worker.awaitServer();
       transport.logger.info("Served");
-      final connector = await worker.connect("127.0.0.1", 12345, pool: 1);
+      final connector = await worker.connect("127.0.0.1", 12345, pool: 128);
       transport.logger.info("Connected");
       final time = Stopwatch();
       time.start();
       var count = 0;
-      Timer.periodic(Duration.zero, (_) async {
+      var done = false;
+      Timer(Duration(seconds: 10), () => done = true);
+      while (!done) {
         count += (await Future.wait(connector.map((client) => client.write(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-      });
+      }
       print("Done ${count / time.elapsed.inSeconds}");
     },
   );
-  await Future.delayed(Duration(seconds: 10));
-  await Future.delayed(Duration(days: 1));
+  await Future.delayed(Duration(seconds: 20));
   exit(0);
 }

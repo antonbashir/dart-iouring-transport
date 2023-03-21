@@ -20,7 +20,6 @@ class TransportChannel {
   Future<int> allocate() async {
     var bufferId = _bindings.transport_worker_select_buffer(_pointer);
     if (bufferId == -1) {
-      print("await buffer");
       final completer = Completer<int>();
       _bufferFinalizers[_pointer.address]!.add(completer);
       return await completer.future;

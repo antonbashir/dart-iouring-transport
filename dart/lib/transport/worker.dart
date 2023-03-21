@@ -152,7 +152,7 @@ class TransportWorker {
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
   void _handleError(int result, int userData) {
-    _logger.info("[handle error] result = $result, event = ${_event(userData)}");
+    //_logger.info("[handle error] result = $result, event = ${_event(userData)}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;
@@ -241,7 +241,7 @@ class TransportWorker {
   }
 
   Future<void> _handle(int result, int userData) async {
-    _logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
+    //_logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = userData & ~transportEventAll;
