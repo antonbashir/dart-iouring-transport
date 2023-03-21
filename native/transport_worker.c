@@ -87,7 +87,7 @@ int transport_worker_write(struct transport_worker *worker, int fd, int buffer_i
   transport_listener_t *listener = transport_listener_pool_next(worker->listener);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, buffer_id | worker->id | event, 0);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, buffer_id | worker->id | TRANSPORT_EVENT_MESSAGE | event, 0);
   if (likely(io_uring_submit_and_wait(worker->ring, 1) != -1))
   {
     io_uring_cq_advance(worker->ring, 1);
@@ -102,7 +102,7 @@ int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id
   transport_listener_t *listener = transport_listener_pool_next(worker->listener);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, buffer_id | worker->id | event, 0);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, buffer_id | worker->id | TRANSPORT_EVENT_MESSAGE | event, 0);
   if (likely(io_uring_submit_and_wait(worker->ring, 1) != -1))
   {
     io_uring_cq_advance(worker->ring, 1);

@@ -32,7 +32,7 @@ extern "C"
     intptr_t *workers;
     uint64_t *worker_ids;
     size_t workers_count;
-    int64_t worker_mask;
+    uint64_t worker_mask;
   } transport_listener_t;
 
   transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration);

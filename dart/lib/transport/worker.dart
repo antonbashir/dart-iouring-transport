@@ -152,7 +152,7 @@ class TransportWorker {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_worker_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], bufferId | transportEventRead);
+        _bindings.transport_worker_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventRead);
         return;
       }
       if (result == -EPIPE) {
@@ -172,7 +172,7 @@ class TransportWorker {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_worker_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], bufferId | transportEventWrite);
+        _bindings.transport_worker_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventWrite);
         return;
       }
       if (result == -EPIPE) {
@@ -206,7 +206,7 @@ class TransportWorker {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_worker_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], bufferId | transportEventReadCallback);
+        _bindings.transport_worker_read(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], transportEventReadCallback);
         return;
       }
       final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
@@ -222,7 +222,7 @@ class TransportWorker {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       if (result == -EAGAIN) {
-        _bindings.transport_worker_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId], bufferId | transportEventWriteCallback);
+        _bindings.transport_worker_write(pointer, fd, bufferId, pointer.ref.used_buffers_offsets[bufferId],transportEventWriteCallback);
         return;
       }
       final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
@@ -251,7 +251,7 @@ class TransportWorker {
           _inboundChannels[fd]!.reuse(bufferId);
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
-          _bindings.transport_worker_write(pointer, fd, bufferId, offset, bufferId | transportEventWrite);
+          _bindings.transport_worker_write(pointer, fd, bufferId, offset, transportEventWrite);
           return;
         }
         _inboundChannels[fd]!.free(bufferId);
@@ -263,7 +263,7 @@ class TransportWorker {
       final bufferId = userData & ~transportEventAll;
       final fd = pointer.ref.used_buffers[bufferId];
       _inboundChannels[fd]!.reuse(bufferId);
-      _bindings.transport_worker_read(pointer, fd, bufferId, 0, bufferId | transportEventRead);
+      _bindings.transport_worker_read(pointer, fd, bufferId, 0, transportEventRead);
       return;
     }
 

@@ -28,7 +28,7 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
   listener->worker_mask = 0;
   for (size_t worker_index = 0; worker_index < listener->workers_count; worker_index++)
   {
-    listener->worker_ids[worker_index] = (uint64_t)(1 << (64 - TRANSPORT_EVENT_MAX - worker_index - 1));
+    listener->worker_ids[worker_index] = ((uint64_t)1 << (64 - TRANSPORT_EVENT_MAX - worker_index - 1));
     listener->worker_mask |= listener->worker_ids[worker_index];
   }
   listener->workers = malloc(sizeof(intptr_t) * configuration->workers_count);
