@@ -24,10 +24,8 @@ class TransportListener {
 
     _fromTransport.close();
 
-    final events = <List<List<int>>>[];
     for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
       listenerPointer.ref.workers[workerIndex] = workers[workerIndex];
-      events.add([]);
     }
 
     final ring = listenerPointer.ref.ring;
@@ -43,14 +41,9 @@ class TransportListener {
             bindings.transport_listener_prepare(listenerPointer, cqe.ref.res, cqe.ref.user_data & ~transportEventMessage);
             continue;
           }
-          events[bindings.transport_listener_get_worker_index(listenerPointer, cqe.ref.user_data)].add([cqe.ref.res, cqe.ref.user_data & ~listenerPointer.ref.worker_mask]);
+          workerPorts[bindings.transport_listener_get_worker_index(listenerPointer, cqe.ref.user_data)].send([cqe.ref.res, cqe.ref.user_data & ~listenerPointer.ref.worker_mask]);
         }
         bindings.transport_listener_submit(listenerPointer);
-        for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
-          final event = events[workerIndex];
-          if (event.isNotEmpty) workerPorts[workerIndex].send(event);
-          event.clear();
-        }
         bindings.transport_cqe_advance(ring, cqeCount);
       }
     }

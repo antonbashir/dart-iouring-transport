@@ -92,15 +92,13 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     var listenerCounter = 0;
-    _listener = RawReceivePort((List<dynamic> input) {
-      _bindings.transport_cqe_advance(_workerPointer.ref.ring, input.length);
-      for (var event in input) {
-        if (event[0] < 0) {
-          _handleError(event[0], event[1]);
-          return;
-        }
-        _handle(event[0], event[1]);
+    _listener = RawReceivePort((List<dynamic> event) {
+      _bindings.transport_cqe_advance(_workerPointer.ref.ring, 1);
+      if (event[0] < 0) {
+        _handleError(event[0], event[1]);
+        return;
       }
+      _handle(event[0], event[1]);
     });
     _activator = RawReceivePort((listener) {
       _bindings.transport_listener_pool_add(_workerPointer.ref.listener, Pointer.fromAddress(listener).cast());
