@@ -23,26 +23,45 @@ class TransportConfiguration {
       );
 }
 
-class TransportChannelConfiguration {
+class TransportListenerConfiguration {
+  final int ringSize;
+  final int ringFlags;
+
+  TransportListenerConfiguration({
+    required this.ringSize,
+    required this.ringFlags,
+  });
+
+  TransportListenerConfiguration copyWith({
+    int? ringSize,
+    int? ringFlags,
+  }) =>
+      TransportListenerConfiguration(
+        ringSize: ringSize ?? this.ringSize,
+        ringFlags: ringFlags ?? this.ringFlags,
+      );
+}
+
+class TransportWorkerConfiguration {
   final int buffersCount;
   final int bufferSize;
   final int ringSize;
   final int ringFlags;
 
-  TransportChannelConfiguration({
+  TransportWorkerConfiguration({
     required this.buffersCount,
     required this.bufferSize,
     required this.ringSize,
     required this.ringFlags,
   });
 
-  TransportChannelConfiguration copyWith({
+  TransportWorkerConfiguration copyWith({
     int? buffersCount,
     int? bufferSize,
     int? ringSize,
     int? ringFlags,
   }) =>
-      TransportChannelConfiguration(
+      TransportWorkerConfiguration(
         buffersCount: buffersCount ?? this.buffersCount,
         bufferSize: bufferSize ?? this.bufferSize,
         ringSize: ringSize ?? this.ringSize,

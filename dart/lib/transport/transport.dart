@@ -15,7 +15,8 @@ import 'lookup.dart';
 class Transport {
   final TransportConfiguration transportConfiguration;
   final TransportAcceptorConfiguration acceptorConfiguration;
-  final TransportChannelConfiguration channelConfiguration;
+  final TransportListenerConfiguration listenerConfiguration;
+  final TransportWorkerConfiguration workerConfiguration;
   final TransportConnectorConfiguration connectorConfiguration;
   late final TransportLogger logger;
 
@@ -27,7 +28,7 @@ class Transport {
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transport;
 
-  Transport(this.transportConfiguration, this.acceptorConfiguration, this.channelConfiguration, this.connectorConfiguration, {String? libraryPath}) {
+  Transport(this.transportConfiguration, this.acceptorConfiguration, this.listenerConfiguration, this.workerConfiguration, this.connectorConfiguration, {String? libraryPath}) {
     this._libraryPath = libraryPath;
 
     _library = TransportLibrary.load(libraryPath: libraryPath);
@@ -46,15 +47,15 @@ class Transport {
     nativeConnectorConfiguration.ref.send_buffer_size = connectorConfiguration.sendBufferSize;
 
     final nativeChannelConfiguration = calloc<transport_listener_configuration_t>();
-    nativeChannelConfiguration.ref.ring_flags = channelConfiguration.ringFlags;
-    nativeChannelConfiguration.ref.ring_size = channelConfiguration.ringSize;
+    nativeChannelConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
+    nativeChannelConfiguration.ref.ring_size = listenerConfiguration.ringSize;
     nativeChannelConfiguration.ref.workers_count = transportConfiguration.workerInsolates;
 
     final nativeWorkerConfiguration = calloc<transport_worker_configuration_t>();
-    nativeWorkerConfiguration.ref.ring_flags = channelConfiguration.ringFlags;
-    nativeWorkerConfiguration.ref.ring_size = channelConfiguration.ringSize;
-    nativeWorkerConfiguration.ref.buffer_size = channelConfiguration.bufferSize;
-    nativeWorkerConfiguration.ref.buffers_count = channelConfiguration.buffersCount;
+    nativeWorkerConfiguration.ref.ring_flags = workerConfiguration.ringFlags;
+    nativeWorkerConfiguration.ref.ring_size = workerConfiguration.ringSize;
+    nativeWorkerConfiguration.ref.buffer_size = workerConfiguration.bufferSize;
+    nativeWorkerConfiguration.ref.buffers_count = workerConfiguration.buffersCount;
 
     _transport = _bindings.transport_initialize(
       nativeChannelConfiguration,
@@ -118,7 +119,7 @@ class Transport {
       logger.info("[listener]: initialized");
       final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
       SendPort toListener = port as SendPort;
-      toListener.send([_libraryPath, listenerPointer.address, channelConfiguration.ringSize, workerMeessagePorts, workers]);
+      toListener.send([_libraryPath, listenerPointer.address, listenerConfiguration.ringSize, workerMeessagePorts, workers]);
       workersActivators.forEach((port) => port.send(listenerPointer.address));
       if (++listeners == transportConfiguration.listenerIsolates) {
         listenerCompleter.complete();

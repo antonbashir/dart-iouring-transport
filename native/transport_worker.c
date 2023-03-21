@@ -63,22 +63,17 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 
 int transport_worker_select_buffer(transport_worker_t *worker)
 {
-  while (worker->used_buffers[worker->available_buffer_id] != BUFFER_AVAILABLE)
+  int buffer_id = 0;
+  while (worker->used_buffers[buffer_id] != BUFFER_AVAILABLE)
   {
-    worker->available_buffer_id++;
-    if (worker->available_buffer_id == worker->buffers_count)
+    if (++buffer_id == worker->buffers_count)
     {
-      worker->available_buffer_id = 0;
-      if (worker->used_buffers[worker->available_buffer_id] != BUFFER_AVAILABLE)
-      {
-        return -1;
-      }
-      break;
+      return -1;
     }
   }
 
-  worker->used_buffers[worker->available_buffer_id] = BUFFER_USED;
-  return worker->available_buffer_id;
+  worker->used_buffers[buffer_id] = BUFFER_USED;
+  return buffer_id;
 }
 
 int transport_worker_write(struct transport_worker *worker, int fd, int buffer_id, int64_t offset, int64_t event)
