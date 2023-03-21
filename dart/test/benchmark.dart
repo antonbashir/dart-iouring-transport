@@ -21,7 +21,7 @@ Future<void> main(List<String> args) async {
   ).serve(
     receiver: receiver.sendPort,
     "0.0.0.0",
-    12345,
+    9000,
     (input) async {
       final encoder = Utf8Encoder();
       final fromServer = encoder.convert("from server\n");
@@ -37,17 +37,16 @@ Future<void> main(List<String> args) async {
       worker.serve((channel) => channel.read()).listen((event) => event.respond(fromServer));
       await worker.awaitServer();
       transport.logger.info("Served");
-      final connector = await worker.connect("127.0.0.1", 12345, pool: 32);
-      transport.logger.info("Connected");
-      final time = Stopwatch();
-      time.start();
+      // final connector = await worker.connect("127.0.0.1", 12345, pool: 128);
+      // transport.logger.info("Connected");
+      // final time = Stopwatch();
+      // time.start();
       var count = 0;
       var done = false;
-      Timer(Duration(seconds: 10), () => done = true);
-      while (!done) {
-        count += (await Future.wait(connector.map((client) => client.write(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-      }
-      print("Send $count");
+      await Future.delayed(Duration(days: 10));
+      // while (!done) {
+      //   count += (await Future.wait(connector.map((client) => client.write(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
+      // }
       worker.receiver!.send(count);
     },
   );
