@@ -32,7 +32,7 @@ Future<void> main(List<String> args) async {
       worker.serve((channel) => channel.read()).listen((event) => event.respond(fromServer));
       await worker.awaitServer();
       transport.logger.info("Served");
-      final connector = await worker.connect("127.0.0.1", 12345, pool: 1000);
+      final connector = await worker.connect("127.0.0.1", 12345, pool: 1);
       transport.logger.info("Connected");
       final time = Stopwatch();
       time.start();
@@ -44,6 +44,6 @@ Future<void> main(List<String> args) async {
     },
   );
   await Future.delayed(Duration(seconds: 10));
-  await Future.delayed(Duration(seconds: 1));
+  await Future.delayed(Duration(days: 1));
   exit(0);
 }

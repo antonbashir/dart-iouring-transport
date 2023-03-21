@@ -107,6 +107,7 @@ class Transport {
         _transport.address,
         worker,
         workersMask,
+        transportConfiguration.listenerIsolates,
       ];
       if (acceptor != null) workerConfiguration.add(acceptor.address);
       toWorker.send(workerConfiguration);

@@ -20,14 +20,14 @@ extern "C"
 
   typedef struct transport_worker
   {
-    int64_t id;
+    uint64_t id;
     struct io_uring *ring;
     transport_listener_pool_t *listener;
     struct iovec *buffers;
     uint32_t buffer_size;
     uint32_t buffers_count;
     int *used_buffers;
-    int *used_buffers_offsets;
+    uint64_t *used_buffers_offsets;
     int available_buffer_id;
   } transport_worker_t;
 

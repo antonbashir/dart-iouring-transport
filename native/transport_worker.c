@@ -29,7 +29,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
-  worker->used_buffers = malloc(sizeof(uint64_t) * configuration->buffers_count);
+  worker->used_buffers = malloc(sizeof(int) * configuration->buffers_count);
   worker->used_buffers_offsets = malloc(sizeof(uint64_t) * configuration->buffers_count);
   worker->available_buffer_id = 0;
 

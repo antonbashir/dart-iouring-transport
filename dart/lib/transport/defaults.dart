@@ -8,8 +8,8 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        listenerIsolates: 2,
-        workerInsolates: Platform.numberOfProcessors - 2,
+        listenerIsolates: 1,
+        workerInsolates: 1,
       );
 
   static TransportChannelConfiguration channel() => TransportChannelConfiguration(

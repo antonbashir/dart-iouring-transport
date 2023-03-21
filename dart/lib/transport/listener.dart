@@ -40,11 +40,7 @@ class TransportListener {
             bindings.transport_listener_submit(listenerPointer, cqe.ref.res, cqe.ref.user_data & ~transportEventMessage);
             continue;
           }
-          events[bindings.transport_listener_get_worker_index(listenerPointer, cqe.ref.user_data)] = [
-            cqe.ref.res,
-            cqe.ref.user_data & ~listenerPointer.ref.worker_mask,
-            listenerPointer.address,
-          ];
+          events[bindings.transport_listener_get_worker_index(listenerPointer, cqe.ref.user_data)] = [cqe.ref.res, cqe.ref.user_data & ~listenerPointer.ref.worker_mask];
         }
         events.forEach((key, value) => workerPorts[key].send(value));
         bindings.transport_cqe_advance(ring, cqeCount);

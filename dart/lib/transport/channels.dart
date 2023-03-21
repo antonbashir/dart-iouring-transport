@@ -20,6 +20,7 @@ class TransportChannel {
   Future<int> allocate() async {
     var bufferId = _bindings.transport_worker_select_buffer(_pointer);
     if (bufferId == -1) {
+      print("await buffer");
       final completer = Completer<int>();
       _bufferFinalizers[_pointer.address]!.add(completer);
       return await completer.future;
@@ -50,7 +51,7 @@ class TransportInboundChannel extends TransportChannel {
 
   Future<void> read({int offset = 0}) async {
     final bufferId = await allocate();
-    _bindings.transport_worker_read(_pointer, descriptor, bufferId, offset, bufferId | transportEventRead);
+    _bindings.transport_worker_read(_pointer, descriptor, bufferId, offset, transportEventRead);
   }
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
@@ -58,7 +59,7 @@ class TransportInboundChannel extends TransportChannel {
     final buffer = _pointer.ref.buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_worker_write(_pointer, descriptor, bufferId, offset, bufferId | transportEventWrite);
+    _bindings.transport_worker_write(_pointer, descriptor, bufferId, offset, transportEventWrite);
   }
 }
 
