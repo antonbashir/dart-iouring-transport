@@ -50,7 +50,7 @@ Future<void> main(List<String> args) async {
       print("Send $count");
       worker.receiver!.send(count);
     },
-  );
+  );  
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
   print("Done: ${count / 10}");
   exit(0);

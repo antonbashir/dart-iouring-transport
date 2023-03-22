@@ -42,6 +42,20 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
     return NULL;
   }
 
+  struct iovec *buffers = malloc(sizeof(struct iovec *) * 1024 * configuration->workers_count);
+
+  int buffer_index = 0;
+  for (int worker_index = 0; worker_index < listener->workers; worker_index++)
+  {
+    transport_worker_t *worker = (transport_worker_t *)listener->workers[worker_index];
+    for (int worker_buffer_index = 0; worker_buffer_index < worker->buffers_count; worker_buffer_index++)
+    {
+      buffers[buffer_index] = worker->buffers[worker_buffer_index];
+      buffer_index++;
+    }
+  }
+  io_uring_register_buffers(listener->ring, buffers, buffer_index);
+
   listener->ring = ring;
   return listener;
 }
