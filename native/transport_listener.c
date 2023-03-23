@@ -60,7 +60,7 @@ int transport_listener_register_buffers(transport_listener_t *listener)
 
 uint8_t transport_listener_get_worker_index(uint64_t worker_data)
 {
-  return (uint8_t)((worker_data >> 8) & 0xffffffff);
+  return (uint8_t)((worker_data >> 16) & 0xffffffff);
 }
 
 static inline transport_worker_t *transport_listener_get_worker_from_data(transport_listener_t *listener, uint64_t worker_data)
