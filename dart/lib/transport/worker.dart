@@ -81,7 +81,6 @@ class TransportWorker {
   late final Stream<TransportPayload> _serverStream;
   late final void Function(TransportInboundChannel channel)? _onAccept;
   late final SendPort? receiver;
-  late final int _listenersCount;
 
   final _logger = TransportLogger(TransportDefaults.transport().logLevel);
 
@@ -90,7 +89,6 @@ class TransportWorker {
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
-    var listenerCounter = 0;
     _listener = RawReceivePort((List<dynamic> event) {
       _bindings.transport_cqe_advance(_workerPointer.ref.ring, 1);
       if (event[0] < 0) {
@@ -99,11 +97,7 @@ class TransportWorker {
       }
       _handle(event[0], event[1]);
     });
-    _activator = RawReceivePort((listener) {
-      _bindings.transport_listener_pool_add(_workerPointer.ref.listeners, Pointer.fromAddress(listener).cast());
-      if (++listenerCounter == _listenersCount) _initializer.complete();
-    });
-    toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
+    toTransport.send([_fromTransport.sendPort, _listener.sendPort]);
   }
 
   Future<void> initialize() async {
@@ -111,10 +105,9 @@ class TransportWorker {
     final libraryPath = configuration[0] as String?;
     _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
     _workerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
-    _listenersCount = configuration[3] as int;
-    receiver = configuration[4] as SendPort?;
-    if (configuration.length == 6) {
-      _acceptorPointer = Pointer.fromAddress(configuration[5] as int).cast<transport_acceptor_t>();
+    receiver = configuration[3] as SendPort?;
+    if (configuration.length == 5) {
+      _acceptorPointer = Pointer.fromAddress(configuration[4] as int).cast<transport_acceptor_t>();
       _hasServer = true;
     }
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
@@ -123,7 +116,6 @@ class TransportWorker {
     _serverController = StreamController();
     _serverStream = _serverController.stream;
     _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
-    await _initializer.future;
   }
 
   Future<void> awaitServer() => _servingComplter.future;

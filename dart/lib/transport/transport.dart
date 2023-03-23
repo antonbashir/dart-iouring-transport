@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/constants.dart';
+import 'package:iouring_transport/transport/exception.dart';
 import 'package:iouring_transport/transport/listener.dart';
 import 'package:iouring_transport/transport/logger.dart';
 import 'package:iouring_transport/transport/worker.dart';
@@ -92,20 +93,17 @@ class Transport {
     final workersCompleter = Completer();
     final workers = <int>[];
     final workerMeessagePorts = <SendPort>[];
-    final workersActivators = <SendPort>[];
 
     fromTransportToWorker.listen((ports) {
       logger.info("[worker]: initialized");
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
-      workersActivators.add(ports[2]);
       final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workers.length).address;
       workers.add(workerPointer);
       final workerConfiguration = [
         _libraryPath,
         _transport.address,
         workerPointer,
-        transportConfiguration.listenerIsolates,
         receiver,
       ];
       if (acceptor != null) workerConfiguration.add(acceptor.address);
@@ -117,11 +115,24 @@ class Transport {
 
     fromTransportToListener.listen((port) async {
       await workersCompleter.future;
-      logger.info("[listener]: initialized");
       final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
-      SendPort toListener = port as SendPort;
-      toListener.send([_libraryPath, listenerPointer.address, listenerConfiguration.ringSize, workerMeessagePorts, workers]);
-      workersActivators.forEach((port) => port.send(listenerPointer.address));
+      for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
+        listenerPointer.ref.workers[workerIndex] = workers[workerIndex];
+        _bindings.transport_listener_pool_add(Pointer.fromAddress(workers[workerIndex]).cast<transport_worker_t>().ref.listeners, listenerPointer);
+      }
+      final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
+      if (listenerRegisterResult != 0) {
+        listenerCompleter.completeError(TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult)}"));
+        return;
+      }
+      (port as SendPort).send([
+        _libraryPath,
+        listenerPointer.address,
+        listenerConfiguration.ringSize,
+        workerMeessagePorts,
+        workers,
+      ]);
+      logger.info("[listener]: initialized");
       if (++listeners == transportConfiguration.listenerIsolates) {
         listenerCompleter.complete();
       }

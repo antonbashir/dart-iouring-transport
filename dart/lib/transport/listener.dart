@@ -23,15 +23,6 @@ class TransportListener {
     final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _fromTransport.close();
 
-    for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
-      listenerPointer.ref.workers[workerIndex] = workers[workerIndex];
-    }
-
-    if (bindings.transport_listener_register_buffers(listenerPointer) != 0) {
-      //TODO: Make error return
-      Isolate.exit();
-    }
-
     final ring = listenerPointer.ref.ring;
     final cqes = bindings.transport_allocate_cqes(ringSize);
 
