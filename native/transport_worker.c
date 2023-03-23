@@ -102,7 +102,7 @@ int transport_worker_write(transport_worker_t *worker, int fd, int buffer_id, ui
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 16) | (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | event;
+  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 32) | ((uint64_t)worker->id << 16) | (TRANSPORT_EVENT_MESSAGE | event);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, data, 0);
   return io_uring_submit(worker->ring);
 }
@@ -113,7 +113,7 @@ int transport_worker_read(transport_worker_t *worker, int fd, int buffer_id, uin
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 16) | (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | event;
+  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 32) | ((uint64_t)worker->id << 16) | (TRANSPORT_EVENT_MESSAGE | event);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, data, 0);
   return io_uring_submit(worker->ring);
 }
@@ -127,7 +127,7 @@ int transport_worker_connect(transport_worker_t *worker, transport_client_t *cli
       .value = (intptr_t)client,
   };
   mh_i32_put(worker->used_clients, &node, NULL, 0);
-  uint64_t data = (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_CONNECT;
+  uint64_t data = ((uint64_t)worker->id << 16) | (TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_CONNECT);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, client->fd, data, 0);
   return io_uring_submit(worker->ring);
 }
@@ -141,7 +141,7 @@ int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *ac
       .value = (intptr_t)acceptor,
   };
   mh_i32_put(worker->used_acceptors, &node, NULL, 0);
-  uint64_t data = (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_ACCEPT;
+  uint64_t data = ((uint64_t)worker->id << 16) | (TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_ACCEPT);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, acceptor->fd, data, 0);
   return io_uring_submit(worker->ring);
 }

@@ -35,7 +35,7 @@ extern "C"
   } transport_listener_t;
 
   transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration);
-  void transport_listener_register_buffers(transport_listener_t *);
+  int transport_listener_register_buffers(transport_listener_t *listener);
   void transport_listener_destroy(transport_listener_t *listener);
   int transport_listener_prepare(transport_listener_t *listener, int fd, uint64_t data);
   int transport_listener_submit(struct transport_listener *listener);

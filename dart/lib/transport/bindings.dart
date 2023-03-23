@@ -14858,21 +14858,21 @@ class TransportBindings {
           ffi.Pointer<transport_listener_t> Function(
               ffi.Pointer<transport_listener_configuration_t>)>();
 
-  void transport_listener_register_buffers(
-    ffi.Pointer<transport_listener_t> arg0,
+  int transport_listener_register_buffers(
+    ffi.Pointer<transport_listener_t> listener,
   ) {
     return _transport_listener_register_buffers(
-      arg0,
+      listener,
     );
   }
 
   late final _transport_listener_register_buffersPtr = _lookup<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_t>)>>(
+              ffi.Int Function(ffi.Pointer<transport_listener_t>)>>(
       'transport_listener_register_buffers');
   late final _transport_listener_register_buffers =
       _transport_listener_register_buffersPtr
-          .asFunction<void Function(ffi.Pointer<transport_listener_t>)>();
+          .asFunction<int Function(ffi.Pointer<transport_listener_t>)>();
 
   void transport_listener_destroy(
     ffi.Pointer<transport_listener_t> listener,
@@ -22439,7 +22439,7 @@ class _SymbolAddresses {
           _library._transport_listener_initializePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_t>)>>
+              ffi.Int Function(ffi.Pointer<transport_listener_t>)>>
       get transport_listener_register_buffers =>
           _library._transport_listener_register_buffersPtr;
   ffi.Pointer<
@@ -30381,23 +30381,21 @@ const String kIsolateSnapshotInstructionsAsmSymbol =
 
 const String kIsolateSnapshotBssAsmSymbol = '_kDartIsolateSnapshotBss';
 
-const int TRANSPORT_EVENT_CLOSE = -9223372036854775808;
+const int TRANSPORT_EVENT_CLOSE = 2;
 
-const int TRANSPORT_EVENT_READ = 4611686018427387904;
+const int TRANSPORT_EVENT_READ = 4;
 
-const int TRANSPORT_EVENT_WRITE = 2305843009213693952;
+const int TRANSPORT_EVENT_WRITE = 8;
 
-const int TRANSPORT_EVENT_ACCEPT = 1152921504606846976;
+const int TRANSPORT_EVENT_ACCEPT = 16;
 
-const int TRANSPORT_EVENT_CONNECT = 576460752303423488;
+const int TRANSPORT_EVENT_CONNECT = 32;
 
-const int TRANSPORT_EVENT_READ_CALLBACK = 288230376151711744;
+const int TRANSPORT_EVENT_READ_CALLBACK = 64;
 
-const int TRANSPORT_EVENT_WRITE_CALLBACK = 144115188075855872;
+const int TRANSPORT_EVENT_WRITE_CALLBACK = 128;
 
-const int TRANSPORT_EVENT_MESSAGE = 72057594037927936;
-
-const int TRANSPORT_EVENT_MAX = 8;
+const int TRANSPORT_EVENT_MESSAGE = 256;
 
 const String PACKAGE_VERSION = '';
 
