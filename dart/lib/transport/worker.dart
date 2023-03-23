@@ -241,7 +241,7 @@ class TransportWorker {
   }
 
   Future<void> _handle(int result, int userData) async {
-    _logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
+    //_logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = _bindings.transport_worker_get_buffer_index(_workerPointer, userData);
