@@ -3,7 +3,6 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/pool.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -35,6 +34,23 @@ class TransportClient {
   void close() => _channel.close();
 }
 
+class TransportClientPool {
+  final List<TransportClient> _objects;
+  var _next = 0;
+
+  TransportClientPool(this._objects);
+
+  TransportClient select() {
+    final client = _objects[_next];
+    if (++_next == _objects.length) _next = 0;
+    return client;
+  }
+
+  void forEach(FutureOr<void> Function(TransportClient object) action) => _objects.forEach(action);
+
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportClient object) mapper) => _objects.map(mapper);
+}
+
 class TransportConnector {
   final TransportBindings _bindings;
   final TransportWorkerCallbacks _callbacks;
@@ -43,7 +59,7 @@ class TransportConnector {
 
   TransportConnector(this._callbacks, this._transportPointer, this._workerPointer, this._bindings);
 
-  Future<TransportPool<TransportClient>> connect(String host, int port, {int? pool}) async {
+  Future<TransportClientPool> connect(String host, int port, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
@@ -57,6 +73,6 @@ class TransportConnector {
       _bindings.transport_worker_connect(_workerPointer, client);
       clients.add(completer.future);
     }
-    return TransportPool<TransportClient>(await Future.wait(clients));
+    return TransportClientPool(await Future.wait(clients));
   }
 }

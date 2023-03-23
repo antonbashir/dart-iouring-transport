@@ -17,7 +17,7 @@ class TransportChannel {
     _bufferFinalizers[this._pointer.address] = Queue();
   }
 
-  @pragma(preferInlinePragma)
+  
   Future<int> allocate() async {
     var bufferId = _bindings.transport_worker_select_buffer(_pointer);
     if (bufferId == -1) {
@@ -28,14 +28,12 @@ class TransportChannel {
     return bufferId;
   }
 
-  @pragma(preferInlinePragma)
   void reuse(int bufferId) {
     _bindings.memset(_pointer.ref.buffers[bufferId].iov_base, 0, _pointer.ref.buffer_size);
     _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
     _pointer.ref.used_buffers_offsets[bufferId] = 0;
   }
 
-  @pragma(preferInlinePragma)
   void free(int bufferId) {
     _bindings.memset(_pointer.ref.buffers[bufferId].iov_base, 0, _pointer.ref.buffer_size);
     _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
