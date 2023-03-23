@@ -24,6 +24,7 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
   }
 
   listener->workers_count = configuration->workers_count;
+  listener->buffers_count = configuration->buffers_count;
   listener->workers = malloc(sizeof(intptr_t) * configuration->workers_count);
 
   struct io_uring *ring = malloc(sizeof(struct io_uring));

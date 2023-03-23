@@ -46,10 +46,11 @@ class Transport {
     nativeclientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeclientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
 
-    final nativeChannelConfiguration = calloc<transport_listener_configuration_t>();
-    nativeChannelConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
-    nativeChannelConfiguration.ref.ring_size = listenerConfiguration.ringSize;
-    nativeChannelConfiguration.ref.workers_count = transportConfiguration.workerInsolates;
+    final nativeListenerConfiguration = calloc<transport_listener_configuration_t>();
+    nativeListenerConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
+    nativeListenerConfiguration.ref.ring_size = listenerConfiguration.ringSize;
+    nativeListenerConfiguration.ref.workers_count = transportConfiguration.workerInsolates;
+    nativeListenerConfiguration.ref.buffers_count = workerConfiguration.buffersCount;
 
     final nativeWorkerConfiguration = calloc<transport_worker_configuration_t>();
     nativeWorkerConfiguration.ref.ring_flags = workerConfiguration.ringFlags;
@@ -58,7 +59,7 @@ class Transport {
     nativeWorkerConfiguration.ref.buffers_count = workerConfiguration.buffersCount;
 
     _transport = _bindings.transport_initialize(
-      nativeChannelConfiguration,
+      nativeListenerConfiguration,
       nativeWorkerConfiguration,
       nativeclientConfiguration,
       nativeAcceptorConfiguration,
@@ -98,17 +99,18 @@ class Transport {
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
       workersActivators.add(ports[2]);
-      workers.add(_bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerMeessagePorts.length - 1).address);
+      final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workers.length).address;
+      workers.add(workerPointer);
       final workerConfiguration = [
         _libraryPath,
         _transport.address,
-        worker,
+        workerPointer,
         transportConfiguration.listenerIsolates,
         receiver,
       ];
       if (acceptor != null) workerConfiguration.add(acceptor.address);
       toWorker.send(workerConfiguration);
-      if (workerMeessagePorts.length == transportConfiguration.workerInsolates) {
+      if (workers.length == transportConfiguration.workerInsolates) {
         workersCompleter.complete();
       }
     });
