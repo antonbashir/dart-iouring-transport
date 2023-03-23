@@ -93,11 +93,13 @@ class Transport {
     final workersCompleter = Completer();
     final workers = <int>[];
     final workerMeessagePorts = <SendPort>[];
+    final workerActivators = <SendPort>[];
 
     fromTransportToWorker.listen((ports) {
       logger.info("[worker]: initialized");
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
+      workerActivators.add(ports[2]);
       final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workers.length).address;
       workers.add(workerPointer);
       final workerConfiguration = [
@@ -156,5 +158,6 @@ class Transport {
 
     await listenerCompleter.future;
     logger.info("[transport]: ready");
+    workerActivators.forEach((port) => port.send(null));
   }
 }

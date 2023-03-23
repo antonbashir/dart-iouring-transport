@@ -97,7 +97,8 @@ class TransportWorker {
       }
       _handle(event[0], event[1]);
     });
-    toTransport.send([_fromTransport.sendPort, _listener.sendPort]);
+    _activator = RawReceivePort((_) => _initializer.complete());
+    toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
   }
 
   Future<void> initialize() async {
@@ -116,6 +117,7 @@ class TransportWorker {
     _serverController = StreamController();
     _serverStream = _serverController.stream;
     _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
+    await _initializer.future;
   }
 
   Future<void> awaitServer() => _servingComplter.future;
