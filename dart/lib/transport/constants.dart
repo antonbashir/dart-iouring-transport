@@ -113,8 +113,6 @@ const transportEventReadCallback = 1 << (64 - 6);
 const transportEventWriteCallback = 1 << (64 - 7);
 const transportEventMessage = 1 << (64 - 8);
 
-const transportEventMax = 8;
-
 const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose | transportEventReadCallback | transportEventWriteCallback | transportEventMessage;
 
 const ringSetupIopoll = 1 << 0;

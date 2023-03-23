@@ -98,8 +98,7 @@ class Transport {
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
       workersActivators.add(ports[2]);
-      int worker = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, 1 << (64 - transportEventMax - workerMeessagePorts.length)).address;
-      workers.add(worker);
+      workers.add(_bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerMeessagePorts.length - 1).address);
       final workerConfiguration = [
         _libraryPath,
         _transport.address,
