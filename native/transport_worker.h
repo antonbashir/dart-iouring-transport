@@ -48,16 +48,6 @@ extern "C"
   int32_t transport_worker_get_fd(uint64_t worker_data);
   uint16_t transport_worker_get_buffer_index(transport_worker_t *worker, uint64_t worker_data);
 
-  static inline transport_client_t *transport_worker_get_client(transport_worker_t *worker, int fd)
-  {
-    return (transport_client_t *)(mh_i32_node(worker->used_clients, mh_i32_find(worker->used_clients, fd, 0))->value);
-  }
-
-  static inline transport_acceptor_t *transport_worker_get_acceptor(transport_worker_t *worker, int fd)
-  {
-    return (transport_acceptor_t *)(mh_i32_node(worker->used_acceptors, mh_i32_find(worker->used_acceptors, fd, 0))->value);
-  }
-
   void transport_worker_destroy(transport_worker_t *worker);
 
 #if defined(__cplusplus)

@@ -33,7 +33,7 @@ class TransportListener {
       if (cqeCount != -1) {
         for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
           final cqe = cqes[cqeIndex];
-          if (cqe.ref.user_data & transportEventMessage != 0) {
+          if (cqe.ref.user_data & transportEventMessage != 0 || cqe.ref.res & transportEventMessage != 0) {
             bindings.transport_listener_prepare(listenerPointer, cqe.ref.res, cqe.ref.user_data);
             continue;
           }

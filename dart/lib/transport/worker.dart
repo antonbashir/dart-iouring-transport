@@ -240,7 +240,7 @@ class TransportWorker {
   }
 
   Future<void> _handle(int result, int userData) async {
-    //_logger.info("[handle] result = $result, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
+    _logger.info("[handle] result = $result, worker = ${_workerPointer.ref.id}, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = _bindings.transport_worker_get_buffer_index(_workerPointer, userData);
@@ -296,7 +296,7 @@ class TransportWorker {
 
     if (userData & transportEventConnect != 0) {
       final fd = _bindings.transport_worker_get_fd(userData);
-      _logger.info("[client]: connected, fd = $fd");
+      _logger.info("[client]: connected fd = $fd");
       _outboundChannels[fd] = TransportOutboundChannel(_workerPointer, fd, _bindings);
       _callbacks.notifyConnect(
         fd,

@@ -63,9 +63,18 @@ uint8_t transport_listener_get_worker_index(uint64_t worker_data)
   return (uint8_t)((worker_data >> 8) & 0xffffffff);
 }
 
-static inline transport_worker_t *transport_listener_get_worker(transport_listener_t *listener, uint64_t worker_data)
+static inline transport_worker_t *transport_listener_get_worker_from_data(transport_listener_t *listener, uint64_t worker_data)
 {
-  return (transport_worker_t *)listener->workers[(uint8_t)((worker_data >> 8) & 0xffffffff)];
+  uint8_t id = (uint8_t)((worker_data >> 16) & 0xffffffff);
+  printf("worker id from data: %d\n", id);
+  return (transport_worker_t *)listener->workers[id];
+}
+
+static inline transport_worker_t *transport_listener_get_worker_from_result(transport_listener_t *listener, uint32_t result)
+{
+  uint8_t id = (uint8_t)((result >> 16) & 0xffff);
+  printf("worker id from result: %d\n", id);
+  return (transport_worker_t *)listener->workers[id];
 }
 
 static inline uint16_t transport_listener_get_buffer_id(int64_t worker_data)
@@ -73,46 +82,51 @@ static inline uint16_t transport_listener_get_buffer_id(int64_t worker_data)
   return (uint16_t)((worker_data >> 24) & 0xffffffff);
 }
 
-int transport_listener_prepare(transport_listener_t *listener, int fd, uint64_t data)
+int transport_listener_prepare(transport_listener_t *listener, uint32_t result, uint64_t data)
 {
-  data &= ~((uint64_t)TRANSPORT_EVENT_MESSAGE);
   struct io_uring_sqe *sqe = provide_sqe(listener->ring);
+
+  if (result & TRANSPORT_EVENT_ACCEPT)
+  {
+    result &= ~((uint64_t)TRANSPORT_EVENT_MESSAGE);
+    transport_worker_t *worker = transport_listener_get_worker_from_result(listener, result);
+    transport_acceptor_t *acceptor = (transport_acceptor_t *)data;
+    uint64_t new_data = ((uint64_t)(acceptor->fd) << 24) | ((uint64_t)worker->id << 16) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
+    io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
+    io_uring_sqe_set_data64(sqe, new_data);
+    return 0;
+  }
+  if (result & TRANSPORT_EVENT_CONNECT)
+  {
+    result &= ~((uint64_t)TRANSPORT_EVENT_MESSAGE);
+    transport_worker_t *worker = transport_listener_get_worker_from_result(listener, result);
+    transport_client_t *client = (transport_client_t *)data;
+    uint64_t new_data = ((uint64_t)(client->fd) << 24) | ((uint64_t)worker->id << 16) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
+    io_uring_prep_connect(sqe, client->fd, (struct sockaddr *)&client->client_address, client->client_address_length);
+    io_uring_sqe_set_data64(sqe, new_data);
+    return 0;
+  }
+
+  data &= ~((uint64_t)TRANSPORT_EVENT_MESSAGE);
   if (data & (TRANSPORT_EVENT_READ | TRANSPORT_EVENT_READ_CALLBACK))
   {
-    transport_worker_t *worker = transport_listener_get_worker(listener, data);
+    transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    io_uring_prep_read_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id], buffer_id);
+    io_uring_prep_read_fixed(sqe, result, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
   if (data & (TRANSPORT_EVENT_WRITE | TRANSPORT_EVENT_WRITE_CALLBACK))
   {
-    transport_worker_t *worker = transport_listener_get_worker(listener, data);
+    transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    io_uring_prep_write_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id], buffer_id);
+    io_uring_prep_write_fixed(sqe, result, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
-    return 0;
-  }
-  if (data & TRANSPORT_EVENT_ACCEPT)
-  {
-    transport_worker_t *worker = transport_listener_get_worker(listener, data);
-    transport_acceptor_t *acceptor = transport_worker_get_acceptor(worker, fd);
-    io_uring_prep_accept(sqe, fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
-    io_uring_sqe_set_data64(sqe, data);
-    return 0;
-  }
-  if (data & TRANSPORT_EVENT_CONNECT)
-  {
-    transport_worker_t *worker = transport_listener_get_worker(listener, data);
-    transport_client_t *client = transport_worker_get_client(worker, fd);
-    uint64_t new_data = ((uint64_t)(fd) << 24) | ((uint64_t)worker->id << 16) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
-    io_uring_prep_connect(sqe, fd, (struct sockaddr *)&client->client_address, client->client_address_length);
-    io_uring_sqe_set_data64(sqe, new_data);
     return 0;
   }
   if (data & TRANSPORT_EVENT_CLOSE)
   {
-    transport_worker_t *worker = transport_listener_get_worker(listener, data);
+    transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     // TODO: Handle
     return 0;
   }
