@@ -61,10 +61,10 @@ class TransportConnector {
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
-    if (pool == null) pool = _transportPointer.ref.connector_configuration.ref.default_pool;
+    if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
-      final client = using((arena) => _bindings.transport_connector_initialize(
-            _transportPointer.ref.connector_configuration,
+      final client = using((arena) => _bindings.transport_client_initialize(
+            _transportPointer.ref.client_configuration,
             host.toNativeUtf8(allocator: arena).cast(),
             port,
           ));

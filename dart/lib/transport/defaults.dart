@@ -18,13 +18,13 @@ class TransportDefaults {
       );
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
-        buffersCount: 4096,
+        buffersCount: 2048,
         bufferSize: 4096,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,
       );
 
-  static TransportConnectorConfiguration connector() => TransportConnectorConfiguration(
+  static TransportClientConfiguration client() => TransportClientConfiguration(
         maxConnections: 1024,
         receiveBufferSize: 4096,
         sendBufferSize: 4096,

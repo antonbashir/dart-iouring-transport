@@ -11,7 +11,7 @@ final Transport _transport = Transport(
   TransportDefaults.transport(),
   TransportDefaults.acceptor(),
   TransportDefaults.channel(),
-  TransportDefaults.connector(),
+  TransportDefaults.client(),
 );
 
 void main() {

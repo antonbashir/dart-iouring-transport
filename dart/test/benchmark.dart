@@ -17,7 +17,7 @@ Future<void> main(List<String> args) async {
     TransportDefaults.acceptor(),
     TransportDefaults.listener(),
     TransportDefaults.worker(),
-    TransportDefaults.connector(),
+    TransportDefaults.client(),
   ).serve(
     receiver: receiver.sendPort,
     "0.0.0.0",
@@ -30,7 +30,7 @@ Future<void> main(List<String> args) async {
         TransportDefaults.acceptor(),
         TransportDefaults.listener(),
         TransportDefaults.worker(),
-        TransportDefaults.connector(),
+        TransportDefaults.client(),
       );
       final worker = TransportWorker(input);
       await worker.initialize();
@@ -50,7 +50,7 @@ Future<void> main(List<String> args) async {
       print("Send $count");
       worker.receiver!.send(count);
     },
-  );  
+  );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
   print("Done: ${count / 10}");
   exit(0);

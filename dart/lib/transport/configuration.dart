@@ -92,26 +92,26 @@ class TransportAcceptorConfiguration {
       );
 }
 
-class TransportConnectorConfiguration {
+class TransportClientConfiguration {
   final int maxConnections;
   final int receiveBufferSize;
   final int sendBufferSize;
   final int defaultPool;
 
-  TransportConnectorConfiguration({
+  TransportClientConfiguration({
     required this.maxConnections,
     required this.receiveBufferSize,
     required this.sendBufferSize,
     required this.defaultPool,
   });
 
-  TransportConnectorConfiguration copyWith({
+  TransportClientConfiguration copyWith({
     int? maxConnections,
     int? receiveBufferSize,
     int? sendBufferSize,
     int? defaultPool,
   }) =>
-      TransportConnectorConfiguration(
+      TransportClientConfiguration(
         maxConnections: maxConnections ?? this.maxConnections,
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
