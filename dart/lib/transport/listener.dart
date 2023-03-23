@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:isolate';
 
 import 'bindings.dart';
@@ -26,9 +27,9 @@ class TransportListener {
       listenerPointer.ref.workers[workerIndex] = workers[workerIndex];
     }
 
-    final registerResult = bindings.transport_listener_register_buffers(listenerPointer);
-    if (registerResult != 0) {
-      print(registerResult);
+    if (bindings.transport_listener_register_buffers(listenerPointer) != 0) {
+      //TODO: Make error return
+      Isolate.exit();
     }
 
     final ring = listenerPointer.ref.ring;
@@ -44,9 +45,7 @@ class TransportListener {
             bindings.transport_listener_prepare(listenerPointer, cqe.ref.res, cqe.ref.user_data & ~transportEventMessage);
             continue;
           }
-          final workerIndex = (cqe.ref.user_data >> 16) & 0xffffffff;
-          print(workerIndex);
-          workerPorts[workerIndex].send([cqe.ref.res, cqe.ref.user_data]);
+          workerPorts[bindings.transport_listener_get_worker_index(cqe.ref.user_data)].send([cqe.ref.res, cqe.ref.user_data]);
         }
         bindings.transport_listener_submit(listenerPointer);
         bindings.transport_cqe_advance(ring, cqeCount);

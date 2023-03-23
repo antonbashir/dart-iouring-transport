@@ -16,7 +16,7 @@ extern "C"
 
   typedef struct transport_worker_configuration
   {
-    uint32_t buffers_count;
+    uint16_t buffers_count;
     uint32_t buffer_size;
     size_t ring_size;
     int ring_flags;
@@ -24,27 +24,29 @@ extern "C"
 
   typedef struct transport_worker
   {
-    uint32_t id;
-    uint32_t buffer_shift;
+    uint8_t id;
+    uint16_t buffer_shift;
     struct io_uring *ring;
     transport_listener_pool_t *listeners;
     struct iovec *buffers;
     uint32_t buffer_size;
-    uint32_t buffers_count;
+    uint16_t buffers_count;
     int *used_buffers;
     uint64_t *used_buffers_offsets;
     struct mh_i32_t *used_acceptors;
     struct mh_i32_t *used_clients;
   } transport_worker_t;
 
-  transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint32_t id);
+  transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id);
 
-  int transport_worker_write(transport_worker_t *worker, int fd, int buffer_id, uint64_t offset, uint64_t event);
-  int transport_worker_read(transport_worker_t *worker, int fd, int buffer_id, uint64_t offset, uint64_t event);
+  int transport_worker_write(transport_worker_t *worker, int32_t fd, int16_t buffer_id, uint64_t offset, uint16_t event);
+  int transport_worker_read(transport_worker_t *worker, int32_t fd, int16_t buffer_id, uint64_t offset, uint16_t event);
   int transport_worker_connect(transport_worker_t *worker, transport_client_t *client);
   int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *acceptor);
   int transport_worker_close(transport_worker_t *worker);
   int transport_worker_select_buffer(transport_worker_t *worker);
+  int32_t transport_worker_get_fd(uint64_t worker_data);
+  uint16_t transport_worker_get_buffer_index(transport_worker_t *worker, uint64_t worker_data);
 
   static inline transport_client_t *transport_worker_get_client(transport_worker_t *worker, int fd)
   {

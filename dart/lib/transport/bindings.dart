@@ -14832,14 +14832,6 @@ class TransportBindings {
   set Dart_ExitScope_DL(Dart_ExitScope_Type value) =>
       _Dart_ExitScope_DL.value = value;
 
-  late final ffi.Pointer<ffi.Uint64> _TRANSPORT_EVENT_ALL_FLAGS =
-      _lookup<ffi.Uint64>('TRANSPORT_EVENT_ALL_FLAGS');
-
-  int get TRANSPORT_EVENT_ALL_FLAGS => _TRANSPORT_EVENT_ALL_FLAGS.value;
-
-  set TRANSPORT_EVENT_ALL_FLAGS(int value) =>
-      _TRANSPORT_EVENT_ALL_FLAGS.value = value;
-
   ffi.Pointer<transport_listener_t> transport_listener_initialize(
     ffi.Pointer<transport_listener_configuration_t> configuration,
   ) {
@@ -14922,6 +14914,20 @@ class TransportBindings {
               ffi.Pointer<transport_listener>)>>('transport_listener_submit');
   late final _transport_listener_submit = _transport_listener_submitPtr
       .asFunction<int Function(ffi.Pointer<transport_listener>)>();
+
+  int transport_listener_get_worker_index(
+    int worker_data,
+  ) {
+    return _transport_listener_get_worker_index(
+      worker_data,
+    );
+  }
+
+  late final _transport_listener_get_worker_indexPtr =
+      _lookup<ffi.NativeFunction<ffi.Uint8 Function(ffi.Uint64)>>(
+          'transport_listener_get_worker_index');
+  late final _transport_listener_get_worker_index =
+      _transport_listener_get_worker_indexPtr.asFunction<int Function(int)>();
 
   ffi.Pointer<transport_acceptor_t> transport_acceptor_initialize(
     ffi.Pointer<transport_acceptor_configuration_t> configuration,
@@ -19085,7 +19091,7 @@ class TransportBindings {
       ffi.NativeFunction<
           ffi.Pointer<transport_worker_t> Function(
               ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Uint32)>>('transport_worker_initialize');
+              ffi.Uint8)>>('transport_worker_initialize');
   late final _transport_worker_initialize =
       _transport_worker_initializePtr.asFunction<
           ffi.Pointer<transport_worker_t> Function(
@@ -19109,8 +19115,8 @@ class TransportBindings {
 
   late final _transport_worker_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int, ffi.Int,
-              ffi.Uint64, ffi.Uint64)>>('transport_worker_write');
+          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int32,
+              ffi.Int16, ffi.Uint64, ffi.Uint16)>>('transport_worker_write');
   late final _transport_worker_write = _transport_worker_writePtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -19132,8 +19138,8 @@ class TransportBindings {
 
   late final _transport_worker_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int, ffi.Int,
-              ffi.Uint64, ffi.Uint64)>>('transport_worker_read');
+          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int32,
+              ffi.Int16, ffi.Uint64, ffi.Uint16)>>('transport_worker_read');
   late final _transport_worker_read = _transport_worker_readPtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -19204,6 +19210,38 @@ class TransportBindings {
   late final _transport_worker_select_buffer =
       _transport_worker_select_bufferPtr
           .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
+
+  int transport_worker_get_fd(
+    int worker_data,
+  ) {
+    return _transport_worker_get_fd(
+      worker_data,
+    );
+  }
+
+  late final _transport_worker_get_fdPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint64)>>(
+          'transport_worker_get_fd');
+  late final _transport_worker_get_fd =
+      _transport_worker_get_fdPtr.asFunction<int Function(int)>();
+
+  int transport_worker_get_buffer_index(
+    ffi.Pointer<transport_worker_t> worker,
+    int worker_data,
+  ) {
+    return _transport_worker_get_buffer_index(
+      worker,
+      worker_data,
+    );
+  }
+
+  late final _transport_worker_get_buffer_indexPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Uint16 Function(ffi.Pointer<transport_worker_t>,
+              ffi.Uint64)>>('transport_worker_get_buffer_index');
+  late final _transport_worker_get_buffer_index =
+      _transport_worker_get_buffer_indexPtr
+          .asFunction<int Function(ffi.Pointer<transport_worker_t>, int)>();
 
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
@@ -22429,8 +22467,6 @@ class _SymbolAddresses {
       _library._Dart_EnterScope_DL;
   ffi.Pointer<Dart_ExitScope_Type> get Dart_ExitScope_DL =>
       _library._Dart_ExitScope_DL;
-  ffi.Pointer<ffi.Uint64> get TRANSPORT_EVENT_ALL_FLAGS =>
-      _library._TRANSPORT_EVENT_ALL_FLAGS;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_listener_t> Function(
@@ -22454,6 +22490,9 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_listener>)>>
       get transport_listener_submit => _library._transport_listener_submitPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Uint8 Function(ffi.Uint64)>>
+      get transport_listener_get_worker_index =>
+          _library._transport_listener_get_worker_indexPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_acceptor_t> Function(
@@ -23245,26 +23284,26 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_worker_t> Function(
-                  ffi.Pointer<transport_worker_configuration_t>, ffi.Uint32)>>
+                  ffi.Pointer<transport_worker_configuration_t>, ffi.Uint8)>>
       get transport_worker_initialize =>
           _library._transport_worker_initializePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
-              ffi.Int,
-              ffi.Int,
+              ffi.Int32,
+              ffi.Int16,
               ffi.Uint64,
-              ffi.Uint64)>> get transport_worker_write =>
+              ffi.Uint16)>> get transport_worker_write =>
       _library._transport_worker_writePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
-              ffi.Int,
-              ffi.Int,
+              ffi.Int32,
+              ffi.Int16,
               ffi.Uint64,
-              ffi.Uint64)>> get transport_worker_read =>
+              ffi.Uint16)>> get transport_worker_read =>
       _library._transport_worker_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -23283,6 +23322,13 @@ class _SymbolAddresses {
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_select_buffer =>
           _library._transport_worker_select_bufferPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint64)>>
+      get transport_worker_get_fd => _library._transport_worker_get_fdPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Uint16 Function(ffi.Pointer<transport_worker_t>, ffi.Uint64)>>
+      get transport_worker_get_buffer_index =>
+          _library._transport_worker_get_buffer_indexPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
@@ -26293,10 +26339,10 @@ class transport_listener_configuration extends ffi.Struct {
   @ffi.Int()
   external int ring_flags;
 
-  @ffi.Size()
+  @ffi.Uint8()
   external int workers_count;
 
-  @ffi.Size()
+  @ffi.Uint16()
   external int buffers_count;
 }
 
@@ -26309,10 +26355,10 @@ class transport_listener extends ffi.Struct {
 
   external ffi.Pointer<iovec> buffers;
 
-  @ffi.Size()
+  @ffi.Uint8()
   external int workers_count;
 
-  @ffi.Size()
+  @ffi.Uint16()
   external int buffers_count;
 }
 
@@ -26447,7 +26493,7 @@ class mh_i32_t extends ffi.Struct {
 typedef mh_int_t = ffi.Uint32;
 
 class transport_worker_configuration extends ffi.Struct {
-  @ffi.Uint32()
+  @ffi.Uint16()
   external int buffers_count;
 
   @ffi.Uint32()
@@ -26461,10 +26507,10 @@ class transport_worker_configuration extends ffi.Struct {
 }
 
 class transport_worker extends ffi.Struct {
-  @ffi.Uint32()
+  @ffi.Uint8()
   external int id;
 
-  @ffi.Uint32()
+  @ffi.Uint16()
   external int buffer_shift;
 
   external ffi.Pointer<io_uring> ring;
@@ -26476,7 +26522,7 @@ class transport_worker extends ffi.Struct {
   @ffi.Uint32()
   external int buffer_size;
 
-  @ffi.Uint32()
+  @ffi.Uint16()
   external int buffers_count;
 
   external ffi.Pointer<ffi.Int> used_buffers;
