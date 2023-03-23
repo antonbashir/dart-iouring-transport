@@ -37,10 +37,10 @@ extern "C"
     struct mh_i32_t *used_clients;
   } transport_worker_t;
 
-  transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, int64_t id);
+  transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint32_t id);
 
-  int transport_worker_write(transport_worker_t *worker, int fd, int buffer_id, int64_t offset, int64_t event);
-  int transport_worker_read(transport_worker_t *worker, int fd, int buffer_id, int64_t offset, int64_t event);
+  int transport_worker_write(transport_worker_t *worker, int fd, int buffer_id, uint64_t offset, uint64_t event);
+  int transport_worker_read(transport_worker_t *worker, int fd, int buffer_id, uint64_t offset, uint64_t event);
   int transport_worker_connect(transport_worker_t *worker, transport_client_t *client);
   int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *acceptor);
   int transport_worker_close(transport_worker_t *worker);

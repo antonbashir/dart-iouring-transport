@@ -15,7 +15,7 @@
 #define BUFFER_AVAILABLE -2
 #define BUFFER_USED -1
 
-transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, int64_t id)
+transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint32_t id)
 {
   transport_worker_t *worker = malloc(sizeof(transport_worker_t));
   if (!worker)
@@ -96,7 +96,7 @@ static inline transport_listener_t *transport_listener_pool_next(transport_liste
   return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
 }
 
-int transport_worker_write(struct transport_worker *worker, int fd, int buffer_id, int64_t offset, int64_t event)
+int transport_worker_write(struct transport_worker *worker, int fd, int buffer_id, uint64_t offset, uint64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
@@ -107,7 +107,7 @@ int transport_worker_write(struct transport_worker *worker, int fd, int buffer_i
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id, int64_t offset, int64_t event)
+int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id, uint64_t offset, uint64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);

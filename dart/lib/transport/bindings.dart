@@ -19085,7 +19085,7 @@ class TransportBindings {
       ffi.NativeFunction<
           ffi.Pointer<transport_worker_t> Function(
               ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Int64)>>('transport_worker_initialize');
+              ffi.Uint32)>>('transport_worker_initialize');
   late final _transport_worker_initialize =
       _transport_worker_initializePtr.asFunction<
           ffi.Pointer<transport_worker_t> Function(
@@ -19110,7 +19110,7 @@ class TransportBindings {
   late final _transport_worker_writePtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int, ffi.Int,
-              ffi.Int64, ffi.Int64)>>('transport_worker_write');
+              ffi.Uint64, ffi.Uint64)>>('transport_worker_write');
   late final _transport_worker_write = _transport_worker_writePtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -19133,7 +19133,7 @@ class TransportBindings {
   late final _transport_worker_readPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int, ffi.Int,
-              ffi.Int64, ffi.Int64)>>('transport_worker_read');
+              ffi.Uint64, ffi.Uint64)>>('transport_worker_read');
   late final _transport_worker_read = _transport_worker_readPtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -23245,7 +23245,7 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_worker_t> Function(
-                  ffi.Pointer<transport_worker_configuration_t>, ffi.Int64)>>
+                  ffi.Pointer<transport_worker_configuration_t>, ffi.Uint32)>>
       get transport_worker_initialize =>
           _library._transport_worker_initializePtr;
   ffi.Pointer<
@@ -23254,8 +23254,8 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Int,
               ffi.Int,
-              ffi.Int64,
-              ffi.Int64)>> get transport_worker_write =>
+              ffi.Uint64,
+              ffi.Uint64)>> get transport_worker_write =>
       _library._transport_worker_writePtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -23263,8 +23263,8 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Int,
               ffi.Int,
-              ffi.Int64,
-              ffi.Int64)>> get transport_worker_read =>
+              ffi.Uint64,
+              ffi.Uint64)>> get transport_worker_read =>
       _library._transport_worker_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
