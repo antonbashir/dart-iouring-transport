@@ -96,7 +96,7 @@ static inline transport_listener_t *transport_listener_pool_next(transport_liste
   return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
 }
 
-int transport_worker_write(struct transport_worker *worker, int fd, int buffer_id, uint64_t offset, uint64_t event)
+int transport_worker_write(transport_worker_t *worker, int fd, int buffer_id, uint64_t offset, uint64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
@@ -107,7 +107,7 @@ int transport_worker_write(struct transport_worker *worker, int fd, int buffer_i
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id, uint64_t offset, uint64_t event)
+int transport_worker_read(transport_worker_t *worker, int fd, int buffer_id, uint64_t offset, uint64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
@@ -118,7 +118,7 @@ int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_connect(struct transport_worker *worker, transport_client_t *client)
+int transport_worker_connect(transport_worker_t *worker, transport_client_t *client)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
@@ -132,7 +132,7 @@ int transport_worker_connect(struct transport_worker *worker, transport_client_t
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_accept(struct transport_worker *worker, transport_acceptor_t *acceptor)
+int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *acceptor)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
@@ -146,7 +146,7 @@ int transport_worker_accept(struct transport_worker *worker, transport_acceptor_
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_close(struct transport_worker *worker)
+int transport_worker_close(transport_worker_t *worker)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
