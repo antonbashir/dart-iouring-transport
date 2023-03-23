@@ -15,6 +15,7 @@ import 'exception.dart';
 import 'file.dart';
 import 'lookup.dart';
 import 'payload.dart';
+import 'pool.dart';
 
 String _event(int userdata) {
   if (userdata & transportEventClose != 0) return "transportEventClose";
@@ -148,7 +149,7 @@ class TransportWorker {
     return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings));
   }
 
-  Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
+  Future<TransportPool<TransportClient>> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
   void _handleError(int result, int userData) {
     _logger.info("[handle error] result = $result, event = ${_event(userData)}");
