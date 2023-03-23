@@ -34,6 +34,7 @@ Future<void> main(List<String> args) async {
       );
       final worker = TransportWorker(input);
       await worker.initialize();
+      await Future.delayed(Duration(seconds: 1));
       worker.serve((channel) => channel.read()).listen((event) => event.respond(fromServer));
       await worker.awaitServer();
       transport.logger.info("Served");
