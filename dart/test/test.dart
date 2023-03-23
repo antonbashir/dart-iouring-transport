@@ -1,16 +1,13 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
-import 'package:test/test.dart';
 
 final Transport _transport = Transport(
   TransportDefaults.transport(),
   TransportDefaults.acceptor(),
-  TransportDefaults.channel(),
+  TransportDefaults.listener(),
+  TransportDefaults.worker(),
   TransportDefaults.client(),
 );
 
