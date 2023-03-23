@@ -37,7 +37,7 @@ Future<void> main(List<String> args) async {
       worker.serve((channel) => channel.read()).listen((event) => event.respond(fromServer));
       await worker.awaitServer();
       transport.logger.info("Served");
-      final connector = await worker.connect("127.0.0.1", 12345, pool: 128);
+      final connector = await worker.connect("127.0.0.1", 12345, pool: 1);
       transport.logger.info("Connected");
       final time = Stopwatch();
       time.start();
