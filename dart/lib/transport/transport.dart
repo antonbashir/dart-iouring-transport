@@ -42,10 +42,10 @@ class Transport {
     nativeAcceptorConfiguration.ref.receive_buffer_size = acceptorConfiguration.receiveBufferSize;
     nativeAcceptorConfiguration.ref.send_buffer_size = acceptorConfiguration.sendBufferSize;
 
-    final nativeclientConfiguration = calloc<transport_client_configuration_t>();
-    nativeclientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
-    nativeclientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
-    nativeclientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    final nativeClientConfiguration = calloc<transport_client_configuration_t>();
+    nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
+    nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
+    nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
 
     final nativeListenerConfiguration = calloc<transport_listener_configuration_t>();
     nativeListenerConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
@@ -62,7 +62,7 @@ class Transport {
     _transport = _bindings.transport_initialize(
       nativeListenerConfiguration,
       nativeWorkerConfiguration,
-      nativeclientConfiguration,
+      nativeClientConfiguration,
       nativeAcceptorConfiguration,
     );
   }
@@ -100,6 +100,11 @@ class Transport {
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
       final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workers.length).address;
+      if (workerPointer == nullptr) {
+        logger.error("[worker] is null");
+        listenerCompleter.completeError(TransportException("[worker] is null"));
+        return;
+      }
       workers.add(workerPointer);
       final workerConfiguration = [
         _libraryPath,
@@ -131,8 +136,9 @@ class Transport {
       logger.info("[listener]: added to pool");
       final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
       if (listenerRegisterResult != 0) {
-        logger.error("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult)}");
-        listenerCompleter.completeError(TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult)}"));
+        logger.error("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}");
+        listenerCompleter.completeError(
+            TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}"));
         return;
       }
       logger.info("[listener]: buffers registered");
@@ -142,7 +148,7 @@ class Transport {
         listenerConfiguration.ringSize,
         workerMeessagePorts,
       ]);
-      logger.info("[worker]: configuration sent");
+      logger.info("[listener]: configuration sent");
       if (++listeners == transportConfiguration.listenerIsolates) {
         listenerCompleter.complete();
         logger.info("[listeners]: initialized");

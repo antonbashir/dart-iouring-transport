@@ -73,7 +73,7 @@ class TransportWorker {
   late final Pointer<transport_worker_t> _workerPointer;
 
   late final RawReceivePort _listener;
-  late final RawReceivePort _activator;
+  late final ReceivePort _activator;
   late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final TransportConnector _connector;
   late final TransportWorkerCallbacks _callbacks;
@@ -97,12 +97,13 @@ class TransportWorker {
       }
       _handle(event[0], event[1]);
     });
-    _activator = RawReceivePort((_) => _initializer.complete());
+    _activator = ReceivePort();
+    _activator.listen((message) => _initializer.complete());
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
   }
 
   Future<void> initialize() async {
-    print("[worker]: initialize() start");
+    print("[worker]: initialize() await configuration");
     final configuration = await _fromTransport.first as List;
     print("[worker]: initialize() has configuration");
     final libraryPath = configuration[0] as String?;

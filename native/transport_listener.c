@@ -26,7 +26,7 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
   listener->workers_count = configuration->workers_count;
   listener->buffers_count = configuration->buffers_count;
   listener->workers = malloc(sizeof(intptr_t) * configuration->workers_count);
-  listener->buffers = malloc(sizeof(struct iovec *) * listener->buffers_count * listener->workers_count);
+  listener->buffers = malloc(sizeof(struct iovec) * listener->buffers_count * listener->workers_count);
 
   struct io_uring *ring = malloc(sizeof(struct io_uring));
   int32_t status = io_uring_queue_init(configuration->ring_size, ring, configuration->ring_flags);
@@ -50,7 +50,8 @@ int transport_listener_register_buffers(transport_listener_t *listener)
     transport_worker_t *worker = (transport_worker_t *)listener->workers[worker_index];
     for (int worker_buffer_index = 0; worker_buffer_index < worker->buffers_count; worker_buffer_index++)
     {
-      listener->buffers[buffer_index] = worker->buffers[worker_buffer_index];
+      listener->buffers[buffer_index].iov_base = worker->buffers[worker_buffer_index].iov_base;
+      listener->buffers[buffer_index].iov_len = worker->buffers[worker_buffer_index].iov_len;
       buffer_index++;
     }
   }

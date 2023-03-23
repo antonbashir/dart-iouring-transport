@@ -14,15 +14,15 @@ class TransportListener {
   }
 
   Future<void> initialize() async {
-    print("[listener]: initialize() await initialization");
+    print("[listener]: initialize() await configuration");
     final configuration = await _fromTransport.first;
+    print("[listener]: initialize() has configuration");
     final libraryPath = configuration[0] as String?;
     final listenerPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_listener_t>();
     final ringSize = configuration[2] as int;
     final workerPorts = configuration[3] as List<SendPort>;
     final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _fromTransport.close();
-    print("[listener]: initialize() has configuration");
     final ring = listenerPointer.ref.ring;
     final cqes = bindings.transport_allocate_cqes(ringSize);
 

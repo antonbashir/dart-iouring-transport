@@ -16,7 +16,7 @@ class TransportDefaults {
       );
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
-        buffersCount: 2048,
+        buffersCount: 1024,
         bufferSize: 4096,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,
