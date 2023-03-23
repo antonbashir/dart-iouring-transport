@@ -75,7 +75,7 @@
     "transport_ger.h": "c",
     "transport_message.h": "c",
     "transport_balancer.h": "c",
-    "transport_connector.h": "c",
+    "transport_client.h": "c",
     "limits": "c",
     "cstdint": "c",
     "numeric": "c",
@@ -99,6 +99,7 @@
     "dart_native_api.h": "c",
     "light.h": "c",
     "mhash.h": "c",
-    "transport_worker.h": "c"
+    "transport_worker.h": "c",
+    "transport_collections.h": "c"
   },
 }

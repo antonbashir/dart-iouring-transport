@@ -24,14 +24,15 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   }
 
   worker->id = id;
-  worker->listener = transport_listener_pool_initialize();
-
+  worker->listeners = transport_listener_pool_initialize();
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
+  worker->buffer_shift = configuration->buffer_size * id;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   worker->used_buffers = malloc(sizeof(int) * configuration->buffers_count);
   worker->used_buffers_offsets = malloc(sizeof(uint64_t) * configuration->buffers_count);
-  worker->available_buffer_id = 0;
+  worker->used_acceptors = mh_i32_new();
+  worker->used_clients = mh_i32_new();
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
@@ -76,46 +77,79 @@ int transport_worker_select_buffer(transport_worker_t *worker)
   return buffer_id;
 }
 
+static inline transport_listener_t *transport_listener_pool_next(transport_listener_pool_t *pool)
+{
+  if (unlikely(!pool->next_listener))
+  {
+    pool->next_listener = pool->listener.next;
+    pool->next_listener_index = 0;
+    return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
+  }
+  if (pool->next_listener_index + 1 == pool->count)
+  {
+    pool->next_listener = pool->listener.next;
+    pool->next_listener_index = 0;
+    return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
+  }
+  pool->next_listener = pool->next_listener->next;
+  pool->next_listener_index++;
+  return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
+}
+
 int transport_worker_write(struct transport_worker *worker, int fd, int buffer_id, int64_t offset, int64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, (uint64_t)buffer_id | worker->id | TRANSPORT_EVENT_MESSAGE | event, 0);
+  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 16) | (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | event;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, data, 0);
   return io_uring_submit(worker->ring);
 }
 
 int transport_worker_read(struct transport_worker *worker, int fd, int buffer_id, int64_t offset, int64_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, (uint64_t)buffer_id | worker->id | TRANSPORT_EVENT_MESSAGE | event, 0);
+  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 16) | (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | event;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, fd, data, 0);
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_connect(struct transport_worker *worker, transport_connector_t *connector)
+int transport_worker_connect(struct transport_worker *worker, transport_client_t *client)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, 0, (uint64_t)connector | worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_CONNECT, 0);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
+  struct mh_i32_node_t node = {
+      .key = client->fd,
+      .value = (intptr_t)client,
+  };
+  mh_i32_put(worker->used_clients, &node, NULL, 0);
+  uint64_t data = (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_CONNECT;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, client->fd, data, 0);
   return io_uring_submit(worker->ring);
 }
 
 int transport_worker_accept(struct transport_worker *worker, transport_acceptor_t *acceptor)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, 0, (uint64_t)acceptor | worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_ACCEPT, 0);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
+  struct mh_i32_node_t node = {
+      .key = acceptor->fd,
+      .value = (intptr_t)acceptor,
+  };
+  mh_i32_put(worker->used_acceptors, &node, NULL, 0);
+  uint64_t data = (uint64_t)worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_ACCEPT;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, acceptor->fd, data, 0);
   return io_uring_submit(worker->ring);
 }
 
 int transport_worker_close(struct transport_worker *worker)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listener);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, 0, worker->id | TRANSPORT_EVENT_MESSAGE | TRANSPORT_EVENT_CLOSE, 0);
   return io_uring_submit(worker->ring);
 }
@@ -130,5 +164,7 @@ void transport_worker_destroy(transport_worker_t *worker)
   free(worker->used_buffers);
   io_uring_queue_exit(worker->ring);
   free(worker->ring);
+  mh_i32_delete(worker->used_acceptors);
+  mh_i32_delete(worker->used_clients);
   free(worker);
 }

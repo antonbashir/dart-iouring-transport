@@ -17,7 +17,6 @@ extern "C"
   } transport_listener_pool_t;
 
   transport_listener_pool_t *transport_listener_pool_initialize();
-  struct transport_listener *transport_listener_pool_next(transport_listener_pool_t *pool);
   void transport_listener_pool_add(transport_listener_pool_t *pool, transport_listener_t *listener);
   void transport_listener_pool_remove(transport_listener_pool_t *pool, transport_listener_t *listener);
 

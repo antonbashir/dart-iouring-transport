@@ -19,7 +19,7 @@
 
 transport_t *transport_initialize(transport_listener_configuration_t *listener_configuration,
                                   transport_worker_configuration_t *worker_configuration,
-                                  transport_connector_configuration_t *connector_configuration,
+                                  transport_client_configuration_t *client_configuration,
                                   transport_acceptor_configuration_t *acceptor_configuration)
 {
   transport_t *transport = malloc(sizeof(transport_t));
@@ -30,7 +30,7 @@ transport_t *transport_initialize(transport_listener_configuration_t *listener_c
 
   transport->acceptor_configuration = acceptor_configuration;
   transport->listener_configuration = listener_configuration;
-  transport->connector_configuration = connector_configuration;
+  transport->client_configuration = client_configuration;
   transport->worker_configuration = worker_configuration;
 
   return transport;
@@ -40,7 +40,8 @@ void transport_destroy(transport_t *transport)
 {
   free(transport->acceptor_configuration);
   free(transport->listener_configuration);
-  free(transport->connector_configuration);
+  free(transport->client_configuration);
+  free(transport->worker_configuration);
 }
 
 void transport_cqe_advance(struct io_uring *ring, int count)
