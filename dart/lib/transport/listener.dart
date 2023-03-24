@@ -33,7 +33,7 @@ class TransportListener {
       if (cqeCount != -1) {
         for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
           final cqe = cqes[cqeIndex];
-          if ((cqe.ref.user_data & 0xffff) & transportEventExternal != 0) {
+          if (bindings.transport_listener_is_external(cqe.ref.user_data)) {
             workerPorts[bindings.transport_listener_get_worker_index(cqe.ref.user_data)].send([cqe.ref.res, cqe.ref.user_data]);
             continue;
           }

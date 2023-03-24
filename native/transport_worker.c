@@ -132,8 +132,8 @@ int transport_worker_connect(transport_worker_t *worker, transport_client_t *cli
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  uint32_t data = ((uint32_t)worker->id << 16) | ((uint32_t)TRANSPORT_EVENT_INTERNAL | TRANSPORT_EVENT_CONNECT);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, data, (intptr_t)client, 0);
+  uint32_t result = ((uint32_t)worker->id << 16) | ((uint32_t)TRANSPORT_EVENT_INTERNAL | TRANSPORT_EVENT_CONNECT);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, result, (intptr_t)client, 0);
   return io_uring_submit(worker->ring);
 }
 
@@ -141,8 +141,8 @@ int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *ac
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  uint32_t data = ((uint32_t)worker->id << 16) | (((uint32_t)TRANSPORT_EVENT_INTERNAL | TRANSPORT_EVENT_ACCEPT));
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, data, (intptr_t)acceptor, 0);
+  uint32_t result = ((uint32_t)worker->id << 16) | (((uint32_t)TRANSPORT_EVENT_INTERNAL | TRANSPORT_EVENT_ACCEPT));
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, result, (intptr_t)acceptor, 0);
   return io_uring_submit(worker->ring);
 }
 

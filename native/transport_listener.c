@@ -58,38 +58,39 @@ int transport_listener_register_buffers(transport_listener_t *listener)
   return io_uring_register_buffers(listener->ring, listener->buffers, buffer_index);
 }
 
-uint8_t transport_listener_get_worker_index(uint64_t worker_data)
+uint8_t transport_listener_get_worker_index(uint64_t data)
 {
-  return (uint8_t)((worker_data >> 16) & 0xff);
+  return (uint8_t)((data >> 16) & 0xff);
 }
 
-static inline transport_worker_t *transport_listener_get_worker_from_data(transport_listener_t *listener, uint64_t worker_data)
+bool transport_listener_is_external(uint64_t data)
 {
-  uint8_t id = (uint8_t)((worker_data >> 16) & 0xff);
-  printf("worker id from data: %d\n", id);
-  return (transport_worker_t *)listener->workers[id];
+  return (uint16_t)(data & 0xffff) & TRANSPORT_EVENT_EXTERNAL;
+}
+
+static inline transport_worker_t *transport_listener_get_worker_from_data(transport_listener_t *listener, uint64_t data)
+{
+  return (transport_worker_t *)listener->workers[(uint8_t)((data >> 16) & 0xff)];
 }
 
 static inline transport_worker_t *transport_listener_get_worker_from_result(transport_listener_t *listener, uint32_t result)
 {
-  uint8_t id = (uint8_t)((result >> 16) & 0xff);
-  printf("worker id from result: %d\n", id);
-  return (transport_worker_t *)listener->workers[id];
+  return (transport_worker_t *)listener->workers[(uint8_t)((result >> 16) & 0xff)];
 }
 
-static inline uint16_t transport_listener_get_buffer_id(int64_t worker_data)
+static inline uint16_t transport_listener_get_buffer_id(int64_t data)
 {
-  return (uint16_t)((worker_data >> 24) & 0xffff);
+  return (uint16_t)((data >> 24) & 0xffff);
 }
 
 int transport_listener_prepare(transport_listener_t *listener, uint32_t result, uint64_t data)
 {
   struct io_uring_sqe *sqe = provide_sqe(listener->ring);
-  data &= ~((uint64_t)TRANSPORT_EVENT_INTERNAL);
 
   uint16_t event = (uint16_t)(data & 0xffff);
   if (event & (TRANSPORT_EVENT_READ | TRANSPORT_EVENT_READ_CALLBACK))
   {
+    data &= ~((uint64_t)TRANSPORT_EVENT_INTERNAL);
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
     io_uring_prep_read_fixed(sqe, result, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id], buffer_id);
@@ -98,6 +99,7 @@ int transport_listener_prepare(transport_listener_t *listener, uint32_t result, 
   }
   if (event & (TRANSPORT_EVENT_WRITE | TRANSPORT_EVENT_WRITE_CALLBACK))
   {
+    data &= ~((uint64_t)TRANSPORT_EVENT_INTERNAL);
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
     io_uring_prep_write_fixed(sqe, result, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id], buffer_id);
