@@ -130,13 +130,13 @@ class Transport {
         listenerPointer.ref.workers[workerIndex] = worker.address;
         _bindings.transport_listener_pool_add(worker.ref.listeners, listenerPointer);
       }
-      final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
-      if (listenerRegisterResult != 0) {
-        listenerCompleter.completeError(
-          TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}"),
-        );
-        return;
-      }
+      // final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
+      // if (listenerRegisterResult != 0) {
+      //   listenerCompleter.completeError(
+      //     TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}"),
+      //   );
+      //   return;
+      // }
       (port as SendPort).send([
         _libraryPath,
         listenerPointer.address,
