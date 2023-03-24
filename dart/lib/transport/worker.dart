@@ -134,9 +134,9 @@ class TransportWorker {
 
   Future<void> awaitServer() => _servingComplter.future;
 
-  Stream<TransportPayload> serve([void Function(TransportInboundChannel channel)? onAccept]) async* {
+  Stream<TransportPayload> serve([void Function(TransportInboundChannel channel)? onAccept]) {
     if (!_hasServer) throw TransportException("[server]: is not available");
-    if (_serving) yield* _serverStream;
+    if (_serving) return _serverStream;
     this._onAccept = onAccept;
     _bindings.transport_worker_accept(
       _workerPointer,
@@ -144,7 +144,7 @@ class TransportWorker {
     );
     _serving = true;
     _servingComplter.complete();
-    yield* _serverStream;
+    return _serverStream;
   }
 
   Future<TransportFile> open(String path) async {
