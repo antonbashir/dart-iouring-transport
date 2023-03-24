@@ -42,7 +42,7 @@ class TransportListener {
             submit = true;
             continue;
           }
-          events[((userData >> 16) & 0xff)].add([result, userData]);
+          events[(userData >> 16) & 0xff].add([result, userData]);
         }
         if (submit) bindings.transport_listener_submit(listenerPointer);
         for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
