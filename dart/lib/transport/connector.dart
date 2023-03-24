@@ -70,7 +70,6 @@ class TransportConnector {
           ));
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(client.ref.fd, completer);
-      print("send connect ${_workerPointer.ref.id} with fd = ${client.ref.fd}");
       _bindings.transport_worker_connect(_workerPointer, client);
       clients.add(completer.future);
     }

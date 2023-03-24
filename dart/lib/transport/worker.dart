@@ -103,9 +103,7 @@ class TransportWorker {
   }
 
   Future<void> initialize() async {
-    print("[worker]: initialize() await configuration");
     final configuration = await _fromTransport.first as List;
-    print("[worker]: initialize() has configuration");
     final libraryPath = configuration[0] as String?;
     _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
     _workerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
@@ -120,10 +118,8 @@ class TransportWorker {
     _serverController = StreamController();
     _serverStream = _serverController.stream;
     _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
-    print("[worker]: initialize() await initialization");
     await _initializer.future;
     _activator.close();
-    print("[worker]: initialize() done");
   }
 
   Future<void> awaitServer() => _servingComplter.future;
@@ -137,7 +133,6 @@ class TransportWorker {
       _acceptorPointer,
     );
     _serving = true;
-    _logger.info("[server] accepting");
     _servingComplter.complete();
     yield* _serverStream;
   }

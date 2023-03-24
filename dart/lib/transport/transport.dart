@@ -101,7 +101,6 @@ class Transport {
       workerActivators.add(ports[2]);
       final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workers.length).address;
       if (workerPointer == nullptr) {
-        logger.error("[worker] is null");
         listenerCompleter.completeError(TransportException("[worker] is null"));
         return;
       }
@@ -116,7 +115,6 @@ class Transport {
       toWorker.send(workerConfiguration);
       if (workers.length == transportConfiguration.workerInsolates) {
         workersCompleter.complete();
-        logger.info("[workers]: initialized");
       }
     });
 
@@ -124,34 +122,27 @@ class Transport {
       await workersCompleter.future;
       final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
       if (listenerPointer == nullptr) {
-        logger.error("[listener] is null");
         listenerCompleter.completeError(TransportException("[listener] is null"));
         return;
       }
-      logger.info("[listener]: created");
       for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
         listenerPointer.ref.workers[workerIndex] = workers[workerIndex];
         _bindings.transport_listener_pool_add(Pointer.fromAddress(workers[workerIndex]).cast<transport_worker_t>().ref.listeners, listenerPointer);
       }
-      logger.info("[listener]: added to pool");
       final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
       if (listenerRegisterResult != 0) {
-        logger.error("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}");
         listenerCompleter.completeError(
             TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}"));
         return;
       }
-      logger.info("[listener]: buffers registered");
       (port as SendPort).send([
         _libraryPath,
         listenerPointer.address,
         listenerConfiguration.ringSize,
         workerMeessagePorts,
       ]);
-      logger.info("[listener]: configuration sent");
       if (++listeners == transportConfiguration.listenerIsolates) {
         listenerCompleter.complete();
-        logger.info("[listeners]: initialized");
       }
     });
 

@@ -114,8 +114,15 @@ const transportEventWriteCallback = 1 << 7;
 const transportEventInternal = 1 << 8;
 const transportEventExternal = 1 << 9;
 
-const transportEventAll =
-    transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose | transportEventReadCallback | transportEventWriteCallback | transportEventInternal;
+const transportEventAll = transportEventRead |
+    transportEventWrite |
+    transportEventAccept |
+    transportEventConnect |
+    transportEventClose |
+    transportEventReadCallback |
+    transportEventWriteCallback |
+    transportEventInternal |
+    transportEventExternal;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;

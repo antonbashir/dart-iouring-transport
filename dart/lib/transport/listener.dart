@@ -1,9 +1,7 @@
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'bindings.dart';
-import 'constants.dart';
 import 'lookup.dart';
 
 class TransportListener {
@@ -14,9 +12,7 @@ class TransportListener {
   }
 
   Future<void> initialize() async {
-    print("[listener]: initialize() await configuration");
     final configuration = await _fromTransport.first;
-    print("[listener]: initialize() has configuration");
     final libraryPath = configuration[0] as String?;
     final listenerPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_listener_t>();
     final ringSize = configuration[2] as int;
@@ -25,8 +21,6 @@ class TransportListener {
     _fromTransport.close();
     final ring = listenerPointer.ref.ring;
     final cqes = bindings.transport_allocate_cqes(ringSize);
-
-    print("[listener]: initialize() start wait");
     while (true) {
       final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
 
