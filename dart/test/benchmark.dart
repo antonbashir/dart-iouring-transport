@@ -37,16 +37,7 @@ Future<void> main(List<String> args) async {
       worker.serve((channel) => channel.read()).listen((event) => event.respond(fromServer));
       await worker.awaitServer();
       transport.logger.info("Served");
-      final connector = await worker.connect("127.0.0.1", 12345, pool: 1024);
-      transport.logger.info("Connected");
-      var count = 0;
-      var done = false;
-      Timer(Duration(seconds: 10), () => done = true);
-      while (!done) {
-        count += (await Future.wait(connector.map((client) => client.write(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-      }
-      print("Send $count");
-      worker.receiver!.send(count);
+
     },
   );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
