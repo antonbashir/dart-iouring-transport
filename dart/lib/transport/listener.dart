@@ -24,26 +24,29 @@ class TransportListener {
     final events = workerPorts.map((_) => <List<dynamic>>[]).toList();
     while (true) {
       final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
-
       if (cqeCount != -1) {
+        var submit = false;
         for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
           final cqe = cqes[cqeIndex];
+          final result = cqe.ref.res;
+          final userData = cqe.ref.user_data;
           if (bindings.transport_listener_is_internal_data(cqe)) {
-            bindings.transport_listener_prepare_data(listenerPointer, cqe.ref.res, cqe.ref.user_data);
+            bindings.transport_listener_prepare_data(listenerPointer, result, userData);
+            submit = true;
             continue;
           }
           if (bindings.transport_listener_is_internal_result(cqe)) {
-            bindings.transport_listener_prepare_result(listenerPointer, cqe.ref.res, cqe.ref.user_data);
+            bindings.transport_listener_prepare_result(listenerPointer, result, userData);
+            submit = true;
             continue;
           }
-
-          events[bindings.transport_listener_get_worker_index(cqe.ref.user_data)].add([cqe.ref.res, cqe.ref.user_data]);
+          events[bindings.transport_listener_get_worker_index(userData)].add([result, userData]);
         }
+        if (submit) bindings.transport_listener_submit(listenerPointer);
         for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
           workerPorts[workerIndex].send(events[workerIndex]);
           events[workerIndex].clear();
         }
-        bindings.transport_listener_submit(listenerPointer);
         bindings.transport_cqe_advance(ring, cqeCount);
       }
     }
