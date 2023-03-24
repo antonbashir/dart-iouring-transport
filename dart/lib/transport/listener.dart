@@ -1,6 +1,8 @@
 import 'dart:ffi';
 import 'dart:isolate';
 
+import 'package:iouring_transport/transport/constants.dart';
+
 import 'bindings.dart';
 import 'lookup.dart';
 
@@ -30,12 +32,13 @@ class TransportListener {
           final cqe = cqes[cqeIndex];
           final result = cqe.ref.res;
           final userData = cqe.ref.user_data;
-          if (bindings.transport_listener_is_internal_data(cqe)) {
+          final flags = cqe.ref.flags;
+          if (flags & transportMessageData != 0) {
             bindings.transport_listener_prepare_data(listenerPointer, result, userData);
             submit = true;
             continue;
           }
-          if (bindings.transport_listener_is_internal_result(cqe)) {
+          if (flags & transportMessageResult != 0) {
             bindings.transport_listener_prepare_result(listenerPointer, result, userData);
             submit = true;
             continue;
