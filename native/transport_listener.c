@@ -105,7 +105,8 @@ int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t 
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    io_uring_prep_read_fixed(sqe, result, listener->buffers[buffer_id].iov_base, listener->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
+    struct iovec buffer = listener->buffers[buffer_id];
+    io_uring_prep_read_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
@@ -113,7 +114,8 @@ int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t 
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    io_uring_prep_write_fixed(sqe, result, listener->buffers[buffer_id].iov_base, listener->buffers[buffer_id].iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
+    struct iovec buffer = listener->buffers[buffer_id];
+    io_uring_prep_write_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
