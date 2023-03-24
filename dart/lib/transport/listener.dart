@@ -27,11 +27,16 @@ class TransportListener {
       if (cqeCount != -1) {
         for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
           final cqe = cqes[cqeIndex];
-          if (bindings.transport_listener_is_external(cqe.ref.user_data)) {
-            workerPorts[bindings.transport_listener_get_worker_index(cqe.ref.user_data)].send([cqe.ref.res, cqe.ref.user_data]);
+          if (bindings.transport_listener_is_internal_data(cqe)) {
+            bindings.transport_listener_prepare_data(listenerPointer, cqe.ref.res, cqe.ref.user_data);
             continue;
           }
-          bindings.transport_listener_prepare(listenerPointer, cqe.ref.res, cqe.ref.user_data);
+          if (bindings.transport_listener_is_internal_result(cqe)) {
+            bindings.transport_listener_prepare_result(listenerPointer, cqe.ref.res, cqe.ref.user_data);
+            continue;
+          }
+
+          workerPorts[bindings.transport_listener_get_worker_index(cqe.ref.user_data)].send([cqe.ref.res, cqe.ref.user_data]);
         }
         bindings.transport_listener_submit(listenerPointer);
         bindings.transport_cqe_advance(ring, cqeCount);

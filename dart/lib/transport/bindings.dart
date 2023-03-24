@@ -14881,25 +14881,6 @@ class TransportBindings {
   late final _transport_listener_destroy = _transport_listener_destroyPtr
       .asFunction<void Function(ffi.Pointer<transport_listener_t>)>();
 
-  int transport_listener_prepare(
-    ffi.Pointer<transport_listener_t> listener,
-    int result,
-    int data,
-  ) {
-    return _transport_listener_prepare(
-      listener,
-      result,
-      data,
-    );
-  }
-
-  late final _transport_listener_preparePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_listener_t>, ffi.Uint32,
-              ffi.Uint64)>>('transport_listener_prepare');
-  late final _transport_listener_prepare = _transport_listener_preparePtr
-      .asFunction<int Function(ffi.Pointer<transport_listener_t>, int, int)>();
-
   int transport_listener_submit(
     ffi.Pointer<transport_listener> listener,
   ) {
@@ -14929,19 +14910,75 @@ class TransportBindings {
   late final _transport_listener_get_worker_index =
       _transport_listener_get_worker_indexPtr.asFunction<int Function(int)>();
 
-  bool transport_listener_is_external(
-    int worker_data,
+  int transport_listener_prepare_result(
+    ffi.Pointer<transport_listener_t> listener,
+    int result,
+    int data,
   ) {
-    return _transport_listener_is_external(
-      worker_data,
+    return _transport_listener_prepare_result(
+      listener,
+      result,
+      data,
     );
   }
 
-  late final _transport_listener_is_externalPtr =
-      _lookup<ffi.NativeFunction<ffi.Bool Function(ffi.Uint64)>>(
-          'transport_listener_is_external');
-  late final _transport_listener_is_external =
-      _transport_listener_is_externalPtr.asFunction<bool Function(int)>();
+  late final _transport_listener_prepare_resultPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<transport_listener_t>, ffi.Uint32,
+              ffi.Uint64)>>('transport_listener_prepare_result');
+  late final _transport_listener_prepare_result =
+      _transport_listener_prepare_resultPtr.asFunction<
+          int Function(ffi.Pointer<transport_listener_t>, int, int)>();
+
+  int transport_listener_prepare_data(
+    ffi.Pointer<transport_listener_t> listener,
+    int result,
+    int data,
+  ) {
+    return _transport_listener_prepare_data(
+      listener,
+      result,
+      data,
+    );
+  }
+
+  late final _transport_listener_prepare_dataPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<transport_listener_t>, ffi.Uint32,
+              ffi.Uint64)>>('transport_listener_prepare_data');
+  late final _transport_listener_prepare_data =
+      _transport_listener_prepare_dataPtr.asFunction<
+          int Function(ffi.Pointer<transport_listener_t>, int, int)>();
+
+  bool transport_listener_is_internal_result(
+    ffi.Pointer<io_uring_cqe> cqe,
+  ) {
+    return _transport_listener_is_internal_result(
+      cqe,
+    );
+  }
+
+  late final _transport_listener_is_internal_resultPtr =
+      _lookup<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>(
+          'transport_listener_is_internal_result');
+  late final _transport_listener_is_internal_result =
+      _transport_listener_is_internal_resultPtr
+          .asFunction<bool Function(ffi.Pointer<io_uring_cqe>)>();
+
+  bool transport_listener_is_internal_data(
+    ffi.Pointer<io_uring_cqe> cqe,
+  ) {
+    return _transport_listener_is_internal_data(
+      cqe,
+    );
+  }
+
+  late final _transport_listener_is_internal_dataPtr =
+      _lookup<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>(
+          'transport_listener_is_internal_data');
+  late final _transport_listener_is_internal_data =
+      _transport_listener_is_internal_dataPtr
+          .asFunction<bool Function(ffi.Pointer<io_uring_cqe>)>();
 
   ffi.Pointer<transport_acceptor_t> transport_acceptor_initialize(
     ffi.Pointer<transport_acceptor_configuration_t> configuration,
@@ -22497,19 +22534,29 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_listener_t>)>>
       get transport_listener_destroy => _library._transport_listener_destroyPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_listener_t>, ffi.Uint32, ffi.Uint64)>>
-      get transport_listener_prepare => _library._transport_listener_preparePtr;
-  ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_listener>)>>
       get transport_listener_submit => _library._transport_listener_submitPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Uint8 Function(ffi.Uint64)>>
       get transport_listener_get_worker_index =>
           _library._transport_listener_get_worker_indexPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Uint64)>>
-      get transport_listener_is_external =>
-          _library._transport_listener_is_externalPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<transport_listener_t>, ffi.Uint32, ffi.Uint64)>>
+      get transport_listener_prepare_result =>
+          _library._transport_listener_prepare_resultPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<transport_listener_t>, ffi.Uint32, ffi.Uint64)>>
+      get transport_listener_prepare_data =>
+          _library._transport_listener_prepare_dataPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>
+      get transport_listener_is_internal_result =>
+          _library._transport_listener_is_internal_resultPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>
+      get transport_listener_is_internal_data =>
+          _library._transport_listener_is_internal_dataPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_acceptor_t> Function(
@@ -30458,9 +30505,9 @@ const int TRANSPORT_EVENT_READ_CALLBACK = 64;
 
 const int TRANSPORT_EVENT_WRITE_CALLBACK = 128;
 
-const int TRANSPORT_EVENT_INTERNAL = 256;
+const int TRANSPORT_MESSAGE_RESULT = 2;
 
-const int TRANSPORT_EVENT_EXTERNAL = 512;
+const int TRANSPORT_MESSAGE_DATA = 4;
 
 const String PACKAGE_VERSION = '';
 
