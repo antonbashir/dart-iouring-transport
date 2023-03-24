@@ -117,7 +117,7 @@ int transport_listener_prepare_data(transport_listener_t *listener, uint32_t res
 {
   struct io_uring_sqe *sqe = provide_sqe(listener->ring);
   uint16_t event = (uint16_t)(data & 0xffff);
-  if (event & TRANSPORT_EVENT_READ || event & TRANSPORT_EVENT_READ_CALLBACK)
+  if (likely(event & (TRANSPORT_EVENT_READ | TRANSPORT_EVENT_READ_CALLBACK)))
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
@@ -125,7 +125,7 @@ int transport_listener_prepare_data(transport_listener_t *listener, uint32_t res
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
-  if (event & TRANSPORT_EVENT_WRITE || event & TRANSPORT_EVENT_WRITE_CALLBACK)
+  if (likely(event & (TRANSPORT_EVENT_WRITE | TRANSPORT_EVENT_WRITE_CALLBACK)))
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
