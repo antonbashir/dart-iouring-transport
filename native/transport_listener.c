@@ -49,8 +49,7 @@ int transport_listener_register_buffers(transport_listener_t *listener)
     transport_worker_t *worker = (transport_worker_t *)listener->workers[worker_index];
     for (int worker_buffer_index = 0; worker_buffer_index < worker->buffers_count; worker_buffer_index++)
     {
-      listener->buffers[buffer_index].iov_base = worker->buffers[worker_buffer_index].iov_base;
-      listener->buffers[buffer_index].iov_len = worker->buffers[worker_buffer_index].iov_len;
+      listener->buffers[buffer_index] = worker->buffers[worker_buffer_index];
       buffer_index++;
     }
   }
@@ -105,8 +104,9 @@ int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t 
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    struct iovec buffer = listener->buffers[buffer_id];
-    io_uring_prep_read_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
+    uint16_t worker_buffer_id = buffer_id - worker->buffer_shift;
+    struct iovec buffer = worker->buffers[worker_buffer_id];
+    io_uring_prep_read_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[worker_buffer_id], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
@@ -114,8 +114,9 @@ int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t 
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    struct iovec buffer = listener->buffers[buffer_id];
-    io_uring_prep_write_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
+    uint16_t worker_buffer_id = buffer_id - worker->buffer_shift;
+    struct iovec buffer = worker->buffers[worker_buffer_id];
+    io_uring_prep_write_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[worker_buffer_id], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
