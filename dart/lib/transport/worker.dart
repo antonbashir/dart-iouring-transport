@@ -73,7 +73,7 @@ class TransportWorker {
   late final Pointer<transport_worker_t> _workerPointer;
 
   late final RawReceivePort _listener;
-  late final ReceivePort _activator;
+  late final RawReceivePort _activator;
   late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final TransportConnector _connector;
   late final TransportWorkerCallbacks _callbacks;
@@ -89,16 +89,17 @@ class TransportWorker {
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
-    _listener = RawReceivePort((List<dynamic> event) {
-      _bindings.transport_cqe_advance(_workerPointer.ref.ring, 1);
-      if (event[0] < 0) {
-        _handleError(event[0], event[1]);
-        return;
+    _listener = RawReceivePort((List<dynamic> events) {
+      _bindings.transport_cqe_advance(_workerPointer.ref.ring, events.length);
+      for (var event in events) {
+        if (event[0] < 0) {
+          _handleError(event[0], event[1]);
+          return;
+        }
+        _handle(event[0], event[1]);
       }
-      _handle(event[0], event[1]);
     });
-    _activator = ReceivePort();
-    _activator.listen((message) => _initializer.complete());
+    _activator = RawReceivePort((_) => _initializer.complete());
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
   }
 
