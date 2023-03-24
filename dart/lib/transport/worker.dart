@@ -119,16 +119,16 @@ class TransportWorker {
     }
     _fromTransport.close();
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
-    _ring = _workerPointer.ref.ring;
-    _bufferShift = _workerPointer.ref.buffer_shift;
-    _usedBuffers = _workerPointer.ref.used_buffers;
-    _usedBuffersOffsets = _workerPointer.ref.used_buffers_offsets;
-    _buffers = _workerPointer.ref.buffers;
     _callbacks = TransportCallbacks();
     _serverController = StreamController();
     _serverStream = _serverController.stream;
     _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
     await _initializer.future;
+    _ring = _workerPointer.ref.ring;
+    _bufferShift = _workerPointer.ref.buffer_shift;
+    _usedBuffers = _workerPointer.ref.used_buffers;
+    _usedBuffersOffsets = _workerPointer.ref.used_buffers_offsets;
+    _buffers = _workerPointer.ref.buffers;
     _activator.close();
   }
 
@@ -247,7 +247,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData) {
-//    _logger.info("[handle] result = $result");
+//    _logger.info("[handle] result = $result, bid = ${((userData >> 24) & 0xffff) - _bufferShift}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;

@@ -133,7 +133,8 @@ class Transport {
       final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
       if (listenerRegisterResult != 0) {
         listenerCompleter.completeError(
-            TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}"));
+          TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}"),
+        );
         return;
       }
       (port as SendPort).send([

@@ -35,6 +35,14 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
+    void *buffer_memory = mmap(NULL, configuration->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+    if (buffer_memory == MAP_FAILED)
+    {
+      return NULL;
+    }
+
+    worker->buffers[index].iov_base = buffer_memory;
+    worker->buffers[index].iov_len = configuration->buffer_size;
     worker->used_buffers[index] = BUFFER_AVAILABLE;
     worker->used_buffers_offsets[index] = 0;
   }
@@ -138,6 +146,10 @@ int transport_worker_close(transport_worker_t *worker)
 
 void transport_worker_destroy(transport_worker_t *worker)
 {
+  for (size_t index = 0; index < worker->buffers_count; index++)
+  {
+    munmap(worker->buffers[index].iov_base, worker->buffer_size);
+  }
   free(worker->buffers);
   free(worker->used_buffers);
   io_uring_queue_exit(worker->ring);
