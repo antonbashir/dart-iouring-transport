@@ -26,7 +26,7 @@ String _event(int userdata) {
   return "unkown";
 }
 
-class TransportWorkerCallbacks {
+class TransportCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
   final _readCallbacks = <int, Completer<TransportPayload>>{};
   final _writeCallbacks = <int, Completer<void>>{};
@@ -81,7 +81,7 @@ class TransportWorker {
   late final RawReceivePort _activator;
   late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final TransportConnector _connector;
-  late final TransportWorkerCallbacks _callbacks;
+  late final TransportCallbacks _callbacks;
   late final StreamController<TransportPayload> _serverController;
   late final Stream<TransportPayload> _serverStream;
   late final void Function(TransportInboundChannel channel)? _onAccept;
@@ -124,7 +124,7 @@ class TransportWorker {
     _usedBuffers = _workerPointer.ref.used_buffers;
     _usedBuffersOffsets = _workerPointer.ref.used_buffers_offsets;
     _buffers = _workerPointer.ref.buffers;
-    _callbacks = TransportWorkerCallbacks();
+    _callbacks = TransportCallbacks();
     _serverController = StreamController();
     _serverStream = _serverController.stream;
     _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);

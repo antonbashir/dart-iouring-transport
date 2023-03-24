@@ -10,7 +10,7 @@ import 'payload.dart';
 import 'worker.dart';
 
 class TransportClient {
-  final TransportWorkerCallbacks _callbacks;
+  final TransportCallbacks _callbacks;
   final TransportOutboundChannel _channel;
 
   TransportClient(this._callbacks, this._channel);
@@ -53,7 +53,7 @@ class TransportClientPool {
 
 class TransportConnector {
   final TransportBindings _bindings;
-  final TransportWorkerCallbacks _callbacks;
+  final TransportCallbacks _callbacks;
   final Pointer<transport_t> _transportPointer;
   final Pointer<transport_worker_t> _workerPointer;
 

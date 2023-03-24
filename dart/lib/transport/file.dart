@@ -8,7 +8,7 @@ import 'payload.dart';
 
 class TransportFile {
   final TransportOutboundChannel _channel;
-  final TransportWorkerCallbacks _callbacks;
+  final TransportCallbacks _callbacks;
 
   TransportFile(this._callbacks, this._channel);
 

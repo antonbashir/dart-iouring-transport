@@ -12,14 +12,14 @@ class TransportDefaults {
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
         ringSize: 16384,
-        ringFlags: ringSetupSqpoll,
+        ringFlags: 0,
       );
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 2048,
         ringSize: 16384,
-        ringFlags: ringSetupSqpoll,
+        ringFlags: 0,
       );
 
   static TransportClientConfiguration client() => TransportClientConfiguration(
