@@ -6,17 +6,17 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        listenerIsolates: 2,
-        workerInsolates: 2,
+        listenerIsolates: 4,
+        workerInsolates: 4,
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
         ringSize: 16384,
-        ringFlags: ringSetupSqpoll,
+        ringFlags: 0,
       );
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
-        buffersCount: 2048,
+        buffersCount: 4096,
         bufferSize: 2048,
         ringSize: 16384,
         ringFlags: 0,
