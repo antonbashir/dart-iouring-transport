@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -34,12 +35,12 @@ class TransportListener {
           final userData = cqe.ref.user_data;
           final flags = cqe.ref.flags;
           if (flags & transportMessageData != 0) {
-            bindings.transport_listener_prepare_data(listenerPointer, result, userData);
+            bindings.transport_listener_prepare_by_data(listenerPointer, result, userData);
             submit = true;
             continue;
           }
           if (flags & transportMessageResult != 0) {
-            bindings.transport_listener_prepare_result(listenerPointer, result, userData);
+            bindings.transport_listener_prepare_by_result(listenerPointer, result, userData);
             submit = true;
             continue;
           }
@@ -47,8 +48,9 @@ class TransportListener {
         }
         if (submit) bindings.transport_listener_submit(listenerPointer);
         for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
-          workerPorts[workerIndex].send(events[workerIndex]);
-          events[workerIndex].clear();
+          final workerEvents = events[workerIndex];
+          workerPorts[workerIndex].send(workerEvents);
+          workerEvents.clear();
         }
         bindings.transport_cqe_advance(ring, cqeCount);
       }

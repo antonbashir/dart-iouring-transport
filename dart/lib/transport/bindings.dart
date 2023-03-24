@@ -14910,75 +14910,45 @@ class TransportBindings {
   late final _transport_listener_get_worker_index =
       _transport_listener_get_worker_indexPtr.asFunction<int Function(int)>();
 
-  int transport_listener_prepare_result(
+  int transport_listener_prepare_by_result(
     ffi.Pointer<transport_listener_t> listener,
     int result,
     int data,
   ) {
-    return _transport_listener_prepare_result(
+    return _transport_listener_prepare_by_result(
       listener,
       result,
       data,
     );
   }
 
-  late final _transport_listener_prepare_resultPtr = _lookup<
+  late final _transport_listener_prepare_by_resultPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_listener_t>, ffi.Uint32,
-              ffi.Uint64)>>('transport_listener_prepare_result');
-  late final _transport_listener_prepare_result =
-      _transport_listener_prepare_resultPtr.asFunction<
+              ffi.Uint64)>>('transport_listener_prepare_by_result');
+  late final _transport_listener_prepare_by_result =
+      _transport_listener_prepare_by_resultPtr.asFunction<
           int Function(ffi.Pointer<transport_listener_t>, int, int)>();
 
-  int transport_listener_prepare_data(
+  int transport_listener_prepare_by_data(
     ffi.Pointer<transport_listener_t> listener,
     int result,
     int data,
   ) {
-    return _transport_listener_prepare_data(
+    return _transport_listener_prepare_by_data(
       listener,
       result,
       data,
     );
   }
 
-  late final _transport_listener_prepare_dataPtr = _lookup<
+  late final _transport_listener_prepare_by_dataPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_listener_t>, ffi.Uint32,
-              ffi.Uint64)>>('transport_listener_prepare_data');
-  late final _transport_listener_prepare_data =
-      _transport_listener_prepare_dataPtr.asFunction<
+              ffi.Uint64)>>('transport_listener_prepare_by_data');
+  late final _transport_listener_prepare_by_data =
+      _transport_listener_prepare_by_dataPtr.asFunction<
           int Function(ffi.Pointer<transport_listener_t>, int, int)>();
-
-  bool transport_listener_is_internal_result(
-    ffi.Pointer<io_uring_cqe> cqe,
-  ) {
-    return _transport_listener_is_internal_result(
-      cqe,
-    );
-  }
-
-  late final _transport_listener_is_internal_resultPtr =
-      _lookup<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>(
-          'transport_listener_is_internal_result');
-  late final _transport_listener_is_internal_result =
-      _transport_listener_is_internal_resultPtr
-          .asFunction<bool Function(ffi.Pointer<io_uring_cqe>)>();
-
-  bool transport_listener_is_internal_data(
-    ffi.Pointer<io_uring_cqe> cqe,
-  ) {
-    return _transport_listener_is_internal_data(
-      cqe,
-    );
-  }
-
-  late final _transport_listener_is_internal_dataPtr =
-      _lookup<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>(
-          'transport_listener_is_internal_data');
-  late final _transport_listener_is_internal_data =
-      _transport_listener_is_internal_dataPtr
-          .asFunction<bool Function(ffi.Pointer<io_uring_cqe>)>();
 
   ffi.Pointer<transport_acceptor_t> transport_acceptor_initialize(
     ffi.Pointer<transport_acceptor_configuration_t> configuration,
@@ -22543,20 +22513,14 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Int Function(
                   ffi.Pointer<transport_listener_t>, ffi.Uint32, ffi.Uint64)>>
-      get transport_listener_prepare_result =>
-          _library._transport_listener_prepare_resultPtr;
+      get transport_listener_prepare_by_result =>
+          _library._transport_listener_prepare_by_resultPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(
                   ffi.Pointer<transport_listener_t>, ffi.Uint32, ffi.Uint64)>>
-      get transport_listener_prepare_data =>
-          _library._transport_listener_prepare_dataPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>
-      get transport_listener_is_internal_result =>
-          _library._transport_listener_is_internal_resultPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<io_uring_cqe>)>>
-      get transport_listener_is_internal_data =>
-          _library._transport_listener_is_internal_dataPtr;
+      get transport_listener_prepare_by_data =>
+          _library._transport_listener_prepare_by_dataPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<transport_acceptor_t> Function(
@@ -26592,10 +26556,6 @@ class transport_worker extends ffi.Struct {
   external ffi.Pointer<ffi.Int> used_buffers;
 
   external ffi.Pointer<ffi.Uint64> used_buffers_offsets;
-
-  external ffi.Pointer<mh_i32_t> used_acceptors;
-
-  external ffi.Pointer<mh_i32_t> used_clients;
 }
 
 typedef transport_worker_t = transport_worker;
@@ -30517,7 +30477,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

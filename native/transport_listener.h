@@ -39,10 +39,8 @@ extern "C"
   void transport_listener_destroy(transport_listener_t *listener);
   int transport_listener_submit(struct transport_listener *listener);
   uint8_t transport_listener_get_worker_index(uint64_t worker_data);
-  int transport_listener_prepare_result(transport_listener_t *listener, uint32_t result, uint64_t data);
-  int transport_listener_prepare_data(transport_listener_t *listener, uint32_t result, uint64_t data);
-  bool transport_listener_is_internal_result(struct io_uring_cqe* cqe);
-  bool transport_listener_is_internal_data(struct io_uring_cqe* cqe);
+  int transport_listener_prepare_by_result(transport_listener_t *listener, uint32_t result, uint64_t data);
+  int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t result, uint64_t data);
 #if defined(__cplusplus)
 }
 #endif

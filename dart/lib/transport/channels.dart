@@ -17,7 +17,7 @@ class TransportChannel {
     _bufferFinalizers[this._pointer.address] = Queue();
   }
 
-  
+  @pragma(preferInlinePragma)
   Future<int> allocate() async {
     var bufferId = _bindings.transport_worker_select_buffer(_pointer);
     if (bufferId == -1) {
@@ -40,7 +40,7 @@ class TransportChannel {
     _pointer.ref.used_buffers_offsets[bufferId] = 0;
     _pointer.ref.used_buffers[bufferId] = transportBufferAvailable;
     final finalizer = _bufferFinalizers[_pointer.address]!;
-    if (finalizer.isNotEmpty) finalizer.removeFirst().complete(bufferId);
+    if (finalizer.isNotEmpty) finalizer.removeLast().complete(bufferId);
   }
 
   void close() => _bindings.transport_close_descritor(descriptor);

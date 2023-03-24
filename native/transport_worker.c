@@ -31,8 +31,6 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   worker->used_buffers = malloc(sizeof(int) * configuration->buffers_count);
   worker->used_buffers_offsets = malloc(sizeof(uint64_t) * configuration->buffers_count);
-  worker->used_acceptors = mh_i32_new();
-  worker->used_clients = mh_i32_new();
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
@@ -165,7 +163,5 @@ void transport_worker_destroy(transport_worker_t *worker)
   free(worker->used_buffers);
   io_uring_queue_exit(worker->ring);
   free(worker->ring);
-  mh_i32_delete(worker->used_acceptors);
-  mh_i32_delete(worker->used_clients);
   free(worker);
 }

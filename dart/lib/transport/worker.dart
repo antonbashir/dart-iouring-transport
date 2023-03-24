@@ -94,7 +94,7 @@ class TransportWorker {
       for (var event in events) {
         if (event[0] < 0) {
           _handleError(event[0], event[1]);
-          return;
+          continue;
         }
         _handle(event[0], event[1]);
       }
@@ -145,6 +145,7 @@ class TransportWorker {
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
+  @pragma(preferInlinePragma)
   void _handleError(int result, int userData) {
     _logger.info("[handle error] result = $result, event = ${_event(userData)}");
 
@@ -235,27 +236,29 @@ class TransportWorker {
     }
   }
 
-  Future<void> _handle(int result, int userData) async {
+  @pragma(preferInlinePragma)
+  void _handle(int result, int userData) {
 //    _logger.info("[handle] result = $result, worker = ${_workerPointer.ref.id}, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = _bindings.transport_worker_get_buffer_index(_workerPointer, userData);
       final fd = _workerPointer.ref.used_buffers[bufferId];
+      final channel = _inboundChannels[fd]!;
       if (!_serverController.hasListener) {
         _logger.warn("[server] no listeners for fd = $fd");
-        _inboundChannels[fd]!.free(bufferId);
+        channel.free(bufferId);
         return;
       }
       final buffer = _workerPointer.ref.buffers[bufferId];
       _serverController.add(TransportPayload(buffer.iov_base.cast<Uint8>().asTypedList(result), (answer, offset) {
         if (answer != null) {
-          _inboundChannels[fd]!.reuse(bufferId);
+          channel.reuse(bufferId);
           buffer.iov_base.cast<Uint8>().asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
           _bindings.transport_worker_write(_workerPointer, fd, bufferId, offset, transportEventWrite);
           return;
         }
-        _inboundChannels[fd]!.free(bufferId);
+        channel.free(bufferId);
       }));
       return;
     }
@@ -292,23 +295,17 @@ class TransportWorker {
 
     if (userData & transportEventConnect != 0) {
       final fd = _bindings.transport_worker_get_fd(userData);
-      //_logger.info("[client]: connected fd = $fd");
-      _outboundChannels[fd] = TransportOutboundChannel(_workerPointer, fd, _bindings);
-      _callbacks.notifyConnect(
-        fd,
-        TransportClient(
-          _callbacks,
-          _outboundChannels[fd]!,
-        ),
-      );
+      final channel = TransportOutboundChannel(_workerPointer, fd, _bindings);
+      _outboundChannels[fd] = channel;
+      _callbacks.notifyConnect(fd, TransportClient(_callbacks, channel));
       return;
     }
 
     if (userData & transportEventAccept != 0) {
       _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
-      //_logger.info("[server] accepted fd = $result");
-      _inboundChannels[result] = TransportInboundChannel(_workerPointer, result, _bindings);
-      _onAccept?.call(_inboundChannels[result]!);
+      final channel = TransportInboundChannel(_workerPointer, result, _bindings);
+      _inboundChannels[result] = channel;
+      _onAccept?.call(channel);
       return;
     }
   }

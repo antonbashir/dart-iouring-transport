@@ -43,7 +43,6 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
 
 int transport_listener_register_buffers(transport_listener_t *listener)
 {
-
   int buffer_index = 0;
   for (int worker_index = 0; worker_index < listener->workers_count; worker_index++)
   {
@@ -63,16 +62,6 @@ uint8_t transport_listener_get_worker_index(uint64_t data)
   return (uint8_t)((data >> 16) & 0xff);
 }
 
-bool transport_listener_is_internal_result(struct io_uring_cqe *cqe)
-{
-  return cqe->flags & TRANSPORT_MESSAGE_RESULT;
-}
-
-bool transport_listener_is_internal_data(struct io_uring_cqe *cqe)
-{
-  return cqe->flags & TRANSPORT_MESSAGE_DATA;
-}
-
 static inline transport_worker_t *transport_listener_get_worker_from_data(transport_listener_t *listener, uint64_t data)
 {
   return (transport_worker_t *)listener->workers[(uint8_t)((data >> 16) & 0xff)];
@@ -88,7 +77,7 @@ static inline uint16_t transport_listener_get_buffer_id(int64_t data)
   return (uint16_t)((data >> 24) & 0xffff);
 }
 
-int transport_listener_prepare_result(transport_listener_t *listener, uint32_t result, uint64_t data)
+int transport_listener_prepare_by_result(transport_listener_t *listener, uint32_t result, uint64_t data)
 {
   struct io_uring_sqe *sqe = provide_sqe(listener->ring);
   uint16_t event = (uint16_t)(result & 0xffff);
@@ -113,7 +102,7 @@ int transport_listener_prepare_result(transport_listener_t *listener, uint32_t r
   unreachable();
 }
 
-int transport_listener_prepare_data(transport_listener_t *listener, uint32_t result, uint64_t data)
+int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t result, uint64_t data)
 {
   struct io_uring_sqe *sqe = provide_sqe(listener->ring);
   uint16_t event = (uint16_t)(data & 0xffff);
