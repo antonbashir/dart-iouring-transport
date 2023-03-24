@@ -17,21 +17,21 @@ class TransportDefaults {
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
         buffersCount: 4096,
-        bufferSize: 4096,
+        bufferSize: 2048,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,
       );
 
   static TransportClientConfiguration client() => TransportClientConfiguration(
         maxConnections: 2048,
-        receiveBufferSize: 4096,
-        sendBufferSize: 4096,
+        receiveBufferSize: 2048,
+        sendBufferSize: 2048,
         defaultPool: 1,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
         maxConnections: 2048,
-        receiveBufferSize: 4096,
-        sendBufferSize: 4096,
+        receiveBufferSize: 2048,
+        sendBufferSize: 2048,
       );
 }

@@ -247,7 +247,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData) {
-//    _logger.info("[handle] result = $result, worker = ${_workerPointer.ref.id}, event = ${_event(userData)}, eventData = ${userData & ~transportEventAll}");
+//    _logger.info("[handle] result = $result");
 
     if (userData & transportEventRead != 0) {
       final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
