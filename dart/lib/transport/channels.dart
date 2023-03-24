@@ -11,10 +11,19 @@ class TransportChannel {
   final Pointer<transport_worker_t> _pointer;
   final TransportBindings _bindings;
 
+  late final int _bufferSize;
+  late final Pointer<Int> _usedBuffers;
+  late final Pointer<iovec> _buffers;
+  late final Pointer<Uint64> _usedBuffersOffsets;
+
   static final _bufferFinalizers = <int, Queue<Completer<int>>>{};
 
   TransportChannel(this._pointer, this.descriptor, this._bindings) {
     _bufferFinalizers[this._pointer.address] = Queue();
+    _bufferSize = _pointer.ref.buffer_size;
+    _usedBuffers = _pointer.ref.used_buffers;
+    _usedBuffersOffsets = _pointer.ref.used_buffers_offsets;
+    _buffers = _pointer.ref.buffers;
   }
 
   @pragma(preferInlinePragma)
@@ -29,16 +38,16 @@ class TransportChannel {
   }
 
   void reuse(int bufferId) {
-    _bindings.memset(_pointer.ref.buffers[bufferId].iov_base, 0, _pointer.ref.buffer_size);
-    _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
-    _pointer.ref.used_buffers_offsets[bufferId] = 0;
+    _bindings.memset(_buffers[bufferId].iov_base, 0, _bufferSize);
+    _buffers[bufferId].iov_len = _bufferSize;
+    _usedBuffersOffsets[bufferId] = 0;
   }
 
   void free(int bufferId) {
-    _bindings.memset(_pointer.ref.buffers[bufferId].iov_base, 0, _pointer.ref.buffer_size);
-    _pointer.ref.buffers[bufferId].iov_len = _pointer.ref.buffer_size;
-    _pointer.ref.used_buffers_offsets[bufferId] = 0;
-    _pointer.ref.used_buffers[bufferId] = transportBufferAvailable;
+    _bindings.memset(_buffers[bufferId].iov_base, 0, _bufferSize);
+    _buffers[bufferId].iov_len = _pointer.ref.buffer_size;
+    _usedBuffers[bufferId] = transportBufferAvailable;
+    _usedBuffersOffsets[bufferId] = 0;
     final finalizer = _bufferFinalizers[_pointer.address]!;
     if (finalizer.isNotEmpty) finalizer.removeLast().complete(bufferId);
   }
@@ -56,7 +65,7 @@ class TransportInboundChannel extends TransportChannel {
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
     final bufferId = await allocate();
-    final buffer = _pointer.ref.buffers[bufferId];
+    final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
     _bindings.transport_worker_write(_pointer, descriptor, bufferId, offset, transportEventWrite);
@@ -71,7 +80,7 @@ class TransportOutboundChannel extends TransportChannel {
   }
 
   void write(Uint8List bytes, int bufferId, {int offset = 0}) {
-    final buffer = _pointer.ref.buffers[bufferId];
+    final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
     _bindings.transport_worker_write(_pointer, descriptor, bufferId, offset, transportEventWriteCallback);

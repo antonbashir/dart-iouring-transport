@@ -35,20 +35,20 @@ class TransportClient {
 }
 
 class TransportClientPool {
-  final List<TransportClient> _objects;
+  final List<TransportClient> _clients;
   var _next = 0;
 
-  TransportClientPool(this._objects);
+  TransportClientPool(this._clients);
 
   TransportClient select() {
-    final client = _objects[_next];
-    if (++_next == _objects.length) _next = 0;
+    final client = _clients[_next];
+    if (++_next == _clients.length) _next = 0;
     return client;
   }
 
-  void forEach(FutureOr<void> Function(TransportClient object) action) => _objects.forEach(action);
+  void forEach(FutureOr<void> Function(TransportClient object) action) => _clients.forEach(action);
 
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportClient object) mapper) => _objects.map(mapper);
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportClient object) mapper) => _clients.map(mapper);
 }
 
 class TransportConnector {
@@ -63,7 +63,9 @@ class TransportConnector {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
-      final client = using((arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, host.toNativeUtf8(allocator: arena).cast(), port));
+      final client = using(
+        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, host.toNativeUtf8(allocator: arena).cast(), port),
+      );
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(client.ref.fd, completer);
       _bindings.transport_worker_connect(_workerPointer, client);
