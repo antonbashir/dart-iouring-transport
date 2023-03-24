@@ -43,8 +43,6 @@ extern "C"
   int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *acceptor);
   int transport_worker_close(transport_worker_t *worker);
   int transport_worker_select_buffer(transport_worker_t *worker);
-  int32_t transport_worker_get_fd(uint64_t worker_data);
-  uint16_t transport_worker_get_buffer_index(transport_worker_t *worker, uint64_t worker_data);
 
   void transport_worker_destroy(transport_worker_t *worker);
 

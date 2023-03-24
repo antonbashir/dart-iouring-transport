@@ -19232,38 +19232,6 @@ class TransportBindings {
       _transport_worker_select_bufferPtr
           .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
 
-  int transport_worker_get_fd(
-    int worker_data,
-  ) {
-    return _transport_worker_get_fd(
-      worker_data,
-    );
-  }
-
-  late final _transport_worker_get_fdPtr =
-      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint64)>>(
-          'transport_worker_get_fd');
-  late final _transport_worker_get_fd =
-      _transport_worker_get_fdPtr.asFunction<int Function(int)>();
-
-  int transport_worker_get_buffer_index(
-    ffi.Pointer<transport_worker_t> worker,
-    int worker_data,
-  ) {
-    return _transport_worker_get_buffer_index(
-      worker,
-      worker_data,
-    );
-  }
-
-  late final _transport_worker_get_buffer_indexPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Uint16 Function(ffi.Pointer<transport_worker_t>,
-              ffi.Uint64)>>('transport_worker_get_buffer_index');
-  late final _transport_worker_get_buffer_index =
-      _transport_worker_get_buffer_indexPtr
-          .asFunction<int Function(ffi.Pointer<transport_worker_t>, int)>();
-
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
   ) {
@@ -23350,13 +23318,6 @@ class _SymbolAddresses {
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_select_buffer =>
           _library._transport_worker_select_bufferPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint64)>>
-      get transport_worker_get_fd => _library._transport_worker_get_fdPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Uint16 Function(ffi.Pointer<transport_worker_t>, ffi.Uint64)>>
-      get transport_worker_get_buffer_index =>
-          _library._transport_worker_get_buffer_indexPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>

@@ -94,16 +94,6 @@ static inline transport_listener_t *transport_listener_pool_next(transport_liste
   return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
 }
 
-int32_t transport_worker_get_fd(uint64_t data)
-{
-  return (int32_t)((data >> 24) & 0xffffffff);
-}
-
-uint16_t transport_worker_get_buffer_index(transport_worker_t *worker, uint64_t data)
-{
-  return ((int16_t)((data >> 24) & 0xffff)) - worker->buffer_shift;
-}
-
 int transport_worker_write(transport_worker_t *worker, int32_t fd, int16_t buffer_id, uint64_t offset, uint16_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
