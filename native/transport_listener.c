@@ -57,11 +57,6 @@ int transport_listener_register_buffers(transport_listener_t *listener)
   return io_uring_register_buffers(listener->ring, listener->buffers, buffer_index);
 }
 
-uint8_t transport_listener_get_worker_index(uint64_t data)
-{
-  return (uint8_t)((data >> 16) & 0xff);
-}
-
 static inline transport_worker_t *transport_listener_get_worker_from_data(transport_listener_t *listener, uint64_t data)
 {
   return (transport_worker_t *)listener->workers[(uint8_t)((data >> 16) & 0xff)];
