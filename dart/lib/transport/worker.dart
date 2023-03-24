@@ -291,7 +291,7 @@ class TransportWorker {
 
     if (userData & transportEventConnect != 0) {
       final fd = _bindings.transport_worker_get_fd(userData);
-      _logger.info("[client]: connected fd = $fd");
+      //_logger.info("[client]: connected fd = $fd");
       _outboundChannels[fd] = TransportOutboundChannel(_workerPointer, fd, _bindings);
       _callbacks.notifyConnect(
         fd,
@@ -305,7 +305,7 @@ class TransportWorker {
 
     if (userData & transportEventAccept != 0) {
       _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
-      _logger.info("[server] accepted fd = $result");
+      //_logger.info("[server] accepted fd = $result");
       _inboundChannels[result] = TransportInboundChannel(_workerPointer, result, _bindings);
       _onAccept?.call(_inboundChannels[result]!);
       return;

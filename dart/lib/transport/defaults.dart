@@ -6,7 +6,7 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
-        listenerIsolates: 2,
+        listenerIsolates: 4,
         workerInsolates: 2,
       );
 
@@ -23,14 +23,14 @@ class TransportDefaults {
       );
 
   static TransportClientConfiguration client() => TransportClientConfiguration(
-        maxConnections: 1024,
+        maxConnections: 2048,
         receiveBufferSize: 4096,
         sendBufferSize: 4096,
         defaultPool: 1,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
-        maxConnections: 1024,
+        maxConnections: 2048,
         receiveBufferSize: 4096,
         sendBufferSize: 4096,
       );
