@@ -16,16 +16,16 @@ class TransportClient {
   TransportClient(this._callbacks, this._channel);
 
   Future<TransportPayload> read() async {
-    final completer = Completer<TransportPayload>();
     final bufferId = await _channel.allocate();
+    final completer = Completer<TransportPayload>();
     _callbacks.putRead(bufferId, completer);
     _channel.read(bufferId, offset: 0);
     return completer.future;
   }
 
   Future<void> write(Uint8List bytes) async {
-    final completer = Completer<void>();
     final bufferId = await _channel.allocate();
+    final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
     _channel.write(bytes, bufferId);
     return completer.future;
@@ -63,11 +63,7 @@ class TransportConnector {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
-      final client = using((arena) => _bindings.transport_client_initialize(
-            _transportPointer.ref.client_configuration,
-            host.toNativeUtf8(allocator: arena).cast(),
-            port,
-          ));
+      final client = using((arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, host.toNativeUtf8(allocator: arena).cast(), port));
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(client.ref.fd, completer);
       _bindings.transport_worker_connect(_workerPointer, client);
