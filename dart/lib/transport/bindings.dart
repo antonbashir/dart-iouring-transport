@@ -14896,20 +14896,6 @@ class TransportBindings {
   late final _transport_listener_submit = _transport_listener_submitPtr
       .asFunction<int Function(ffi.Pointer<transport_listener>)>();
 
-  int transport_listener_get_worker_index(
-    int worker_data,
-  ) {
-    return _transport_listener_get_worker_index(
-      worker_data,
-    );
-  }
-
-  late final _transport_listener_get_worker_indexPtr =
-      _lookup<ffi.NativeFunction<ffi.Uint8 Function(ffi.Uint64)>>(
-          'transport_listener_get_worker_index');
-  late final _transport_listener_get_worker_index =
-      _transport_listener_get_worker_indexPtr.asFunction<int Function(int)>();
-
   int transport_listener_prepare_by_result(
     ffi.Pointer<transport_listener_t> listener,
     int result,
@@ -22474,9 +22460,6 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_listener>)>>
       get transport_listener_submit => _library._transport_listener_submitPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Uint8 Function(ffi.Uint64)>>
-      get transport_listener_get_worker_index =>
-          _library._transport_listener_get_worker_indexPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(
@@ -26399,7 +26382,7 @@ class itimerval extends ffi.Struct {
 }
 
 class transport_listener_pool extends ffi.Struct {
-  external rlist listener;
+  external rlist listeners;
 
   external ffi.Pointer<rlist> next_listener;
 
@@ -26517,6 +26500,9 @@ class transport_worker extends ffi.Struct {
   external ffi.Pointer<ffi.Int> used_buffers;
 
   external ffi.Pointer<ffi.Uint64> used_buffers_offsets;
+
+  @ffi.Uint64()
+  external int packed_id;
 }
 
 typedef transport_worker_t = transport_worker;

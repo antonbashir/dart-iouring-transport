@@ -126,8 +126,9 @@ class Transport {
         return;
       }
       for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
-        listenerPointer.ref.workers[workerIndex] = workers[workerIndex];
-        _bindings.transport_listener_pool_add(Pointer.fromAddress(workers[workerIndex]).cast<transport_worker_t>().ref.listeners, listenerPointer);
+        final worker = Pointer.fromAddress(workers[workerIndex]).cast<transport_worker_t>();
+        listenerPointer.ref.workers[workerIndex] = worker.address;
+        _bindings.transport_listener_pool_add(worker.ref.listeners, listenerPointer);
       }
       final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
       if (listenerRegisterResult != 0) {

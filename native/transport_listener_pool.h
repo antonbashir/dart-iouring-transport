@@ -10,7 +10,7 @@ extern "C"
 
   typedef struct transport_listener_pool
   {
-    struct rlist listener;
+    struct rlist listeners;
     struct rlist *next_listener;
     uint16_t next_listener_index;
     size_t count;

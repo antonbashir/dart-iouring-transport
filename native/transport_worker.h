@@ -33,6 +33,7 @@ extern "C"
     uint16_t buffers_count;
     int *used_buffers;
     uint64_t *used_buffers_offsets;
+    uint64_t packed_id;
   } transport_worker_t;
 
   transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id);

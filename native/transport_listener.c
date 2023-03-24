@@ -80,7 +80,7 @@ int transport_listener_prepare_by_result(transport_listener_t *listener, uint32_
   {
     transport_worker_t *worker = transport_listener_get_worker_from_result(listener, result);
     transport_acceptor_t *acceptor = (transport_acceptor_t *)data;
-    uint64_t new_data = ((uint64_t)(acceptor->fd) << 24) | ((uint64_t)worker->id << 16) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
+    uint64_t new_data = ((uint64_t)(acceptor->fd) << 24) | (worker->packed_id) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
     io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
     io_uring_sqe_set_data64(sqe, new_data);
     return 0;
@@ -89,7 +89,7 @@ int transport_listener_prepare_by_result(transport_listener_t *listener, uint32_
   {
     transport_worker_t *worker = transport_listener_get_worker_from_result(listener, result);
     transport_client_t *client = (transport_client_t *)data;
-    uint64_t new_data = ((uint64_t)(client->fd) << 24) | ((uint64_t)worker->id << 16) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
+    uint64_t new_data = ((uint64_t)(client->fd) << 24) | (worker->packed_id) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
     io_uring_prep_connect(sqe, client->fd, (struct sockaddr *)&client->client_address, client->client_address_length);
     io_uring_sqe_set_data64(sqe, new_data);
     return 0;
