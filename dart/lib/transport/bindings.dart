@@ -19123,7 +19123,7 @@ class TransportBindings {
   late final _transport_worker_writePtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int32,
-              ffi.Int16, ffi.Uint64, ffi.Uint16)>>('transport_worker_write');
+              ffi.Uint16, ffi.Uint64, ffi.Uint16)>>('transport_worker_write');
   late final _transport_worker_write = _transport_worker_writePtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -19146,7 +19146,7 @@ class TransportBindings {
   late final _transport_worker_readPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Int32,
-              ffi.Int16, ffi.Uint64, ffi.Uint16)>>('transport_worker_read');
+              ffi.Uint16, ffi.Uint64, ffi.Uint16)>>('transport_worker_read');
   late final _transport_worker_read = _transport_worker_readPtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -23271,7 +23271,7 @@ class _SymbolAddresses {
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Int32,
-              ffi.Int16,
+              ffi.Uint16,
               ffi.Uint64,
               ffi.Uint16)>> get transport_worker_write =>
       _library._transport_worker_writePtr;
@@ -23280,7 +23280,7 @@ class _SymbolAddresses {
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Int32,
-              ffi.Int16,
+              ffi.Uint16,
               ffi.Uint64,
               ffi.Uint16)>> get transport_worker_read =>
       _library._transport_worker_readPtr;
@@ -26316,6 +26316,9 @@ class transport_listener_configuration extends ffi.Struct {
 
   @ffi.Uint16()
   external int buffers_count;
+
+  @ffi.Uint16()
+  external int buffer_size;
 }
 
 class transport_listener extends ffi.Struct {
@@ -26332,6 +26335,9 @@ class transport_listener extends ffi.Struct {
 
   @ffi.Uint16()
   external int buffers_count;
+
+  @ffi.Uint16()
+  external int buffer_size;
 }
 
 typedef transport_listener_t = transport_listener;
@@ -30424,11 +30430,11 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'Debug';
+const String BUILD_TYPE = 'RelWithDebInfo';
 
 const String BUILD_INFO = '';
 

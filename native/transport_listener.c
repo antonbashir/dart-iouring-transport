@@ -25,6 +25,7 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
 
   listener->workers_count = configuration->workers_count;
   listener->buffers_count = configuration->buffers_count;
+  listener->buffer_size = configuration->buffer_size;
   listener->workers = malloc(sizeof(intptr_t) * configuration->workers_count);
   listener->buffers = malloc(sizeof(struct iovec) * listener->buffers_count * listener->workers_count);
 
@@ -49,7 +50,15 @@ int transport_listener_register_buffers(transport_listener_t *listener)
     transport_worker_t *worker = (transport_worker_t *)listener->workers[worker_index];
     for (int worker_buffer_index = 0; worker_buffer_index < worker->buffers_count; worker_buffer_index++)
     {
-      listener->buffers[buffer_index] = worker->buffers[worker_buffer_index];
+      void *buffer_memory = mmap(NULL, worker->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+      if (buffer_memory == MAP_FAILED)
+      {
+        return -1;
+      }
+
+      listener->buffers[buffer_index].iov_base = buffer_memory;
+      listener->buffers[buffer_index].iov_len = worker->buffer_size;
+      worker->buffers[worker_buffer_index] = listener->buffers[buffer_index];
       buffer_index++;
     }
   }
@@ -104,9 +113,8 @@ int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t 
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    uint16_t worker_buffer_id = buffer_id - worker->buffer_shift;
-    struct iovec buffer = worker->buffers[worker_buffer_id];
-    io_uring_prep_read_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[worker_buffer_id], buffer_id);
+    struct iovec buffer = listener->buffers[buffer_id];
+    io_uring_prep_read_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
@@ -114,9 +122,8 @@ int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t 
   {
     transport_worker_t *worker = transport_listener_get_worker_from_data(listener, data);
     uint16_t buffer_id = transport_listener_get_buffer_id(data);
-    uint16_t worker_buffer_id = buffer_id - worker->buffer_shift;
-    struct iovec buffer = worker->buffers[worker_buffer_id];
-    io_uring_prep_write_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[worker_buffer_id], buffer_id);
+    struct iovec buffer = listener->buffers[buffer_id];
+    io_uring_prep_write_fixed(sqe, result, buffer.iov_base, buffer.iov_len, worker->used_buffers_offsets[buffer_id - worker->buffer_shift], buffer_id);
     io_uring_sqe_set_data64(sqe, data);
     return 0;
   }
@@ -137,6 +144,11 @@ int transport_listener_submit(struct transport_listener *listener)
 
 void transport_listener_destroy(transport_listener_t *listener)
 {
+  for (size_t index = 0; index < listener->buffers_count; index++)
+  {
+    munmap(listener->buffers[index].iov_base, listener->buffer_size);
+  }
+
   io_uring_unregister_buffers(listener->ring);
   io_uring_queue_exit(listener->ring);
   free(listener->ring);

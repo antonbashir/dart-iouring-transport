@@ -27,7 +27,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->listeners = transport_listener_pool_initialize();
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
-  worker->buffer_shift = configuration->buffer_size * id;
+  worker->buffer_shift = configuration->buffers_count * id;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   worker->used_buffers = malloc(sizeof(int) * configuration->buffers_count);
   worker->used_buffers_offsets = malloc(sizeof(uint64_t) * configuration->buffers_count);
@@ -35,14 +35,6 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
-    void *buffer_memory = mmap(NULL, configuration->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
-    if (buffer_memory == MAP_FAILED)
-    {
-      return NULL;
-    }
-
-    worker->buffers[index].iov_base = buffer_memory;
-    worker->buffers[index].iov_len = configuration->buffer_size;
     worker->used_buffers[index] = BUFFER_AVAILABLE;
     worker->used_buffers_offsets[index] = 0;
   }
@@ -95,7 +87,7 @@ static inline transport_listener_t *transport_listener_pool_next(transport_liste
   return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
 }
 
-int transport_worker_write(transport_worker_t *worker, int32_t fd, int16_t buffer_id, uint64_t offset, uint16_t event)
+int transport_worker_write(transport_worker_t *worker, int32_t fd, uint16_t buffer_id, uint64_t offset, uint16_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
@@ -106,7 +98,7 @@ int transport_worker_write(transport_worker_t *worker, int32_t fd, int16_t buffe
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_read(transport_worker_t *worker, int32_t fd, int16_t buffer_id, uint64_t offset, uint16_t event)
+int transport_worker_read(transport_worker_t *worker, int32_t fd, uint16_t buffer_id, uint64_t offset, uint16_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
@@ -146,10 +138,6 @@ int transport_worker_close(transport_worker_t *worker)
 
 void transport_worker_destroy(transport_worker_t *worker)
 {
-  for (size_t index = 0; index < worker->buffers_count; index++)
-  {
-    munmap(worker->buffers[index].iov_base, worker->buffer_size);
-  }
   free(worker->buffers);
   free(worker->used_buffers);
   io_uring_queue_exit(worker->ring);

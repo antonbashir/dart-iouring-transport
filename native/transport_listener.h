@@ -22,6 +22,7 @@ extern "C"
     int ring_flags;
     uint8_t workers_count;
     uint16_t buffers_count;
+    uint16_t buffer_size;
   } transport_listener_configuration_t;
 
   typedef struct transport_listener
@@ -32,6 +33,7 @@ extern "C"
     struct iovec *buffers;
     uint8_t workers_count;
     uint16_t buffers_count;
+    uint16_t buffer_size;
   } transport_listener_t;
 
   transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration);
