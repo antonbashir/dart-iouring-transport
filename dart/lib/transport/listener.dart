@@ -21,20 +21,13 @@ class TransportListener {
     _fromTransport.close();
     final ring = listenerPointer.ref.ring;
     final cqes = bindings.transport_allocate_cqes(ringSize);
-    final events = workerPorts.map((_) => <dynamic>[]).toList();
     while (true) {
       final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
       if (cqeCount != -1) {
         for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
           final cqe = cqes[cqeIndex];
           final result = cqe.ref.res;
-          final userData = cqe.ref.user_data;
-          events[result].add(userData);
-        }
-        for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
-          final workerEvents = events[workerIndex];
-          workerPorts[workerIndex].send(workerEvents);
-          workerEvents.clear();
+          workerPorts[result].send(null);
         }
         bindings.transport_cqe_advance(ring, cqeCount);
       }

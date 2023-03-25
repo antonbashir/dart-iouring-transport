@@ -3,9 +3,11 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/exception.dart';
 import 'package:iouring_transport/transport/listener.dart';
 import 'package:iouring_transport/transport/logger.dart';
+import 'package:iouring_transport/transport/worker.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -120,6 +122,10 @@ class Transport {
       if (listenerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[listener] is null"));
         return;
+      }
+      for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
+        final worker = Pointer.fromAddress(workers[workerIndex]).cast<transport_worker_t>();
+        _bindings.transport_listener_pool_add(worker.ref.listeners, listenerPointer);
       }
       (port as SendPort).send([
         _libraryPath,
