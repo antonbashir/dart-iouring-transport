@@ -97,7 +97,7 @@ int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buf
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = offset;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  io_uring_prep_read_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
+  io_uring_prep_write_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(worker->ring);
@@ -111,7 +111,7 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = offset;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  io_uring_prep_write_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
+  io_uring_prep_read_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(worker->ring);
