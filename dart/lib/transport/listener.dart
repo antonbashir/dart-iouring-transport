@@ -24,7 +24,14 @@ class TransportListener {
     while (true) {
       final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
       if (cqeCount != -1) {
-        workerPorts.forEach((element) => element.send(null));
+        final notifiedWorkers = <int>{};
+        for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+          final workerIndex = cqes[cqeIndex].ref.res;
+          if (notifiedWorkers.contains(workerIndex)) continue;
+          workerPorts[workerIndex].send(null);
+          notifiedWorkers.add(workerIndex);
+          if (notifiedWorkers.length == workerPorts.length) break;
+        }
         bindings.transport_cqe_advance(ring, cqeCount);
       }
     }

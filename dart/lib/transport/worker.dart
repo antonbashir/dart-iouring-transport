@@ -96,20 +96,24 @@ class TransportWorker {
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
       int cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
+      final events = <List<dynamic>>[];
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final result = cqe.ref.res;
         final data = cqe.ref.user_data;
         if ((data & 0xffff) & transportEventAll != 0) {
           int fd = (data >> 32) & 0xffffffff;
-          if (result < 0) {
-            _handleError(result, data, fd);
-            continue;
-          }
-          _handle(result, data, fd);
+          events.add([result, data, fd]);
         }
       }
       _bindings.transport_cqe_advance(_ring, cqeCount);
+      for (var event in events) {
+        if (event[0] < 0) {
+          _handleError(event[0], event[1], event[2]);
+          continue;
+        }
+        _handle(event[0], event[1], event[2]);
+      }
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
