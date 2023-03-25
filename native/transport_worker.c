@@ -95,7 +95,7 @@ int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buf
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 24) | (worker->packed_id) | ((uint64_t)event);
+  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 24) | (worker->packed_id) | (event);
   io_uring_prep_msg_ring_cqe_flags(sqe, listener->ring->ring_fd, fd, data, 0, TRANSPORT_MESSAGE_DATA);
   return io_uring_submit(worker->ring);
 }
@@ -106,7 +106,7 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = fd;
   worker->used_buffers_offsets[buffer_id] = offset;
-  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 24) | (worker->packed_id) | ((uint64_t)event);
+  uint64_t data = ((uint64_t)(buffer_id + worker->buffer_shift) << 24) | (worker->packed_id) | (event);
   io_uring_prep_msg_ring_cqe_flags(sqe, listener->ring->ring_fd, fd, data, 0, TRANSPORT_MESSAGE_DATA);
   return io_uring_submit(worker->ring);
 }
