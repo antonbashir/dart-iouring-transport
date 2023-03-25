@@ -100,7 +100,7 @@ int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buf
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_read(transport_worker_t *worker, int32_t fd, uint16_t buffer_id, uint64_t offset, uint16_t event)
+int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint64_t offset, uint16_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
