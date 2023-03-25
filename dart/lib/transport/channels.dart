@@ -22,7 +22,6 @@ class TransportChannel {
     _bufferFinalizers[this._pointer.address] = Queue();
     _bufferSize = _pointer.ref.buffer_size;
     _usedBuffers = _pointer.ref.used_buffers;
-    _usedBuffersOffsets = _pointer.ref.used_buffers_offsets;
     _buffers = _pointer.ref.buffers;
   }
 

@@ -72,10 +72,9 @@ class TransportWorker {
 
   late final Pointer<transport_worker_t> _workerPointer;
   late final Pointer<io_uring> _ring;
-  late final int _bufferShift;
   late final Pointer<Int> _usedBuffers;
   late final Pointer<iovec> _buffers;
-  late final Pointer<Uint64> _usedBuffersOffsets;
+  late final Pointer<Pointer<io_uring_cqe>> _cqes;
 
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
@@ -90,18 +89,26 @@ class TransportWorker {
 
   bool _hasServer = false;
   var _serving = false;
+
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((List<dynamic> events) {
-      _bindings.transport_cqe_advance(_ring, events.length);
-      for (var event in events) {
-        if (event[0] < 0) {
-          _handleError(event[0], event[1]);
-          continue;
+      int cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
+      for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+        final cqe = _cqes[cqeIndex];
+        final result = cqe.ref.res;
+        final data = cqe.ref.user_data;
+        if ((data & 0xffff) & transportEventAll != 0) {
+          final fd = events[cqeIndex];
+          if (result < 0) {
+            _handleError(result, data, fd);
+            continue;
+          }
+          _handle(result, data, fd);
         }
-        _handle(event[0], event[1]);
       }
+      _bindings.transport_cqe_advance(_ring, cqeCount);
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
@@ -125,9 +132,8 @@ class TransportWorker {
     _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
     await _initializer.future;
     _ring = _workerPointer.ref.ring;
-    _bufferShift = _workerPointer.ref.buffer_shift;
+    _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
-    _usedBuffersOffsets = _workerPointer.ref.used_buffers_offsets;
     _buffers = _workerPointer.ref.buffers;
     _activator.close();
   }
@@ -155,14 +161,13 @@ class TransportWorker {
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
   @pragma(preferInlinePragma)
-  void _handleError(int result, int userData) {
+  void _handleError(int result, int userData, int fd) {
     _logger.info("[handle error] result = $result, event = ${_event(userData)}");
 
     if (userData & transportEventRead != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
       if (result == -EAGAIN) {
-        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffersOffsets[bufferId], transportEventRead);
+        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventRead);
         return;
       }
       if (result == -EPIPE) {
@@ -179,10 +184,9 @@ class TransportWorker {
     }
 
     if (userData & transportEventWrite != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
       if (result == -EAGAIN) {
-        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffersOffsets[bufferId], transportEventWrite);
+        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWrite);
         return;
       }
       if (result == -EPIPE) {
@@ -205,7 +209,6 @@ class TransportWorker {
     }
 
     if (userData & transportEventConnect != 0) {
-      final fd = (userData >> 24) & 0xffffffff;
       final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = $fd";
       _logger.error(message);
       _bindings.transport_close_descritor(fd);
@@ -214,10 +217,10 @@ class TransportWorker {
     }
 
     if (userData & transportEventReadCallback != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
+
       if (result == -EAGAIN) {
-        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffersOffsets[bufferId], transportEventReadCallback);
+        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventReadCallback);
         return;
       }
       final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
@@ -230,10 +233,9 @@ class TransportWorker {
     }
 
     if (userData & transportEventWriteCallback != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
       if (result == -EAGAIN) {
-        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffersOffsets[bufferId], transportEventWriteCallback);
+        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWriteCallback);
         return;
       }
       final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
@@ -246,12 +248,11 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handle(int result, int userData) {
-//    _logger.info("[handle] result = $result, bid = ${((userData >> 24) & 0xffff) - _bufferShift}");
+  void _handle(int result, int userData, int fd) {
+    _logger.info("[handle] result = $result, bid = ${((userData >> 16) & 0xffff)}, fd = $fd");
 
     if (userData & transportEventRead != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
       final channel = _inboundChannels[fd]!;
       if (!_serverController.hasListener) {
         _logger.warn("[server] no listeners for fd = $fd");
@@ -274,16 +275,14 @@ class TransportWorker {
     }
 
     if (userData & transportEventWrite != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
       _inboundChannels[fd]!.reuse(bufferId);
       _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
       return;
     }
 
     if (userData & transportEventReadCallback != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
       final buffer = _buffers[bufferId];
       _callbacks.notifyRead(
         bufferId,
@@ -296,15 +295,13 @@ class TransportWorker {
     }
 
     if (userData & transportEventWriteCallback != 0) {
-      final bufferId = ((userData >> 24) & 0xffff) - _bufferShift;
-      final fd = _usedBuffers[bufferId];
+      final bufferId = ((userData >> 16) & 0xffff);
       _outboundChannels[fd]!.free(bufferId);
       _callbacks.notifyWrite(bufferId);
       return;
     }
 
     if (userData & transportEventConnect != 0) {
-      final fd = (userData >> 24) & 0xffffffff;
       final channel = TransportOutboundChannel(_workerPointer, fd, _bindings);
       _outboundChannels[fd] = channel;
       _callbacks.notifyConnect(fd, TransportClient(_callbacks, channel));

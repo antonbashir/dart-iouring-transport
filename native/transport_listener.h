@@ -20,28 +20,16 @@ extern "C"
   {
     size_t ring_size;
     int ring_flags;
-    uint8_t workers_count;
-    uint16_t buffers_count;
-    uint16_t buffer_size;
   } transport_listener_configuration_t;
 
   typedef struct transport_listener
   {
     struct io_uring *ring;
     struct rlist listener_pool_link;
-    intptr_t *workers;
-    struct iovec *buffers;
-    uint8_t workers_count;
-    uint16_t buffers_count;
-    uint16_t buffer_size;
   } transport_listener_t;
 
   transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration);
-  int transport_listener_register_buffers(transport_listener_t *listener);
   void transport_listener_destroy(transport_listener_t *listener);
-  int transport_listener_submit(struct transport_listener *listener);
-  int transport_listener_prepare_by_result(transport_listener_t *listener, uint32_t result, uint64_t data);
-  int transport_listener_prepare_by_data(transport_listener_t *listener, uint32_t result, uint64_t data);
 #if defined(__cplusplus)
 }
 #endif

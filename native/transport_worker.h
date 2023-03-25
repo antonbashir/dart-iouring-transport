@@ -25,15 +25,12 @@ extern "C"
   typedef struct transport_worker
   {
     uint8_t id;
-    uint16_t buffer_shift;
     struct io_uring *ring;
     transport_listener_pool_t *listeners;
     struct iovec *buffers;
     uint32_t buffer_size;
     uint16_t buffers_count;
     int *used_buffers;
-    uint64_t *used_buffers_offsets;
-    uint64_t packed_id;
   } transport_worker_t;
 
   transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id);

@@ -3,11 +3,9 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/exception.dart';
 import 'package:iouring_transport/transport/listener.dart';
 import 'package:iouring_transport/transport/logger.dart';
-import 'package:iouring_transport/transport/worker.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -50,8 +48,6 @@ class Transport {
     final nativeListenerConfiguration = calloc<transport_listener_configuration_t>();
     nativeListenerConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
     nativeListenerConfiguration.ref.ring_size = listenerConfiguration.ringSize;
-    nativeListenerConfiguration.ref.workers_count = transportConfiguration.workerInsolates;
-    nativeListenerConfiguration.ref.buffers_count = workerConfiguration.buffersCount;
 
     final nativeWorkerConfiguration = calloc<transport_worker_configuration_t>();
     nativeWorkerConfiguration.ref.ring_flags = workerConfiguration.ringFlags;
@@ -123,18 +119,6 @@ class Transport {
       final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
       if (listenerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[listener] is null"));
-        return;
-      }
-      for (var workerIndex = 0; workerIndex < listenerPointer.ref.workers_count; workerIndex++) {
-        final worker = Pointer.fromAddress(workers[workerIndex]).cast<transport_worker_t>();
-        listenerPointer.ref.workers[workerIndex] = worker.address;
-        _bindings.transport_listener_pool_add(worker.ref.listeners, listenerPointer);
-      }
-      final listenerRegisterResult = _bindings.transport_listener_register_buffers(listenerPointer);
-      if (listenerRegisterResult != 0) {
-        listenerCompleter.completeError(
-          TransportException("[listener] register buffers error code = $listenerRegisterResult, message = ${_bindings.strerror(-listenerRegisterResult).cast<Utf8>().toDartString()}"),
-        );
         return;
       }
       (port as SendPort).send([
