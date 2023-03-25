@@ -72,7 +72,7 @@ class TransportWorker {
 
   late final Pointer<transport_worker_t> _workerPointer;
   late final Pointer<io_uring> _ring;
-  late final Pointer<Int> _usedBuffers;
+  late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
   late final Pointer<Pointer<io_uring_cqe>> _cqes;
 

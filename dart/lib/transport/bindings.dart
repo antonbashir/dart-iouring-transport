@@ -19052,7 +19052,7 @@ class TransportBindings {
   late final _transport_worker_writePtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Uint32,
-              ffi.Uint16, ffi.Uint64, ffi.Uint16)>>('transport_worker_write');
+              ffi.Uint16, ffi.Uint32, ffi.Uint16)>>('transport_worker_write');
   late final _transport_worker_write = _transport_worker_writePtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -19075,7 +19075,7 @@ class TransportBindings {
   late final _transport_worker_readPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Uint32,
-              ffi.Uint16, ffi.Uint64, ffi.Uint16)>>('transport_worker_read');
+              ffi.Uint16, ffi.Uint32, ffi.Uint16)>>('transport_worker_read');
   late final _transport_worker_read = _transport_worker_readPtr.asFunction<
       int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
 
@@ -23181,7 +23181,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Uint64,
+              ffi.Uint32,
               ffi.Uint16)>> get transport_worker_write =>
       _library._transport_worker_writePtr;
   ffi.Pointer<
@@ -23190,7 +23190,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Uint64,
+              ffi.Uint32,
               ffi.Uint16)>> get transport_worker_read =>
       _library._transport_worker_readPtr;
   ffi.Pointer<
@@ -26387,7 +26387,7 @@ class transport_worker extends ffi.Struct {
   @ffi.Uint16()
   external int buffers_count;
 
-  external ffi.Pointer<ffi.Int> used_buffers;
+  external ffi.Pointer<ffi.Int64> used_buffers;
 }
 
 typedef transport_worker_t = transport_worker;

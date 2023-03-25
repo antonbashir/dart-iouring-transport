@@ -12,7 +12,7 @@ class TransportChannel {
   final TransportBindings _bindings;
 
   late final int _bufferSize;
-  late final Pointer<Int> _usedBuffers;
+  late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
 
   static final _bufferFinalizers = <int, Queue<Completer<int>>>{};
