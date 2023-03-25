@@ -100,7 +100,7 @@ class TransportWorker {
         final result = cqe.ref.res;
         final data = cqe.ref.user_data;
         if ((data & 0xffff) & transportEventAll != 0) {
-          int fd = (data >> 24) & 0xffffffff;
+          int fd = (data >> 32) & 0xffffffff;
           if (result < 0) {
             _handleError(result, data, fd);
             continue;

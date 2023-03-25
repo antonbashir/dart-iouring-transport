@@ -14,7 +14,6 @@ class TransportChannel {
   late final int _bufferSize;
   late final Pointer<Int> _usedBuffers;
   late final Pointer<iovec> _buffers;
-  late final Pointer<Uint64> _usedBuffersOffsets;
 
   static final _bufferFinalizers = <int, Queue<Completer<int>>>{};
 
@@ -39,7 +38,7 @@ class TransportChannel {
     final buffer = _buffers[bufferId];
     _bindings.memset(buffer.iov_base, 0, _bufferSize);
     buffer.iov_len = _bufferSize;
-    _usedBuffersOffsets[bufferId] = 0;
+    _usedBuffers[bufferId] = 0;
   }
 
   void free(int bufferId) {
@@ -47,7 +46,6 @@ class TransportChannel {
     _bindings.memset(buffer.iov_base, 0, _bufferSize);
     buffer.iov_len = _bufferSize;
     _usedBuffers[bufferId] = transportBufferAvailable;
-    _usedBuffersOffsets[bufferId] = 0;
     final finalizer = _bufferFinalizers[_pointer.address]!;
     if (finalizer.isNotEmpty) finalizer.removeLast().complete(bufferId);
   }

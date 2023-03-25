@@ -28,7 +28,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
-  worker->used_buffers = malloc(sizeof(int) * configuration->buffers_count);
+  worker->used_buffers = malloc(sizeof(int64_t) * configuration->buffers_count);
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
@@ -91,12 +91,12 @@ static inline transport_listener_t *transport_listener_pool_next(transport_liste
   return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
 }
 
-int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint64_t offset, uint16_t event)
+int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = offset;
-  uint64_t data = (((uint64_t)(fd) << 24) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
+  uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   io_uring_prep_read_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
@@ -105,12 +105,12 @@ int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buf
   return io_uring_submit(worker->ring);
 }
 
-int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint64_t offset, uint16_t event)
+int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = offset;
-  uint64_t data = (((uint64_t)(fd) << 24) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
+  uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   io_uring_prep_write_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
@@ -123,7 +123,7 @@ int transport_worker_connect(transport_worker_t *worker, transport_client_t *cli
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  uint64_t data = ((uint64_t)(client->fd) << 24) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
+  uint64_t data = ((uint64_t)(client->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
   io_uring_prep_connect(sqe, client->fd, (struct sockaddr *)&client->client_address, client->client_address_length);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
@@ -136,7 +136,7 @@ int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *ac
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  uint64_t data = ((uint64_t)(acceptor->fd) << 24) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
+  uint64_t data = ((uint64_t)(acceptor->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
   io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
