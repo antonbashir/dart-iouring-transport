@@ -24,11 +24,7 @@ class TransportListener {
     while (true) {
       final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
       if (cqeCount != -1) {
-        for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-          final cqe = cqes[cqeIndex];
-          final result = cqe.ref.res;
-          workerPorts[result].send(null);
-        }
+        workerPorts.forEach((element) => element.send(null));
         bindings.transport_cqe_advance(ring, cqeCount);
       }
     }

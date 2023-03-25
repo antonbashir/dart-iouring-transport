@@ -42,22 +42,22 @@ class TransportCallbacks {
   void putWrite(int bufferId, Completer<void> completer) => _writeCallbacks[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)!.complete(client);
+  void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)?.complete(client);
 
   @pragma(preferInlinePragma)
-  void notifyRead(int bufferId, TransportPayload payload) => _readCallbacks.remove(bufferId)!.complete(payload);
+  void notifyRead(int bufferId, TransportPayload payload) => _readCallbacks.remove(bufferId)?.complete(payload);
 
   @pragma(preferInlinePragma)
-  void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)!.complete();
+  void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)?.complete();
 
   @pragma(preferInlinePragma)
-  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)!.completeError(error);
+  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)?.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)!.completeError(error);
+  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)?.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)!.completeError(error);
+  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)?.completeError(error);
 }
 
 class TransportWorker {
