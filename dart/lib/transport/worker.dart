@@ -106,11 +106,7 @@ class TransportWorker {
             _handleError(result, data, fd);
             continue;
           }
-          try {
-            _handle(result, data, fd);
-          } catch (_) {
-            exit(-1);
-          }
+          _handle(result, data, fd);
         }
       }
       _bindings.transport_cqe_advance(_ring, cqeCount);
@@ -254,7 +250,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd) {
-    _logger.info("[handle] result = $result, wid = ${_workerPointer.ref.id}, bid = ${((userData >> 16) & 0xffff)}, fd = $fd, event = ${_event(userData)}");
+    //_logger.info("[handle] result = $result, wid = ${_workerPointer.ref.id}, bid = ${((userData >> 16) & 0xffff)}, fd = $fd, event = ${_event(userData)}");
 
     if ((userData & 0xffff) & transportEventRead != 0) {
       final bufferId = ((userData >> 16) & 0xffff);

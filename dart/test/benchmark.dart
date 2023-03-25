@@ -41,11 +41,11 @@ Future<void> main(List<String> args) async {
       transport.logger.info("Connected");
       var count = 0;
       var done = false;
-      Timer.periodic(Duration(seconds: 1), (_) => print("Send $count"));
-      Timer(Duration(seconds: 10), () => done = true);
-      while (!done) {
-        await Future.delayed(Duration.zero);
+      final time = Stopwatch();
+      time.start();
+      while (true) {
         count += (await Future.wait(connector.map((client) => client.write(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
+        if (time.elapsed.inSeconds >= 10) break;
       }
       print("Send $count");
       worker.receiver!.send(count);
