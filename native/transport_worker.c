@@ -35,13 +35,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
-    void *buffer_memory = mmap(NULL, configuration->buffer_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
-    if (buffer_memory == MAP_FAILED)
-    {
-      return NULL;
-    }
-
-    worker->buffers[index].iov_base = buffer_memory;
+    posix_memalign(&worker->buffers[index].iov_base, getpagesize(), configuration->buffer_size);
     worker->buffers[index].iov_len = configuration->buffer_size;
     worker->used_buffers[index] = BUFFER_AVAILABLE;
     worker->used_buffers_offsets[index] = 0;
