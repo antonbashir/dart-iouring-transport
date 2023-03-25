@@ -15,14 +15,14 @@ import 'file.dart';
 import 'lookup.dart';
 import 'payload.dart';
 
-String _event(int userdata) {
-  if (userdata & transportEventClose != 0) return "transportEventClose";
-  if (userdata & transportEventRead != 0) return "transportEventRead";
-  if (userdata & transportEventWrite != 0) return "transportEventWrite";
-  if (userdata & transportEventAccept != 0) return "transportEventAccept";
-  if (userdata & transportEventConnect != 0) return "transportEventConnect";
-  if (userdata & transportEventReadCallback != 0) return "transportEventReadCallback";
-  if (userdata & transportEventWriteCallback != 0) return "transportEventWriteCallback";
+String _event(int userData) {
+  if ((userData & 0xffff) & transportEventClose != 0) return "transportEventClose";
+  if ((userData & 0xffff) & transportEventRead != 0) return "transportEventRead";
+  if ((userData & 0xffff) & transportEventWrite != 0) return "transportEventWrite";
+  if ((userData & 0xffff) & transportEventAccept != 0) return "transportEventAccept";
+  if ((userData & 0xffff) & transportEventConnect != 0) return "transportEventConnect";
+  if ((userData & 0xffff) & transportEventReadCallback != 0) return "transportEventReadCallback";
+  if ((userData & 0xffff) & transportEventWriteCallback != 0) return "transportEventWriteCallback";
   return "unkown";
 }
 
@@ -93,14 +93,14 @@ class TransportWorker {
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
-    _listener = RawReceivePort((List<dynamic> events) {
+    _listener = RawReceivePort((_) {
       int cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final result = cqe.ref.res;
         final data = cqe.ref.user_data;
         if ((data & 0xffff) & transportEventAll != 0) {
-          int fd = (data << 24) & 0xffffffff;
+          int fd = (data >> 24) & 0xffffffff;
           if (result < 0) {
             _handleError(result, data, fd);
             continue;
@@ -251,7 +251,7 @@ class TransportWorker {
   void _handle(int result, int userData, int fd) {
     _logger.info("[handle] result = $result, bid = ${((userData >> 16) & 0xffff)}, fd = $fd");
 
-    if (userData & transportEventRead != 0) {
+    if ((userData & 0xffff) & transportEventRead != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       final channel = _inboundChannels[fd]!;
       if (!_serverController.hasListener) {
@@ -274,14 +274,14 @@ class TransportWorker {
       return;
     }
 
-    if (userData & transportEventWrite != 0) {
+    if ((userData & 0xffff) & transportEventWrite != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       _inboundChannels[fd]!.reuse(bufferId);
       _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
       return;
     }
 
-    if (userData & transportEventReadCallback != 0) {
+    if ((userData & 0xffff) & transportEventReadCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       final buffer = _buffers[bufferId];
       _callbacks.notifyRead(
@@ -294,21 +294,21 @@ class TransportWorker {
       return;
     }
 
-    if (userData & transportEventWriteCallback != 0) {
+    if ((userData & 0xffff) & transportEventWriteCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       _outboundChannels[fd]!.free(bufferId);
       _callbacks.notifyWrite(bufferId);
       return;
     }
 
-    if (userData & transportEventConnect != 0) {
+    if ((userData & 0xffff) & transportEventConnect != 0) {
       final channel = TransportOutboundChannel(_workerPointer, fd, _bindings);
       _outboundChannels[fd] = channel;
       _callbacks.notifyConnect(fd, TransportClient(_callbacks, channel));
       return;
     }
 
-    if (userData & transportEventAccept != 0) {
+    if ((userData & 0xffff) & transportEventAccept != 0) {
       _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
       final channel = TransportInboundChannel(_workerPointer, result, _bindings);
       _inboundChannels[result] = channel;
