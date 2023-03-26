@@ -36,18 +36,8 @@ class TransportChannel {
     return bufferId;
   }
 
-  void reuse(int bufferId) {
-    final buffer = _buffers[bufferId];
-    _bindings.memset(buffer.iov_base, 0, _bufferSize);
-    buffer.iov_len = _bufferSize;
-    _usedBuffers[bufferId] = 0;
-  }
-
   void free(int bufferId) {
-    final buffer = _buffers[bufferId];
-    _bindings.memset(buffer.iov_base, 0, _bufferSize);
-    buffer.iov_len = _bufferSize;
-    _usedBuffers[bufferId] = transportBufferAvailable;
+    _bindings.transport_worker_free_buffer(_pointer, bufferId);
     final finalizer = _bufferFinalizers[_pointer.address]!;
     if (finalizer.isNotEmpty) finalizer.removeLast().complete(bufferId);
   }

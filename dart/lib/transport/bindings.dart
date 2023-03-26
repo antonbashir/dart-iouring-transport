@@ -19166,6 +19166,40 @@ class TransportBindings {
       _transport_worker_select_bufferPtr
           .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
 
+  void transport_worker_reuse_buffer(
+    ffi.Pointer<transport_worker_t> worker,
+    int buffer_id,
+  ) {
+    return _transport_worker_reuse_buffer(
+      worker,
+      buffer_id,
+    );
+  }
+
+  late final _transport_worker_reuse_bufferPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_worker_t>,
+              ffi.Uint16)>>('transport_worker_reuse_buffer');
+  late final _transport_worker_reuse_buffer = _transport_worker_reuse_bufferPtr
+      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
+
+  void transport_worker_free_buffer(
+    ffi.Pointer<transport_worker_t> worker,
+    int buffer_id,
+  ) {
+    return _transport_worker_free_buffer(
+      worker,
+      buffer_id,
+    );
+  }
+
+  late final _transport_worker_free_bufferPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_worker_t>,
+              ffi.Uint16)>>('transport_worker_free_buffer');
+  late final _transport_worker_free_buffer = _transport_worker_free_bufferPtr
+      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
+
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
   ) {
@@ -23234,6 +23268,16 @@ class _SymbolAddresses {
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_select_buffer =>
           _library._transport_worker_select_bufferPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
+      get transport_worker_reuse_buffer =>
+          _library._transport_worker_reuse_bufferPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
+      get transport_worker_free_buffer =>
+          _library._transport_worker_free_bufferPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
@@ -30331,10 +30375,6 @@ const int TRANSPORT_EVENT_CONNECT = 32;
 const int TRANSPORT_EVENT_READ_CALLBACK = 64;
 
 const int TRANSPORT_EVENT_WRITE_CALLBACK = 128;
-
-const int TRANSPORT_MESSAGE_RESULT = 2;
-
-const int TRANSPORT_MESSAGE_DATA = 4;
 
 const String PACKAGE_VERSION = '';
 

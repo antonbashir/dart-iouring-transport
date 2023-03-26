@@ -266,7 +266,7 @@ class TransportWorker {
       final bufferBytes = buffer.iov_base.cast<Uint8>();
       _serverController.add(TransportPayload(bufferBytes.asTypedList(result), (answer, offset) {
         if (answer != null) {
-          channel.reuse(bufferId);
+          _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
           bufferBytes.asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
           _bindings.transport_worker_write(_workerPointer, fd, bufferId, offset, transportEventWrite);
@@ -279,7 +279,7 @@ class TransportWorker {
 
     if ((userData & 0xffff) & transportEventWrite != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
-      _inboundChannels[fd]!.reuse(bufferId);
+      _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
       _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
       return;
     }

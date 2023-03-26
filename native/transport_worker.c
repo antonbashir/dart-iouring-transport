@@ -157,6 +157,22 @@ int transport_worker_close(transport_worker_t *worker)
   return io_uring_submit(worker->ring);
 }
 
+void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id)
+{
+  struct iovec buffer = worker->buffers[buffer_id];
+  memset(buffer.iov_base, 0, worker->buffer_size);
+  buffer.iov_len = worker->buffer_size;
+  worker->used_buffers[buffer_id] = 0;
+}
+
+void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id)
+{
+  struct iovec buffer = worker->buffers[buffer_id];
+  memset(buffer.iov_base, 0, worker->buffer_size);
+  buffer.iov_len = worker->buffer_size;
+  worker->used_buffers[buffer_id] = BUFFER_AVAILABLE;
+}
+
 void transport_worker_destroy(transport_worker_t *worker)
 {
   for (size_t index = 0; index < worker->buffers_count; index++)
