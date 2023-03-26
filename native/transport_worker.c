@@ -64,7 +64,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 int transport_worker_select_buffer(transport_worker_t *worker)
 {
   int buffer_id = 0;
-  while (unlikely(worker->used_buffers[buffer_id] != BUFFER_AVAILABLE))
+  while (worker->used_buffers[buffer_id] != BUFFER_AVAILABLE)
   {
     if (++buffer_id == worker->buffers_count)
     {

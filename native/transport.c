@@ -97,7 +97,7 @@ int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uri
 int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
   int count = 0;
-  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
+  if (unlikely(!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count))))
   {
     return -1;
   }
