@@ -12,8 +12,8 @@ class TransportFile {
 
   TransportFile(this._callbacks, this._channel);
 
-  Future<TransportPayload> readBuffer({int offset = 0}) async {
-    final completer = Completer<TransportPayload>();
+  Future<TransportOutboundPayload> readBuffer({int offset = 0}) async {
+    final completer = Completer<TransportOutboundPayload>();
     final bufferId = await _channel.allocate();
     _callbacks.putRead(bufferId, completer);
     _channel.read(bufferId, offset: offset);
@@ -28,11 +28,11 @@ class TransportFile {
     return completer.future;
   }
 
-  Future<TransportPayload> read() async {
+  Future<TransportOutboundPayload> read() async {
     BytesBuilder builder = BytesBuilder();
     var offset = 0;
     var payload = await readBuffer(offset: offset);
-    final payloads = <TransportPayload>[];
+    final payloads = <TransportOutboundPayload>[];
     payloads.add(payload);
     builder.add(payload.bytes);
     offset += payload.bytes.length;
@@ -47,7 +47,7 @@ class TransportFile {
       offset += payload.bytes.length;
       payload.release();
     }
-    return TransportPayload(builder.takeBytes(), (answer, offset) => payloads.forEach((payload) => payload.release()));
+    return TransportOutboundPayload(builder.takeBytes(), () => payloads.forEach((payload) => payload.release()));
   }
 
   void close() => _channel.close();

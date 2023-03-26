@@ -48,17 +48,17 @@ class TransportChannel {
 class TransportInboundChannel extends TransportChannel {
   TransportInboundChannel(super.pointer, super.descriptor, super._bindings) : super();
 
-  Future<void> read({int offset = 0}) async {
+  Future<void> read() async {
     final bufferId = await allocate();
-    _bindings.transport_worker_read(_pointer, descriptor, bufferId, offset, transportEventRead);
+    _bindings.transport_worker_read(_pointer, descriptor, bufferId, 0, transportEventRead);
   }
 
-  Future<void> write(Uint8List bytes, {int offset = 0}) async {
+  Future<void> write(Uint8List bytes) async {
     final bufferId = await allocate();
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_worker_write(_pointer, descriptor, bufferId, offset, transportEventWrite);
+    _bindings.transport_worker_write(_pointer, descriptor, bufferId, 0, transportEventWrite);
   }
 }
 

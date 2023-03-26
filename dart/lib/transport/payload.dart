@@ -1,12 +1,26 @@
 import 'dart:typed_data';
 
-class TransportPayload {
+import 'package:iouring_transport/transport/constants.dart';
+
+class TransportOutboundPayload {
   final Uint8List bytes;
-  final void Function(Uint8List? answer, int offset) _responder;
+  final void Function() _releaser;
 
-  TransportPayload(this.bytes, this._responder);
+  TransportOutboundPayload(this.bytes, this._releaser);
 
-  void release() => _responder(null, 0);
+  @pragma(preferInlinePragma)
+  void release() => _releaser();
+}
 
-  void respond(Uint8List answer, {int offset = 0}) => _responder(answer, offset);
+class TransportInboundPayload {
+  final Uint8List bytes;
+  final void Function(Uint8List? answer) _responder;
+
+  TransportInboundPayload(this.bytes, this._responder);
+
+  @pragma(preferInlinePragma)
+  void release() => _responder(null);
+
+  @pragma(preferInlinePragma)
+  void respond(Uint8List answer) => _responder(answer);
 }

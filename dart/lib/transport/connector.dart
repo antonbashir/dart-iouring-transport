@@ -15,9 +15,9 @@ class TransportClient {
 
   TransportClient(this._callbacks, this._channel);
 
-  Future<TransportPayload> read() async {
+  Future<TransportOutboundPayload> read() async {
     final bufferId = await _channel.allocate();
-    final completer = Completer<TransportPayload>();
+    final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
     _channel.read(bufferId, offset: 0);
     return completer.future;

@@ -28,14 +28,14 @@ String _event(int userData) {
 
 class TransportCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
-  final _readCallbacks = <int, Completer<TransportPayload>>{};
+  final _readCallbacks = <int, Completer<TransportOutboundPayload>>{};
   final _writeCallbacks = <int, Completer<void>>{};
 
   @pragma(preferInlinePragma)
   void putConnect(int fd, Completer<TransportClient> completer) => _connectCallbacks[fd] = completer;
 
   @pragma(preferInlinePragma)
-  void putRead(int bufferId, Completer<TransportPayload> completer) => _readCallbacks[bufferId] = completer;
+  void putRead(int bufferId, Completer<TransportOutboundPayload> completer) => _readCallbacks[bufferId] = completer;
 
   @pragma(preferInlinePragma)
   void putWrite(int bufferId, Completer<void> completer) => _writeCallbacks[bufferId] = completer;
@@ -44,7 +44,7 @@ class TransportCallbacks {
   void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)!.complete(client);
 
   @pragma(preferInlinePragma)
-  void notifyRead(int bufferId, TransportPayload payload) => _readCallbacks.remove(bufferId)!.complete(payload);
+  void notifyRead(int bufferId, TransportOutboundPayload payload) => _readCallbacks.remove(bufferId)!.complete(payload);
 
   @pragma(preferInlinePragma)
   void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)!.complete();
@@ -81,8 +81,8 @@ class TransportWorker {
   late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final TransportConnector _connector;
   late final TransportCallbacks _callbacks;
-  late final StreamController<TransportPayload> _serverController;
-  late final Stream<TransportPayload> _serverStream;
+  late final StreamController<TransportInboundPayload> _serverController;
+  late final Stream<TransportInboundPayload> _serverStream;
   late final void Function(TransportInboundChannel channel)? _onAccept;
 
   late final SendPort? receiver;
@@ -143,7 +143,7 @@ class TransportWorker {
     return _servingComplter.future;
   }
 
-  Stream<TransportPayload> serve([void Function(TransportInboundChannel channel)? onAccept]) {
+  Stream<TransportInboundPayload> serve([void Function(TransportInboundChannel channel)? onAccept]) {
     if (!_hasServer) throw TransportException("[server]: is not available");
     if (_serving) return _serverStream;
     this._onAccept = onAccept;
@@ -262,12 +262,12 @@ class TransportWorker {
       }
       final buffer = _buffers[bufferId];
       final bufferBytes = buffer.iov_base.cast<Uint8>();
-      _serverController.add(TransportPayload(bufferBytes.asTypedList(result), (answer, offset) {
+      _serverController.add(TransportInboundPayload(bufferBytes.asTypedList(result), (answer) {
         if (answer != null) {
           _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
           bufferBytes.asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
-          _bindings.transport_worker_write(_workerPointer, fd, bufferId, offset, transportEventWrite);
+          _bindings.transport_worker_write(_workerPointer, fd, bufferId, 0, transportEventWrite);
           return;
         }
         channel.free(bufferId);
@@ -284,13 +284,9 @@ class TransportWorker {
 
     if ((userData & 0xffff) & transportEventReadCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
-      final buffer = _buffers[bufferId];
       _callbacks.notifyRead(
         bufferId,
-        TransportPayload(
-          buffer.iov_base.cast<Uint8>().asTypedList(result),
-          (answer, offset) => _outboundChannels[fd]!.free(bufferId),
-        ),
+        TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(result), () => _outboundChannels[fd]!.free(bufferId)),
       );
       return;
     }
