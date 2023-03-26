@@ -16,9 +16,6 @@ extern "C"
 #define TRANSPORT_EVENT_READ_CALLBACK ((uint16_t)1 << 6)
 #define TRANSPORT_EVENT_WRITE_CALLBACK ((uint16_t)1 << 7)
 
-#define TRANSPORT_MESSAGE_RESULT ((uint32_t)1 << 1)
-#define TRANSPORT_MESSAGE_DATA ((uint32_t)1 << 2)
-
 #if defined(__cplusplus)
 }
 #endif

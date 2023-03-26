@@ -112,9 +112,6 @@ const transportEventConnect = 1 << 5;
 const transportEventReadCallback = 1 << 6;
 const transportEventWriteCallback = 1 << 7;
 
-const transportMessageResult = 1 << 1;
-const transportMessageData = 1 << 2;
-
 const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose | transportEventReadCallback | transportEventWriteCallback;
 
 const ringSetupIopoll = 1 << 0;

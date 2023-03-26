@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
@@ -139,7 +138,10 @@ class TransportWorker {
     _activator.close();
   }
 
-  Future<void> awaitServer() => _servingComplter.future;
+  Future<void> awaitServer() {
+    if (!_hasServer) throw TransportException("[server]: is not available");
+    return _servingComplter.future;
+  }
 
   Stream<TransportPayload> serve([void Function(TransportInboundChannel channel)? onAccept]) {
     if (!_hasServer) throw TransportException("[server]: is not available");
@@ -163,7 +165,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd) {
-    _logger.info("[handle error] result = $result, event = ${_event(userData)}");
+    _logger.error("[handle error] result = $result, event = ${_event(userData)}");
 
     if (userData & transportEventRead != 0) {
       final bufferId = ((userData >> 16) & 0xffff);

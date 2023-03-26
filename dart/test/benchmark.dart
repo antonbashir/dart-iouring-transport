@@ -40,7 +40,6 @@ Future<void> main(List<String> args) async {
       final connector = await worker.connect("127.0.0.1", 12345, pool: 16);
       transport.logger.info("Connected");
       var count = 0;
-      var done = false;
       final time = Stopwatch();
       time.start();
       while (true) {
