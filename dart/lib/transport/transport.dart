@@ -3,14 +3,12 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/constants.dart';
-import 'package:iouring_transport/transport/exception.dart';
-import 'package:iouring_transport/transport/listener.dart';
-import 'package:iouring_transport/transport/logger.dart';
-import 'package:iouring_transport/transport/worker.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
+import 'exception.dart';
+import 'listener.dart';
+import 'logger.dart';
 import 'lookup.dart';
 
 class Transport {
@@ -50,6 +48,7 @@ class Transport {
     final nativeListenerConfiguration = calloc<transport_listener_configuration_t>();
     nativeListenerConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
     nativeListenerConfiguration.ref.ring_size = listenerConfiguration.ringSize;
+    nativeListenerConfiguration.ref.workers_count = transportConfiguration.workerInsolates;
 
     final nativeWorkerConfiguration = calloc<transport_worker_configuration_t>();
     nativeWorkerConfiguration.ref.ring_flags = workerConfiguration.ringFlags;
@@ -112,6 +111,7 @@ class Transport {
       if (acceptor != null) workerConfiguration.add(acceptor.address);
       toWorker.send(workerConfiguration);
       if (workers.length == transportConfiguration.workerInsolates) {
+        fromTransportToWorker.close();
         workersCompleter.complete();
       }
     });
@@ -121,6 +121,7 @@ class Transport {
       final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
       if (listenerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[listener] is null"));
+        fromTransportToListener.close();
         return;
       }
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
@@ -134,6 +135,7 @@ class Transport {
         workerMeessagePorts,
       ]);
       if (++listeners == transportConfiguration.listenerIsolates) {
+        fromTransportToListener.close();
         listenerCompleter.complete();
       }
     });
