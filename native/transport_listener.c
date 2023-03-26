@@ -40,6 +40,7 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
   }
 
   listener->ring = ring;
+  listener->ring_fd = ring->ring_fd;
   return listener;
 }
 
@@ -47,7 +48,7 @@ void transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
 {
   int32_t cqeCount = 0;
   uint32_t ready_workers_count = 0;
-  if (cqeCount = transport_wait(listener->ring_size, cqes, listener->ring) != -1)
+  if (likely(cqeCount = transport_wait(listener->ring_size, cqes, listener->ring) != -1))
   {
     for (size_t cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++)
     {
