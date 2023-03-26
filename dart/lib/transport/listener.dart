@@ -19,20 +19,14 @@ class TransportListener {
     final workerPorts = configuration[3] as List<SendPort>;
     final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _fromTransport.close();
-    final ring = listenerPointer.ref.ring;
     final cqes = bindings.transport_allocate_cqes(ringSize);
     while (true) {
-      final cqeCount = bindings.transport_wait(ringSize, cqes, ring);
-      if (cqeCount != -1) {
-        final notifiedWorkers = <int>{};
-        for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-          final workerIndex = cqes[cqeIndex].ref.res;
-          if (notifiedWorkers.contains(workerIndex)) continue;
+      bindings.transport_listener_reap(listenerPointer, cqes);
+      for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
+        if (listenerPointer.ref.ready_workers[workerIndex] == 1) {
           workerPorts[workerIndex].send(null);
-          notifiedWorkers.add(workerIndex);
-          if (notifiedWorkers.length == workerPorts.length) break;
+          listenerPointer.ref.ready_workers[workerIndex] = 0;
         }
-        bindings.transport_cqe_advance(ring, cqeCount);
       }
     }
   }

@@ -14,6 +14,7 @@
 #include "transport_worker.h"
 #include "transport_acceptor.h"
 #include "transport_client.h"
+#include "transport.h"
 
 transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration)
 {
@@ -21,6 +22,12 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
   if (!listener)
   {
     return NULL;
+  }
+
+  listener->ready_workers = malloc(sizeof(int) * configuration->workers_count);
+  for (size_t workerIndex = 0; workerIndex < configuration->workers_count; workerIndex++)
+  {
+    listener->ready_workers[workerIndex] = 0;
   }
 
   struct io_uring *ring = malloc(sizeof(struct io_uring));
@@ -34,6 +41,25 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
 
   listener->ring = ring;
   return listener;
+}
+
+void transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes)
+{
+  int32_t cqeCount = 0;
+  uint32_t ready_workers_count = 0;
+  if (cqeCount = transport_wait(listener->ring_size, cqes, listener->ring) != -1)
+  {
+    for (size_t cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++)
+    {
+      listener->ready_workers[cqes[cqeIndex]->res] = 1;
+      if (++ready_workers_count == listener->workers_count)
+      {
+        io_uring_cq_advance(listener->ring, cqeCount);
+        return;
+      }
+    }
+    io_uring_cq_advance(listener->ring, cqeCount);
+  }
 }
 
 void transport_listener_destroy(transport_listener_t *listener)

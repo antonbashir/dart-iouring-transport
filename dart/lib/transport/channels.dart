@@ -29,7 +29,8 @@ class TransportChannel {
     while (bufferId == -1) {
       final completer = Completer<int>();
       _bufferFinalizers[_pointer.address]!.add(completer);
-      await completer.future;
+      bufferId = await completer.future;
+      if (_usedBuffers[bufferId] == transportBufferAvailable) return bufferId;
       bufferId = _bindings.transport_worker_select_buffer(_pointer);
     }
     return bufferId;

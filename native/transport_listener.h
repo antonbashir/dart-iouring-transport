@@ -19,16 +19,21 @@ extern "C"
   typedef struct transport_listener_configuration
   {
     size_t ring_size;
+    uint16_t workers_count;
     int ring_flags;
   } transport_listener_configuration_t;
 
   typedef struct transport_listener
   {
     struct io_uring *ring;
+    size_t ring_size;
     struct rlist listener_pool_link;
+    int *ready_workers;
+    uint16_t workers_count;
   } transport_listener_t;
 
   transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration);
+  void transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes);
   void transport_listener_destroy(transport_listener_t *listener);
 #if defined(__cplusplus)
 }

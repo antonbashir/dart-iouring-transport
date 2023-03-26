@@ -14850,6 +14850,25 @@ class TransportBindings {
           ffi.Pointer<transport_listener_t> Function(
               ffi.Pointer<transport_listener_configuration_t>)>();
 
+  void transport_listener_reap(
+    ffi.Pointer<transport_listener_t> listener,
+    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
+  ) {
+    return _transport_listener_reap(
+      listener,
+      cqes,
+    );
+  }
+
+  late final _transport_listener_reapPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_listener_t>,
+                  ffi.Pointer<ffi.Pointer<io_uring_cqe>>)>>(
+      'transport_listener_reap');
+  late final _transport_listener_reap = _transport_listener_reapPtr.asFunction<
+      void Function(ffi.Pointer<transport_listener_t>,
+          ffi.Pointer<ffi.Pointer<io_uring_cqe>>)>();
+
   void transport_listener_destroy(
     ffi.Pointer<transport_listener_t> listener,
   ) {
@@ -22379,6 +22398,11 @@ class _SymbolAddresses {
           _library._transport_listener_initializePtr;
   ffi.Pointer<
           ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_listener_t>,
+                  ffi.Pointer<ffi.Pointer<io_uring_cqe>>)>>
+      get transport_listener_reap => _library._transport_listener_reapPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_listener_t>)>>
       get transport_listener_destroy => _library._transport_listener_destroyPtr;
   ffi.Pointer<
@@ -26217,6 +26241,9 @@ class transport_listener_configuration extends ffi.Struct {
   @ffi.Size()
   external int ring_size;
 
+  @ffi.Uint16()
+  external int workers_count;
+
   @ffi.Int()
   external int ring_flags;
 }
@@ -26224,7 +26251,15 @@ class transport_listener_configuration extends ffi.Struct {
 class transport_listener extends ffi.Struct {
   external ffi.Pointer<io_uring> ring;
 
+  @ffi.Size()
+  external int ring_size;
+
   external rlist listener_pool_link;
+
+  external ffi.Pointer<ffi.Int> ready_workers;
+
+  @ffi.Uint16()
+  external int workers_count;
 }
 
 typedef transport_listener_t = transport_listener;
@@ -30309,7 +30344,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

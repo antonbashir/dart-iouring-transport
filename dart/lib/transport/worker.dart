@@ -42,22 +42,22 @@ class TransportCallbacks {
   void putWrite(int bufferId, Completer<void> completer) => _writeCallbacks[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)?.complete(client);
+  void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)!.complete(client);
 
   @pragma(preferInlinePragma)
-  void notifyRead(int bufferId, TransportPayload payload) => _readCallbacks.remove(bufferId)?.complete(payload);
+  void notifyRead(int bufferId, TransportPayload payload) => _readCallbacks.remove(bufferId)!.complete(payload);
 
   @pragma(preferInlinePragma)
-  void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)?.complete();
+  void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)!.complete();
 
   @pragma(preferInlinePragma)
-  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)?.completeError(error);
+  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)!.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)?.completeError(error);
+  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)!.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)?.completeError(error);
+  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)!.completeError(error);
 }
 
 class TransportWorker {
@@ -95,24 +95,20 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
-      int cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
-      final events = <List<dynamic>>[];
+      final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final result = cqe.ref.res;
         final data = cqe.ref.user_data;
+        _bindings.transport_cqe_advance(_ring, 1);
         if ((data & 0xffff) & transportEventAll != 0) {
-          int fd = (data >> 32) & 0xffffffff;
-          events.add([result, data, fd]);
+          final fd = (data >> 32) & 0xffffffff;
+          if (result < 0) {
+            _handleError(result, data, fd);
+            continue;
+          }
+          _handle(result, data, fd);
         }
-      }
-      _bindings.transport_cqe_advance(_ring, cqeCount);
-      for (var event in events) {
-        if (event[0] < 0) {
-          _handleError(event[0], event[1], event[2]);
-          continue;
-        }
-        _handle(event[0], event[1], event[2]);
       }
     });
     _activator = RawReceivePort((_) => _initializer.complete());
