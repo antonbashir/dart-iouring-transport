@@ -6,7 +6,7 @@ set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
 
 set(LIBURING_VERSION master)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fPIC -static-libgcc -static-libstdc++ -fno-stack-protector")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O3 -fPIC -static-libgcc -static-libstdc++ -fno-stack-protector")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O2 -fPIC -static-libgcc -static-libstdc++ -fno-stack-protector")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 set(HAVE_CLOCK_GETTIME_DECL ON)
 

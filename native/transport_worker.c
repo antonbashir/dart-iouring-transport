@@ -105,6 +105,7 @@ int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buf
   sqe->flags |= IOSQE_IO_LINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(worker->ring);
+  io_uring_prep_link_timeout
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   return io_uring_submit(worker->ring);
 }
