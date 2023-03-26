@@ -166,7 +166,7 @@ class TransportWorker {
   void _handleError(int result, int userData, int fd) {
     _logger.error("[handle error] result = $result, event = ${_event(userData)}");
 
-    if (userData & transportEventRead != 0) {
+    if ((userData & 0xffff) & transportEventRead != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       if (result == -EAGAIN) {
         _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventRead);
@@ -185,7 +185,7 @@ class TransportWorker {
       return;
     }
 
-    if (userData & transportEventWrite != 0) {
+    if ((userData & 0xffff) & transportEventWrite != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       if (result == -EAGAIN) {
         _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWrite);
@@ -204,13 +204,13 @@ class TransportWorker {
       return;
     }
 
-    if (userData & transportEventAccept != 0) {
+    if ((userData & 0xffff) & transportEventAccept != 0) {
       _logger.error("[inbound accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${result}");
       _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
       return;
     }
 
-    if (userData & transportEventConnect != 0) {
+    if ((userData & 0xffff) & transportEventConnect != 0) {
       final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = $fd";
       _logger.error(message);
       _bindings.transport_close_descritor(fd);
@@ -218,7 +218,7 @@ class TransportWorker {
       return;
     }
 
-    if (userData & transportEventReadCallback != 0) {
+    if ((userData & 0xffff) & transportEventReadCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
 
       if (result == -EAGAIN) {
