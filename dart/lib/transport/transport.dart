@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/constants.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -88,29 +89,33 @@ class Transport {
     var listeners = 0;
     final listenerCompleter = Completer();
     final workersCompleter = Completer();
-    final workers = <int>[];
+    final workerAddresses = <int>[];
     final workerMeessagePorts = <SendPort>[];
     final workerActivators = <SendPort>[];
+    final workerPointers = <Pointer<transport_worker_t>>[];
 
     fromTransportToWorker.listen((ports) {
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
-      final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workers.length).address;
+      final workerPointer = (workerConfiguration.ringFlags & ringSetupAttachWq != 0) && (workerConfiguration.ringFlags & ringSetupSqpoll != 0)
+          ? _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerAddresses.length, workerPointers.isEmpty ? 0 : workerPointers[0].ref.ring_fd)
+          : _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerAddresses.length, 0);
+      workerPointers.add(workerPointer);
       if (workerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[worker] is null"));
         return;
       }
-      workers.add(workerPointer);
-      final workerConfiguration = [
+      workerAddresses.add(workerPointer.address);
+      final workerInput = [
         _libraryPath,
         _transport.address,
-        workerPointer,
+        workerPointer.address,
         receiver,
       ];
-      if (acceptor != null) workerConfiguration.add(acceptor.address);
-      toWorker.send(workerConfiguration);
-      if (workers.length == transportConfiguration.workerInsolates) {
+      if (acceptor != null) workerInput.add(acceptor.address);
+      toWorker.send(workerInput);
+      if (workerAddresses.length == transportConfiguration.workerInsolates) {
         fromTransportToWorker.close();
         workersCompleter.complete();
       }
@@ -125,7 +130,7 @@ class Transport {
         return;
       }
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
-        final worker = Pointer.fromAddress(workers[workerIndex]).cast<transport_worker_t>();
+        final worker = Pointer.fromAddress(workerAddresses[workerIndex]).cast<transport_worker_t>();
         _bindings.transport_listener_pool_add(worker.ref.listeners, listenerPointer);
       }
       (port as SendPort).send([
