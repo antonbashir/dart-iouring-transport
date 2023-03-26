@@ -32,7 +32,11 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
-    posix_memalign(&worker->buffers[index].iov_base, getpagesize(), configuration->buffer_size);
+    if (posix_memalign(&worker->buffers[index].iov_base, getpagesize(), configuration->buffer_size) == errno)
+    {
+      free(worker);
+      return NULL;
+    }
     worker->buffers[index].iov_len = configuration->buffer_size;
     worker->used_buffers[index] = BUFFER_AVAILABLE;
   }
