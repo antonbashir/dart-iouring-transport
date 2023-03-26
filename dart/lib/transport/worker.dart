@@ -163,7 +163,6 @@ class TransportWorker {
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
-  @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd) {
     _logger.error("[handle error] result = $result, event = ${_event(userData)}");
 
@@ -250,7 +249,6 @@ class TransportWorker {
     }
   }
 
-  @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd) {
     //_logger.info("[handle] result = $result, wid = ${_workerPointer.ref.id}, bid = ${((userData >> 16) & 0xffff)}, fd = $fd, event = ${_event(userData)}");
 
