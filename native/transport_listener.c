@@ -59,7 +59,7 @@ void transport_listener_close(transport_listener_t *listener)
 {
   struct io_uring_sqe *sqe = provide_sqe(listener->ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, -1, 0, 0);
-  io_uring_submit(listener->ring);
+  printf("[listener]: sent close with status: %d\n", io_uring_submit(listener->ring));
 }
 
 bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes)

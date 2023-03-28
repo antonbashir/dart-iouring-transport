@@ -26,13 +26,10 @@ class TransportListener {
         print("[listener]: closed");
         Isolate.exit();
       }
-      print("[listener]: reaped");
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
-        print("[listener]: ${listenerPointer.ref.ready_workers.value}");
         if (listenerPointer.ref.ready_workers[workerIndex] == 1) {
           workerPorts[workerIndex].send(null);
           listenerPointer.ref.ready_workers[workerIndex] = 0;
-          print("[listener]: sent");
         }
       }
     }

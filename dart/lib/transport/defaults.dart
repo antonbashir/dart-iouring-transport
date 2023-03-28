@@ -12,7 +12,7 @@ class TransportDefaults {
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
         ringSize: 32768,
-        ringFlags: ringSetupSingleIssuer,
+        ringFlags: 0,
       );
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
