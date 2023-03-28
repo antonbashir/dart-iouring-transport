@@ -5,6 +5,7 @@ import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/extensions.dart';
+import 'package:iouring_transport/transport/model.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -147,7 +148,7 @@ class TransportWorker {
     return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
   }
 
-  Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
+  Future<TransportClientPool> connect(TransportUri uri, {int? pool}) => _connector.connect(uri, pool: pool);
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {

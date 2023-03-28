@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/model.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -59,12 +60,12 @@ class TransportConnector {
 
   TransportConnector(this._callbacks, this._transportPointer, this._workerPointer, this._bindings);
 
-  Future<TransportClientPool> connect(String host, int port, {int? pool}) async {
+  Future<TransportClientPool> connect(TransportUri uri, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
       final client = using(
-        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, host.toNativeUtf8(allocator: arena).cast(), port),
+        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.host!.toNativeUtf8(allocator: arena).cast(), uri.port!),
       );
       final completer = Completer<TransportClient>.sync();
       _callbacks.putConnect(client.ref.fd, completer);

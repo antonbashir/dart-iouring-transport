@@ -6,7 +6,7 @@ class TransportUri {
   final int? port;
   final String? path;
 
-  TransportUri(this.mode, {this.host, this.port, this.path});
+  TransportUri._(this.mode, {this.host, this.port, this.path});
 
-  factory TransportUri.tcp(String host, int port) => TransportUri(TransportSocketMode.TCP, host: host, port: port);
+  factory TransportUri.tcp(String host, int port) => TransportUri._(TransportSocketMode.TCP, host: host, port: port);
 }
