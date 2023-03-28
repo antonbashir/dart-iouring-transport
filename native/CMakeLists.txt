@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.0)
+cmake_minimum_required(VERSION 3.16.0)
 project(native C ASM)
 
 add_definitions("-D_GNU_SOURCE")
