@@ -5,13 +5,13 @@ import 'constants.dart';
 
 extension IntExtension on int {
   String transportEventToString() {
-    if (this & transportEventClose != 0) return "transportEventClose";
-    if (this & transportEventRead != 0) return "transportEventRead";
-    if (this & transportEventWrite != 0) return "transportEventWrite";
-    if (this & transportEventAccept != 0) return "transportEventAccept";
-    if (this & transportEventConnect != 0) return "transportEventConnect";
-    if (this & transportEventReadCallback != 0) return "transportEventReadCallback";
-    if (this & transportEventWriteCallback != 0) return "transportEventWriteCallback";
+    if (this & transportEventClose != 0) return "[Close]";
+    if (this & transportEventRead != 0) return "[Read]";
+    if (this & transportEventWrite != 0) return "[Write]";
+    if (this & transportEventAccept != 0) return "[Accept]";
+    if (this & transportEventConnect != 0) return "[Connect]";
+    if (this & transportEventReadCallback != 0) return "[ReadCallback]";
+    if (this & transportEventWriteCallback != 0) return "[WriteCallback]";
     return "unkown";
   }
 

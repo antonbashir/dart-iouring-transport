@@ -3,16 +3,16 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/extensions.dart';
-import 'package:iouring_transport/transport/logger.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
 import 'connector.dart';
 import 'constants.dart';
+import 'defaults.dart';
 import 'exception.dart';
 import 'file.dart';
+import 'logger.dart';
 import 'lookup.dart';
 import 'payload.dart';
 
@@ -59,8 +59,8 @@ class TransportWorker {
 
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transportPointer;
-
   late final Pointer<transport_worker_t> _workerPointer;
+  late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final Pointer<io_uring> _ring;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
@@ -68,7 +68,6 @@ class TransportWorker {
 
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
-  late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final TransportConnector _connector;
   late final TransportCallbacks _callbacks;
   late final StreamController<TransportInboundPayload> _serverController;
