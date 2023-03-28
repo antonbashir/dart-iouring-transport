@@ -65,7 +65,6 @@ void transport_listener_close(transport_listener_t *listener)
 bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes)
 {
   int32_t cqeCount = 0;
-  uint32_t ready_workers_count = 0;
   if (likely(cqeCount = transport_wait(listener->ring_size, cqes, listener->ring) != -1))
   {
     for (size_t cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++)
@@ -73,14 +72,10 @@ bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
       int result = cqes[cqeIndex]->res;
       if (unlikely(result == -1))
       {
+        io_uring_cq_advance(listener->ring, cqeCount);
         return false;
       }
       listener->ready_workers[result] = 1;
-      if (++ready_workers_count == listener->workers_count)
-      {
-        io_uring_cq_advance(listener->ring, cqeCount);
-        return true;
-      }
     }
     io_uring_cq_advance(listener->ring, cqeCount);
   }

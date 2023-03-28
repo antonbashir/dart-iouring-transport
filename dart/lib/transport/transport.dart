@@ -128,12 +128,12 @@ class Transport {
     fromTransportToListener.listen((port) async {
       await workersCompleter.future;
       final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration);
-      _listenerClosers.add(listenerPointer);
       if (listenerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[listener] is null"));
         fromTransportToListener.close();
         return;
       }
+      _listenerClosers.add(listenerPointer);
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
         final worker = Pointer.fromAddress(workerAddresses[workerIndex]).cast<transport_worker_t>();
         _bindings.transport_listener_pool_add(worker.ref.listeners, listenerPointer);
