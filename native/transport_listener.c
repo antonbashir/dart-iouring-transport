@@ -64,7 +64,6 @@ void transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
 
 void transport_listener_destroy(transport_listener_t *listener)
 {
-  io_uring_unregister_buffers(listener->ring);
   io_uring_queue_exit(listener->ring);
   free(listener->ring);
   free(listener);

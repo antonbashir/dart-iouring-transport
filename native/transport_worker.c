@@ -41,7 +41,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
     worker->used_buffers[index] = BUFFER_AVAILABLE;
   }
   worker->ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags;
+  int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
   if (status)
   {
     free(worker->ring);
@@ -121,7 +121,6 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-
   return io_uring_submit(ring);
 }
 
@@ -179,13 +178,13 @@ void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id
 
 void transport_worker_destroy(transport_worker_t *worker)
 {
+  io_uring_queue_exit(worker->ring);
   for (size_t index = 0; index < worker->buffers_count; index++)
   {
-    munmap(worker->buffers[index].iov_base, worker->buffer_size);
+    free(worker->buffers[index].iov_base);
   }
   free(worker->buffers);
   free(worker->used_buffers);
-  io_uring_queue_exit(worker->ring);
   free(worker->ring);
   free(worker);
 }

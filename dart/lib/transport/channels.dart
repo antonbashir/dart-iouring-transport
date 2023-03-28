@@ -11,7 +11,6 @@ class TransportChannel {
   final Pointer<transport_worker_t> _pointer;
   final TransportBindings _bindings;
 
-  late final int _bufferSize;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
 
@@ -19,7 +18,6 @@ class TransportChannel {
 
   TransportChannel(this._pointer, this.descriptor, this._bindings) {
     _bufferFinalizers[this._pointer.address] = Queue();
-    _bufferSize = _pointer.ref.buffer_size;
     _usedBuffers = _pointer.ref.used_buffers;
     _buffers = _pointer.ref.buffers;
   }

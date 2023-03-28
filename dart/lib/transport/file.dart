@@ -13,7 +13,7 @@ class TransportFile {
   TransportFile(this._callbacks, this._channel);
 
   Future<TransportOutboundPayload> readBuffer({int offset = 0}) async {
-    final completer = Completer<TransportOutboundPayload>();
+    final completer = Completer<TransportOutboundPayload>.sync();
     final bufferId = await _channel.allocate();
     _callbacks.putRead(bufferId, completer);
     _channel.read(bufferId, offset: offset);
@@ -21,7 +21,7 @@ class TransportFile {
   }
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
-    final completer = Completer<void>();
+    final completer = Completer<void>.sync();
     final bufferId = await _channel.allocate();
     _callbacks.putWrite(bufferId, completer);
     _channel.write(bytes, bufferId, offset: offset);
