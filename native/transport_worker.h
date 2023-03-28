@@ -26,7 +26,6 @@ extern "C"
   {
     uint8_t id;
     struct io_uring *ring;
-    int32_t ring_fd;
     transport_listener_pool_t *listeners;
     struct iovec *buffers;
     uint32_t buffer_size;
@@ -34,7 +33,7 @@ extern "C"
     int64_t *used_buffers;
   } transport_worker_t;
 
-  transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id, int32_t ring_wq_fd);
+  transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id);
 
   int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event);
   int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event);

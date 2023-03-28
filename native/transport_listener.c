@@ -40,7 +40,6 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
   }
 
   listener->ring = ring;
-  listener->ring_fd = ring->ring_fd;
   return listener;
 }
 

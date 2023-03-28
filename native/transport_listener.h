@@ -26,7 +26,6 @@ extern "C"
   typedef struct transport_listener
   {
     struct io_uring *ring;
-    int32_t ring_fd;
     size_t ring_size;
     struct rlist listener_pool_link;
     int *ready_workers;

@@ -92,16 +92,12 @@ class Transport {
     final workerAddresses = <int>[];
     final workerMeessagePorts = <SendPort>[];
     final workerActivators = <SendPort>[];
-    final workerPointers = <Pointer<transport_worker_t>>[];
 
     fromTransportToWorker.listen((ports) {
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
-      final workerPointer = (workerConfiguration.ringFlags & ringSetupAttachWq != 0) && (workerConfiguration.ringFlags & ringSetupSqpoll != 0)
-          ? _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerAddresses.length, workerPointers.isEmpty ? 0 : workerPointers[0].ref.ring_fd)
-          : _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerAddresses.length, 0);
-      workerPointers.add(workerPointer);
+      final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerAddresses.length);
       if (workerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[worker] is null"));
         return;

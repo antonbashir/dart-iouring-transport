@@ -15,7 +15,7 @@
 #define BUFFER_AVAILABLE -2
 #define BUFFER_USED -1
 
-transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id, int32_t ring_wq_fd)
+transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id)
 {
   transport_worker_t *worker = malloc(sizeof(transport_worker_t));
   if (!worker)
@@ -40,36 +40,13 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
     worker->buffers[index].iov_len = configuration->buffer_size;
     worker->used_buffers[index] = BUFFER_AVAILABLE;
   }
-  worker->ring = NULL;
-  if (ring_wq_fd)
+  worker->ring = malloc(sizeof(struct io_uring));
+  int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags;
+  if (status)
   {
-    worker->ring = malloc(sizeof(struct io_uring));
-
-    struct io_uring_params setup = {};
-    setup.flags = configuration->ring_flags;
-    setup.wq_fd = ring_wq_fd;
-
-    int32_t status = io_uring_queue_init_params(configuration->ring_size, worker->ring, &setup);
-    if (status)
-    {
-      free(worker->ring);
-      free(worker);
-      return NULL;
-    }
-    worker->ring_fd = worker->ring->ring_fd;
-  }
-
-  if (!worker->ring)
-  {
-    worker->ring = malloc(sizeof(struct io_uring));
-    int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags & ~IORING_SETUP_ATTACH_WQ);
-    if (status)
-    {
-      free(worker->ring);
-      free(worker);
-      return NULL;
-    }
-    worker->ring_fd = worker->ring->ring_fd;
+    free(worker->ring);
+    free(worker);
+    return NULL;
   }
 
   int32_t status = io_uring_register_buffers(worker->ring, worker->buffers, worker->buffers_count);
@@ -128,7 +105,7 @@ int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buf
   sqe->flags |= IOSQE_IO_LINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring_fd, (int32_t)worker->id, 0, 0);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   return io_uring_submit(ring);
 }
 
@@ -143,7 +120,8 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   sqe->flags |= IOSQE_IO_LINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring_fd, (int32_t)worker->id, 0, 0);
+  io_uring_prep_msg_ring(sqe, listene->ringr->ring_fd, (int32_t)worker->id, 0, 0);
+
   return io_uring_submit(ring);
 }
 
@@ -157,7 +135,7 @@ int transport_worker_connect(transport_worker_t *worker, transport_client_t *cli
   sqe->flags |= IOSQE_IO_LINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring_fd, (int32_t)worker->id, 0, 0);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   return io_uring_submit(ring);
 }
 
@@ -171,7 +149,7 @@ int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *ac
   sqe->flags |= IOSQE_IO_LINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring_fd, (int32_t)worker->id, 0, 0);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   return io_uring_submit(ring);
 }
 
@@ -179,7 +157,7 @@ int transport_worker_close(transport_worker_t *worker)
 {
   struct io_uring_sqe *sqe = provide_sqe(worker->ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  io_uring_prep_msg_ring(sqe, listener->ring_fd, worker->id, TRANSPORT_EVENT_CLOSE, 0);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, worker->id, TRANSPORT_EVENT_CLOSE, 0);
   return io_uring_submit(worker->ring);
 }
 

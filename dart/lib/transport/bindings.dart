@@ -19035,12 +19035,10 @@ class TransportBindings {
   ffi.Pointer<transport_worker_t> transport_worker_initialize(
     ffi.Pointer<transport_worker_configuration_t> configuration,
     int id,
-    int ring_wq_fd,
   ) {
     return _transport_worker_initialize(
       configuration,
       id,
-      ring_wq_fd,
     );
   }
 
@@ -19048,12 +19046,11 @@ class TransportBindings {
       ffi.NativeFunction<
           ffi.Pointer<transport_worker_t> Function(
               ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Uint8,
-              ffi.Int32)>>('transport_worker_initialize');
+              ffi.Uint8)>>('transport_worker_initialize');
   late final _transport_worker_initialize =
       _transport_worker_initializePtr.asFunction<
           ffi.Pointer<transport_worker_t> Function(
-              ffi.Pointer<transport_worker_configuration_t>, int, int)>();
+              ffi.Pointer<transport_worker_configuration_t>, int)>();
 
   int transport_worker_write(
     ffi.Pointer<transport_worker_t> worker,
@@ -23231,12 +23228,11 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>
       get mh_i32_dump => _library._mh_i32_dumpPtr;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_worker_t> Function(
-              ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Uint8,
-              ffi.Int32)>> get transport_worker_initialize =>
-      _library._transport_worker_initializePtr;
+          ffi.NativeFunction<
+              ffi.Pointer<transport_worker_t> Function(
+                  ffi.Pointer<transport_worker_configuration_t>, ffi.Uint8)>>
+      get transport_worker_initialize =>
+          _library._transport_worker_initializePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -26299,6 +26295,9 @@ class transport_listener_configuration extends ffi.Struct {
 class transport_listener extends ffi.Struct {
   external ffi.Pointer<io_uring> ring;
 
+  @ffi.Int32()
+  external int ring_fd;
+
   @ffi.Size()
   external int ring_size;
 
@@ -26459,9 +26458,6 @@ class transport_worker extends ffi.Struct {
   external int id;
 
   external ffi.Pointer<io_uring> ring;
-
-  @ffi.Int32()
-  external int ring_fd;
 
   external ffi.Pointer<transport_listener_pool_t> listeners;
 
@@ -30395,7 +30391,7 @@ const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'Debug';
+const String BUILD_TYPE = 'RelWithDebInfo';
 
 const String BUILD_INFO = '';
 
