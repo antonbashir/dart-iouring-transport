@@ -24,7 +24,7 @@ class TransportListener {
       if (!bindings.transport_listener_reap(listenerPointer, cqes)) {
         print("[listener]: closed");
         bindings.transport_listener_destroy(listenerPointer);
-        return;
+        Isolate.exit();
       }
       print("[listener]: reaped");
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
