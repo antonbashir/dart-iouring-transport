@@ -104,15 +104,14 @@ const transportLogLevels = [
 const transportBufferAvailable = -2;
 const transportBufferUsed = -1;
 
-const transportEventClose = 1 << 1;
-const transportEventRead = 1 << 2;
-const transportEventWrite = 1 << 3;
-const transportEventAccept = 1 << 4;
-const transportEventConnect = 1 << 5;
-const transportEventReadCallback = 1 << 6;
-const transportEventWriteCallback = 1 << 7;
+const transportEventRead = 1 << 0;
+const transportEventWrite = 1 << 1;
+const transportEventAccept = 1 << 2;
+const transportEventConnect = 1 << 3;
+const transportEventReadCallback = 1 << 4;
+const transportEventWriteCallback = 1 << 5;
 
-const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventClose | transportEventReadCallback | transportEventWriteCallback;
+const transportEventAll = transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventReadCallback | transportEventWriteCallback;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;

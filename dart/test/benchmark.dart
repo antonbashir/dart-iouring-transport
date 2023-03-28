@@ -25,20 +25,13 @@ Future<void> main(List<String> args) async {
     (input) async {
       final encoder = Utf8Encoder();
       final fromServer = encoder.convert("from server\n");
-      final transport = Transport(
-        TransportDefaults.transport().copyWith(logLevel: TransportLogLevel.info),
-        TransportDefaults.acceptor(),
-        TransportDefaults.listener(),
-        TransportDefaults.worker(),
-        TransportDefaults.client(),
-      );
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.serve((channel) => channel.read()).listen((event) => event.respond(fromServer));
       await worker.awaitServer();
-      transport.logger.info("Served");
+      print("Served");
       final connector = await worker.connect("127.0.0.1", 12345, pool: 256);
-      transport.logger.info("Connected");
+      print("Connected");
       var count = 0;
       final time = Stopwatch();
       time.start();

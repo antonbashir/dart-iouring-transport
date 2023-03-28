@@ -153,86 +153,84 @@ class TransportWorker {
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
+  @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    if (event & transportEventRead != 0) {
-      final bufferId = ((userData >> 16) & 0xffff);
-      if (result == -EAGAIN) {
-        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventRead);
-        return;
-      }
-      if (result == -EPIPE) {
+    switch (event) {
+      case transportEventRead:
+        final bufferId = ((userData >> 16) & 0xffff);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventRead);
+          return;
+        }
         _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _bindings.transport_close_descritor(fd);
         return;
-      }
-      _logger.error("[inbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd");
-      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-      _bindings.transport_close_descritor(fd);
-      return;
-    }
-
-    if (event & transportEventWrite != 0) {
-      final bufferId = ((userData >> 16) & 0xffff);
-      if (result == -EAGAIN) {
-        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWrite);
-        return;
-      }
-      if (result == -EPIPE) {
+      case transportEventWrite:
+        final bufferId = ((userData >> 16) & 0xffff);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWrite);
+          return;
+        }
         _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _bindings.transport_close_descritor(fd);
         return;
-      }
-      _logger.error("[inbound write] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd");
-      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-      _bindings.transport_close_descritor(fd);
-      return;
-    }
-
-    if (event & transportEventAccept != 0) {
-      _logger.error("[inbound accept] code = $result, message = ${result.kernelErrorToString(_bindings)}, fd = ${result}");
-      _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
-      return;
-    }
-
-    if (event & transportEventConnect != 0) {
-      final message = "[connect] code = $result, message = ${result.kernelErrorToString(_bindings)}, fd = $fd";
-      _logger.error(message);
-      _bindings.transport_close_descritor(fd);
-      _callbacks.notifyConnectError(fd, TransportException(message));
-      return;
-    }
-
-    if (event & transportEventReadCallback != 0) {
-      final bufferId = ((userData >> 16) & 0xffff);
-      if (result == -EAGAIN) {
-        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventReadCallback);
+      case transportEventAccept:
+        _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
         return;
-      }
-      final message = "[outbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd";
-      _logger.error(message);
-      _callbacks.notifyReadError(bufferId, TransportException(message));
-      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-      _bindings.transport_close_descritor(fd);
-      return;
-    }
-
-    if (userData & transportEventWriteCallback != 0) {
-      final bufferId = ((userData >> 16) & 0xffff);
-      if (result == -EAGAIN) {
-        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWriteCallback);
+      case transportEventConnect:
+        _bindings.transport_close_descritor(fd);
+        _callbacks.notifyConnectError(
+          fd,
+          TransportException.forEvent(
+            event,
+            result,
+            result.kernelErrorToString(_bindings),
+            fd,
+          ),
+        );
         return;
-      }
-      final message = "[outbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd";
-      _callbacks.notifyWriteError(bufferId, TransportException(message));
-      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-      _bindings.transport_close_descritor(fd);
-      return;
+      case transportEventReadCallback:
+        final bufferId = ((userData >> 16) & 0xffff);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventReadCallback);
+          return;
+        }
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        _bindings.transport_close_descritor(fd);
+        _callbacks.notifyReadError(
+          bufferId,
+          TransportException.forEvent(
+            event,
+            result,
+            result.kernelErrorToString(_bindings),
+            fd,
+            bufferId: bufferId,
+          ),
+        );
+        return;
+      case transportEventWriteCallback:
+        final bufferId = ((userData >> 16) & 0xffff);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWriteCallback);
+          return;
+        }
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        _bindings.transport_close_descritor(fd);
+        _callbacks.notifyWriteError(
+          bufferId,
+          TransportException.forEvent(
+            event,
+            result,
+            result.kernelErrorToString(_bindings),
+            fd,
+            bufferId: bufferId,
+          ),
+        );
+        return;
     }
   }
 
@@ -242,7 +240,7 @@ class TransportWorker {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
         if (!_serverController.hasListener) {
-          _logger.warn("[server]: no listeners for fd = $fd");
+          _logger.warn("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
           if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
           return;
