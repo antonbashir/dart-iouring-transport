@@ -120,7 +120,7 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   sqe->flags |= IOSQE_IO_LINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listene->ringr->ring_fd, (int32_t)worker->id, 0, 0);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
 
   return io_uring_submit(ring);
 }
