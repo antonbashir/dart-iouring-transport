@@ -36,7 +36,7 @@ class TransportChannel {
 }
 
 class TransportInboundChannel extends TransportChannel {
-  TransportInboundChannel(super.pointer, super.descriptor, super._bindings, super._bufferFinalizers) : super();
+  TransportInboundChannel(super._pointer, super._descriptor, super._bindings, super._bufferFinalizers) : super();
 
   Future<void> read() async {
     final bufferId = await allocate();
