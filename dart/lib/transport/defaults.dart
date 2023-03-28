@@ -26,7 +26,7 @@ class TransportDefaults {
         maxConnections: 4096,
         receiveBufferSize: 4096,
         sendBufferSize: 4096,
-        defaultPool: 8,
+        defaultPool: 1,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(

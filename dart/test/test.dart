@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/model.dart';
@@ -18,7 +19,9 @@ final Transport _transport = Transport(
 void main() {
   group("[base]", () {
     test("[echo]", () async {
-      await _transport.serve(TransportUri.tcp("127.0.0.1", 12345), (input) async {
+      final done = ReceivePort();
+      final serverData = Utf8Encoder().convert("respond");
+      await _transport.serve(transmitter: done.sendPort, TransportUri.tcp("127.0.0.1", 12345), (input) async {
         final clientData = Utf8Encoder().convert("request");
         final serverData = Utf8Encoder().convert("respond");
         final worker = TransportWorker(input);
@@ -38,10 +41,12 @@ void main() {
         print("Sent request");
         final response = await client.select().read();
         print("Received response");
-        expect(response.bytes, serverData);
+        worker.transmitter!.send(response.bytes);
         response.release();
-        exit(0);
       });
+      expect(serverData, await done.first);
+      done.close();
+      exit(0);
     });
   });
 }
