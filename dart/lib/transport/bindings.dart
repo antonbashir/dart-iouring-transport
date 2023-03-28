@@ -19135,21 +19135,6 @@ class TransportBindings {
       int Function(ffi.Pointer<transport_worker_t>,
           ffi.Pointer<transport_acceptor_t>)>();
 
-  int transport_worker_close(
-    ffi.Pointer<transport_worker_t> worker,
-  ) {
-    return _transport_worker_close(
-      worker,
-    );
-  }
-
-  late final _transport_worker_closePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>)>>('transport_worker_close');
-  late final _transport_worker_close = _transport_worker_closePtr
-      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
-
   int transport_worker_select_buffer(
     ffi.Pointer<transport_worker_t> worker,
   ) {
@@ -19271,26 +19256,6 @@ class TransportBindings {
   late final _transport_consume = _transport_consumePtr.asFunction<
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
           ffi.Pointer<io_uring>, int, int)>();
-
-  int transport_wait(
-    int cqe_count,
-    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
-    ffi.Pointer<io_uring> ring,
-  ) {
-    return _transport_wait(
-      cqe_count,
-      cqes,
-      ring,
-    );
-  }
-
-  late final _transport_waitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>>('transport_wait');
-  late final _transport_wait = _transport_waitPtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-          ffi.Pointer<io_uring>)>();
 
   int transport_peek(
     int cqe_count,
@@ -23263,9 +23228,6 @@ class _SymbolAddresses {
       get transport_worker_accept => _library._transport_worker_acceptPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
-      get transport_worker_close => _library._transport_worker_closePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_select_buffer =>
           _library._transport_worker_select_bufferPtr;
   ffi.Pointer<
@@ -23299,11 +23261,6 @@ class _SymbolAddresses {
               ffi.Int64,
               ffi.Int64)>> get transport_consume =>
       _library._transport_consumePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>> get transport_wait =>
-      _library._transport_waitPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
@@ -26294,9 +26251,6 @@ class transport_listener_configuration extends ffi.Struct {
 
 class transport_listener extends ffi.Struct {
   external ffi.Pointer<io_uring> ring;
-
-  @ffi.Int32()
-  external int ring_fd;
 
   @ffi.Size()
   external int ring_size;
@@ -30365,19 +30319,17 @@ const String kIsolateSnapshotInstructionsAsmSymbol =
 
 const String kIsolateSnapshotBssAsmSymbol = '_kDartIsolateSnapshotBss';
 
-const int TRANSPORT_EVENT_CLOSE = 2;
+const int TRANSPORT_EVENT_READ = 1;
 
-const int TRANSPORT_EVENT_READ = 4;
+const int TRANSPORT_EVENT_WRITE = 2;
 
-const int TRANSPORT_EVENT_WRITE = 8;
+const int TRANSPORT_EVENT_ACCEPT = 4;
 
-const int TRANSPORT_EVENT_ACCEPT = 16;
+const int TRANSPORT_EVENT_CONNECT = 8;
 
-const int TRANSPORT_EVENT_CONNECT = 32;
+const int TRANSPORT_EVENT_READ_CALLBACK = 16;
 
-const int TRANSPORT_EVENT_READ_CALLBACK = 64;
-
-const int TRANSPORT_EVENT_WRITE_CALLBACK = 128;
+const int TRANSPORT_EVENT_WRITE_CALLBACK = 32;
 
 const String PACKAGE_VERSION = '';
 
@@ -30391,7 +30343,7 @@ const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'RelWithDebInfo';
+const String BUILD_TYPE = 'Debug';
 
 const String BUILD_INFO = '';
 
