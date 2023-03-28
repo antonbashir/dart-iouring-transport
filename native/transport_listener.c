@@ -16,7 +16,7 @@
 #include "transport_client.h"
 #include "transport.h"
 
-transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration)
+transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration, uint8_t id)
 {
   transport_listener_t *listener = malloc(sizeof(transport_listener_t));
   if (!listener)
@@ -24,6 +24,7 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
     return NULL;
   }
 
+  listener->id = id;
   listener->ready_workers = malloc(sizeof(int) * configuration->workers_count);
   for (size_t workerIndex = 0; workerIndex < configuration->workers_count; workerIndex++)
   {

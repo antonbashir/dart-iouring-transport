@@ -38,6 +38,9 @@ class Transport {
 
     _logger = TransportLogger(transportConfiguration.logLevel);
 
+    final nativeTransportConfiguration = calloc<transport_configuration_t>();
+    nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel.index;
+
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
     nativeAcceptorConfiguration.ref.receive_buffer_size = acceptorConfiguration.receiveBufferSize;
@@ -61,6 +64,7 @@ class Transport {
     nativeWorkerConfiguration.ref.buffers_count = workerConfiguration.buffersCount;
 
     _transportPointer = _bindings.transport_initialize(
+      nativeTransportConfiguration,
       nativeListenerConfiguration,
       nativeWorkerConfiguration,
       nativeClientConfiguration,
@@ -75,7 +79,7 @@ class Transport {
     _listenerExit.close();
     _bindings.transport_acceptor_shutdown(_acceptorPointer);
     _bindings.transport_destroy(_transportPointer);
-    _logger.info("[transport]: destroyed");
+    _logger.debug("[transport]: destroyed");
   }
 
   Future<void> serve(TransportUri uri, void Function(SendPort input) worker, {SendPort? transmitter}) => _run(
@@ -127,7 +131,7 @@ class Transport {
 
     fromTransportToListener.listen((port) async {
       await workersCompleter.future;
-      final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration);
+      final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration, listeners);
       if (listenerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[listener] is null"));
         fromTransportToListener.close();
@@ -140,6 +144,7 @@ class Transport {
       }
       (port as SendPort).send([
         _libraryPath,
+        _transportPointer.address,
         listenerPointer.address,
         listenerConfiguration.ringSize,
         workerMeessagePorts,
@@ -166,7 +171,7 @@ class Transport {
     }
 
     await listenerCompleter.future;
-    _logger.info("[transport]: ready");
+    _logger.debug("[transport]: ready");
     workerActivators.forEach((port) => port.send(null));
   }
 }

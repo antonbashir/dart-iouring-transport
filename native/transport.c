@@ -17,7 +17,8 @@
 #include "transport_acceptor.h"
 #include "small/include/small/rlist.h"
 
-transport_t *transport_initialize(transport_listener_configuration_t *listener_configuration,
+transport_t *transport_initialize(transport_configuration_t *transport_configuration,
+                                  transport_listener_configuration_t *listener_configuration,
                                   transport_worker_configuration_t *worker_configuration,
                                   transport_client_configuration_t *client_configuration,
                                   transport_acceptor_configuration_t *acceptor_configuration)
@@ -28,6 +29,7 @@ transport_t *transport_initialize(transport_listener_configuration_t *listener_c
     return NULL;
   }
 
+  transport->transport_configuration = transport_configuration;
   transport->acceptor_configuration = acceptor_configuration;
   transport->listener_configuration = listener_configuration;
   transport->client_configuration = client_configuration;
@@ -38,6 +40,7 @@ transport_t *transport_initialize(transport_listener_configuration_t *listener_c
 
 void transport_destroy(transport_t *transport)
 {
+  free(transport->transport_configuration);
   free(transport->acceptor_configuration);
   free(transport->listener_configuration);
   free(transport->client_configuration);

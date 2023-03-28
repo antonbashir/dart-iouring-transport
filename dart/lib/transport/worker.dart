@@ -53,10 +53,10 @@ class TransportCallbacks {
 
 class TransportWorker {
   final _initializer = Completer();
-  final _logger = TransportLogger(TransportDefaults.transport().logLevel);
   final _fromTransport = ReceivePort();
   final _bufferFinalizers = Queue<Completer<int>>();
 
+  late final TransportLogger _logger;
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transportPointer;
   late final Pointer<transport_worker_t> _workerPointer;
@@ -65,7 +65,6 @@ class TransportWorker {
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
   late final Pointer<Pointer<io_uring_cqe>> _cqes;
-
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
   late final RawReceivePort _closer;
@@ -112,7 +111,7 @@ class TransportWorker {
       _closer.close();
       final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
-      _logger.debug("[worker $id}]: closed");
+      _logger.debug("[worker $id]: closed");
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
   }
@@ -128,6 +127,7 @@ class TransportWorker {
       _hasServer = true;
     }
     _fromTransport.close();
+    _logger = TransportLogger(TransportLogLevel.values[_transportPointer.ref.transport_configuration.ref.log_level]);
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _callbacks = TransportCallbacks();
     _serverController = StreamController();
@@ -254,7 +254,7 @@ class TransportWorker {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
         if (!_serverController.hasListener) {
-          _logger.warn("[server]: stream hasn't listeners for fd = $fd");
+          _logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
           if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
           return;
