@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/constants.dart';
+import 'constants.dart';
 
 class TransportOutboundPayload {
   final Uint8List bytes;

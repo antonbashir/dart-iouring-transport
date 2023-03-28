@@ -1,4 +1,4 @@
-import 'package:iouring_transport/transport/constants.dart';
+import 'constants.dart';
 
 class TransportConfiguration {
   final TransportLogLevel logLevel;
