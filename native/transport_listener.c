@@ -30,17 +30,29 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
     listener->ready_workers[workerIndex] = 0;
   }
 
-  struct io_uring *ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(configuration->ring_size, ring, configuration->ring_flags);
+  listener->ring = malloc(sizeof(struct io_uring));
+  int32_t status = io_uring_queue_init(configuration->ring_size, listener->ring, configuration->ring_flags);
   if (status)
   {
-    free(ring);
+    free(listener->ring);
     free(listener);
     return NULL;
   }
-
-  listener->ring = ring;
   return listener;
+}
+
+static inline int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
+{
+  int count = 0;
+  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
+  {
+    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
+    {
+      return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+    }
+    return -1;
+  }
+  return count;
 }
 
 void transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes)

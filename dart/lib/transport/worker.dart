@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/defaults.dart';
+import 'package:iouring_transport/transport/extensions.dart';
 import 'package:iouring_transport/transport/logger.dart';
 
 import 'bindings.dart';
@@ -14,17 +15,6 @@ import 'exception.dart';
 import 'file.dart';
 import 'lookup.dart';
 import 'payload.dart';
-
-String _event(int userData) {
-  if ((userData & 0xffff) & transportEventClose != 0) return "transportEventClose";
-  if ((userData & 0xffff) & transportEventRead != 0) return "transportEventRead";
-  if ((userData & 0xffff) & transportEventWrite != 0) return "transportEventWrite";
-  if ((userData & 0xffff) & transportEventAccept != 0) return "transportEventAccept";
-  if ((userData & 0xffff) & transportEventConnect != 0) return "transportEventConnect";
-  if ((userData & 0xffff) & transportEventReadCallback != 0) return "transportEventReadCallback";
-  if ((userData & 0xffff) & transportEventWriteCallback != 0) return "transportEventWriteCallback";
-  return "unkown";
-}
 
 class TransportCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
@@ -100,13 +90,14 @@ class TransportWorker {
         final result = cqe.ref.res;
         final data = cqe.ref.user_data;
         _bindings.transport_cqe_advance(_ring, 1);
-        if ((data & 0xffff) & transportEventAll != 0) {
+        final event = data & 0xffff;
+        if (event & transportEventAll != 0) {
           final fd = (data >> 32) & 0xffffffff;
           if (result < 0) {
-            _handleError(result, data, fd);
+            _handleError(result, data, fd, event);
             continue;
           }
-          _handle(result, data, fd);
+          _handle(result, data, fd, event);
         }
       }
     });
@@ -163,10 +154,8 @@ class TransportWorker {
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
-  void _handleError(int result, int userData, int fd) {
-    _logger.error("[handle error] result = $result, event = ${_event(userData)}");
-
-    if ((userData & 0xffff) & transportEventRead != 0) {
+  void _handleError(int result, int userData, int fd, int event) {
+    if (event & transportEventRead != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       if (result == -EAGAIN) {
         _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventRead);
@@ -178,14 +167,14 @@ class TransportWorker {
         channel.close();
         return;
       }
-      _logger.error("[inbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
+      _logger.error("[inbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd");
       final channel = _inboundChannels.remove(fd)!;
       channel.free(bufferId);
       channel.close();
       return;
     }
 
-    if ((userData & 0xffff) & transportEventWrite != 0) {
+    if (event & transportEventWrite != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       if (result == -EAGAIN) {
         _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWrite);
@@ -197,35 +186,34 @@ class TransportWorker {
         channel.close();
         return;
       }
-      _logger.error("[inbound write] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd");
+      _logger.error("[inbound write] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd");
       final channel = _inboundChannels.remove(fd)!;
       channel.free(bufferId);
       channel.close();
       return;
     }
 
-    if ((userData & 0xffff) & transportEventAccept != 0) {
-      _logger.error("[inbound accept] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = ${result}");
+    if (event & transportEventAccept != 0) {
+      _logger.error("[inbound accept] code = $result, message = ${result.kernelErrorToString(_bindings)}, fd = ${result}");
       _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
       return;
     }
 
-    if ((userData & 0xffff) & transportEventConnect != 0) {
-      final message = "[connect] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, fd = $fd";
+    if (event & transportEventConnect != 0) {
+      final message = "[connect] code = $result, message = ${result.kernelErrorToString(_bindings)}, fd = $fd";
       _logger.error(message);
       _bindings.transport_close_descritor(fd);
       _callbacks.notifyConnectError(fd, TransportException(message));
       return;
     }
 
-    if ((userData & 0xffff) & transportEventReadCallback != 0) {
+    if (event & transportEventReadCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
-
       if (result == -EAGAIN) {
         _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventReadCallback);
         return;
       }
-      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
+      final message = "[outbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd";
       _logger.error(message);
       final channel = _outboundChannels[fd]!;
       _callbacks.notifyReadError(bufferId, TransportException(message));
@@ -240,7 +228,7 @@ class TransportWorker {
         _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWriteCallback);
         return;
       }
-      final message = "[outbound read] code = $result, message = ${_bindings.strerror(-result).cast<Utf8>().toDartString()}, bufferId = $bufferId, fd = $fd";
+      final message = "[outbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd";
       final channel = _outboundChannels[fd]!;
       _callbacks.notifyWriteError(bufferId, TransportException(message));
       channel.free(bufferId);
@@ -249,10 +237,8 @@ class TransportWorker {
     }
   }
 
-  void _handle(int result, int userData, int fd) {
-    //_logger.info("[handle] result = $result, wid = ${_workerPointer.ref.id}, bid = ${((userData >> 16) & 0xffff)}, fd = $fd, event = ${_event(userData)}");
-
-    if ((userData & 0xffff) & transportEventRead != 0) {
+  void _handle(int result, int userData, int fd, int event) {
+    if (event & transportEventRead != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       final channel = _inboundChannels[fd]!;
       if (!_serverController.hasListener) {
@@ -275,14 +261,14 @@ class TransportWorker {
       return;
     }
 
-    if ((userData & 0xffff) & transportEventWrite != 0) {
+    if (event & transportEventWrite != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
       _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
       return;
     }
 
-    if ((userData & 0xffff) & transportEventReadCallback != 0) {
+    if (event & transportEventReadCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       _callbacks.notifyRead(
         bufferId,
@@ -291,21 +277,21 @@ class TransportWorker {
       return;
     }
 
-    if ((userData & 0xffff) & transportEventWriteCallback != 0) {
+    if (event & transportEventWriteCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
       _outboundChannels[fd]!.free(bufferId);
       _callbacks.notifyWrite(bufferId);
       return;
     }
 
-    if ((userData & 0xffff) & transportEventConnect != 0) {
+    if (event & transportEventConnect != 0) {
       final channel = TransportOutboundChannel(_workerPointer, fd, _bindings);
       _outboundChannels[fd] = channel;
       _callbacks.notifyConnect(fd, TransportClient(_callbacks, channel));
       return;
     }
 
-    if ((userData & 0xffff) & transportEventAccept != 0) {
+    if (event & transportEventAccept != 0) {
       _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
       final channel = TransportInboundChannel(_workerPointer, result, _bindings);
       _inboundChannels[result] = channel;

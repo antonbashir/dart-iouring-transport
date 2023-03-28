@@ -12,26 +12,26 @@ class TransportDefaults {
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
         ringSize: 32768,
-        ringFlags: ringSetupCqe32 | ringSetupSqe128 | ringSetupSingleIssuer,
+        ringFlags: ringSetupSingleIssuer,
       );
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 32768,
-        ringFlags: ringSetupSqpoll | ringSetupCqe32 | ringSetupSqe128 | ringSetupSingleIssuer,
+        ringFlags: ringSetupSqpoll | ringSetupSingleIssuer,
       );
 
   static TransportClientConfiguration client() => TransportClientConfiguration(
-        maxConnections: 2048,
-        receiveBufferSize: 2048,
-        sendBufferSize: 2048,
-        defaultPool: 1,
+        maxConnections: 4096,
+        receiveBufferSize: 4096,
+        sendBufferSize: 4096,
+        defaultPool: 8,
       );
 
   static TransportAcceptorConfiguration acceptor() => TransportAcceptorConfiguration(
-        maxConnections: 2048,
-        receiveBufferSize: 2048,
-        sendBufferSize: 2048,
+        maxConnections: 4096,
+        receiveBufferSize: 4096,
+        sendBufferSize: 4096,
       );
 }

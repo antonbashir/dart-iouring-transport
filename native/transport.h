@@ -32,8 +32,6 @@ extern "C"
 
   int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring, int64_t timeout_seconds, int64_t timeout_nanos);
 
-  int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
-
   int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
   struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count);

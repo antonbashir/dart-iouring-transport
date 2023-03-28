@@ -73,20 +73,6 @@ int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_
   return count;
 }
 
-int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
-{
-  int count = 0;
-  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
-  {
-    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
-    {
-      return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
-    }
-    return -1;
-  }
-  return count;
-}
-
 int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
   int count = 0;
