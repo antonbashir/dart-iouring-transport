@@ -108,6 +108,7 @@ class TransportWorker {
       _listener.close();
       _closer.close();
       _bindings.transport_worker_destroy(_workerPointer);
+      print("[worker]: closed");
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
   }

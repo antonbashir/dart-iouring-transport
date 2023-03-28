@@ -22,8 +22,8 @@ class TransportListener {
     final cqes = bindings.transport_allocate_cqes(ringSize);
     while (true) {
       if (!bindings.transport_listener_reap(listenerPointer, cqes)) {
-        print("[listener]: closed");
         bindings.transport_listener_destroy(listenerPointer);
+        print("[listener]: closed");
         Isolate.exit();
       }
       print("[listener]: reaped");
