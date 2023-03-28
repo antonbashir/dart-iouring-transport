@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -53,8 +54,7 @@ class TransportWorker {
   final _initializer = Completer();
   final _logger = TransportLogger(TransportDefaults.transport().logLevel);
   final _fromTransport = ReceivePort();
-  final _inboundChannels = <int, TransportInboundChannel>{};
-  final _outboundChannels = <int, TransportOutboundChannel>{};
+  final _bufferFinalizers = Queue<Completer<int>>();
   final _servingComplter = Completer();
 
   late final TransportBindings _bindings;
@@ -148,7 +148,7 @@ class TransportWorker {
 
   Future<TransportFile> open(String path) async {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings));
+    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
   }
 
   Future<TransportClientPool> connect(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
@@ -161,15 +161,15 @@ class TransportWorker {
         return;
       }
       if (result == -EPIPE) {
-        final channel = _inboundChannels.remove(fd)!;
-        channel.free(bufferId);
-        channel.close();
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        _bindings.transport_close_descritor(fd);
         return;
       }
       _logger.error("[inbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd");
-      final channel = _inboundChannels.remove(fd)!;
-      channel.free(bufferId);
-      channel.close();
+      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+      _bindings.transport_close_descritor(fd);
       return;
     }
 
@@ -180,15 +180,15 @@ class TransportWorker {
         return;
       }
       if (result == -EPIPE) {
-        final channel = _inboundChannels.remove(fd)!;
-        channel.free(bufferId);
-        channel.close();
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        _bindings.transport_close_descritor(fd);
         return;
       }
       _logger.error("[inbound write] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd");
-      final channel = _inboundChannels.remove(fd)!;
-      channel.free(bufferId);
-      channel.close();
+      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+      _bindings.transport_close_descritor(fd);
       return;
     }
 
@@ -214,10 +214,10 @@ class TransportWorker {
       }
       final message = "[outbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd";
       _logger.error(message);
-      final channel = _outboundChannels[fd]!;
       _callbacks.notifyReadError(bufferId, TransportException(message));
-      channel.free(bufferId);
-      channel.close();
+      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+      _bindings.transport_close_descritor(fd);
       return;
     }
 
@@ -228,10 +228,10 @@ class TransportWorker {
         return;
       }
       final message = "[outbound read] code = $result, message = ${result.kernelErrorToString(_bindings)}, bufferId = $bufferId, fd = $fd";
-      final channel = _outboundChannels[fd]!;
       _callbacks.notifyWriteError(bufferId, TransportException(message));
-      channel.free(bufferId);
-      channel.close();
+      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+      _bindings.transport_close_descritor(fd);
       return;
     }
   }
@@ -239,24 +239,27 @@ class TransportWorker {
   void _handle(int result, int userData, int fd, int event) {
     if (event & transportEventRead != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
-      final channel = _inboundChannels[fd]!;
       if (!_serverController.hasListener) {
         _logger.warn("[server] no listeners for fd = $fd");
-        channel.free(bufferId);
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         return;
       }
       final buffer = _buffers[bufferId];
       final bufferBytes = buffer.iov_base.cast<Uint8>();
-      _serverController.add(TransportInboundPayload(bufferBytes.asTypedList(result), (answer) {
-        if (answer != null) {
+      _serverController.add(TransportInboundPayload(
+        bufferBytes.asTypedList(result),
+        (answer) {
           _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
           bufferBytes.asTypedList(answer.length).setAll(0, answer);
           buffer.iov_len = answer.length;
           _bindings.transport_worker_write(_workerPointer, fd, bufferId, 0, transportEventWrite);
-          return;
-        }
-        channel.free(bufferId);
-      }));
+        },
+        () {
+          _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+          if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        },
+      ));
       return;
     }
 
@@ -271,30 +274,33 @@ class TransportWorker {
       final bufferId = ((userData >> 16) & 0xffff);
       _callbacks.notifyRead(
         bufferId,
-        TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(result), () => _outboundChannels[fd]!.free(bufferId)),
+        TransportOutboundPayload(
+          _buffers[bufferId].iov_base.cast<Uint8>().asTypedList(result),
+          () {
+            _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+            if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+          },
+        ),
       );
       return;
     }
 
     if (event & transportEventWriteCallback != 0) {
       final bufferId = ((userData >> 16) & 0xffff);
-      _outboundChannels[fd]!.free(bufferId);
+      _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+      if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
       _callbacks.notifyWrite(bufferId);
       return;
     }
 
     if (event & transportEventConnect != 0) {
-      final channel = TransportOutboundChannel(_workerPointer, fd, _bindings);
-      _outboundChannels[fd] = channel;
-      _callbacks.notifyConnect(fd, TransportClient(_callbacks, channel));
+      _callbacks.notifyConnect(fd, TransportClient(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers)));
       return;
     }
 
     if (event & transportEventAccept != 0) {
       _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
-      final channel = TransportInboundChannel(_workerPointer, result, _bindings);
-      _inboundChannels[result] = channel;
-      _onAccept?.call(channel);
+      _onAccept?.call(TransportInboundChannel(_workerPointer, result, _bindings, _bufferFinalizers));
       return;
     }
   }

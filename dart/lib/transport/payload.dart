@@ -14,12 +14,13 @@ class TransportOutboundPayload {
 
 class TransportInboundPayload {
   final Uint8List bytes;
-  final void Function(Uint8List? answer) _responder;
+  final void Function(Uint8List answer) _responder;
+  final void Function() _releaser;
 
-  TransportInboundPayload(this.bytes, this._responder);
+  TransportInboundPayload(this.bytes, this._responder, this._releaser);
 
   @pragma(preferInlinePragma)
-  void release() => _responder(null);
+  void release() => _releaser();
 
   @pragma(preferInlinePragma)
   void respond(Uint8List answer) => _responder(answer);
