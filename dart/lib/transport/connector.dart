@@ -3,10 +3,10 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/model.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
+import 'model.dart';
 import 'payload.dart';
 import 'worker.dart';
 
@@ -47,9 +47,9 @@ class TransportClientPool {
     return client;
   }
 
-  void forEach(FutureOr<void> Function(TransportClient object) action) => _clients.forEach(action);
+  void forEach(FutureOr<void> Function(TransportClient client) action) => _clients.forEach(action);
 
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportClient object) mapper) => _clients.map(mapper);
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportClient client) mapper) => _clients.map(mapper);
 }
 
 class TransportConnector {

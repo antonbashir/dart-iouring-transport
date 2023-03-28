@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/exception.dart';
 import 'package:iouring_transport/transport/worker.dart';
 
 import 'channels.dart';

@@ -82,6 +82,7 @@ class TransportWorker {
   var _closed = false;
 
   bool get serving => _serving;
+  bool get closed => _closed;
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
@@ -104,7 +105,9 @@ class TransportWorker {
       }
     });
     _activator = RawReceivePort((_) => _initializer.complete());
-    _closer = RawReceivePort((_) {
+    _closer = RawReceivePort((_) async {
+      _closed = true;
+      await Future.delayed(Duration.zero);
       _listener.close();
       _closer.close();
       _bindings.transport_worker_destroy(_workerPointer);
@@ -154,7 +157,7 @@ class TransportWorker {
 
   Future<TransportFile> open(String path) async {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
+    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers, this));
   }
 
   Future<TransportClientPool> connect(TransportUri uri, {int? pool}) => _connector.connect(uri, pool: pool);
@@ -296,11 +299,28 @@ class TransportWorker {
         _callbacks.notifyWrite(bufferId);
         return;
       case transportEventConnect:
-        _callbacks.notifyConnect(fd, TransportClient(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers)));
+        _callbacks.notifyConnect(
+            fd,
+            TransportClient(
+              _callbacks,
+              TransportOutboundChannel(
+                _workerPointer,
+                fd,
+                _bindings,
+                _bufferFinalizers,
+                this,
+              ),
+            ));
         return;
       case transportEventAccept:
         _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
-        _onAccept(TransportInboundChannel(_workerPointer, result, _bindings, _bufferFinalizers));
+        _onAccept(TransportInboundChannel(
+          _workerPointer,
+          result,
+          _bindings,
+          _bufferFinalizers,
+          this,
+        ));
         return;
     }
   }

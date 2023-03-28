@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:iouring_transport/transport/defaults.dart';
@@ -42,16 +41,14 @@ void echo(int listeners, int workers, int clients) {
                 },
               ));
       print("Served");
-      final client = await worker.connect(TransportUri.tcp("127.0.0.1", 12345));
+      final clients = await worker.connect(TransportUri.tcp("127.0.0.1", 12345));
       print("Connected");
-      await client.select().write(clientData);
-      print("Sent request");
-      final response = await client.select().read();
-      print("Received response");
-      worker.transmitter!.send(response.bytes);
-      response.release();
+      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
+      print("Received responses");
+      responses.forEach((response) => worker.transmitter!.send(response.bytes));
+      responses.forEach((response) => response.release());
     });
-    expect(serverData, await done.first);
+    (await done.take(workers * clients).toList()).forEach((response) => expect(serverData, response));
     done.close();
     await transport.shutdown();
   });
