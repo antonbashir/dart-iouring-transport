@@ -39,7 +39,6 @@ extern "C"
   int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event);
   int transport_worker_connect(transport_worker_t *worker, transport_client_t *client);
   int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *acceptor);
-  int transport_worker_close(transport_worker_t *worker);
   int transport_worker_select_buffer(transport_worker_t *worker);
   void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id);
   void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id);

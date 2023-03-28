@@ -7,7 +7,7 @@ import 'bindings.dart';
 import 'constants.dart';
 
 class TransportChannel {
-  final int descriptor;
+  final int _descriptor;
   final Pointer<transport_worker_t> _pointer;
   final TransportBindings _bindings;
   final Queue<Completer<int>> _bufferFinalizers;
@@ -15,7 +15,7 @@ class TransportChannel {
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
 
-  TransportChannel(this._pointer, this.descriptor, this._bindings, this._bufferFinalizers) {
+  TransportChannel(this._pointer, this._descriptor, this._bindings, this._bufferFinalizers) {
     _usedBuffers = _pointer.ref.used_buffers;
     _buffers = _pointer.ref.buffers;
   }
@@ -32,23 +32,25 @@ class TransportChannel {
     return bufferId;
   }
 
-  void close() => _bindings.transport_close_descritor(descriptor);
+  void close() => _bindings.transport_close_descritor(_descriptor);
 }
 
 class TransportInboundChannel extends TransportChannel {
   TransportInboundChannel(super._pointer, super._descriptor, super._bindings, super._bufferFinalizers) : super();
 
   Future<void> read() async {
+    print("[inbound]: read, fd = ${_descriptor}");
     final bufferId = await allocate();
-    _bindings.transport_worker_read(_pointer, descriptor, bufferId, 0, transportEventRead);
+    _bindings.transport_worker_read(_pointer, _descriptor, bufferId, 0, transportEventRead);
   }
 
   Future<void> write(Uint8List bytes) async {
+    print("[inbound]: write, fd = ${_descriptor}");
     final bufferId = await allocate();
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_worker_write(_pointer, descriptor, bufferId, 0, transportEventWrite);
+    _bindings.transport_worker_write(_pointer, _descriptor, bufferId, 0, transportEventWrite);
   }
 }
 
@@ -56,13 +58,15 @@ class TransportOutboundChannel extends TransportChannel {
   TransportOutboundChannel(super.pointer, super.descriptor, super._bindings, super._bufferFinalizers) : super();
 
   void read(int bufferId, {int offset = 0}) {
-    _bindings.transport_worker_read(_pointer, descriptor, bufferId, offset, transportEventReadCallback);
+    print("[outbound]: read, fd = ${_descriptor}");
+    _bindings.transport_worker_read(_pointer, _descriptor, bufferId, offset, transportEventReadCallback);
   }
 
   void write(Uint8List bytes, int bufferId, {int offset = 0}) {
+    print("[outbound]: write, fd = ${_descriptor}");
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_worker_write(_pointer, descriptor, bufferId, offset, transportEventWriteCallback);
+    _bindings.transport_worker_write(_pointer, _descriptor, bufferId, offset, transportEventWriteCallback);
   }
 }

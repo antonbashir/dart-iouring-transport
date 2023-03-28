@@ -23,9 +23,21 @@ void main() {
         final serverData = Utf8Encoder().convert("respond");
         final worker = TransportWorker(input);
         await worker.initialize();
-        await worker.serve((channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
+        await worker.serve(
+            (channel) => channel.read(),
+            (stream) => stream.listen(
+                  (event) {
+                    print("Received request");
+                    event.respond(serverData);
+                  },
+                ));
+        print("Served");
         final client = await worker.connect(TransportUri.tcp("127.0.0.1", 12345));
-        final response = await client.select().write(clientData).then((value) => client.select().read());
+        print("Connected");
+        await client.select().write(clientData);
+        print("Sent request");
+        final response = await client.select().read();
+        print("Received response");
         expect(response.bytes, serverData);
         response.release();
         exit(0);

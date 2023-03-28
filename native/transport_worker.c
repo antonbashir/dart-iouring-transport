@@ -49,7 +49,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
     return NULL;
   }
 
-  int32_t status = io_uring_register_buffers(worker->ring, worker->buffers, worker->buffers_count);
+  status = io_uring_register_buffers(worker->ring, worker->buffers, worker->buffers_count);
   if (status)
   {
     free(worker->ring);
@@ -150,14 +150,6 @@ int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *ac
   sqe = provide_sqe(ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   return io_uring_submit(ring);
-}
-
-int transport_worker_close(transport_worker_t *worker)
-{
-  struct io_uring_sqe *sqe = provide_sqe(worker->ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, worker->id, TRANSPORT_EVENT_CLOSE, 0);
-  return io_uring_submit(worker->ring);
 }
 
 void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id)

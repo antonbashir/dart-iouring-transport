@@ -3,8 +3,6 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/constants.dart';
-import 'package:iouring_transport/transport/model.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -12,6 +10,7 @@ import 'exception.dart';
 import 'listener.dart';
 import 'logger.dart';
 import 'lookup.dart';
+import 'model.dart';
 
 class Transport {
   final TransportConfiguration transportConfiguration;
@@ -46,6 +45,7 @@ class Transport {
     nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    nativeClientConfiguration.ref.default_pool = clientConfiguration.defaultPool;
 
     final nativeListenerConfiguration = calloc<transport_listener_configuration_t>();
     nativeListenerConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;

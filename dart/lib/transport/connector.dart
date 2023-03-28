@@ -67,6 +67,7 @@ class TransportConnector {
       final client = using(
         (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.host!.toNativeUtf8(allocator: arena).cast(), uri.port!),
       );
+      print("connect, fd = ${client.ref.fd}");
       final completer = Completer<TransportClient>.sync();
       _callbacks.putConnect(client.ref.fd, completer);
       _bindings.transport_worker_connect(_workerPointer, client);
