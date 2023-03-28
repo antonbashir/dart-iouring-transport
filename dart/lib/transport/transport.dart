@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/constants.dart';
+import 'package:iouring_transport/transport/model.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -18,11 +19,11 @@ class Transport {
   final TransportListenerConfiguration listenerConfiguration;
   final TransportWorkerConfiguration workerConfiguration;
   final TransportClientConfiguration clientConfiguration;
-  late final TransportLogger logger;
 
   final _listenerExit = ReceivePort();
   final _workerExit = ReceivePort();
 
+  late final TransportLogger _logger;
   late final String? _libraryPath;
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
@@ -34,7 +35,7 @@ class Transport {
     _library = TransportLibrary.load(libraryPath: libraryPath);
     _bindings = TransportBindings(_library.library);
 
-    logger = TransportLogger(transportConfiguration.logLevel);
+    _logger = TransportLogger(transportConfiguration.logLevel);
 
     final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
     nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
@@ -68,22 +69,22 @@ class Transport {
   Future<void> shutdown() async {
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
     _bindings.transport_destroy(_transport);
-    logger.info("[transport]: destroyed");
+    _logger.info("[transport]: destroyed");
   }
 
-  Future<void> serve(String host, int port, void Function(SendPort input) worker, {SendPort? receiver}) => _run(
+  Future<void> serve(TransportUri uri, void Function(SendPort input) worker, {SendPort? transmitter}) => _run(
         worker,
         acceptor: using((Arena arena) => _bindings.transport_acceptor_initialize(
               _transport.ref.acceptor_configuration,
-              host.toNativeUtf8(allocator: arena).cast(),
-              port,
+              uri.host!.toNativeUtf8(allocator: arena).cast(),
+              uri.port!,
             )),
-        receiver: receiver,
+        transmitter: transmitter,
       );
 
-  Future<void> run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? receiver}) => _run(worker, receiver: receiver);
+  Future<void> run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? transmitter}) => _run(worker, transmitter: transmitter);
 
-  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? receiver}) async {
+  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? transmitter}) async {
     final fromTransportToListener = ReceivePort();
     final fromTransportToWorker = ReceivePort();
     var listeners = 0;
@@ -107,7 +108,7 @@ class Transport {
         _libraryPath,
         _transport.address,
         workerPointer.address,
-        receiver,
+        transmitter,
       ];
       if (acceptor != null) workerInput.add(acceptor.address);
       toWorker.send(workerInput);
@@ -158,7 +159,7 @@ class Transport {
     }
 
     await listenerCompleter.future;
-    logger.info("[transport]: ready");
+    _logger.info("[transport]: ready");
     workerActivators.forEach((port) => port.send(null));
   }
 }

@@ -5,7 +5,6 @@ import 'constants.dart';
 
 extension IntExtension on int {
   String transportEventToString() {
-    if (this & transportEventClose != 0) return "[Close]";
     if (this & transportEventRead != 0) return "[Read]";
     if (this & transportEventWrite != 0) return "[Write]";
     if (this & transportEventAccept != 0) return "[Accept]";

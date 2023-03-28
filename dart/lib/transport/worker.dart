@@ -55,7 +55,6 @@ class TransportWorker {
   final _logger = TransportLogger(TransportDefaults.transport().logLevel);
   final _fromTransport = ReceivePort();
   final _bufferFinalizers = Queue<Completer<int>>();
-  final _servingComplter = Completer();
 
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transportPointer;
@@ -72,9 +71,9 @@ class TransportWorker {
   late final TransportCallbacks _callbacks;
   late final StreamController<TransportInboundPayload> _serverController;
   late final Stream<TransportInboundPayload> _serverStream;
-  late final void Function(TransportInboundChannel channel)? _onAccept;
+  late final void Function(TransportInboundChannel channel) _onAccept;
 
-  late final SendPort? receiver;
+  late final SendPort? transmitter;
 
   bool _hasServer = false;
   var _serving = false;
@@ -109,7 +108,7 @@ class TransportWorker {
     final libraryPath = configuration[0] as String?;
     _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
     _workerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
-    receiver = configuration[3] as SendPort?;
+    transmitter = configuration[3] as SendPort?;
     if (configuration.length == 5) {
       _acceptorPointer = Pointer.fromAddress(configuration[4] as int).cast<transport_acceptor_t>();
       _hasServer = true;
@@ -128,22 +127,19 @@ class TransportWorker {
     _activator.close();
   }
 
-  Future<void> awaitServer() {
+  Future<void> serve(void Function(TransportInboundChannel channel) onAccept, void Function(Stream<TransportInboundPayload> stream) handler) async {
     if (!_hasServer) throw TransportException("[server]: is not available");
-    return _servingComplter.future;
-  }
-
-  Stream<TransportInboundPayload> serve([void Function(TransportInboundChannel channel)? onAccept]) {
-    if (!_hasServer) throw TransportException("[server]: is not available");
-    if (_serving) return _serverStream;
+    if (_serving) {
+      handler(_serverStream);
+      return;
+    }
     this._onAccept = onAccept;
     _bindings.transport_worker_accept(
       _workerPointer,
       _acceptorPointer,
     );
     _serving = true;
-    _servingComplter.complete();
-    return _serverStream;
+    handler(_serverStream);
   }
 
   Future<TransportFile> open(String path) async {
@@ -290,7 +286,7 @@ class TransportWorker {
         return;
       case transportEventAccept:
         _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
-        _onAccept?.call(TransportInboundChannel(_workerPointer, result, _bindings, _bufferFinalizers));
+        _onAccept(TransportInboundChannel(_workerPointer, result, _bindings, _bufferFinalizers));
         return;
     }
   }

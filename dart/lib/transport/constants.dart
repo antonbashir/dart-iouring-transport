@@ -127,3 +127,9 @@ const ringSetupSqe128 = 1 << 10;
 const ringSetupCqe32 = 1 << 11;
 const ringSetupSingleIssuer = 1 << 12;
 const ringSetupDeferTaskrun = 1 << 13;
+
+enum TransportSocketMode {
+  TCP,
+  UDP,
+  UNIX,
+}
