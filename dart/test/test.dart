@@ -44,19 +44,9 @@ void echo({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      await worker.serve(
-          (channel) => channel.read(),
-          (stream) => stream.listen(
-                (event) {
-                  print("Received request");
-                  event.respond(serverData);
-                },
-              ));
-      print("Served");
+      await worker.serve((channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
       final clients = await worker.connect(TransportUri.tcp("127.0.0.1", 12345));
-      print("Connected");
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
-      print("Received responses");
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
     });

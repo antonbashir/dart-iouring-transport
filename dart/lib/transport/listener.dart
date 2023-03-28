@@ -23,7 +23,6 @@ class TransportListener {
     while (true) {
       if (!bindings.transport_listener_reap(listenerPointer, cqes)) {
         bindings.transport_listener_destroy(listenerPointer);
-        print("[listener]: closed");
         Isolate.exit();
       }
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {

@@ -110,8 +110,9 @@ class TransportWorker {
       await Future.delayed(Duration.zero);
       _listener.close();
       _closer.close();
+      final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
-      print("[worker]: closed");
+      _logger.debug("[worker $id}]: closed");
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
   }
