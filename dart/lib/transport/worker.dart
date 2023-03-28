@@ -165,7 +165,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    _logger.debug(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message);
+    _logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
 
     switch (event) {
       case transportEventRead:

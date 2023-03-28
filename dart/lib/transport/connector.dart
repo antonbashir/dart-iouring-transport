@@ -18,7 +18,7 @@ class TransportClient {
 
   Future<TransportOutboundPayload> read() async {
     final bufferId = await _channel.allocate();
-    final completer = Completer<TransportOutboundPayload>.sync();
+    final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
     _channel.read(bufferId, offset: 0);
     return completer.future;
@@ -26,7 +26,7 @@ class TransportClient {
 
   Future<void> write(Uint8List bytes) async {
     final bufferId = await _channel.allocate();
-    final completer = Completer<void>.sync();
+    final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
     _channel.write(bytes, bufferId);
     return completer.future;
@@ -67,7 +67,7 @@ class TransportConnector {
       final client = using(
         (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.host!.toNativeUtf8(allocator: arena).cast(), uri.port!),
       );
-      final completer = Completer<TransportClient>.sync();
+      final completer = Completer<TransportClient>();
       _callbacks.putConnect(client.ref.fd, completer);
       _bindings.transport_worker_connect(_workerPointer, client);
       clients.add(completer.future);
