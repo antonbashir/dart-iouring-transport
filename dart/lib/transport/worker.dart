@@ -68,6 +68,7 @@ class TransportWorker {
 
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
+  late final RawReceivePort _closer;
   late final TransportConnector _connector;
   late final TransportCallbacks _callbacks;
   late final StreamController<TransportInboundPayload> _serverController;
@@ -78,11 +79,13 @@ class TransportWorker {
 
   bool _hasServer = false;
   var _serving = false;
+  var _closed = false;
 
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
+      if (_closed) return;
       final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
@@ -101,7 +104,12 @@ class TransportWorker {
       }
     });
     _activator = RawReceivePort((_) => _initializer.complete());
-    toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort]);
+    _closer = RawReceivePort((_) {
+      _listener.close();
+      _closer.close();
+      _bindings.transport_worker_destroy(_workerPointer);
+    });
+    toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
   }
 
   Future<void> initialize() async {

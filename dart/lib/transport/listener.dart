@@ -21,7 +21,11 @@ class TransportListener {
     _fromTransport.close();
     final cqes = bindings.transport_allocate_cqes(ringSize);
     while (true) {
-      bindings.transport_listener_reap(listenerPointer, cqes);
+      if (!bindings.transport_listener_reap(listenerPointer, cqes)) {
+        print("[listener]: closed");
+        bindings.transport_listener_destroy(listenerPointer);
+        return;
+      }
       print("[listener]: reaped");
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
         print("[listener]: ${listenerPointer.ref.ready_workers.value}");

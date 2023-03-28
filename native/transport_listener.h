@@ -33,7 +33,8 @@ extern "C"
   } transport_listener_t;
 
   transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration);
-  void transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes);
+  void transport_listener_close(transport_listener_t *listener);
+  bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes);
   void transport_listener_destroy(transport_listener_t *listener);
 #if defined(__cplusplus)
 }

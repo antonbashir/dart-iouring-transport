@@ -20,13 +20,15 @@ class Transport {
   final TransportClientConfiguration clientConfiguration;
 
   final _listenerExit = ReceivePort();
-  final _workerExit = ReceivePort();
+  final _workerClosers = <SendPort>[];
+  final _listenerClosers = <Pointer<transport_listener_t>>[];
 
   late final TransportLogger _logger;
   late final String? _libraryPath;
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
-  late final Pointer<transport_t> _transport;
+  late final Pointer<transport_t> _transportPointer;
+  late final Pointer<transport_acceptor_t> _acceptorPointer;
 
   Transport(this.transportConfiguration, this.acceptorConfiguration, this.listenerConfiguration, this.workerConfiguration, this.clientConfiguration, {String? libraryPath}) {
     this._libraryPath = libraryPath;
@@ -58,7 +60,7 @@ class Transport {
     nativeWorkerConfiguration.ref.buffer_size = workerConfiguration.bufferSize;
     nativeWorkerConfiguration.ref.buffers_count = workerConfiguration.buffersCount;
 
-    _transport = _bindings.transport_initialize(
+    _transportPointer = _bindings.transport_initialize(
       nativeListenerConfiguration,
       nativeWorkerConfiguration,
       nativeClientConfiguration,
@@ -67,15 +69,19 @@ class Transport {
   }
 
   Future<void> shutdown() async {
+    _listenerClosers.forEach((listener) => _bindings.transport_listener_close(listener));
+    _workerClosers.forEach((worker) => worker.send(null));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
-    _bindings.transport_destroy(_transport);
+    _listenerExit.close();
+    _bindings.transport_acceptor_shutdown(_acceptorPointer);
+    _bindings.transport_destroy(_transportPointer);
     _logger.info("[transport]: destroyed");
   }
 
   Future<void> serve(TransportUri uri, void Function(SendPort input) worker, {SendPort? transmitter}) => _run(
         worker,
-        acceptor: using((Arena arena) => _bindings.transport_acceptor_initialize(
-              _transport.ref.acceptor_configuration,
+        acceptor: _acceptorPointer = using((Arena arena) => _bindings.transport_acceptor_initialize(
+              _transportPointer.ref.acceptor_configuration,
               uri.host!.toNativeUtf8(allocator: arena).cast(),
               uri.port!,
             )),
@@ -98,7 +104,8 @@ class Transport {
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
-      final workerPointer = _bindings.transport_worker_initialize(_transport.ref.worker_configuration, workerAddresses.length);
+      _workerClosers.add(ports[3]);
+      final workerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.worker_configuration, workerAddresses.length);
       if (workerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[worker] is null"));
         return;
@@ -106,7 +113,7 @@ class Transport {
       workerAddresses.add(workerPointer.address);
       final workerInput = [
         _libraryPath,
-        _transport.address,
+        _transportPointer.address,
         workerPointer.address,
         transmitter,
       ];
@@ -120,7 +127,8 @@ class Transport {
 
     fromTransportToListener.listen((port) async {
       await workersCompleter.future;
-      final listenerPointer = _bindings.transport_listener_initialize(_transport.ref.listener_configuration);
+      final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration);
+      _listenerClosers.add(listenerPointer);
       if (listenerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[listener] is null"));
         fromTransportToListener.close();
@@ -146,7 +154,6 @@ class Transport {
       Isolate.spawn<SendPort>(
         worker,
         fromTransportToWorker.sendPort,
-        onExit: _workerExit.sendPort,
       );
     }
 

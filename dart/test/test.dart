@@ -8,20 +8,19 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
-final Transport _transport = Transport(
-  TransportDefaults.transport(),
-  TransportDefaults.acceptor(),
-  TransportDefaults.listener(),
-  TransportDefaults.worker(),
-  TransportDefaults.client(),
-);
-
 void main() {
   group("[base]", () {
-    test("[echo]", () async {
+    test("[listener = 1, worker = 1, client = 1]", () async {
+      final transport = Transport(
+        TransportDefaults.transport().copyWith(listenerIsolates: 1, workerInsolates: 1),
+        TransportDefaults.acceptor(),
+        TransportDefaults.listener(),
+        TransportDefaults.worker(),
+        TransportDefaults.client(),
+      );
       final done = ReceivePort();
       final serverData = Utf8Encoder().convert("respond");
-      await _transport.serve(transmitter: done.sendPort, TransportUri.tcp("127.0.0.1", 12345), (input) async {
+      await transport.serve(transmitter: done.sendPort, TransportUri.tcp("127.0.0.1", 12345), (input) async {
         final clientData = Utf8Encoder().convert("request");
         final serverData = Utf8Encoder().convert("respond");
         final worker = TransportWorker(input);
@@ -46,7 +45,7 @@ void main() {
       });
       expect(serverData, await done.first);
       done.close();
-      exit(0);
+      await transport.shutdown();
     });
   });
 }

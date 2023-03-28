@@ -29,7 +29,7 @@ Future<void> main(List<String> args) async {
       await worker.initialize();
       await worker.serve((channel) => channel.read(), (stream) => stream.listen((event) => event.respond(fromServer)));
       print("Served");
-      final connector = await worker.connect("127.0.0.1", 12345, pool: 256);
+      final connector = await worker.connect(TransportUri.tcp("127.0.0.1", 12345), pool: 256);
       print("Connected");
       var count = 0;
       final time = Stopwatch();

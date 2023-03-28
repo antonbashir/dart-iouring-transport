@@ -14850,7 +14850,22 @@ class TransportBindings {
           ffi.Pointer<transport_listener_t> Function(
               ffi.Pointer<transport_listener_configuration_t>)>();
 
-  void transport_listener_reap(
+  void transport_listener_close(
+    ffi.Pointer<transport_listener_t> listener,
+  ) {
+    return _transport_listener_close(
+      listener,
+    );
+  }
+
+  late final _transport_listener_closePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<transport_listener_t>)>>('transport_listener_close');
+  late final _transport_listener_close = _transport_listener_closePtr
+      .asFunction<void Function(ffi.Pointer<transport_listener_t>)>();
+
+  bool transport_listener_reap(
     ffi.Pointer<transport_listener_t> listener,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
   ) {
@@ -14862,11 +14877,11 @@ class TransportBindings {
 
   late final _transport_listener_reapPtr = _lookup<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_t>,
+              ffi.Bool Function(ffi.Pointer<transport_listener_t>,
                   ffi.Pointer<ffi.Pointer<io_uring_cqe>>)>>(
       'transport_listener_reap');
   late final _transport_listener_reap = _transport_listener_reapPtr.asFunction<
-      void Function(ffi.Pointer<transport_listener_t>,
+      bool Function(ffi.Pointer<transport_listener_t>,
           ffi.Pointer<ffi.Pointer<io_uring_cqe>>)>();
 
   void transport_listener_destroy(
@@ -22397,7 +22412,11 @@ class _SymbolAddresses {
           _library._transport_listener_initializePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_t>,
+              ffi.Void Function(ffi.Pointer<transport_listener_t>)>>
+      get transport_listener_close => _library._transport_listener_closePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Bool Function(ffi.Pointer<transport_listener_t>,
                   ffi.Pointer<ffi.Pointer<io_uring_cqe>>)>>
       get transport_listener_reap => _library._transport_listener_reapPtr;
   ffi.Pointer<
