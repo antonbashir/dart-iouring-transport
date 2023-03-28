@@ -31,6 +31,8 @@ class TransportChannel {
     }
     return bufferId;
   }
+
+  void close() => _bindings.transport_close_descritor(descriptor);
 }
 
 class TransportInboundChannel extends TransportChannel {
