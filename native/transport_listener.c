@@ -71,7 +71,7 @@ bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
     for (size_t cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++)
     {
       int result = cqes[cqeIndex]->res;
-      if (result == -1)
+      if (unlikely(result == -1))
       {
         return false;
       }
