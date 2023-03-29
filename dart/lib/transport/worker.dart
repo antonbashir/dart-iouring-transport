@@ -82,7 +82,7 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((readyCqes) {
-      final cqeCount = _bindings.transport_worker_wait(readyCqes * 2, _cqes, _ring);
+      final cqeCount = _bindings.transport_worker_wait(readyCqes, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final data = cqe.ref.user_data;
@@ -133,6 +133,10 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
+    Timer.periodic(Duration(seconds: 1), (timer) {
+      final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_flags, _cqes, _ring);
+      print(cqeCount);
+    });
     _activator.close();
   }
 
