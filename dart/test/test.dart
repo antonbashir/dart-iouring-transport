@@ -10,13 +10,13 @@ import 'package:test/test.dart';
 
 void main() {
   group("[base]", () {
-    final echoTestsCount = 1;
+    final echoTestsCount = 100;
     for (var index = 0; index < echoTestsCount; index++) {
-      echo(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echo(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echo(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echo(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echo(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      //echo(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+       echo(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      // echo(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      // echo(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      // echo(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
 }

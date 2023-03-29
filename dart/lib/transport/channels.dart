@@ -3,11 +3,9 @@ import 'dart:collection';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/exception.dart';
-import 'package:iouring_transport/transport/worker.dart';
-
 import 'bindings.dart';
 import 'constants.dart';
+import 'worker.dart';
 
 class TransportChannel {
   final int _descriptor;
@@ -25,13 +23,11 @@ class TransportChannel {
   }
 
   Future<int> allocate() async {
-    if (worker.closed) throw TransportException("closed");
     var bufferId = _bindings.transport_worker_select_buffer(_pointer);
     while (bufferId == -1) {
       final completer = Completer<int>();
       _bufferFinalizers.add(completer);
       bufferId = await completer.future;
-      if (worker.closed) throw TransportException("closed");
       if (_usedBuffers[bufferId] == transportBufferAvailable) return bufferId;
       bufferId = _bindings.transport_worker_select_buffer(_pointer);
     }

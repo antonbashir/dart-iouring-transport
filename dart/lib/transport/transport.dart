@@ -20,6 +20,7 @@ class Transport {
   final TransportClientConfiguration clientConfiguration;
 
   final _listenerExit = ReceivePort();
+  final _workerExit = ReceivePort();
   final _workerClosers = <SendPort>[];
   final _listenerClosers = <Pointer<transport_listener_t>>[];
 
@@ -73,8 +74,9 @@ class Transport {
   }
 
   Future<void> shutdown() async {
-    _listenerClosers.forEach((listener) => _bindings.transport_listener_close(listener));
     _workerClosers.forEach((worker) => worker.send(null));
+    await _workerExit.take(transportConfiguration.workerInsolates).toList();
+    _listenerClosers.forEach((listener) => _bindings.transport_listener_close(listener));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
     _listenerExit.close();
     _bindings.transport_acceptor_shutdown(_acceptorPointer);
@@ -159,6 +161,7 @@ class Transport {
       Isolate.spawn<SendPort>(
         worker,
         fromTransportToWorker.sendPort,
+        onExit: _workerExit.sendPort,
       );
     }
 

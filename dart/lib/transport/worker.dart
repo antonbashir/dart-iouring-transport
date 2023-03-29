@@ -78,14 +78,11 @@ class TransportWorker {
 
   bool _hasServer = false;
   var _serving = false;
-  var _closed = false;
 
   bool get serving => _serving;
-  bool get closed => _closed;
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
-      if (_closed) return;
       final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
@@ -105,13 +102,12 @@ class TransportWorker {
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
-      _closed = true;
-      await Future.delayed(Duration.zero);
       _listener.close();
       _closer.close();
       final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
       _logger.debug("[worker $id]: closed");
+      Isolate.exit();
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
   }

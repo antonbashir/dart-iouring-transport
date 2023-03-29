@@ -15,8 +15,10 @@ extern "C"
     struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
     while (unlikely(sqe == NULL))
     {
-      struct io_uring_cqe* unused;
+      struct io_uring_cqe *unused;
+      printf("wait cqe becase sqe is null\n");
       io_uring_wait_cqe_nr(ring, &unused, 1);
+      printf("done wait cqe becase sqe is null\n");
       sqe = io_uring_get_sqe(ring);
     }
     return sqe;
