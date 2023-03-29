@@ -81,7 +81,7 @@ class Transport {
     _listenerExit.close();
     _bindings.transport_acceptor_shutdown(_acceptorPointer);
     _bindings.transport_destroy(_transportPointer);
-    _logger.debug("[transport]: destroyed");
+    //_logger.debug("[transport]: destroyed");
   }
 
   Future<void> serve(TransportUri uri, void Function(SendPort input) worker, {SendPort? transmitter}) => _run(
@@ -174,7 +174,7 @@ class Transport {
     }
 
     await listenerCompleter.future;
-    _logger.debug("[transport]: ready");
+    //_logger.debug("[transport]: ready");
     workerActivators.forEach((port) => port.send(null));
   }
 }

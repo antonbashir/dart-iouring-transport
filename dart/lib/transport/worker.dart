@@ -104,9 +104,9 @@ class TransportWorker {
     _closer = RawReceivePort((_) async {
       _listener.close();
       _closer.close();
-      final id = _workerPointer.ref.id;
+      //final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
-      logger.debug("[worker $id]: closed");
+      //logger.debug("[worker $id]: closed");
       Isolate.exit();
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
@@ -251,7 +251,7 @@ class TransportWorker {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
         if (!_serverController.hasListener) {
-          logger.debug("[server]: stream hasn't listeners for fd = $fd");
+          //logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
           if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
           return;

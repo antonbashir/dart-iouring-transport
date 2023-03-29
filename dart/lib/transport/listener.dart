@@ -23,13 +23,13 @@ class TransportListener {
     final workerPorts = configuration[4] as List<SendPort>;
     final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _fromTransport.close();
-    final logger = TransportLogger(TransportLogLevel.values[transportPointer.ref.transport_configuration.ref.log_level]);
+    //final logger = TransportLogger(TransportLogLevel.values[transportPointer.ref.transport_configuration.ref.log_level]);
     final cqes = bindings.transport_allocate_cqes(ringSize);
     while (true) {
       if (!bindings.transport_listener_reap(listenerPointer, cqes)) {
-        final id = listenerPointer.ref.id;
+        //final id = listenerPointer.ref.id;
         bindings.transport_listener_destroy(listenerPointer);
-        logger.debug("[listener ${id}]: closed");
+        //logger.debug("[listener ${id}]: closed");
         Isolate.exit();
       }
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
