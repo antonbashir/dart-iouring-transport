@@ -19,7 +19,7 @@ class TransportDefaults {
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 32768,
-        ringFlags: ringSetupSqpoll | ringSetupSingleIssuer,
+        ringFlags: ringSetupSqpoll,
       );
 
   static TransportClientConfiguration client() => TransportClientConfiguration(
