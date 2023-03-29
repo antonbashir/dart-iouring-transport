@@ -33,6 +33,7 @@ class TransportListener {
         Isolate.exit();
       }
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
+        logger.debug("[listener ${listenerPointer.ref.id}]: cqe (dart) = ${listenerPointer.ref.ready_workers[workerIndex]}");
         if (listenerPointer.ref.ready_workers[workerIndex] == 1) {
           workerPorts[workerIndex].send(null);
           listenerPointer.ref.ready_workers[workerIndex] = 0;

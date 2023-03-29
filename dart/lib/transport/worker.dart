@@ -56,7 +56,7 @@ class TransportWorker {
   final _fromTransport = ReceivePort();
   final _bufferFinalizers = Queue<Completer<int>>();
 
-  late final TransportLogger _logger;
+  late final TransportLogger logger;
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transportPointer;
   late final Pointer<transport_worker_t> _workerPointer;
@@ -106,7 +106,7 @@ class TransportWorker {
       _closer.close();
       final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
-      _logger.debug("[worker $id]: closed");
+      logger.debug("[worker $id]: closed");
       Isolate.exit();
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
@@ -123,7 +123,7 @@ class TransportWorker {
       _hasServer = true;
     }
     _fromTransport.close();
-    _logger = TransportLogger(TransportLogLevel.values[_transportPointer.ref.transport_configuration.ref.log_level]);
+    logger = TransportLogger(TransportLogLevel.values[_transportPointer.ref.transport_configuration.ref.log_level]);
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _callbacks = TransportCallbacks();
     _serverController = StreamController();
@@ -161,7 +161,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    _logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
+    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
 
     switch (event) {
       case transportEventRead:
@@ -244,13 +244,13 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd, int event) {
-    _logger.debug("${event.transportEventToString()} result = $result, fd = $fd");
+    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
 
     switch (event) {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
         if (!_serverController.hasListener) {
-          _logger.debug("[server]: stream hasn't listeners for fd = $fd");
+          logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
           if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
           return;
@@ -274,8 +274,8 @@ class TransportWorker {
       case transportEventWrite:
         final bufferId = ((userData >> 16) & 0xffff);
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-        final result = _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
-        if (result == 0 || result < 0) _logger.debug("[write]: error with read: $result");
+        _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
+        logger.debug("[inbound send read]: worker = ${_workerPointer.ref.id}, fd = $fd");
         return;
       case transportEventReadCallback:
         final bufferId = ((userData >> 16) & 0xffff);

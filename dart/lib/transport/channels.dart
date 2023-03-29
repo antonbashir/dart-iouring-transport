@@ -42,6 +42,7 @@ class TransportInboundChannel extends TransportChannel {
 
   Future<void> read() async {
     final bufferId = await allocate();
+    worker.logger.debug("[inbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
     _bindings.transport_worker_read(_pointer, _descriptor, bufferId, 0, transportEventRead);
   }
 
@@ -50,6 +51,7 @@ class TransportInboundChannel extends TransportChannel {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
+    worker.logger.debug("[inbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
     _bindings.transport_worker_write(_pointer, _descriptor, bufferId, 0, transportEventWrite);
   }
 }
@@ -58,6 +60,7 @@ class TransportOutboundChannel extends TransportChannel {
   TransportOutboundChannel(super.pointer, super.descriptor, super._bindings, super._bufferFinalizers, super.worker) : super();
 
   void read(int bufferId, {int offset = 0}) {
+    worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
     _bindings.transport_worker_read(_pointer, _descriptor, bufferId, offset, transportEventReadCallback);
   }
 
@@ -65,6 +68,7 @@ class TransportOutboundChannel extends TransportChannel {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
+    worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
     _bindings.transport_worker_write(_pointer, _descriptor, bufferId, offset, transportEventWriteCallback);
   }
 }
