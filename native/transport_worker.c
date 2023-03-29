@@ -175,15 +175,11 @@ void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id
 int transport_worker_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
   int count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
-  printf("first receive cqe %d\n", count);
-  if (count != cqe_count)
+  if (unlikely(count != cqe_count))
   {
-    printf("await cqe");
     if (likely(io_uring_wait_cqe_nr(ring, &cqes[0], cqe_count) == 0))
     {
-      count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
-      printf("new receive cqe %d\n", count);
-      return count;
+      return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
     }
     return -1;
   }
