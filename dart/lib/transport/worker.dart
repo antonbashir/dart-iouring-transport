@@ -72,6 +72,7 @@ class TransportWorker {
   late final StreamController<TransportInboundPayload> _serverController;
   late final Stream<TransportInboundPayload> _serverStream;
   late final void Function(TransportInboundChannel channel) _onAccept;
+  late int _ringSize;
 
   late final SendPort? transmitter;
 
@@ -82,7 +83,7 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
-      final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
+      final cqeCount = _bindings.transport_worker_peek(_ringSize, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final data = cqe.ref.user_data;
@@ -133,6 +134,7 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
+    _ringSize = _transportPointer.ref.worker_configuration.ref.ring_size;
     _activator.close();
   }
 

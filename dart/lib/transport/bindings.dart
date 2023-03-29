@@ -19202,23 +19202,23 @@ class TransportBindings {
   late final _transport_worker_free_buffer = _transport_worker_free_bufferPtr
       .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
-  int transport_worker_wait(
+  int transport_worker_peek(
     int cqe_count,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     ffi.Pointer<io_uring> ring,
   ) {
-    return _transport_worker_wait(
+    return _transport_worker_peek(
       cqe_count,
       cqes,
       ring,
     );
   }
 
-  late final _transport_worker_waitPtr = _lookup<
+  late final _transport_worker_peekPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>>('transport_worker_wait');
-  late final _transport_worker_wait = _transport_worker_waitPtr.asFunction<
+              ffi.Pointer<io_uring>)>>('transport_worker_peek');
+  late final _transport_worker_peek = _transport_worker_peekPtr.asFunction<
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
           ffi.Pointer<io_uring>)>();
 
@@ -19269,54 +19269,6 @@ class TransportBindings {
           ffi.Pointer<transport_worker_configuration_t>,
           ffi.Pointer<transport_client_configuration_t>,
           ffi.Pointer<transport_acceptor_configuration_t>)>();
-
-  int transport_consume(
-    int cqe_count,
-    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
-    ffi.Pointer<io_uring> ring,
-    int timeout_seconds,
-    int timeout_nanos,
-  ) {
-    return _transport_consume(
-      cqe_count,
-      cqes,
-      ring,
-      timeout_seconds,
-      timeout_nanos,
-    );
-  }
-
-  late final _transport_consumePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Uint32,
-              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>,
-              ffi.Int64,
-              ffi.Int64)>>('transport_consume');
-  late final _transport_consume = _transport_consumePtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-          ffi.Pointer<io_uring>, int, int)>();
-
-  int transport_peek(
-    int cqe_count,
-    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
-    ffi.Pointer<io_uring> ring,
-  ) {
-    return _transport_peek(
-      cqe_count,
-      cqes,
-      ring,
-    );
-  }
-
-  late final _transport_peekPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>>('transport_peek');
-  late final _transport_peek = _transport_peekPtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-          ffi.Pointer<io_uring>)>();
 
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     int cqe_count,
@@ -23288,8 +23240,8 @@ class _SymbolAddresses {
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>> get transport_worker_wait =>
-      _library._transport_worker_waitPtr;
+              ffi.Pointer<io_uring>)>> get transport_worker_peek =>
+      _library._transport_worker_peekPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
@@ -23303,20 +23255,6 @@ class _SymbolAddresses {
                   ffi.Pointer<transport_client_configuration_t>,
                   ffi.Pointer<transport_acceptor_configuration_t>)>>
       get transport_initialize => _library._transport_initializePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Uint32,
-              ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>,
-              ffi.Int64,
-              ffi.Int64)>> get transport_consume =>
-      _library._transport_consumePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>> get transport_peek =>
-      _library._transport_peekPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(ffi.Uint32)>>
@@ -30405,7 +30343,7 @@ const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'Debug';
+const String BUILD_TYPE = 'RelWithDebInfo';
 
 const String BUILD_INFO = '';
 

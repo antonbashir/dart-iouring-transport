@@ -57,35 +57,6 @@ struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count)
   return malloc(sizeof(struct io_uring_cqe) * cqe_count);
 }
 
-int transport_consume(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring, int64_t timeout_seconds, int64_t timeout_nanos)
-{
-  int count = 0;
-  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
-  {
-    struct __kernel_timespec timeout = {
-        .tv_sec = timeout_seconds,
-        .tv_nsec = timeout_nanos,
-    };
-    if (likely(io_uring_wait_cqe_timeout(ring, &cqes[0], &timeout) == 0))
-    {
-      return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
-    }
-    return -1;
-  }
-
-  return count;
-}
-
-int transport_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
-{
-  int count = 0;
-  if (unlikely(!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count))))
-  {
-    return -1;
-  }
-  return count;
-}
-
 int transport_close_descritor(int fd)
 {
   return shutdown(fd, SHUT_RDWR);

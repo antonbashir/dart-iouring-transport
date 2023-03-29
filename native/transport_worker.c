@@ -172,15 +172,11 @@ void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id
   worker->used_buffers[buffer_id] = BUFFER_AVAILABLE;
 }
 
-int transport_worker_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
+int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
-  int count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
-  if (unlikely(count != cqe_count))
+  int count = 0;
+  if (unlikely(!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count))))
   {
-    if (likely(io_uring_wait_cqe_nr(ring, &cqes[0], cqe_count) == 0))
-    {
-      return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
-    }
     return -1;
   }
   return count;
