@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * Description: run various unlink tests
+ * Description: run various nop tests
  *
  */
 #include <errno.h>

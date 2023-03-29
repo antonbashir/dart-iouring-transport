@@ -4,7 +4,7 @@ project(native C ASM)
 add_definitions("-D_GNU_SOURCE")
 set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
 
-set(LIBURING_VERSION master)
+set(LIBURING_VERSION liburing-2.3)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fPIC -static-libgcc -static-libstdc++ -fno-stack-protector")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O2 -fPIC -static-libgcc -static-libstdc++ -fno-stack-protector")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
@@ -14,7 +14,7 @@ include(FetchContent)
 
 FetchContent_Declare(
   liburing
-  URL "https://github.com/axboe/liburing/archive/refs/heads/${LIBURING_VERSION}.tar.gz"
+  URL "https://github.com/axboe/liburing/archive/refs/tags/${LIBURING_VERSION}.tar.gz"
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/liburing
 )
 FetchContent_MakeAvailable(liburing)
