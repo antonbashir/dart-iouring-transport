@@ -274,7 +274,8 @@ class TransportWorker {
       case transportEventWrite:
         final bufferId = ((userData >> 16) & 0xffff);
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-        _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
+        final result = _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
+        if (result == 0 || result < 0) _logger.debug("[write]: error with read: $result");
         return;
       case transportEventReadCallback:
         final bufferId = ((userData >> 16) & 0xffff);

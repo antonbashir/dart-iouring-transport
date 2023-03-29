@@ -170,6 +170,7 @@ void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id
 
 void transport_worker_destroy(transport_worker_t *worker)
 {
+  io_uring_unregister_buffers(worker->ring);
   io_uring_queue_exit(worker->ring);
   for (size_t index = 0; index < worker->buffers_count; index++)
   {
