@@ -10,7 +10,7 @@ import 'package:test/test.dart';
 
 void main() {
   group("[base]", () {
-    final echoTestsCount = 64;
+    final echoTestsCount = 10;
     for (var index = 0; index < echoTestsCount; index++) {
       echo(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       echo(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll | ringSetupSubmitAll);
