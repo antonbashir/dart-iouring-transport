@@ -42,8 +42,8 @@ class TransportInboundChannel extends TransportChannel {
 
   Future<void> read() async {
     final bufferId = await allocate();
-    worker.logger.debug("[inbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
-    _bindings.transport_worker_read(_pointer, _descriptor, bufferId, 0, transportEventRead);
+    final submitted = _bindings.transport_worker_read(_pointer, _descriptor, bufferId, 0, transportEventRead);
+    worker.logger.debug("[inbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted =  $submitted");
   }
 
   Future<void> write(Uint8List bytes) async {
@@ -51,8 +51,8 @@ class TransportInboundChannel extends TransportChannel {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    worker.logger.debug("[inbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
-    _bindings.transport_worker_write(_pointer, _descriptor, bufferId, 0, transportEventWrite);
+    final submitted = _bindings.transport_worker_write(_pointer, _descriptor, bufferId, 0, transportEventWrite);
+    worker.logger.debug("[inbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 }
 
@@ -60,15 +60,15 @@ class TransportOutboundChannel extends TransportChannel {
   TransportOutboundChannel(super.pointer, super.descriptor, super._bindings, super._bufferFinalizers, super.worker) : super();
 
   void read(int bufferId, {int offset = 0}) {
-    worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
-    _bindings.transport_worker_read(_pointer, _descriptor, bufferId, offset, transportEventReadCallback);
+    final submitted = _bindings.transport_worker_read(_pointer, _descriptor, bufferId, offset, transportEventReadCallback);
+    worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 
   void write(Uint8List bytes, int bufferId, {int offset = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}");
-    _bindings.transport_worker_write(_pointer, _descriptor, bufferId, offset, transportEventWriteCallback);
+    final submitted = _bindings.transport_worker_write(_pointer, _descriptor, bufferId, offset, transportEventWriteCallback);
+    worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 }

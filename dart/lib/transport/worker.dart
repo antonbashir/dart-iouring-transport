@@ -5,17 +5,16 @@ import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/extensions.dart';
-import 'package:iouring_transport/transport/model.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
 import 'connector.dart';
 import 'constants.dart';
-import 'defaults.dart';
 import 'exception.dart';
 import 'file.dart';
 import 'logger.dart';
 import 'lookup.dart';
+import 'model.dart';
 import 'payload.dart';
 
 class TransportCallbacks {
@@ -82,12 +81,12 @@ class TransportWorker {
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
-    _listener = RawReceivePort((_) {
-      final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
+    _listener = RawReceivePort((readyCqes) {
+      final cqeCount = _bindings.transport_worker_wait(readyCqes * 2, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
-        final result = cqe.ref.res;
         final data = cqe.ref.user_data;
+        final result = cqe.ref.res;
         _bindings.transport_cqe_advance(_ring, 1);
         final event = data & 0xffff;
         if (event & transportEventAll != 0) {

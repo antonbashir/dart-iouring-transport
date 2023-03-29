@@ -42,7 +42,7 @@ transport_listener_t *transport_listener_initialize(transport_listener_configura
   return listener;
 }
 
-static inline int transport_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
+static inline int transport_listener_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
   int count = 0;
   if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
@@ -66,18 +66,18 @@ void transport_listener_close(transport_listener_t *listener)
 bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes)
 {
   int32_t cqeCount = 0;
-  if (likely(cqeCount = transport_wait(listener->ring_size, cqes, listener->ring) != -1))
+  if (likely(cqeCount = transport_listener_wait(listener->ring_size, cqes, listener->ring) != -1))
   {
     for (size_t cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++)
     {
       int result = cqes[cqeIndex]->res;
-      printf("[listener %d]: cqe %d\n", listener->id, result);
+      printf("[listener] cqe result : %d\n", result);
       if (unlikely(result == -1))
       {
         io_uring_cq_advance(listener->ring, cqeCount);
         return false;
       }
-      listener->ready_workers[result] = 1;
+      listener->ready_workers[result] += 1;
     }
     io_uring_cq_advance(listener->ring, cqeCount);
   }

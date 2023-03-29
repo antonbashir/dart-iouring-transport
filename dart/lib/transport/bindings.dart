@@ -19202,6 +19202,26 @@ class TransportBindings {
   late final _transport_worker_free_buffer = _transport_worker_free_bufferPtr
       .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
+  int transport_worker_wait(
+    int cqe_count,
+    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
+    ffi.Pointer<io_uring> ring,
+  ) {
+    return _transport_worker_wait(
+      cqe_count,
+      cqes,
+      ring,
+    );
+  }
+
+  late final _transport_worker_waitPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Pointer<io_uring>)>>('transport_worker_wait');
+  late final _transport_worker_wait = _transport_worker_waitPtr.asFunction<
+      int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+          ffi.Pointer<io_uring>)>();
+
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
   ) {
@@ -23265,6 +23285,11 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
       get transport_worker_free_buffer =>
           _library._transport_worker_free_bufferPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+              ffi.Pointer<io_uring>)>> get transport_worker_wait =>
+      _library._transport_worker_waitPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>

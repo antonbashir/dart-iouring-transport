@@ -42,6 +42,7 @@ extern "C"
   int transport_worker_select_buffer(transport_worker_t *worker);
   void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id);
   void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id);
+  int transport_worker_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
   void transport_worker_destroy(transport_worker_t *worker);
 

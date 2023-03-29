@@ -13,7 +13,7 @@ void main() {
     final echoTestsCount = 100;
     for (var index = 0; index < echoTestsCount; index++) {
       //echo(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-       echo(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echo(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       // echo(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       // echo(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       // echo(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -44,7 +44,7 @@ void echo({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      await worker.serve((channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
+      await worker.serve((channel) async => await channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
       final clients = await worker.connect(TransportUri.tcp("127.0.0.1", 12345));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));

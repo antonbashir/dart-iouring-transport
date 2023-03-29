@@ -168,6 +168,24 @@ void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id
   worker->used_buffers[buffer_id] = BUFFER_AVAILABLE;
 }
 
+int transport_worker_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
+{
+  int count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+  printf("first receive cqe %d\n", count);
+  while ((count != cqe_count))
+  {
+    printf("await cqe");
+    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
+    {
+      count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+      printf("new receive cqe %d\n", count);
+      continue;
+    }
+    return -1;
+  }
+  return count;
+}
+
 void transport_worker_destroy(transport_worker_t *worker)
 {
   io_uring_queue_exit(worker->ring);
