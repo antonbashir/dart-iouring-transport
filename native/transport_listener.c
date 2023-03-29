@@ -76,7 +76,7 @@ bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
         io_uring_cq_advance(listener->ring, cqeCount);
         return false;
       }
-      listener->ready_workers[result] += 1;
+      listener->ready_workers[result] = 1;
     }
     io_uring_cq_advance(listener->ring, cqeCount);
   }

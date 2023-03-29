@@ -33,10 +33,8 @@ class TransportListener {
         Isolate.exit();
       }
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
-        //logger.debug("[listener ${listenerPointer.ref.id}]: worker $workerIndex status = ${listenerPointer.ref.ready_workers[workerIndex]}");
-        final readyCqes = listenerPointer.ref.ready_workers[workerIndex];
-        if (readyCqes != 0) {
-          workerPorts[workerIndex].send(readyCqes);
+        if (listenerPointer.ref.ready_workers[workerIndex] != 0) {
+          workerPorts[workerIndex].send(null);
           listenerPointer.ref.ready_workers[workerIndex] = 0;
         }
       }
