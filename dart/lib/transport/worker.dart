@@ -81,8 +81,8 @@ class TransportWorker {
   bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
-    _listener = RawReceivePort((readyCqes) {
-      final cqeCount = _bindings.transport_worker_wait(readyCqes, _cqes, _ring);
+    _listener = RawReceivePort((_) {
+      final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_size, _cqes, _ring);
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final data = cqe.ref.user_data;
@@ -133,10 +133,6 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
-    Timer.periodic(Duration(seconds: 1), (timer) {
-      final cqeCount = _bindings.transport_peek(_transportPointer.ref.worker_configuration.ref.ring_flags, _cqes, _ring);
-      print(cqeCount);
-    });
     _activator.close();
   }
 
@@ -164,7 +160,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
+    //logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
 
     switch (event) {
       case transportEventRead:
@@ -247,7 +243,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd, int event) {
-    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
+    //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
 
     switch (event) {
       case transportEventRead:
@@ -278,7 +274,7 @@ class TransportWorker {
         final bufferId = ((userData >> 16) & 0xffff);
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
         _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
-        logger.debug("[inbound send read]: worker = ${_workerPointer.ref.id}, fd = $fd");
+        //logger.debug("[inbound send read]: worker = ${_workerPointer.ref.id}, fd = $fd");
         return;
       case transportEventReadCallback:
         final bufferId = ((userData >> 16) & 0xffff);

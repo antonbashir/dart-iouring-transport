@@ -43,7 +43,7 @@ class TransportInboundChannel extends TransportChannel {
   Future<void> read() async {
     final bufferId = await allocate();
     final submitted = _bindings.transport_worker_read(_pointer, _descriptor, bufferId, 0, transportEventRead);
-    worker.logger.debug("[inbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted =  $submitted");
+    //worker.logger.debug("[inbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted =  $submitted");
   }
 
   Future<void> write(Uint8List bytes) async {
@@ -52,7 +52,7 @@ class TransportInboundChannel extends TransportChannel {
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
     final submitted = _bindings.transport_worker_write(_pointer, _descriptor, bufferId, 0, transportEventWrite);
-    worker.logger.debug("[inbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
+    //worker.logger.debug("[inbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 }
 
@@ -61,7 +61,7 @@ class TransportOutboundChannel extends TransportChannel {
 
   void read(int bufferId, {int offset = 0}) {
     final submitted = _bindings.transport_worker_read(_pointer, _descriptor, bufferId, offset, transportEventReadCallback);
-    worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
+    //worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 
   void write(Uint8List bytes, int bufferId, {int offset = 0}) {
@@ -69,6 +69,6 @@ class TransportOutboundChannel extends TransportChannel {
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
     final submitted = _bindings.transport_worker_write(_pointer, _descriptor, bufferId, offset, transportEventWriteCallback);
-    worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
+    //worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 }
