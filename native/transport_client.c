@@ -23,6 +23,7 @@ transport_client_t *transport_client_initialize_tcp(transport_client_configurati
   {
     return NULL;
   }
+  client->mode = TCP;
   memset(&client->inet_client_address, 0, sizeof(client->inet_client_address));
   client->inet_client_address.sin_addr.s_addr = inet_addr(ip);
   client->inet_client_address.sin_port = htons(port);
@@ -46,6 +47,7 @@ transport_client_t *transport_client_initialize_udp(transport_client_configurati
   {
     return NULL;
   }
+  client->mode = UDP;
   memset(&client->inet_client_address, 0, sizeof(client->inet_client_address));
   client->inet_client_address.sin_addr.s_addr = inet_addr(ip);
   client->inet_client_address.sin_port = htons(port);
@@ -69,6 +71,7 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
   {
     return NULL;
   }
+  client->mode = UNIX_DGRAM;
   memset(&client->unix_client_address, 0, sizeof(client->inet_client_address));
   client->unix_client_address.sun_family = AF_UNIX;
   strncpy(client->unix_client_address.sun_path, path, path_length);
@@ -91,6 +94,7 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
   {
     return NULL;
   }
+  client->mode = UNIX_STREAM;
   memset(&client->unix_client_address, 0, sizeof(client->inet_client_address));
   client->unix_client_address.sun_family = AF_UNIX;
   strncpy(client->unix_client_address.sun_path, path, path_length);

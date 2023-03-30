@@ -83,12 +83,13 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
   strncpy(server->unix_server_address.sun_path, path, path_length);
   server->server_address_length = sizeof(server->unix_server_address);
   server->fd = transport_socket_create_server_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
-  if (server->fd < 0 || bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length) < 0)
+  int32_t result = 0;
+  if (server->fd < 0 || (result = bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length)) < 0)
   {
     free(server);
     return NULL;
   }
-  if (listen(server->fd, configuration->max_connections) < 0)
+  if ((result = listen(server->fd, configuration->max_connections)) < 0)
   {
     free(server);
     return NULL;

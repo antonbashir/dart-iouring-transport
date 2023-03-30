@@ -163,7 +163,7 @@ int transport_worker_connect(transport_worker_t *worker, transport_client_t *cli
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   uint64_t data = ((uint64_t)(client->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
-  io_uring_prep_connect(sqe, client->fd, (struct sockaddr *)&client->inet_client_address, client->client_address_length);
+  io_uring_prep_connect(sqe, client->fd, client->mode == TCP ? (struct sockaddr *)&client->unix_client_address : (struct sockaddr *)&client->unix_client_address, client->client_address_length);
   sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
@@ -178,7 +178,7 @@ int transport_worker_accept(transport_worker_t *worker, transport_server_t *serv
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
-  io_uring_prep_accept(sqe, server->fd, (struct sockaddr *)&server->inet_server_address, &server->server_address_length, 0);
+  io_uring_prep_accept(sqe, server->fd, server->mode == TCP ? (struct sockaddr *)&server->inet_server_address : (struct sockaddr *)&server->unix_server_address, &server->server_address_length, 0);
   sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);

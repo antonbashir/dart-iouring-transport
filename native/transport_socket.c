@@ -230,7 +230,7 @@ int32_t transport_socket_create_client_unix_stream(uint32_t receive_buffer_size,
 {
   int32_t option = 1;
 
-  int32_t fd = socket(AF_UNIX, SOCK_STREAM | O_NONBLOCK, 0);
+  int32_t fd = socket(AF_UNIX, SOCK_STREAM | O_CLOEXEC, 0);
   if (fd == -1)
   {
     return -1;
