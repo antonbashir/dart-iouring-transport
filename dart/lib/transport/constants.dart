@@ -110,10 +110,23 @@ const transportEventAccept = 1 << 2;
 const transportEventConnect = 1 << 3;
 const transportEventReadCallback = 1 << 4;
 const transportEventWriteCallback = 1 << 5;
-const transportEventCustomCallback = 1 << 6;
+const transportEventReceiveMessageCallback = 1 << 6;
+const transportEventSendMessageCallback = 1 << 7;
+const transportEventReceiveMessage = 1 << 8;
+const transportEventSendMessage = 1 << 9;
+const transportEventCustomCallback = 1 << 10;
 
-const transportEventAll =
-    transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventReadCallback | transportEventWriteCallback | transportEventCustomCallback;
+const transportEventAll = transportEventRead |
+    transportEventWrite |
+    transportEventAccept |
+    transportEventConnect |
+    transportEventReadCallback |
+    transportEventWriteCallback |
+    transportEventReceiveMessageCallback |
+    transportEventSendMessageCallback |
+    transportEventReceiveMessage |
+    transportEventSendMessage |
+    transportEventCustomCallback;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;

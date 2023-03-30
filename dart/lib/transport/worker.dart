@@ -139,7 +139,14 @@ class TransportWorker {
     _callbacks = TransportCallbacks();
     _serverController = StreamController();
     _serverStream = _serverController.stream;
-    _connector = TransportConnector(_callbacks, _transportPointer, _workerPointer, _bindings);
+    _connector = TransportConnector(
+      _callbacks,
+      _transportPointer,
+      _workerPointer,
+      _bindings,
+      _bufferFinalizers,
+      this,
+    );
     await _initializer.future;
     _ring = _workerPointer.ref.ring;
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
@@ -170,6 +177,8 @@ class TransportWorker {
   }
 
   Future<TransportClientPool> connect(TransportUri uri, {int? pool}) => _connector.connect(uri, pool: pool);
+
+  TransportClientPool createClients(TransportUri uri, {int? pool}) => _connector.createClients(uri, pool: pool);
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
 
@@ -311,18 +320,7 @@ class TransportWorker {
         _callbacks.notifyWrite(bufferId);
         return;
       case transportEventConnect:
-        _callbacks.notifyConnect(
-            fd,
-            TransportClient(
-              _callbacks,
-              TransportOutboundChannel(
-                _workerPointer,
-                fd,
-                _bindings,
-                _bufferFinalizers,
-                this,
-              ),
-            ));
+        _callbacks.notifyConnect(fd, _connector.createClient(fd));
         return;
       case transportEventAccept:
         _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
