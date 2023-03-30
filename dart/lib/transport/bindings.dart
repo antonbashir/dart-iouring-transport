@@ -19152,6 +19152,76 @@ class TransportBindings {
       int Function(ffi.Pointer<transport_worker_t>,
           ffi.Pointer<transport_acceptor_t>)>();
 
+  int transport_worker_send_message(
+    ffi.Pointer<transport_worker_t> worker,
+    int fd,
+    int buffer_id,
+    ffi.Pointer<sockaddr_in> address,
+    int address_length,
+    int message_flags,
+    int event,
+  ) {
+    return _transport_worker_send_message(
+      worker,
+      fd,
+      buffer_id,
+      address,
+      address_length,
+      message_flags,
+      event,
+    );
+  }
+
+  late final _transport_worker_send_messagePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Pointer<sockaddr_in>,
+              socklen_t,
+              ffi.Int,
+              ffi.Uint16)>>('transport_worker_send_message');
+  late final _transport_worker_send_message =
+      _transport_worker_send_messagePtr.asFunction<
+          int Function(ffi.Pointer<transport_worker_t>, int, int,
+              ffi.Pointer<sockaddr_in>, int, int, int)>();
+
+  int transport_worker_receive_message(
+    ffi.Pointer<transport_worker_t> worker,
+    int fd,
+    int buffer_id,
+    ffi.Pointer<sockaddr_in> address,
+    int address_length,
+    int message_flags,
+    int event,
+  ) {
+    return _transport_worker_receive_message(
+      worker,
+      fd,
+      buffer_id,
+      address,
+      address_length,
+      message_flags,
+      event,
+    );
+  }
+
+  late final _transport_worker_receive_messagePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Pointer<sockaddr_in>,
+              socklen_t,
+              ffi.Int,
+              ffi.Uint16)>>('transport_worker_receive_message');
+  late final _transport_worker_receive_message =
+      _transport_worker_receive_messagePtr.asFunction<
+          int Function(ffi.Pointer<transport_worker_t>, int, int,
+              ffi.Pointer<sockaddr_in>, int, int, int)>();
+
   int transport_worker_select_buffer(
     ffi.Pointer<transport_worker_t> worker,
   ) {
@@ -23223,6 +23293,28 @@ class _SymbolAddresses {
               ffi.Int Function(ffi.Pointer<transport_worker_t>,
                   ffi.Pointer<transport_acceptor_t>)>>
       get transport_worker_accept => _library._transport_worker_acceptPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Pointer<sockaddr_in>,
+              socklen_t,
+              ffi.Int,
+              ffi.Uint16)>> get transport_worker_send_message =>
+      _library._transport_worker_send_messagePtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Pointer<sockaddr_in>,
+              socklen_t,
+              ffi.Int,
+              ffi.Uint16)>> get transport_worker_receive_message =>
+      _library._transport_worker_receive_messagePtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_select_buffer =>
@@ -30331,6 +30423,16 @@ const int TRANSPORT_EVENT_READ_CALLBACK = 16;
 
 const int TRANSPORT_EVENT_WRITE_CALLBACK = 32;
 
+const int TRANSPORT_EVENT_RECIVE_MESSAGE = 64;
+
+const int TRANSPORT_EVENT_SEND_MESSAGE = 128;
+
+const int TRANSPORT_EVENT_CUSTOM = 256;
+
+const int TRANSPORT_BUFFER_AVAILABLE = -2;
+
+const int TRANSPORT_BUFFER_USED = -1;
+
 const String PACKAGE_VERSION = '';
 
 const String PACKAGE = '';
@@ -30339,7 +30441,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 
