@@ -7,8 +7,6 @@ import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
-import 'constants.dart';
-import 'model.dart';
 import 'payload.dart';
 import 'worker.dart';
 
@@ -32,6 +30,22 @@ class TransportClient {
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
     _channel.write(bytes, bufferId);
+    return completer.future;
+  }
+
+  Future<TransportOutboundPayload> receiveMessage() async {
+    final bufferId = await _channel.allocate();
+    final completer = Completer<TransportOutboundPayload>();
+    _callbacks.putRead(bufferId, completer);
+    _channel.receiveMessage(bufferId, _clientPointer.ref.inet_client_address, _clientPointer.ref.client_address_length);
+    return completer.future;
+  }
+
+  Future<void> sendMessage(Uint8List bytes) async {
+    final bufferId = await _channel.allocate();
+    final completer = Completer<void>();
+    _callbacks.putWrite(bufferId, completer);
+    _channel.sendMessage(bytes, bufferId, _clientPointer.ref.inet_client_address, _clientPointer.ref.client_address_length);
     return completer.future;
   }
 

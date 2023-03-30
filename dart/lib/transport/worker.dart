@@ -341,6 +341,7 @@ class TransportWorker {
           _bindings,
           _bufferFinalizers,
           this,
+          server.pointer,
         ));
         return;
     }

@@ -19306,7 +19306,7 @@ class TransportBindings {
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
-    ffi.Pointer<sockaddr_in> address,
+    sockaddr_in address,
     int address_length,
     int message_flags,
     int event,
@@ -19328,20 +19328,20 @@ class TransportBindings {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<sockaddr_in>,
+              sockaddr_in,
               socklen_t,
               ffi.Int,
               ffi.Uint16)>>('transport_worker_send_message');
   late final _transport_worker_send_message =
       _transport_worker_send_messagePtr.asFunction<
-          int Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr_in>, int, int, int)>();
+          int Function(ffi.Pointer<transport_worker_t>, int, int, sockaddr_in,
+              int, int, int)>();
 
   int transport_worker_receive_message(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
-    ffi.Pointer<sockaddr_in> address,
+    sockaddr_in address,
     int address_length,
     int message_flags,
     int event,
@@ -19363,14 +19363,14 @@ class TransportBindings {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<sockaddr_in>,
+              sockaddr_in,
               socklen_t,
               ffi.Int,
               ffi.Uint16)>>('transport_worker_receive_message');
   late final _transport_worker_receive_message =
       _transport_worker_receive_messagePtr.asFunction<
-          int Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr_in>, int, int, int)>();
+          int Function(ffi.Pointer<transport_worker_t>, int, int, sockaddr_in,
+              int, int, int)>();
 
   int transport_worker_select_buffer(
     ffi.Pointer<transport_worker_t> worker,
@@ -23568,7 +23568,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<sockaddr_in>,
+              sockaddr_in,
               socklen_t,
               ffi.Int,
               ffi.Uint16)>> get transport_worker_send_message =>
@@ -23579,7 +23579,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<sockaddr_in>,
+              sockaddr_in,
               socklen_t,
               ffi.Int,
               ffi.Uint16)>> get transport_worker_receive_message =>

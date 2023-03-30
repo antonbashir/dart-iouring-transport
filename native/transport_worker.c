@@ -113,7 +113,7 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   return io_uring_submit(ring);
 }
 
-int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr_in *address, socklen_t address_length, int message_flags, uint16_t event)
+int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr_in address, socklen_t address_length, int message_flags, uint16_t event)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -122,7 +122,7 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct msghdr message;
   memset(&message, 0, sizeof(message));
-  message.msg_name = address;
+  message.msg_name = &address;
   message.msg_namelen = address_length;
   message.msg_iov = &worker->buffers[buffer_id];
   message.msg_iovlen = 1;
@@ -135,7 +135,7 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   return io_uring_submit(ring);
 }
 
-int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr_in *address, socklen_t address_length, int message_flags, uint16_t event)
+int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr_in address, socklen_t address_length, int message_flags, uint16_t event)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -144,7 +144,7 @@ int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, ui
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct msghdr message;
   memset(&message, 0, sizeof(message));
-  message.msg_name = address;
+  message.msg_name = &address;
   message.msg_namelen = address_length;
   message.msg_iov = &worker->buffers[buffer_id];
   message.msg_iovlen = 1;
