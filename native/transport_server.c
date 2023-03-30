@@ -69,7 +69,7 @@ transport_server_t *transport_server_initialize_udp(transport_server_configurati
 }
 
 transport_server_t *transport_server_initialize_unix_stream(transport_server_configuration_t *configuration,
-                                                            const char *path, 
+                                                            const char *path,
                                                             uint8_t path_length)
 {
   transport_server_t *server = malloc(sizeof(transport_server_t));
@@ -88,12 +88,17 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
     free(server);
     return NULL;
   }
+  if (listen(server->fd, configuration->max_connections) < 0)
+  {
+    free(server);
+    return NULL;
+  }
   return server;
 }
 
 transport_server_t *transport_server_initialize_unix_dgram(transport_server_configuration_t *configuration,
                                                            const char *path,
-                                                          uint8_t path_length)
+                                                           uint8_t path_length)
 {
   transport_server_t *server = malloc(sizeof(transport_server_t));
   if (!server)

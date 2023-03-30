@@ -89,7 +89,7 @@ void echoUnixStream({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.serveUnixStream(Directory.current.path + "/socket.sock", (stream) => stream.listen((event) => event.respond(serverData)));
+      worker.serveUnixStream(Directory.current.path + "/socket.sock", (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
       final clients = await worker.connectUnix(Directory.current.path + "/socket.sock");
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));

@@ -165,9 +165,13 @@ class TransportWorker {
 
   void serveUnixStream(
     String path,
+    void Function(TransportInboundChannel channel) onAccept,
     void Function(Stream<TransportInboundPayload> stream) handler,
-  ) =>
-      handler(_server.createUnixStream(path).stream);
+  ) {
+    final server = _server.createUnixStream(path);
+    server.accept(_workerPointer, onAccept);
+    handler(server.stream);
+  }
 
   void serveUnixDgram(
     String path,
