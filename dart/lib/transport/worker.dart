@@ -180,13 +180,13 @@ class TransportWorker {
     return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers, this));
   }
 
-  Future<TransportClientPool> connectTcp(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
+  Future<TransportClientPool> connectTcp(String host, int port, {int? pool}) => _connector.connectTcp(host, port, pool: pool);
+
+  Future<TransportClientPool> connectUnix(String path, {int? pool}) => _connector.connectUnix(path, pool: pool);
 
   TransportClientPool createUdpClients(String host, int port, {int? pool}) => _connector.createUdpClients(host, port, pool: pool);
 
-  TransportClientPool createUnixStreamClients(String path, {int? pool}) => _connector.createUnixStreamClients(path, pool: pool);
-
-  TransportClientPool createUnixDgramClients(String path, {int? pool}) => _connector.createUnixDgramClients(path, pool: pool);
+  TransportClientPool createUnixDgramClients(String path, {int? pool}) => _connector.createUnixClients(path, pool: pool);
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
 

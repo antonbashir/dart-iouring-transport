@@ -71,7 +71,7 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
   }
   memset(&client->unix_client_address, 0, sizeof(client->inet_client_address));
   client->unix_client_address.sun_family = AF_UNIX;
-  strlcpy(client->unix_client_address.sun_path, path, path_length);
+  strncpy(client->unix_client_address.sun_path, path, path_length);
   client->client_address_length = sizeof(client->unix_client_address);
   client->fd = transport_socket_create_client_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0)
@@ -93,7 +93,7 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
   }
   memset(&client->unix_client_address, 0, sizeof(client->inet_client_address));
   client->unix_client_address.sun_family = AF_UNIX;
-  strlcpy(client->unix_client_address.sun_path, path, path_length);
+  strncpy(client->unix_client_address.sun_path, path, path_length);
   client->client_address_length = sizeof(client->unix_client_address);
   client->fd = transport_socket_create_client_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0)
