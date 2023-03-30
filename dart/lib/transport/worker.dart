@@ -14,7 +14,6 @@ import 'exception.dart';
 import 'file.dart';
 import 'logger.dart';
 import 'lookup.dart';
-import 'model.dart';
 import 'payload.dart';
 import 'server.dart';
 
@@ -152,7 +151,7 @@ class TransportWorker {
     void Function(TransportInboundChannel channel) onAccept,
     void Function(Stream<TransportInboundPayload> stream) handler,
   ) {
-    final server = _server.create(TransportUri.tcp(host, port));
+    final server = _server.createTcp(host, port);
     server.accept(_workerPointer, onAccept);
     handler(server.stream);
   }
@@ -162,28 +161,32 @@ class TransportWorker {
     int port,
     void Function(Stream<TransportInboundPayload> stream) handler,
   ) =>
-      handler(_server.create(TransportUri.udp(host, port)).stream);
+      handler(_server.createUdp(host, port).stream);
 
   void serveUnixStream(
     String path,
     void Function(Stream<TransportInboundPayload> stream) handler,
   ) =>
-      handler(_server.create(TransportUri.unixStream(path)).stream);
+      handler(_server.createUnixStream(path).stream);
 
   void serveUnixDgram(
     String path,
     void Function(Stream<TransportInboundPayload> stream) handler,
   ) =>
-      handler(_server.create(TransportUri.unixDgram(path)).stream);
+      handler(_server.createUnixDgram(path).stream);
 
   Future<TransportFile> file(String path) async {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
     return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers, this));
   }
 
-  Future<TransportClientPool> connect(TransportUri uri, {int? pool}) => _connector.connect(uri, pool: pool);
+  Future<TransportClientPool> connectTcp(String host, int port, {int? pool}) => _connector.connect(host, port, pool: pool);
 
-  TransportClientPool createClients(TransportUri uri, {int? pool}) => _connector.createClients(uri, pool: pool);
+  TransportClientPool createUdpClients(String host, int port, {int? pool}) => _connector.createUdpClients(host, port, pool: pool);
+
+  TransportClientPool createUnixStreamClients(String path, {int? pool}) => _connector.createUnixStreamClients(path, pool: pool);
+
+  TransportClientPool createUnixDgramClients(String path, {int? pool}) => _connector.createUnixDgramClients(path, pool: pool);
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
 

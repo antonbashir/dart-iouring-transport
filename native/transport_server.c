@@ -79,6 +79,7 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
   }
   server->mode = UNIX_STREAM;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
+  server->unix_server_address.sun_family = AF_UNIX;
   strlcpy(server->unix_server_address.sun_path, path, path_length);
   server->server_address_length = sizeof(server->unix_server_address);
   server->fd = transport_socket_create_server_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
@@ -101,6 +102,7 @@ transport_server_t *transport_server_initialize_unix_dgram(transport_server_conf
   }
   server->mode = UNIX_DGRAM;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
+  server->unix_server_address.sun_family = AF_UNIX;
   strlcpy(server->unix_server_address.sun_path, path, path_length);
   server->server_address_length = sizeof(server->unix_server_address);
   server->fd = transport_socket_create_server_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);

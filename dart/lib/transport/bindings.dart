@@ -17089,26 +17089,101 @@ class TransportBindings {
           void Function(ffi.Pointer<transport_listener_pool_t>,
               ffi.Pointer<transport_listener_t>)>();
 
-  ffi.Pointer<transport_client_t> transport_client_initialize(
+  ffi.Pointer<transport_client_t> transport_client_initialize_tcp(
     ffi.Pointer<transport_client_configuration_t> configuration,
     ffi.Pointer<ffi.Char> ip,
     int port,
   ) {
-    return _transport_client_initialize(
+    return _transport_client_initialize_tcp(
       configuration,
       ip,
       port,
     );
   }
 
-  late final _transport_client_initializePtr = _lookup<
+  late final _transport_client_initialize_tcpPtr = _lookup<
       ffi.NativeFunction<
           ffi.Pointer<transport_client_t> Function(
               ffi.Pointer<transport_client_configuration_t>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int32)>>('transport_client_initialize');
-  late final _transport_client_initialize =
-      _transport_client_initializePtr.asFunction<
+              ffi.Int32)>>('transport_client_initialize_tcp');
+  late final _transport_client_initialize_tcp =
+      _transport_client_initialize_tcpPtr.asFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  ffi.Pointer<transport_client_t> transport_client_initialize_udp(
+    ffi.Pointer<transport_client_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> ip,
+    int port,
+  ) {
+    return _transport_client_initialize_udp(
+      configuration,
+      ip,
+      port,
+    );
+  }
+
+  late final _transport_client_initialize_udpPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>>('transport_client_initialize_udp');
+  late final _transport_client_initialize_udp =
+      _transport_client_initialize_udpPtr.asFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  ffi.Pointer<transport_client_t> transport_client_initialize_unix_stream(
+    ffi.Pointer<transport_client_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> path,
+    int path_length,
+  ) {
+    return _transport_client_initialize_unix_stream(
+      configuration,
+      path,
+      path_length,
+    );
+  }
+
+  late final _transport_client_initialize_unix_streamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>>('transport_client_initialize_unix_stream');
+  late final _transport_client_initialize_unix_stream =
+      _transport_client_initialize_unix_streamPtr.asFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  ffi.Pointer<transport_client_t> transport_client_initialize_unix_dgram(
+    ffi.Pointer<transport_client_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> path,
+    int path_length,
+  ) {
+    return _transport_client_initialize_unix_dgram(
+      configuration,
+      path,
+      path_length,
+    );
+  }
+
+  late final _transport_client_initialize_unix_dgramPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>>('transport_client_initialize_unix_dgram');
+  late final _transport_client_initialize_unix_dgram =
+      _transport_client_initialize_unix_dgramPtr.asFunction<
           ffi.Pointer<transport_client_t> Function(
               ffi.Pointer<transport_client_configuration_t>,
               ffi.Pointer<ffi.Char>,
@@ -19560,25 +19635,73 @@ class TransportBindings {
       _transport_socket_create_server_unix_dgramPtr
           .asFunction<int Function(int, int)>();
 
-  int transport_socket_create_client(
-    int max_connections,
+  int transport_socket_create_client_tcp(
     int receive_buffer_size,
     int send_buffer_size,
   ) {
-    return _transport_socket_create_client(
-      max_connections,
+    return _transport_socket_create_client_tcp(
       receive_buffer_size,
       send_buffer_size,
     );
   }
 
-  late final _transport_socket_create_clientPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Uint32, ffi.Uint32,
-              ffi.Uint32)>>('transport_socket_create_client');
-  late final _transport_socket_create_client =
-      _transport_socket_create_clientPtr
-          .asFunction<int Function(int, int, int)>();
+  late final _transport_socket_create_client_tcpPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>(
+          'transport_socket_create_client_tcp');
+  late final _transport_socket_create_client_tcp =
+      _transport_socket_create_client_tcpPtr
+          .asFunction<int Function(int, int)>();
+
+  int transport_socket_create_client_udp(
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create_client_udp(
+      receive_buffer_size,
+      send_buffer_size,
+    );
+  }
+
+  late final _transport_socket_create_client_udpPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>(
+          'transport_socket_create_client_udp');
+  late final _transport_socket_create_client_udp =
+      _transport_socket_create_client_udpPtr
+          .asFunction<int Function(int, int)>();
+
+  int transport_socket_create_client_unix_stream(
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create_client_unix_stream(
+      receive_buffer_size,
+      send_buffer_size,
+    );
+  }
+
+  late final _transport_socket_create_client_unix_streamPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>(
+          'transport_socket_create_client_unix_stream');
+  late final _transport_socket_create_client_unix_stream =
+      _transport_socket_create_client_unix_streamPtr
+          .asFunction<int Function(int, int)>();
+
+  int transport_socket_create_client_unix_dgram(
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create_client_unix_dgram(
+      receive_buffer_size,
+      send_buffer_size,
+    );
+  }
+
+  late final _transport_socket_create_client_unix_dgramPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>(
+          'transport_socket_create_client_unix_dgram');
+  late final _transport_socket_create_client_unix_dgram =
+      _transport_socket_create_client_unix_dgramPtr
+          .asFunction<int Function(int, int)>();
 
   late final addresses = _SymbolAddresses(this);
 }
@@ -23049,8 +23172,29 @@ class _SymbolAddresses {
           ffi.Pointer<transport_client_t> Function(
               ffi.Pointer<transport_client_configuration_t>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int32)>> get transport_client_initialize =>
-      _library._transport_client_initializePtr;
+              ffi.Int32)>> get transport_client_initialize_tcp =>
+      _library._transport_client_initialize_tcpPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>> get transport_client_initialize_udp =>
+      _library._transport_client_initialize_udpPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>> get transport_client_initialize_unix_stream =>
+      _library._transport_client_initialize_unix_streamPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_client_t> Function(
+              ffi.Pointer<transport_client_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>> get transport_client_initialize_unix_dgram =>
+      _library._transport_client_initialize_unix_dgramPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_client_t>)>>
@@ -23499,11 +23643,18 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
       get transport_socket_create_server_unix_dgram =>
           _library._transport_socket_create_server_unix_dgramPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int32 Function(ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
-      get transport_socket_create_client =>
-          _library._transport_socket_create_clientPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_client_tcp =>
+          _library._transport_socket_create_client_tcpPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_client_udp =>
+          _library._transport_socket_create_client_udpPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_client_unix_stream =>
+          _library._transport_socket_create_client_unix_streamPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_client_unix_dgram =>
+          _library._transport_socket_create_client_unix_dgramPtr;
 }
 
 class iovec extends ffi.Struct {
@@ -26575,10 +26726,15 @@ class transport_client extends ffi.Struct {
   @ffi.Int()
   external int fd;
 
-  external sockaddr_in client_address;
+  external sockaddr_in inet_client_address;
+
+  external sockaddr_un unix_client_address;
 
   @socklen_t()
   external int client_address_length;
+
+  @ffi.Int32()
+  external int mode;
 }
 
 typedef transport_client_t = transport_client;

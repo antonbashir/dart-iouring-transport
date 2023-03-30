@@ -7,6 +7,7 @@ import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
+import 'constants.dart';
 import 'model.dart';
 import 'payload.dart';
 import 'worker.dart';
@@ -65,13 +66,11 @@ class TransportConnector {
 
   TransportConnector(this._callbacks, this._transportPointer, this._workerPointer, this._bindings, this._bufferFinalizers, this._worker);
 
-  Future<TransportClientPool> connect(TransportUri uri, {int? pool}) async {
+  Future<TransportClientPool> connect(String host, int port, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
-      final client = using(
-        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.inetHost!.toNativeUtf8(allocator: arena).cast(), uri.inetPort!),
-      );
+      final client = using((arena) => _bindings.transport_client_initialize_tcp(_transportPointer.ref.client_configuration, host.toNativeUtf8(allocator: arena).cast(), port));
       _clients[client.ref.fd] = client;
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(client.ref.fd, completer);
@@ -81,12 +80,58 @@ class TransportConnector {
     return TransportClientPool(await Future.wait(clients));
   }
 
-  TransportClientPool createClients(TransportUri uri, {int? pool}) {
+  TransportClientPool createUdpClients(String host, int port, {int? pool}) {
     final clients = <TransportClient>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
       final client = using(
-        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.inetHost!.toNativeUtf8(allocator: arena).cast(), uri.inetPort!),
+        (arena) => _bindings.transport_client_initialize_udp(_transportPointer.ref.client_configuration, host.toNativeUtf8(allocator: arena).cast(), port),
+      );
+      _clients[client.ref.fd] = client;
+      clients.add(TransportClient(
+        _callbacks,
+        TransportOutboundChannel(
+          _workerPointer,
+          client.ref.fd,
+          _bindings,
+          _bufferFinalizers,
+          _worker,
+        ),
+        client,
+      ));
+    }
+    return TransportClientPool(clients);
+  }
+
+  TransportClientPool createUnixDgramClients(String path, {int? pool}) {
+    final clients = <TransportClient>[];
+    if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
+    for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
+      final client = using(
+        (arena) => _bindings.transport_client_initialize_unix_dgram(_transportPointer.ref.client_configuration, path.toNativeUtf8(allocator: arena).cast(), path.length),
+      );
+      _clients[client.ref.fd] = client;
+      clients.add(TransportClient(
+        _callbacks,
+        TransportOutboundChannel(
+          _workerPointer,
+          client.ref.fd,
+          _bindings,
+          _bufferFinalizers,
+          _worker,
+        ),
+        client,
+      ));
+    }
+    return TransportClientPool(clients);
+  }
+
+  TransportClientPool createUnixStreamClients(String path, {int? pool}) {
+    final clients = <TransportClient>[];
+    if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
+    for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
+      final client = using(
+        (arena) => _bindings.transport_client_initialize_unix_stream(_transportPointer.ref.client_configuration, path.toNativeUtf8(allocator: arena).cast(), path.length),
       );
       _clients[client.ref.fd] = client;
       clients.add(TransportClient(

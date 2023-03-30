@@ -3,7 +3,6 @@ import 'dart:isolate';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/model.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
@@ -45,7 +44,7 @@ void echo({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.serveTcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.connect(TransportUri.tcp("127.0.0.1", 12345));
+      final clients = await worker.connectTcp("127.0.0.1", 12345);
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());

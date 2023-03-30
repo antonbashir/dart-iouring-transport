@@ -7,7 +7,6 @@ import 'dart:isolate';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/model.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 
@@ -27,7 +26,7 @@ Future<void> main(List<String> args) async {
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.serveTcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(fromServer)));
-      final connector = await worker.connect(TransportUri.tcp("127.0.0.1", 12345), pool: 256);
+      final connector = await worker.connectTcp("127.0.0.1", 12345, pool: 256);
       var count = 0;
       final time = Stopwatch();
       time.start();

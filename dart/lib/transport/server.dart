@@ -5,8 +5,6 @@ import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
-import 'constants.dart';
-import 'model.dart';
 import 'payload.dart';
 
 class TransportServerInstance {
@@ -44,40 +42,37 @@ class TransportServer {
 
   TransportServer(this._configuration, this._bindings);
 
-  TransportServerInstance create(TransportUri uri) {
-    final instance = using(
-      (Arena arena) {
-        switch (uri.mode) {
-          case TransportSocketMode.tcp:
-            return TransportServerInstance(
-              _bindings.transport_server_initialize_tcp(_configuration, uri.inetHost!.toNativeUtf8().cast(), uri.inetPort!),
-              _bindings,
-            );
-          case TransportSocketMode.udp:
-            return TransportServerInstance(
-              _bindings.transport_server_initialize_udp(_configuration, uri.inetHost!.toNativeUtf8().cast(), uri.inetPort!),
-              _bindings,
-            );
-          case TransportSocketMode.unixDgram:
-            return TransportServerInstance(
-              _bindings.transport_server_initialize_unix_dgram(
-                _configuration,
-                uri.unixPath!.toNativeUtf8().cast(),
-                uri.unixPath!.length,
-              ),
-              _bindings,
-            );
-          case TransportSocketMode.unixStream:
-            return TransportServerInstance(
-              _bindings.transport_server_initialize_unix_stream(
-                _configuration,
-                uri.unixPath!.toNativeUtf8().cast(),
-                uri.unixPath!.length,
-              ),
-              _bindings,
-            );
-        }
-      },
+  TransportServerInstance createTcp(String host, int port) {
+    final instance = TransportServerInstance(
+      _bindings.transport_server_initialize_tcp(_configuration, host.toNativeUtf8().cast(), port),
+      _bindings,
+    );
+    _serverIntances[instance.pointer.ref.fd] = instance;
+    return instance;
+  }
+
+  TransportServerInstance createUdp(String host, int port) {
+    final instance = TransportServerInstance(
+      _bindings.transport_server_initialize_udp(_configuration, host.toNativeUtf8().cast(), port),
+      _bindings,
+    );
+    _serverIntances[instance.pointer.ref.fd] = instance;
+    return instance;
+  }
+
+  TransportServerInstance createUnixStream(String path) {
+    final instance = TransportServerInstance(
+      _bindings.transport_server_initialize_unix_stream(_configuration, path.toNativeUtf8().cast(), path.length),
+      _bindings,
+    );
+    _serverIntances[instance.pointer.ref.fd] = instance;
+    return instance;
+  }
+
+  TransportServerInstance createUnixDgram(String path) {
+    final instance = TransportServerInstance(
+      _bindings.transport_server_initialize_unix_dgram(_configuration, path.toNativeUtf8().cast(), path.length),
+      _bindings,
     );
     _serverIntances[instance.pointer.ref.fd] = instance;
     return instance;
