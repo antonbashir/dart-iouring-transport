@@ -65,7 +65,7 @@ class TransportInboundChannel extends TransportChannel {
       bufferId,
       _serverPointer.ref.inet_server_address,
       _serverPointer.ref.server_address_length,
-      flags,
+      flags | MSG_TRUNC,
       transportEventReceiveMessage,
     );
     //worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
@@ -82,7 +82,7 @@ class TransportInboundChannel extends TransportChannel {
       bufferId,
       _serverPointer.ref.inet_server_address,
       _serverPointer.ref.server_address_length,
-      flags,
+      flags | MSG_TRUNC,
       transportEventSendMessage,
     );
     //worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
@@ -112,7 +112,7 @@ class TransportOutboundChannel extends TransportChannel {
       bufferId,
       address,
       length,
-      flags,
+      flags | MSG_TRUNC,
       transportEventReceiveMessageCallback,
     );
     //worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
@@ -128,7 +128,7 @@ class TransportOutboundChannel extends TransportChannel {
       bufferId,
       address,
       length,
-      flags,
+      flags | MSG_TRUNC,
       transportEventSendMessageCallback,
     );
     //worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
