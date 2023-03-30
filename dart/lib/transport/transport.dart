@@ -28,7 +28,6 @@ class Transport {
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transportPointer;
-  late final Pointer<transport_server_t> _serverPointer;
 
   Transport(this.transportConfiguration, this.serverConfiguration, this.listenerConfiguration, this.workerConfiguration, this.clientConfiguration, {String? libraryPath}) {
     this._libraryPath = libraryPath;
@@ -41,10 +40,10 @@ class Transport {
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
     nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel.index;
 
-    final nativeserverConfiguration = calloc<transport_server_configuration_t>();
-    nativeserverConfiguration.ref.max_connections = serverConfiguration.maxConnections;
-    nativeserverConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
-    nativeserverConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    final nativeServerConfiguration = calloc<transport_server_configuration_t>();
+    nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
+    nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
+    nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
 
     final nativeClientConfiguration = calloc<transport_client_configuration_t>();
     nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
@@ -68,7 +67,7 @@ class Transport {
       nativeListenerConfiguration,
       nativeWorkerConfiguration,
       nativeClientConfiguration,
-      nativeserverConfiguration,
+      nativeServerConfiguration,
     );
   }
 
@@ -77,8 +76,7 @@ class Transport {
     await _workerExit.take(transportConfiguration.workerInsolates).toList();
     _listenerClosers.forEach((listener) => _bindings.transport_listener_close(listener));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
-    _listenerExit.close();
-    _bindings.transport_server_shutdown(_serverPointer);
+    _listenerExit.close();    
     _bindings.transport_destroy(_transportPointer);
     //_logger.debug("[transport]: destroyed");
   }

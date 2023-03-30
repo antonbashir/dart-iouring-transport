@@ -1,9 +1,6 @@
 import 'dart:ffi';
 import 'dart:isolate';
 
-import 'package:iouring_transport/transport/constants.dart';
-import 'package:iouring_transport/transport/logger.dart';
-
 import 'bindings.dart';
 import 'lookup.dart';
 

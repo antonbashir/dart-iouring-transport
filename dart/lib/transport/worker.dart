@@ -62,6 +62,7 @@ class TransportWorker {
   final _initializer = Completer();
   final _fromTransport = ReceivePort();
   final _bufferFinalizers = Queue<Completer<int>>();
+  final _serversByClients = <int, TransportServerInstance>{};
 
   late final TransportLogger logger;
   late final TransportBindings _bindings;
@@ -84,6 +85,7 @@ class TransportWorker {
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
       final cqeCount = _bindings.transport_worker_peek(_ringSize, _cqes, _ring);
+      print("[worker] id = ${_workerPointer.ref.id} cqes = $cqeCount");
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final data = cqe.ref.user_data;
@@ -108,6 +110,7 @@ class TransportWorker {
     _closer = RawReceivePort((_) async {
       _listener.close();
       _closer.close();
+      _server.shutdown();
       //final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
       //logger.debug("[worker $id]: closed");
@@ -187,7 +190,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    //logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
+    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
 
     switch (event) {
       case transportEventRead:
@@ -270,14 +273,14 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd, int event) {
-    //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
+    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
 
     switch (event) {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.get(fd);
+        final server = _serversByClients[fd]!;
         if (!server.controller.hasListener) {
-          //logger.debug("[server]: stream hasn't listeners for fd = $fd");
+          logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
           if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
           return;
@@ -328,6 +331,7 @@ class TransportWorker {
         return;
       case transportEventAccept:
         final server = _server.get(fd);
+        _serversByClients[result] = server;
         _bindings.transport_worker_accept(_workerPointer, server.pointer);
         server.acceptor!(TransportInboundChannel(
           _workerPointer,

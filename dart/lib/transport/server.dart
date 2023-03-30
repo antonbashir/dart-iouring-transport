@@ -24,13 +24,17 @@ class TransportServerInstance {
 
   void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportInboundChannel channel) acceptor) {
     this.acceptor = acceptor;
+    print("[server]: worker = ${workerPointer.ref.id} accept");
     _bindings.transport_worker_accept(
       workerPointer,
       pointer,
     );
   }
 
-  void close() => controller.close();
+  void close() {
+    _bindings.transport_server_shutdown(pointer);
+    controller.close();
+  }
 }
 
 class TransportServer {
@@ -81,4 +85,6 @@ class TransportServer {
   }
 
   TransportServerInstance get(int fd) => _serverIntances[fd]!;
+
+  void shutdown() => _serverIntances.values.forEach((server) => server.close());
 }
