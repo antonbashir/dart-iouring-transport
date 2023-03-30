@@ -85,7 +85,6 @@ class TransportWorker {
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
       final cqeCount = _bindings.transport_worker_peek(_ringSize, _cqes, _ring);
-      print("[worker] id = ${_workerPointer.ref.id} cqes = $cqeCount");
       for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
         final cqe = _cqes[cqeIndex];
         final data = cqe.ref.user_data;
@@ -190,7 +189,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
+    //logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
 
     switch (event) {
       case transportEventRead:
@@ -273,7 +272,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd, int event) {
-    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
+    //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
 
     switch (event) {
       case transportEventRead:

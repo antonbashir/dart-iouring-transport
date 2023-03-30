@@ -24,7 +24,6 @@ class TransportServerInstance {
 
   void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportInboundChannel channel) acceptor) {
     this.acceptor = acceptor;
-    print("[server]: worker = ${workerPointer.ref.id} accept");
     _bindings.transport_worker_accept(
       workerPointer,
       pointer,
