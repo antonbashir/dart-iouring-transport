@@ -32,19 +32,19 @@ void echo({
   test("[index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.acceptor(),
+      TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.client().copyWith(defaultPool: clients),
     );
     final done = ReceivePort();
     final serverData = Utf8Encoder().convert("respond");
-    await transport.serve(transmitter: done.sendPort, TransportUri.tcp("0.0.0.0", 12345), (input) async {
+    await transport.run(transmitter: done.sendPort, (input) async {
       final clientData = Utf8Encoder().convert("request");
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      await worker.serve((channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
+      worker.serveTcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
       final clients = await worker.connect(TransportUri.tcp("127.0.0.1", 12345));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));

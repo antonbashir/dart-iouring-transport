@@ -14,14 +14,14 @@
 #include "transport_common.h"
 #include "transport_constants.h"
 #include "transport_listener.h"
-#include "transport_acceptor.h"
+#include "transport_server.h"
 #include "small/include/small/rlist.h"
 
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                   transport_listener_configuration_t *listener_configuration,
                                   transport_worker_configuration_t *worker_configuration,
                                   transport_client_configuration_t *client_configuration,
-                                  transport_acceptor_configuration_t *acceptor_configuration)
+                                  transport_server_configuration_t *server_configuration)
 {
   transport_t *transport = malloc(sizeof(transport_t));
   if (!transport)
@@ -30,7 +30,7 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
   }
 
   transport->transport_configuration = transport_configuration;
-  transport->acceptor_configuration = acceptor_configuration;
+  transport->server_configuration = server_configuration;
   transport->listener_configuration = listener_configuration;
   transport->client_configuration = client_configuration;
   transport->worker_configuration = worker_configuration;
@@ -41,7 +41,7 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 void transport_destroy(transport_t *transport)
 {
   free(transport->transport_configuration);
-  free(transport->acceptor_configuration);
+  free(transport->server_configuration);
   free(transport->listener_configuration);
   free(transport->client_configuration);
   free(transport->worker_configuration);

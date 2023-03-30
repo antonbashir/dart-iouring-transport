@@ -8,9 +8,11 @@
 extern "C"
 {
 #endif
-  int32_t transport_socket_create_server(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size);
+  int32_t transport_socket_create_server_tcp(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size);
+  int32_t transport_socket_create_server_udp(uint32_t receive_buffer_size, uint32_t send_buffer_size);
+  int32_t transport_socket_create_server_unix_stream(uint32_t receive_buffer_size, uint32_t send_buffer_size);
+  int32_t transport_socket_create_server_unix_dgram(uint32_t receive_buffer_size, uint32_t send_buffer_size);
   int32_t transport_socket_create_client(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size);
-  int32_t transport_socket_bind(int32_t server_socket_fd, const char *ip, int32_t port, int32_t max_connections);
 #if defined(__cplusplus)
 }
 #endif

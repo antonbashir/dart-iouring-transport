@@ -15,19 +15,18 @@ Future<void> main(List<String> args) async {
   final ReceivePort receiver = ReceivePort();
   Transport(
     TransportDefaults.transport().copyWith(logLevel: TransportLogLevel.info),
-    TransportDefaults.acceptor(),
+    TransportDefaults.server(),
     TransportDefaults.listener(),
     TransportDefaults.worker(),
     TransportDefaults.client(),
-  ).serve(
+  ).run(
     transmitter: receiver.sendPort,
-    TransportUri.tcp("0.0.0.0", 12345),
     (input) async {
       final encoder = Utf8Encoder();
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      await worker.serve((channel) => channel.read(), (stream) => stream.listen((event) => event.respond(fromServer)));
+      worker.serveTcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(fromServer)));
       final connector = await worker.connect(TransportUri.tcp("127.0.0.1", 12345), pool: 256);
       var count = 0;
       final time = Stopwatch();

@@ -10,11 +10,10 @@ import 'exception.dart';
 import 'listener.dart';
 import 'logger.dart';
 import 'lookup.dart';
-import 'model.dart';
 
 class Transport {
   final TransportConfiguration transportConfiguration;
-  final TransportAcceptorConfiguration acceptorConfiguration;
+  final TransportserverConfiguration serverConfiguration;
   final TransportListenerConfiguration listenerConfiguration;
   final TransportWorkerConfiguration workerConfiguration;
   final TransportClientConfiguration clientConfiguration;
@@ -29,9 +28,9 @@ class Transport {
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transportPointer;
-  late final Pointer<transport_acceptor_t> _acceptorPointer;
+  late final Pointer<transport_server_t> _serverPointer;
 
-  Transport(this.transportConfiguration, this.acceptorConfiguration, this.listenerConfiguration, this.workerConfiguration, this.clientConfiguration, {String? libraryPath}) {
+  Transport(this.transportConfiguration, this.serverConfiguration, this.listenerConfiguration, this.workerConfiguration, this.clientConfiguration, {String? libraryPath}) {
     this._libraryPath = libraryPath;
 
     _library = TransportLibrary.load(libraryPath: libraryPath);
@@ -42,10 +41,10 @@ class Transport {
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
     nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel.index;
 
-    final nativeAcceptorConfiguration = calloc<transport_acceptor_configuration_t>();
-    nativeAcceptorConfiguration.ref.max_connections = acceptorConfiguration.maxConnections;
-    nativeAcceptorConfiguration.ref.receive_buffer_size = acceptorConfiguration.receiveBufferSize;
-    nativeAcceptorConfiguration.ref.send_buffer_size = acceptorConfiguration.sendBufferSize;
+    final nativeserverConfiguration = calloc<transport_server_configuration_t>();
+    nativeserverConfiguration.ref.max_connections = serverConfiguration.maxConnections;
+    nativeserverConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
+    nativeserverConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
 
     final nativeClientConfiguration = calloc<transport_client_configuration_t>();
     nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
@@ -69,7 +68,7 @@ class Transport {
       nativeListenerConfiguration,
       nativeWorkerConfiguration,
       nativeClientConfiguration,
-      nativeAcceptorConfiguration,
+      nativeserverConfiguration,
     );
   }
 
@@ -79,24 +78,12 @@ class Transport {
     _listenerClosers.forEach((listener) => _bindings.transport_listener_close(listener));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
     _listenerExit.close();
-    _bindings.transport_acceptor_shutdown(_acceptorPointer);
+    _bindings.transport_server_shutdown(_serverPointer);
     _bindings.transport_destroy(_transportPointer);
     //_logger.debug("[transport]: destroyed");
   }
 
-  Future<void> serve(TransportUri uri, void Function(SendPort input) worker, {SendPort? transmitter}) => _run(
-        worker,
-        acceptor: _acceptorPointer = using((Arena arena) => _bindings.transport_acceptor_initialize(
-              _transportPointer.ref.acceptor_configuration,
-              uri.host!.toNativeUtf8(allocator: arena).cast(),
-              uri.port!,
-            )),
-        transmitter: transmitter,
-      );
-
-  Future<void> run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? transmitter}) => _run(worker, transmitter: transmitter);
-
-  Future<void> _run(void Function(SendPort input) worker, {Pointer<transport_acceptor>? acceptor, SendPort? transmitter}) async {
+  Future<void> run(void Function(SendPort input) worker, {SendPort? transmitter}) async {
     final fromTransportToListener = ReceivePort();
     final fromTransportToWorker = ReceivePort();
     var listeners = 0;
@@ -123,7 +110,6 @@ class Transport {
         workerPointer.address,
         transmitter,
       ];
-      if (acceptor != null) workerInput.add(acceptor.address);
       toWorker.send(workerInput);
       if (workerAddresses.length == transportConfiguration.workerInsolates) {
         fromTransportToWorker.close();

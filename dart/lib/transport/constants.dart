@@ -144,7 +144,8 @@ const ringSetupSingleIssuer = 1 << 12;
 const ringSetupDeferTaskrun = 1 << 13;
 
 enum TransportSocketMode {
-  TCP,
-  UDP,
-  UNIX,
+  tcp,
+  udp,
+  unixDgram,
+  unixStream,
 }

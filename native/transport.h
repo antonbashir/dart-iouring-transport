@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <liburing.h>
 #include "transport_listener.h"
-#include "transport_acceptor.h"
+#include "transport_server.h"
 #include "transport_worker.h"
 #include "transport_client.h"
 #include "transport_listener_pool.h"
@@ -27,7 +27,7 @@ extern "C"
     transport_configuration_t *transport_configuration;
     transport_listener_configuration_t *listener_configuration;
     transport_client_configuration_t *client_configuration;
-    transport_acceptor_configuration_t *acceptor_configuration;
+    transport_server_configuration_t *server_configuration;
     transport_worker_configuration_t *worker_configuration;
   } transport_t;
 
@@ -35,7 +35,7 @@ extern "C"
                                     transport_listener_configuration_t *listener_configuration,
                                     transport_worker_configuration_t *worker_configuration,
                                     transport_client_configuration_t *client_configuration,
-                                    transport_acceptor_configuration_t *acceptor_configuration);
+                                    transport_server_configuration_t *server_configuration);
 
   struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count);
 

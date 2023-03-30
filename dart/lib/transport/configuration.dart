@@ -69,23 +69,23 @@ class TransportWorkerConfiguration {
       );
 }
 
-class TransportAcceptorConfiguration {
+class TransportserverConfiguration {
   final int maxConnections;
   final int receiveBufferSize;
   final int sendBufferSize;
 
-  TransportAcceptorConfiguration({
+  TransportserverConfiguration({
     required this.maxConnections,
     required this.receiveBufferSize,
     required this.sendBufferSize,
   });
 
-  TransportAcceptorConfiguration copyWith({
+  TransportserverConfiguration copyWith({
     int? maxConnections,
     int? receiveBufferSize,
     int? sendBufferSize,
   }) =>
-      TransportAcceptorConfiguration(
+      TransportserverConfiguration(
         maxConnections: maxConnections ?? this.maxConnections,
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,

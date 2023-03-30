@@ -16,6 +16,7 @@ import 'logger.dart';
 import 'lookup.dart';
 import 'model.dart';
 import 'payload.dart';
+import 'server.dart';
 
 class TransportCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
@@ -66,7 +67,6 @@ class TransportWorker {
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transportPointer;
   late final Pointer<transport_worker_t> _workerPointer;
-  late final Pointer<transport_acceptor_t> _acceptorPointer;
   late final Pointer<io_uring> _ring;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
@@ -75,18 +75,11 @@ class TransportWorker {
   late final RawReceivePort _activator;
   late final RawReceivePort _closer;
   late final TransportConnector _connector;
+  late final TransportServer _server;
   late final TransportCallbacks _callbacks;
-  late final StreamController<TransportInboundPayload> _serverController;
-  late final Stream<TransportInboundPayload> _serverStream;
-  late final void Function(TransportInboundChannel channel) _onAccept;
   late int _ringSize;
 
   late final SendPort? transmitter;
-
-  bool _hasServer = false;
-  var _serving = false;
-
-  bool get serving => _serving;
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
@@ -129,16 +122,10 @@ class TransportWorker {
     _transportPointer = Pointer.fromAddress(configuration[1] as int).cast<transport_t>();
     _workerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
     transmitter = configuration[3] as SendPort?;
-    if (configuration.length == 5) {
-      _acceptorPointer = Pointer.fromAddress(configuration[4] as int).cast<transport_acceptor_t>();
-      _hasServer = true;
-    }
     _fromTransport.close();
     logger = TransportLogger(TransportLogLevel.values[_transportPointer.ref.transport_configuration.ref.log_level]);
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _callbacks = TransportCallbacks();
-    _serverController = StreamController();
-    _serverStream = _serverController.stream;
     _connector = TransportConnector(
       _callbacks,
       _transportPointer,
@@ -147,6 +134,7 @@ class TransportWorker {
       _bufferFinalizers,
       this,
     );
+    _server = TransportServer(_transportPointer.ref.server_configuration, _bindings);
     await _initializer.future;
     _ring = _workerPointer.ref.ring;
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
@@ -156,22 +144,37 @@ class TransportWorker {
     _activator.close();
   }
 
-  Future<void> serve(void Function(TransportInboundChannel channel) onAccept, void Function(Stream<TransportInboundPayload> stream) handler) async {
-    if (!_hasServer) throw TransportException("[server]: is not available");
-    if (_serving) {
-      handler(_serverStream);
-      return;
-    }
-    this._onAccept = onAccept;
-    _bindings.transport_worker_accept(
-      _workerPointer,
-      _acceptorPointer,
-    );
-    _serving = true;
-    handler(_serverStream);
+  void serveTcp(
+    String host,
+    int port,
+    void Function(TransportInboundChannel channel) onAccept,
+    void Function(Stream<TransportInboundPayload> stream) handler,
+  ) {
+    final server = _server.create(TransportUri.tcp(host, port));
+    server.accept(_workerPointer, onAccept);
+    handler(server.stream);
   }
 
-  Future<TransportFile> open(String path) async {
+  void serveUdp(
+    String host,
+    int port,
+    void Function(Stream<TransportInboundPayload> stream) handler,
+  ) =>
+      handler(_server.create(TransportUri.udp(host, port)).stream);
+
+  void serveUnixStream(
+    String path,
+    void Function(Stream<TransportInboundPayload> stream) handler,
+  ) =>
+      handler(_server.create(TransportUri.unixStream(path)).stream);
+
+  void serveUnixDgram(
+    String path,
+    void Function(Stream<TransportInboundPayload> stream) handler,
+  ) =>
+      handler(_server.create(TransportUri.unixDgram(path)).stream);
+
+  Future<TransportFile> file(String path) async {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
     return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers, this));
   }
@@ -208,7 +211,7 @@ class TransportWorker {
         _bindings.transport_close_descritor(fd);
         return;
       case transportEventAccept:
-        _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
+        _bindings.transport_worker_accept(_workerPointer, _server.get(fd).pointer);
         return;
       case transportEventConnect:
         _bindings.transport_close_descritor(fd);
@@ -272,7 +275,8 @@ class TransportWorker {
     switch (event) {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
-        if (!_serverController.hasListener) {
+        final server = _server.get(fd);
+        if (!server.controller.hasListener) {
           //logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
           if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
@@ -280,7 +284,7 @@ class TransportWorker {
         }
         final buffer = _buffers[bufferId];
         final bufferBytes = buffer.iov_base.cast<Uint8>();
-        _serverController.add(TransportInboundPayload(
+        server.controller.add(TransportInboundPayload(
           bufferBytes.asTypedList(result),
           (answer) {
             _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
@@ -323,8 +327,9 @@ class TransportWorker {
         _callbacks.notifyConnect(fd, _connector.createClient(fd));
         return;
       case transportEventAccept:
-        _bindings.transport_worker_accept(_workerPointer, _acceptorPointer);
-        _onAccept(TransportInboundChannel(
+        final server = _server.get(fd);
+        _bindings.transport_worker_accept(_workerPointer, server.pointer);
+        server.acceptor!(TransportInboundChannel(
           _workerPointer,
           result,
           _bindings,

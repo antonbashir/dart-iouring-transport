@@ -14901,45 +14901,120 @@ class TransportBindings {
   late final _transport_listener_destroy = _transport_listener_destroyPtr
       .asFunction<void Function(ffi.Pointer<transport_listener_t>)>();
 
-  ffi.Pointer<transport_acceptor_t> transport_acceptor_initialize(
-    ffi.Pointer<transport_acceptor_configuration_t> configuration,
+  ffi.Pointer<transport_server_t> transport_server_initialize_tcp(
+    ffi.Pointer<transport_server_configuration_t> configuration,
     ffi.Pointer<ffi.Char> ip,
     int port,
   ) {
-    return _transport_acceptor_initialize(
+    return _transport_server_initialize_tcp(
       configuration,
       ip,
       port,
     );
   }
 
-  late final _transport_acceptor_initializePtr = _lookup<
+  late final _transport_server_initialize_tcpPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_acceptor_configuration_t>,
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int32)>>('transport_acceptor_initialize');
-  late final _transport_acceptor_initialize =
-      _transport_acceptor_initializePtr.asFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_acceptor_configuration_t>,
+              ffi.Int32)>>('transport_server_initialize_tcp');
+  late final _transport_server_initialize_tcp =
+      _transport_server_initialize_tcpPtr.asFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
               ffi.Pointer<ffi.Char>,
               int)>();
 
-  void transport_acceptor_shutdown(
-    ffi.Pointer<transport_acceptor_t> acceptor,
+  ffi.Pointer<transport_server_t> transport_server_initialize_udp(
+    ffi.Pointer<transport_server_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> ip,
+    int port,
   ) {
-    return _transport_acceptor_shutdown(
-      acceptor,
+    return _transport_server_initialize_udp(
+      configuration,
+      ip,
+      port,
     );
   }
 
-  late final _transport_acceptor_shutdownPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>(
-      'transport_acceptor_shutdown');
-  late final _transport_acceptor_shutdown = _transport_acceptor_shutdownPtr
-      .asFunction<void Function(ffi.Pointer<transport_acceptor_t>)>();
+  late final _transport_server_initialize_udpPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>>('transport_server_initialize_udp');
+  late final _transport_server_initialize_udp =
+      _transport_server_initialize_udpPtr.asFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  ffi.Pointer<transport_server_t> transport_server_initialize_unix_stream(
+    ffi.Pointer<transport_server_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> path,
+    int path_length,
+  ) {
+    return _transport_server_initialize_unix_stream(
+      configuration,
+      path,
+      path_length,
+    );
+  }
+
+  late final _transport_server_initialize_unix_streamPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>>('transport_server_initialize_unix_stream');
+  late final _transport_server_initialize_unix_stream =
+      _transport_server_initialize_unix_streamPtr.asFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  ffi.Pointer<transport_server_t> transport_server_initialize_unix_dgram(
+    ffi.Pointer<transport_server_configuration_t> configuration,
+    ffi.Pointer<ffi.Char> path,
+    int path_length,
+  ) {
+    return _transport_server_initialize_unix_dgram(
+      configuration,
+      path,
+      path_length,
+    );
+  }
+
+  late final _transport_server_initialize_unix_dgramPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>>('transport_server_initialize_unix_dgram');
+  late final _transport_server_initialize_unix_dgram =
+      _transport_server_initialize_unix_dgramPtr.asFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              int)>();
+
+  void transport_server_shutdown(
+    ffi.Pointer<transport_server_t> server,
+  ) {
+    return _transport_server_shutdown(
+      server,
+    );
+  }
+
+  late final _transport_server_shutdownPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<transport_server_t>)>>('transport_server_shutdown');
+  late final _transport_server_shutdown = _transport_server_shutdownPtr
+      .asFunction<void Function(ffi.Pointer<transport_server_t>)>();
 
   int access(
     ffi.Pointer<ffi.Char> __name,
@@ -19136,21 +19211,21 @@ class TransportBindings {
 
   int transport_worker_accept(
     ffi.Pointer<transport_worker_t> worker,
-    ffi.Pointer<transport_acceptor_t> acceptor,
+    ffi.Pointer<transport_server_t> server,
   ) {
     return _transport_worker_accept(
       worker,
-      acceptor,
+      server,
     );
   }
 
   late final _transport_worker_acceptPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Pointer<transport_worker_t>,
-              ffi.Pointer<transport_acceptor_t>)>>('transport_worker_accept');
+              ffi.Pointer<transport_server_t>)>>('transport_worker_accept');
   late final _transport_worker_accept = _transport_worker_acceptPtr.asFunction<
-      int Function(ffi.Pointer<transport_worker_t>,
-          ffi.Pointer<transport_acceptor_t>)>();
+      int Function(
+          ffi.Pointer<transport_worker_t>, ffi.Pointer<transport_server_t>)>();
 
   int transport_worker_send_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19312,14 +19387,14 @@ class TransportBindings {
     ffi.Pointer<transport_listener_configuration_t> listener_configuration,
     ffi.Pointer<transport_worker_configuration_t> worker_configuration,
     ffi.Pointer<transport_client_configuration_t> client_configuration,
-    ffi.Pointer<transport_acceptor_configuration_t> acceptor_configuration,
+    ffi.Pointer<transport_server_configuration_t> server_configuration,
   ) {
     return _transport_initialize(
       transport_configuration,
       listener_configuration,
       worker_configuration,
       client_configuration,
-      acceptor_configuration,
+      server_configuration,
     );
   }
 
@@ -19330,7 +19405,7 @@ class TransportBindings {
                   ffi.Pointer<transport_listener_configuration_t>,
                   ffi.Pointer<transport_worker_configuration_t>,
                   ffi.Pointer<transport_client_configuration_t>,
-                  ffi.Pointer<transport_acceptor_configuration_t>)>>(
+                  ffi.Pointer<transport_server_configuration_t>)>>(
       'transport_initialize');
   late final _transport_initialize = _transport_initializePtr.asFunction<
       ffi.Pointer<transport_t> Function(
@@ -19338,7 +19413,7 @@ class TransportBindings {
           ffi.Pointer<transport_listener_configuration_t>,
           ffi.Pointer<transport_worker_configuration_t>,
           ffi.Pointer<transport_client_configuration_t>,
-          ffi.Pointer<transport_acceptor_configuration_t>)>();
+          ffi.Pointer<transport_server_configuration_t>)>();
 
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     int cqe_count,
@@ -19414,25 +19489,76 @@ class TransportBindings {
   late final _transport_file_open =
       _transport_file_openPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
-  int transport_socket_create_server(
+  int transport_socket_create_server_tcp(
     int max_connections,
     int receive_buffer_size,
     int send_buffer_size,
   ) {
-    return _transport_socket_create_server(
+    return _transport_socket_create_server_tcp(
       max_connections,
       receive_buffer_size,
       send_buffer_size,
     );
   }
 
-  late final _transport_socket_create_serverPtr = _lookup<
+  late final _transport_socket_create_server_tcpPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int32 Function(ffi.Uint32, ffi.Uint32,
-              ffi.Uint32)>>('transport_socket_create_server');
-  late final _transport_socket_create_server =
-      _transport_socket_create_serverPtr
+              ffi.Uint32)>>('transport_socket_create_server_tcp');
+  late final _transport_socket_create_server_tcp =
+      _transport_socket_create_server_tcpPtr
           .asFunction<int Function(int, int, int)>();
+
+  int transport_socket_create_server_udp(
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create_server_udp(
+      receive_buffer_size,
+      send_buffer_size,
+    );
+  }
+
+  late final _transport_socket_create_server_udpPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>(
+          'transport_socket_create_server_udp');
+  late final _transport_socket_create_server_udp =
+      _transport_socket_create_server_udpPtr
+          .asFunction<int Function(int, int)>();
+
+  int transport_socket_create_server_unix_stream(
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create_server_unix_stream(
+      receive_buffer_size,
+      send_buffer_size,
+    );
+  }
+
+  late final _transport_socket_create_server_unix_streamPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>(
+          'transport_socket_create_server_unix_stream');
+  late final _transport_socket_create_server_unix_stream =
+      _transport_socket_create_server_unix_streamPtr
+          .asFunction<int Function(int, int)>();
+
+  int transport_socket_create_server_unix_dgram(
+    int receive_buffer_size,
+    int send_buffer_size,
+  ) {
+    return _transport_socket_create_server_unix_dgram(
+      receive_buffer_size,
+      send_buffer_size,
+    );
+  }
+
+  late final _transport_socket_create_server_unix_dgramPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>(
+          'transport_socket_create_server_unix_dgram');
+  late final _transport_socket_create_server_unix_dgram =
+      _transport_socket_create_server_unix_dgramPtr
+          .asFunction<int Function(int, int)>();
 
   int transport_socket_create_client(
     int max_connections,
@@ -19453,27 +19579,6 @@ class TransportBindings {
   late final _transport_socket_create_client =
       _transport_socket_create_clientPtr
           .asFunction<int Function(int, int, int)>();
-
-  int transport_socket_bind(
-    int server_socket_fd,
-    ffi.Pointer<ffi.Char> ip,
-    int port,
-    int max_connections,
-  ) {
-    return _transport_socket_bind(
-      server_socket_fd,
-      ip,
-      port,
-      max_connections,
-    );
-  }
-
-  late final _transport_socket_bindPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int32 Function(ffi.Int32, ffi.Pointer<ffi.Char>, ffi.Int32,
-              ffi.Int32)>>('transport_socket_bind');
-  late final _transport_socket_bind = _transport_socket_bindPtr
-      .asFunction<int Function(int, ffi.Pointer<ffi.Char>, int, int)>();
 
   late final addresses = _SymbolAddresses(this);
 }
@@ -22473,16 +22578,36 @@ class _SymbolAddresses {
       get transport_listener_destroy => _library._transport_listener_destroyPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Pointer<transport_acceptor_t> Function(
-              ffi.Pointer<transport_acceptor_configuration_t>,
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int32)>> get transport_acceptor_initialize =>
-      _library._transport_acceptor_initializePtr;
+              ffi.Int32)>> get transport_server_initialize_tcp =>
+      _library._transport_server_initialize_tcpPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int32)>> get transport_server_initialize_udp =>
+      _library._transport_server_initialize_udpPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>> get transport_server_initialize_unix_stream =>
+      _library._transport_server_initialize_unix_streamPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_server_t> Function(
+              ffi.Pointer<transport_server_configuration_t>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Uint8)>> get transport_server_initialize_unix_dgram =>
+      _library._transport_server_initialize_unix_dgramPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_acceptor_t>)>>
-      get transport_acceptor_shutdown =>
-          _library._transport_acceptor_shutdownPtr;
+              ffi.Void Function(ffi.Pointer<transport_server_t>)>>
+      get transport_server_shutdown => _library._transport_server_shutdownPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int)>>
       get access => _library._accessPtr;
@@ -23289,10 +23414,10 @@ class _SymbolAddresses {
               ffi.Pointer<transport_client_t>)>> get transport_worker_connect =>
       _library._transport_worker_connectPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<transport_worker_t>,
-                  ffi.Pointer<transport_acceptor_t>)>>
-      get transport_worker_accept => _library._transport_worker_acceptPtr;
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<transport_worker_t>,
+              ffi.Pointer<transport_server_t>)>> get transport_worker_accept =>
+      _library._transport_worker_acceptPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -23345,7 +23470,7 @@ class _SymbolAddresses {
                   ffi.Pointer<transport_listener_configuration_t>,
                   ffi.Pointer<transport_worker_configuration_t>,
                   ffi.Pointer<transport_client_configuration_t>,
-                  ffi.Pointer<transport_acceptor_configuration_t>)>>
+                  ffi.Pointer<transport_server_configuration_t>)>>
       get transport_initialize => _library._transport_initializePtr;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -23363,18 +23488,22 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int32 Function(ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
-      get transport_socket_create_server =>
-          _library._transport_socket_create_serverPtr;
+      get transport_socket_create_server_tcp =>
+          _library._transport_socket_create_server_tcpPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_server_udp =>
+          _library._transport_socket_create_server_udpPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_server_unix_stream =>
+          _library._transport_socket_create_server_unix_streamPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Uint32, ffi.Uint32)>>
+      get transport_socket_create_server_unix_dgram =>
+          _library._transport_socket_create_server_unix_dgramPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int32 Function(ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
       get transport_socket_create_client =>
           _library._transport_socket_create_clientPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int32 Function(
-                  ffi.Int32, ffi.Pointer<ffi.Char>, ffi.Int32, ffi.Int32)>>
-      get transport_socket_bind => _library._transport_socket_bindPtr;
 }
 
 class iovec extends ffi.Struct {
@@ -26319,6 +26448,13 @@ typedef Dart_EnterScope_Type
 typedef Dart_ExitScope_Type
     = ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>;
 
+abstract class transport_socket_mode {
+  static const int TCP = 0;
+  static const int UDP = 1;
+  static const int UNIX_DGRAM = 2;
+  static const int UNIX_STREAM = 3;
+}
+
 class transport_listener_configuration extends ffi.Struct {
   @ffi.Size()
   external int ring_size;
@@ -26350,7 +26486,15 @@ class transport_listener extends ffi.Struct {
 typedef transport_listener_t = transport_listener;
 typedef transport_listener_configuration_t = transport_listener_configuration;
 
-class transport_acceptor_configuration extends ffi.Struct {
+class sockaddr_un extends ffi.Struct {
+  @sa_family_t()
+  external int sun_family;
+
+  @ffi.Array.multi([108])
+  external ffi.Array<ffi.Char> sun_path;
+}
+
+class transport_server_configuration extends ffi.Struct {
   @ffi.Int32()
   external int max_connections;
 
@@ -26361,18 +26505,23 @@ class transport_acceptor_configuration extends ffi.Struct {
   external int send_buffer_size;
 }
 
-class transport_acceptor extends ffi.Struct {
+class transport_server extends ffi.Struct {
   @ffi.Int()
   external int fd;
 
-  external sockaddr_in server_address;
+  @ffi.Int32()
+  external int mode;
+
+  external sockaddr_in inet_server_address;
+
+  external sockaddr_un unix_server_address;
 
   @socklen_t()
   external int server_address_length;
 }
 
-typedef transport_acceptor_t = transport_acceptor;
-typedef transport_acceptor_configuration_t = transport_acceptor_configuration;
+typedef transport_server_t = transport_server;
+typedef transport_server_configuration_t = transport_server_configuration;
 
 class timezone1 extends ffi.Struct {
   @ffi.Int()
@@ -26526,8 +26675,7 @@ class transport extends ffi.Struct {
 
   external ffi.Pointer<transport_client_configuration_t> client_configuration;
 
-  external ffi.Pointer<transport_acceptor_configuration_t>
-      acceptor_configuration;
+  external ffi.Pointer<transport_server_configuration_t> server_configuration;
 
   external ffi.Pointer<transport_worker_configuration_t> worker_configuration;
 }
@@ -30423,11 +30571,15 @@ const int TRANSPORT_EVENT_READ_CALLBACK = 16;
 
 const int TRANSPORT_EVENT_WRITE_CALLBACK = 32;
 
-const int TRANSPORT_EVENT_RECIVE_MESSAGE = 64;
+const int TRANSPORT_EVENT_RECEIVE_MESSAGE_CALLBACK = 64;
 
-const int TRANSPORT_EVENT_SEND_MESSAGE = 128;
+const int TRANSPORT_EVENT_SEND_MESSAGE_CALLBACK = 128;
 
-const int TRANSPORT_EVENT_CUSTOM = 256;
+const int TRANSPORT_EVENT_RECEIVE_MESSAGE = 256;
+
+const int TRANSPORT_EVENT_SEND_MESSAGE = 512;
+
+const int TRANSPORT_EVENT_CUSTOM = 1024;
 
 const int TRANSPORT_BUFFER_AVAILABLE = -2;
 

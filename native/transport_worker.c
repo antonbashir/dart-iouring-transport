@@ -172,13 +172,13 @@ int transport_worker_connect(transport_worker_t *worker, transport_client_t *cli
   return io_uring_submit(ring);
 }
 
-int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *acceptor)
+int transport_worker_accept(transport_worker_t *worker, transport_server_t *server)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  uint64_t data = ((uint64_t)(acceptor->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
-  io_uring_prep_accept(sqe, acceptor->fd, (struct sockaddr *)&acceptor->server_address, &acceptor->server_address_length, 0);
+  uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
+  io_uring_prep_accept(sqe, server->fd, (struct sockaddr *)&server->inet_server_address, &server->server_address_length, 0);
   sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);

@@ -6,7 +6,7 @@
 #include "transport_common.h"
 #include "transport_listener_pool.h"
 #include "transport_client.h"
-#include "transport_acceptor.h"
+#include "transport_server.h"
 #include "transport_collections.h"
 
 #if defined(__cplusplus)
@@ -38,7 +38,7 @@ extern "C"
   int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event);
   int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event);
   int transport_worker_connect(transport_worker_t *worker, transport_client_t *client);
-  int transport_worker_accept(transport_worker_t *worker, transport_acceptor_t *acceptor);
+  int transport_worker_accept(transport_worker_t *worker, transport_server_t *server);
   int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr_in *address, socklen_t address_length, int message_flags, uint16_t event);
   int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr_in *address, socklen_t address_length, int message_flags, uint16_t event);
   int transport_worker_select_buffer(transport_worker_t *worker);

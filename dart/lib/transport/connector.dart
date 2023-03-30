@@ -70,7 +70,7 @@ class TransportConnector {
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
       final client = using(
-        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.host!.toNativeUtf8(allocator: arena).cast(), uri.port!),
+        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.inetHost!.toNativeUtf8(allocator: arena).cast(), uri.inetPort!),
       );
       _clients[client.ref.fd] = client;
       final completer = Completer<TransportClient>();
@@ -86,7 +86,7 @@ class TransportConnector {
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
       final client = using(
-        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.host!.toNativeUtf8(allocator: arena).cast(), uri.port!),
+        (arena) => _bindings.transport_client_initialize(_transportPointer.ref.client_configuration, uri.inetHost!.toNativeUtf8(allocator: arena).cast(), uri.inetPort!),
       );
       _clients[client.ref.fd] = client;
       clients.add(TransportClient(
