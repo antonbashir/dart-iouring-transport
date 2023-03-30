@@ -21,6 +21,7 @@ class TransportCallbacks {
   final _connectCallbacks = <int, Completer<TransportClient>>{};
   final _readCallbacks = <int, Completer<TransportOutboundPayload>>{};
   final _writeCallbacks = <int, Completer<void>>{};
+  final _customCallbacks = <int, Completer<int>>{};
 
   @pragma(preferInlinePragma)
   void putConnect(int fd, Completer<TransportClient> completer) => _connectCallbacks[fd] = completer;
@@ -32,6 +33,9 @@ class TransportCallbacks {
   void putWrite(int bufferId, Completer<void> completer) => _writeCallbacks[bufferId] = completer;
 
   @pragma(preferInlinePragma)
+  void putCustom(int id, Completer<int> completer) => _customCallbacks[id] = completer;
+
+  @pragma(preferInlinePragma)
   void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)!.complete(client);
 
   @pragma(preferInlinePragma)
@@ -39,6 +43,9 @@ class TransportCallbacks {
 
   @pragma(preferInlinePragma)
   void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)!.complete();
+
+  @pragma(preferInlinePragma)
+  void notifyCustom(int id, int data) => _customCallbacks[id]!.complete(data);
 
   @pragma(preferInlinePragma)
   void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)!.completeError(error);
@@ -91,6 +98,10 @@ class TransportWorker {
         _bindings.transport_cqe_advance(_ring, 1);
         final event = data & 0xffff;
         if (event & transportEventAll != 0) {
+          if (event == transportEventCustomCallback) {
+            _callbacks.notifyCustom(result, data);
+            continue;
+          }
           final fd = (data >> 32) & 0xffffffff;
           if (result < 0) {
             _handleError(result, data, fd, event);
@@ -159,6 +170,8 @@ class TransportWorker {
   }
 
   Future<TransportClientPool> connect(TransportUri uri, {int? pool}) => _connector.connect(uri, pool: pool);
+
+  void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
