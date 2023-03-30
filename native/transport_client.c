@@ -72,7 +72,7 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
     return NULL;
   }
   client->mode = UNIX_DGRAM;
-  memset(&client->unix_client_address, 0, sizeof(client->inet_client_address));
+  memset(&client->unix_client_address, 0, sizeof(client->unix_client_address));
   client->unix_client_address.sun_family = AF_UNIX;
   strncpy(client->unix_client_address.sun_path, path, path_length);
   client->client_address_length = sizeof(client->unix_client_address);
@@ -95,7 +95,7 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
     return NULL;
   }
   client->mode = UNIX_STREAM;
-  memset(&client->unix_client_address, 0, sizeof(client->inet_client_address));
+  memset(&client->unix_client_address, 0, sizeof(client->unix_client_address));
   client->unix_client_address.sun_family = AF_UNIX;
   strncpy(client->unix_client_address.sun_path, path, path_length);
   client->client_address_length = sizeof(client->unix_client_address);
