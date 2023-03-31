@@ -165,4 +165,6 @@ class TransportConnector {
         ),
         _clients[fd]!,
       );
+
+  void shutdown() => _clients.values.forEach((client) => _bindings.transport_client_shutdown(client));
 }

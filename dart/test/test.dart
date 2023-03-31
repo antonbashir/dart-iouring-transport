@@ -89,8 +89,9 @@ void echoUnixStream({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.serveUnixStream(Directory.current.path + "/socket.sock", (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.connectUnix(Directory.current.path + "/socket.sock");
+      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
+      worker.serveUnixStream(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
+      final clients = await worker.connectUnix(Directory.current.path + "/socket_${worker.id}.sock");
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
@@ -124,8 +125,9 @@ void echoUnixDgram({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.serveUnixDgram(Directory.current.path + "/socket.sock", (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.createUnixDgramClients(Directory.current.path + "/socket.sock");
+      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
+      worker.serveUnixDgram(Directory.current.path + "/socket_${worker.id}.sock", (stream) => stream.listen((event) => event.respond(serverData)));
+      final clients = await worker.createUnixDgramClients(Directory.current.path + "/socket_${worker.id}.sock");
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());

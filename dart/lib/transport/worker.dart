@@ -81,6 +81,8 @@ class TransportWorker {
 
   late final SendPort? transmitter;
 
+  int get id => _workerPointer.ref.id;
+
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
       final cqeCount = _bindings.transport_worker_peek(_ringSize, _cqes, _ring);
@@ -109,6 +111,7 @@ class TransportWorker {
       _listener.close();
       _closer.close();
       _server.shutdown();
+      _connector.shutdown();
       //final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
       //logger.debug("[worker $id]: closed");
