@@ -70,6 +70,7 @@ class TransportWorker {
   late final Pointer<io_uring> _ring;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
+  late final Pointer<msghdr> _usedMessages;
   late final Pointer<Pointer<io_uring_cqe>> _cqes;
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
@@ -144,6 +145,7 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
+    _usedMessages = _workerPointer.ref.used_messages;
     _ringSize = _transportPointer.ref.worker_configuration.ref.ring_size;
     _activator.close();
   }
@@ -162,9 +164,13 @@ class TransportWorker {
   void serveUdp(
     String host,
     int port,
+    void Function(TransportInboundChannel channel) onCreate,
     void Function(Stream<TransportInboundPayload> stream) handler,
-  ) =>
-      handler(_server.createUdp(host, port).stream);
+  ) {
+    final server = _server.createUdp(host, port);
+    onCreate(TransportInboundChannel(_workerPointer, server.pointer.ref.fd, _bindings, _bufferFinalizers, this, server.pointer));
+    handler(server.stream);
+  }
 
   void serveUnixStream(
     String path,
@@ -178,9 +184,13 @@ class TransportWorker {
 
   void serveUnixDgram(
     String path,
+    void Function(TransportInboundChannel channel) onCreate,
     void Function(Stream<TransportInboundPayload> stream) handler,
-  ) =>
-      handler(_server.createUnixDgram(path).stream);
+  ) {
+    final server = _server.createUnixDgram(path);
+    onCreate(TransportInboundChannel(_workerPointer, server.pointer.ref.fd, _bindings, _bufferFinalizers, this, server.pointer));
+    handler(server.stream);
+  }
 
   Future<TransportFile> file(String path) async {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
@@ -191,15 +201,25 @@ class TransportWorker {
 
   Future<TransportClientPool> connectUnix(String path, {int? pool}) => _connector.connectUnix(path, pool: pool);
 
-  TransportClientPool createUdpClients(String host, int port, {int? pool}) => _connector.createUdpClients(host, port, pool: pool);
+  TransportClientPool createUdpClients(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {int? pool}) => _connector.createUdpClients(
+        sourceHost,
+        sourcePort,
+        destinationHost,
+        destinationPort,
+        pool: pool,
+      );
 
-  TransportClientPool createUnixDgramClients(String path, {int? pool}) => _connector.createUnixClients(path, pool: pool);
+  TransportClientPool createUnixDgramClients(String sourcePath, String destinationPath, {int? pool}) => _connector.createUnixClients(
+        sourcePath,
+        destinationPath,
+        pool: pool,
+      );
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    //logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
+    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
 
     switch (event) {
       case transportEventRead:
@@ -282,7 +302,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd, int event) {
-    //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
+    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
 
     switch (event) {
       case transportEventRead:
@@ -312,7 +332,7 @@ class TransportWorker {
         return;
       case transportEventReceiveMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _serversByClients[fd]!;
+        final server = _server.get(fd);
         if (!server.controller.hasListener) {
           logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
@@ -320,6 +340,7 @@ class TransportWorker {
           return;
         }
         final buffer = _buffers[bufferId];
+        final message = _usedMessages[bufferId];
         final bufferBytes = buffer.iov_base.cast<Uint8>();
         server.controller.add(TransportInboundPayload(
           bufferBytes.asTypedList(result),
@@ -327,15 +348,28 @@ class TransportWorker {
             _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
             bufferBytes.asTypedList(answer.length).setAll(0, answer);
             buffer.iov_len = answer.length;
-            _bindings.transport_worker_send_message(
+            if (server.pointer.ref.mode == transport_socket_mode.UDP) {
+              _bindings.transport_worker_send_message_inet(
+                _workerPointer,
+                fd,
+                bufferId,
+                message.msg_name,
+                message.msg_namelen,
+                MSG_TRUNC,
+                transportEventSendMessage,
+              );
+              return;
+            }
+            _bindings.transport_worker_send_message_unix(
               _workerPointer,
               fd,
               bufferId,
-              server.pointer.ref.inet_server_address,
-              server.pointer.ref.server_address_length,
+              message.msg_name,
+              message.msg_namelen,
               MSG_TRUNC,
               transportEventSendMessage,
             );
+            return;
           },
           () {
             _bindings.transport_worker_free_buffer(_workerPointer, bufferId);

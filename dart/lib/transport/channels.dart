@@ -48,44 +48,28 @@ class TransportInboundChannel extends TransportChannel {
     //worker.logger.debug("[inbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted =  $submitted");
   }
 
-  Future<void> write(Uint8List bytes) async {
-    final bufferId = await allocate();
-    final buffer = _buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
-    final submitted = _bindings.transport_worker_write(_workerPointer, _descriptor, bufferId, 0, transportEventWrite);
-    //worker.logger.debug("[inbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
-  }
-
   Future<void> receiveMessage({int flags = 0}) async {
     final bufferId = await allocate();
-    final submitted = _bindings.transport_worker_receive_message(
+    if (_serverPointer.ref.mode == transport_socket_mode.UDP) {
+      _bindings.transport_worker_receive_message_inet(
+        _workerPointer,
+        _descriptor,
+        bufferId,
+        _serverPointer.ref.server_address_length,
+        flags | MSG_TRUNC,
+        transportEventReceiveMessage,
+      );
+      return;
+    }
+
+    _bindings.transport_worker_receive_message_unix(
       _workerPointer,
       _descriptor,
       bufferId,
-      _serverPointer.ref.inet_server_address,
       _serverPointer.ref.server_address_length,
       flags | MSG_TRUNC,
       transportEventReceiveMessage,
     );
-    //worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
-  }
-
-  Future<void> sendMessage(Uint8List bytes, {int flags = 0}) async {
-    final bufferId = await allocate();
-    final buffer = _buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
-    final submitted = _bindings.transport_worker_send_message(
-      _workerPointer,
-      _descriptor,
-      bufferId,
-      _serverPointer.ref.inet_server_address,
-      _serverPointer.ref.server_address_length,
-      flags | MSG_TRUNC,
-      transportEventSendMessage,
-    );
-    //worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 }
 
@@ -105,32 +89,52 @@ class TransportOutboundChannel extends TransportChannel {
     //worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 
-  void receiveMessage(int bufferId, sockaddr_in address, int length, {int flags = 0}) {
-    final submitted = _bindings.transport_worker_receive_message(
+  void receiveMessage(int bufferId, Pointer<transport_client_t> client, {int flags = 0}) {
+    if (client.ref.mode == transport_socket_mode.UDP) {
+      _bindings.transport_worker_receive_message_inet(
+        _workerPointer,
+        _descriptor,
+        bufferId,
+        client.ref.client_address_length,
+        flags | MSG_TRUNC,
+        transportEventReceiveMessageCallback,
+      );
+      return;
+    }
+    _bindings.transport_worker_receive_message_unix(
       _workerPointer,
       _descriptor,
       bufferId,
-      address,
-      length,
+      client.ref.client_address_length,
       flags | MSG_TRUNC,
       transportEventReceiveMessageCallback,
     );
-    //worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 
-  void sendMessage(Uint8List bytes, int bufferId, sockaddr_in address, int length, {int flags = 0}) {
+  void sendMessage(Uint8List bytes, int bufferId, Pointer<transport_client_t> client, {int flags = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    final submitted = _bindings.transport_worker_send_message(
+    if (client.ref.mode == transport_socket_mode.UDP) {
+      _bindings.transport_worker_send_message_inet(
+        _workerPointer,
+        _descriptor,
+        bufferId,
+        _bindings.transport_client_get_destination_address(client).cast(),
+        client.ref.client_address_length,
+        flags | MSG_TRUNC,
+        transportEventSendMessageCallback,
+      );
+      return;
+    }
+    _bindings.transport_worker_send_message_unix(
       _workerPointer,
       _descriptor,
       bufferId,
-      address,
-      length,
+      _bindings.transport_client_get_destination_address(client).cast(),
+      client.ref.client_address_length,
       flags | MSG_TRUNC,
       transportEventSendMessageCallback,
     );
-    //worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
   }
 }

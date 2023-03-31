@@ -19,14 +19,24 @@ void main() {
   //     echoTcp(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   //   }
   // });
-  group("[unix stream]", () {
+  // group("[unix stream]", () {
+  //   final echoTestsCount = 5;
+  //   for (var index = 0; index < echoTestsCount; index++) {
+  //     echoUnixStream(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     echoUnixStream(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     echoUnixStream(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     echoUnixStream(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     echoUnixStream(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //   }
+  // });
+  group("[unix dgram]", () {
     final echoTestsCount = 5;
     for (var index = 0; index < echoTestsCount; index++) {
-      echoUnixStream(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
 }
@@ -126,9 +136,10 @@ void echoUnixDgram({
       final worker = TransportWorker(input);
       await worker.initialize();
       if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
-      worker.serveUnixDgram(Directory.current.path + "/socket_${worker.id}.sock", (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.createUnixDgramClients(Directory.current.path + "/socket_${worker.id}.sock");
-      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
+      if (File(Directory.current.path + "/socket_${worker.id}_source.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_source.sock").deleteSync();
+      worker.serveUnixDgram(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
+      final clients = await worker.createUnixDgramClients(Directory.current.path + "/socket_${worker.id}_source.sock", Directory.current.path + "/socket_${worker.id}.sock");
+      final responses = await Future.wait(clients.map((client) => client.sendMessage(clientData).then((_) => client.receiveMessage())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
     });

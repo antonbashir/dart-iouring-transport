@@ -11,6 +11,10 @@ extension IntExtension on int {
     if (this & transportEventConnect != 0) return "[Connect]";
     if (this & transportEventReadCallback != 0) return "[ReadCallback]";
     if (this & transportEventWriteCallback != 0) return "[WriteCallback]";
+    if (this & transportEventSendMessage != 0) return "[SendMessage]";
+    if (this & transportEventReceiveMessage != 0) return "[ReceiveMessage]";
+    if (this & transportEventSendMessageCallback != 0) return "[SendMessageCallback]";
+    if (this & transportEventReceiveMessageCallback != 0) return "[ReceiveMessageCallback]";
     return "unkown";
   }
 
