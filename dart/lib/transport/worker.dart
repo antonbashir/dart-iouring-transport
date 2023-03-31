@@ -384,7 +384,7 @@ class TransportWorker {
         //logger.debug("[inbound send read]: worker = ${_workerPointer.ref.id}, fd = $fd");
         return;
       case transportEventReadCallback:
-      case transportEventReceiveMessage:
+      case transportEventReceiveMessageCallback:
         final bufferId = ((userData >> 16) & 0xffff);
         _callbacks.notifyRead(
           bufferId,
