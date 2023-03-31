@@ -201,18 +201,16 @@ class TransportWorker {
 
   Future<TransportClientPool> connectUnix(String path, {int? pool}) => _connector.connectUnix(path, pool: pool);
 
-  TransportClientPool createUdpClients(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {int? pool}) => _connector.createUdpClients(
+  TransportClient createUdpClient(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {int? pool}) => _connector.createUdpClient(
         sourceHost,
         sourcePort,
         destinationHost,
         destinationPort,
-        pool: pool,
       );
 
-  TransportClientPool createUnixDgramClients(String sourcePath, String destinationPath, {int? pool}) => _connector.createUnixClients(
+  TransportClient createUnixDgramClient(String sourcePath, String destinationPath, {int? pool}) => _connector.createUnixClient(
         sourcePath,
         destinationPath,
-        pool: pool,
       );
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
@@ -381,6 +379,31 @@ class TransportWorker {
         final bufferId = ((userData >> 16) & 0xffff);
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
         _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
+        //logger.debug("[inbound send read]: worker = ${_workerPointer.ref.id}, fd = $fd");
+        return;
+      case transportEventSendMessage:
+        final bufferId = ((userData >> 16) & 0xffff);
+        final server = _server.get(fd);
+        _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
+        if (server.pointer.ref.mode == transport_socket_mode.UDP) {
+          _bindings.transport_worker_receive_message_inet(
+            _workerPointer,
+            fd,
+            bufferId,
+            server.pointer.ref.server_address_length,
+            MSG_TRUNC,
+            transportEventReceiveMessage,
+          );
+          return;
+        }
+        _bindings.transport_worker_receive_message_unix(
+          _workerPointer,
+          fd,
+          bufferId,
+          server.pointer.ref.server_address_length,
+          MSG_TRUNC,
+          transportEventReceiveMessage,
+        );
         //logger.debug("[inbound send read]: worker = ${_workerPointer.ref.id}, fd = $fd");
         return;
       case transportEventReadCallback:

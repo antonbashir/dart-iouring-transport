@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
+import 'package:iouring_transport/transport/payload.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
@@ -126,7 +127,7 @@ void echoUnixDgram({
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
-      TransportDefaults.client().copyWith(defaultPool: clients),
+      TransportDefaults.client(),
     );
     final done = ReceivePort();
     final serverData = Utf8Encoder().convert("respond");
@@ -136,10 +137,15 @@ void echoUnixDgram({
       final worker = TransportWorker(input);
       await worker.initialize();
       if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
-      if (File(Directory.current.path + "/socket_${worker.id}_source.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_source.sock").deleteSync();
+      for (var i = 0; i < clients; i++) {
+        if (File(Directory.current.path + "/socket_${worker.id}_$i.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$i.sock").deleteSync();
+      }
       worker.serveUnixDgram(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.createUnixDgramClients(Directory.current.path + "/socket_${worker.id}_source.sock", Directory.current.path + "/socket_${worker.id}.sock");
-      final responses = await Future.wait(clients.map((client) => client.sendMessage(clientData).then((_) => client.receiveMessage())).toList());
+      final responses = <TransportOutboundPayload>[];
+      for (var i = 0; i < clients; i++) {
+        final client = worker.createUnixDgramClient(Directory.current.path + "/socket_${worker.id}_$i.sock", Directory.current.path + "/socket_${worker.id}.sock");
+        responses.add(await client.sendMessage(clientData).then((value) => client.receiveMessage()));
+      }
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
     });
