@@ -7,6 +7,7 @@ import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
+import 'callbacks.dart';
 import 'channels.dart';
 import 'connector.dart';
 import 'constants.dart';
@@ -17,51 +18,10 @@ import 'lookup.dart';
 import 'payload.dart';
 import 'server.dart';
 
-class TransportCallbacks {
-  final _connectCallbacks = <int, Completer<TransportClient>>{};
-  final _readCallbacks = <int, Completer<TransportOutboundPayload>>{};
-  final _writeCallbacks = <int, Completer<void>>{};
-  final _customCallbacks = <int, Completer<int>>{};
-
-  @pragma(preferInlinePragma)
-  void putConnect(int fd, Completer<TransportClient> completer) => _connectCallbacks[fd] = completer;
-
-  @pragma(preferInlinePragma)
-  void putRead(int bufferId, Completer<TransportOutboundPayload> completer) => _readCallbacks[bufferId] = completer;
-
-  @pragma(preferInlinePragma)
-  void putWrite(int bufferId, Completer<void> completer) => _writeCallbacks[bufferId] = completer;
-
-  @pragma(preferInlinePragma)
-  void putCustom(int id, Completer<int> completer) => _customCallbacks[id] = completer;
-
-  @pragma(preferInlinePragma)
-  void notifyConnect(int fd, TransportClient client) => _connectCallbacks.remove(fd)!.complete(client);
-
-  @pragma(preferInlinePragma)
-  void notifyRead(int bufferId, TransportOutboundPayload payload) => _readCallbacks.remove(bufferId)!.complete(payload);
-
-  @pragma(preferInlinePragma)
-  void notifyWrite(int bufferId) => _writeCallbacks.remove(bufferId)!.complete();
-
-  @pragma(preferInlinePragma)
-  void notifyCustom(int id, int data) => _customCallbacks[id]!.complete(data);
-
-  @pragma(preferInlinePragma)
-  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)!.completeError(error);
-
-  @pragma(preferInlinePragma)
-  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)!.completeError(error);
-
-  @pragma(preferInlinePragma)
-  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)!.completeError(error);
-}
-
 class TransportWorker {
   final _initializer = Completer();
   final _fromTransport = ReceivePort();
   final _bufferFinalizers = Queue<Completer<int>>();
-  final _serversByClients = <int, TransportServerInstance>{};
 
   late final TransportLogger logger;
   late final TransportBindings _bindings;
@@ -114,9 +74,7 @@ class TransportWorker {
       _closer.close();
       _server.shutdown();
       _connector.shutdown();
-      //final id = _workerPointer.ref.id;
       _bindings.transport_worker_destroy(_workerPointer);
-      //logger.debug("[worker $id]: closed");
       Isolate.exit();
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
@@ -244,7 +202,7 @@ class TransportWorker {
         return;
       case transportEventReceiveMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.get(fd);
+        final server = _server.getByServer(fd);
         if (result == -EAGAIN) {
           _bindings.transport_worker_receive_message(
             _workerPointer,
@@ -261,7 +219,7 @@ class TransportWorker {
         return;
       case transportEventSendMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.get(fd);
+        final server = _server.getByServer(fd);
         if (result == -EAGAIN) {
           _bindings.transport_worker_send_message(
             _workerPointer,
@@ -278,7 +236,7 @@ class TransportWorker {
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         return;
       case transportEventAccept:
-        _bindings.transport_worker_accept(_workerPointer, _server.get(fd).pointer);
+        _bindings.transport_worker_accept(_workerPointer, _server.getByServer(fd).pointer);
         return;
       case transportEventConnect:
         _bindings.transport_close_descritor(fd);
@@ -397,7 +355,7 @@ class TransportWorker {
     switch (event) {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _serversByClients[fd]!;
+        final server = _server.getByClient(fd);
         if (!server.controller.hasListener) {
           logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
@@ -422,7 +380,7 @@ class TransportWorker {
         return;
       case transportEventReceiveMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.get(fd);
+        final server = _server.getByServer(fd);
         if (!server.controller.hasListener) {
           logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
@@ -462,7 +420,7 @@ class TransportWorker {
         return;
       case transportEventSendMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.get(fd);
+        final server = _server.getByServer(fd);
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
         _bindings.transport_worker_receive_message(
           _workerPointer,
@@ -498,8 +456,8 @@ class TransportWorker {
         _callbacks.notifyConnect(fd, _connector.createClient(fd));
         return;
       case transportEventAccept:
-        final server = _server.get(fd);
-        _serversByClients[result] = server;
+        final server = _server.getByServer(fd);
+        _server.mapClient(fd, result);
         _bindings.transport_worker_accept(_workerPointer, server.pointer);
         server.acceptor!(TransportInboundChannel(
           _workerPointer,

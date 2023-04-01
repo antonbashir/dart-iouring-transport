@@ -39,6 +39,7 @@ class TransportServerInstance {
 
 class TransportServer {
   final _serverIntances = <int, TransportServerInstance>{};
+  final _serversByClients = <int, TransportServerInstance>{};
 
   final Pointer<transport_server_configuration_t> _configuration;
   final TransportBindings _bindings;
@@ -81,7 +82,13 @@ class TransportServer {
     return instance;
   }
 
-  TransportServerInstance get(int fd) => _serverIntances[fd]!;
+  TransportServerInstance getByServer(int fd) => _serverIntances[fd]!;
+
+  TransportServerInstance getByClient(int fd) => _serverIntances[fd]!;
+
+  void mapClient(int serverFd, int clientFd) {
+    _serversByClients[clientFd] = _serverIntances[serverFd]!;
+  }
 
   void shutdown() => _serverIntances.values.forEach((server) => server.close());
 }

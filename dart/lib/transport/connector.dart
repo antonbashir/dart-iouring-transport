@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
+import 'callbacks.dart';
 import 'channels.dart';
 import 'payload.dart';
 import 'worker.dart';
