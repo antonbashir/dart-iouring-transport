@@ -68,25 +68,13 @@ int32_t transport_socket_create_server_udp(uint32_t receive_buffer_size, uint32_
 {
   int32_t option = 1;
 
-  int32_t fd = socket(AF_INET, SOCK_DGRAM | O_NONBLOCK, IPPROTO_UDP);
+  int32_t fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
   if (fd == -1)
   {
     return -1;
   }
 
-  int32_t result = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int));
-  if (result < 0)
-  {
-    return -1;
-  }
-
-  result = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(option));
-  if (result == -1)
-  {
-    return -1;
-  }
-
-  result = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &receive_buffer_size, sizeof(receive_buffer_size));
+  int32_t result = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &receive_buffer_size, sizeof(receive_buffer_size));
   if (result == -1)
   {
     return -1;
@@ -180,7 +168,7 @@ int32_t transport_socket_create_client_udp(uint32_t receive_buffer_size, uint32_
 {
   int32_t option = 1;
 
-  int32_t fd = socket(AF_INET, SOCK_DGRAM | O_NONBLOCK, IPPROTO_UDP);
+  int32_t fd = socket(AF_INET, SOCK_DGRAM | O_CLOEXEC, IPPROTO_UDP);
   if (fd == -1)
   {
     return -1;
