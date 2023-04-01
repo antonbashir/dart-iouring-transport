@@ -157,7 +157,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   Future<void> _handleError(int result, int userData, int fd, int event) async {
-    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
+    //logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
 
     switch (event) {
       case transportEventRead:
@@ -379,7 +379,7 @@ class TransportWorker {
           (newBufferId) => _bindings.transport_worker_receive_message(
             _workerPointer,
             fd,
-            bufferId,
+            newBufferId,
             server.pointer.ref.family,
             MSG_TRUNC,
             transportEventReceiveMessage,

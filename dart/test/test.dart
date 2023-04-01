@@ -4,7 +4,6 @@ import 'dart:isolate';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/payload.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
@@ -110,14 +109,13 @@ void echoUdp({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.udp("0.0.0.0", 12345, (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final responseFutures = <Future<TransportOutboundPayload>>[];
+      final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
-        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()));
+        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
       }
       final responses = await Future.wait(responseFutures);
-      responses.forEach((response) => worker.transmitter!.send(response.bytes));
-      responses.forEach((response) => response.release());
+      responses.forEach((response) => worker.transmitter!.send(response));
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
     done.close();
@@ -151,9 +149,8 @@ void echoUnixStream({
       if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
       worker.servers.unixStream(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
       final clients = await worker.clients.unixStream(Directory.current.path + "/socket_${worker.id}.sock");
-      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
-      responses.forEach((response) => worker.transmitter!.send(response.bytes));
-      responses.forEach((response) => response.release());
+      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
+      responses.forEach((response) => worker.transmitter!.send(response));
       if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
@@ -190,14 +187,13 @@ void echoUnixDgram({
         if (File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").deleteSync();
       }
       worker.servers.unixDatagram(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final responseFutures = <Future<TransportOutboundPayload>>[];
+      final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock", Directory.current.path + "/socket_${worker.id}.sock");
-        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()));
+        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
       }
       final responses = await Future.wait(responseFutures);
-      responses.forEach((response) => worker.transmitter!.send(response.bytes));
-      responses.forEach((response) => response.release());
+      responses.forEach((response) => worker.transmitter!.send(response));
       if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         if (File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").deleteSync();
