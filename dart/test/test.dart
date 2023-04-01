@@ -141,11 +141,12 @@ void echoUnixDgram({
         if (File(Directory.current.path + "/socket_${worker.id}_$i.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$i.sock").deleteSync();
       }
       worker.serveUnixDgram(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final responses = <TransportOutboundPayload>[];
+      final responseFutures = <Future<TransportOutboundPayload>>[];
       for (var i = 0; i < clients; i++) {
         final client = worker.createUnixDgramClient(Directory.current.path + "/socket_${worker.id}_$i.sock", Directory.current.path + "/socket_${worker.id}.sock");
-        responses.add(await client.sendMessage(clientData).then((value) => client.receiveMessage()));
+        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()));
       }
+      final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
     });
