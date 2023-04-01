@@ -77,11 +77,10 @@ void echoTcp({
       await worker.initialize();
       worker.servers.tcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
       final clients = await worker.clients.tcp("127.0.0.1", 12345);
-      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
-      responses.forEach((response) => worker.transmitter!.send(response.bytes));
-      responses.forEach((response) => response.release());
+      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
+      responses.forEach((response) => worker.transmitter!.send(response));
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(serverData, response));
+    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -120,7 +119,7 @@ void echoUdp({
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(serverData, response));
+    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -157,7 +156,7 @@ void echoUnixStream({
       responses.forEach((response) => response.release());
       if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(serverData, response));
+    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -204,7 +203,7 @@ void echoUnixDgram({
         if (File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").deleteSync();
       }
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(serverData, response));
+    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
