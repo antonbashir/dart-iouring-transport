@@ -143,6 +143,7 @@ const ringSetupCqe32 = 1 << 11;
 const ringSetupSingleIssuer = 1 << 12;
 const ringSetupDeferTaskrun = 1 << 13;
 
-enum TransportSocketMode {
-  
+enum TransportSocketFamily {
+  inet,
+  unix,
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/constants.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -14,10 +15,12 @@ class TransportServerInstance {
   late final StreamController<TransportInboundPayload> controller;
   late final Stream<TransportInboundPayload> stream;
   late final void Function(TransportInboundChannel channel)? acceptor;
+  late final TransportSocketFamily socketFamily;
 
   TransportServerInstance(this.pointer, this._bindings) {
     controller = StreamController();
     stream = controller.stream;
+    socketFamily = TransportSocketFamily.values[pointer.ref.family];
   }
 
   void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportInboundChannel channel) acceptor) {

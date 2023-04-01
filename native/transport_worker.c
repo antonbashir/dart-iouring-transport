@@ -16,7 +16,8 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffers_count = configuration->buffers_count;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   worker->used_buffers = malloc(sizeof(int64_t) * configuration->buffers_count);
-  worker->used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
+  worker->inet_received_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
+  worker->unix_received_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
@@ -27,7 +28,14 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
     }
     worker->buffers[index].iov_len = configuration->buffer_size;
     worker->used_buffers[index] = TRANSPORT_BUFFER_AVAILABLE;
-    memset(&worker->used_messages[index], 0, sizeof(worker->used_messages[index]));
+
+    memset(&worker->inet_received_messages[index], 0, sizeof(worker->inet_received_messages[index]));
+    worker->inet_received_messages[index].msg_name = malloc(sizeof(struct sockaddr_in));
+    worker->inet_received_messages[index].msg_namelen = sizeof(struct sockaddr_in);
+
+    memset(&worker->unix_received_messages[index], 0, sizeof(worker->unix_received_messages[index]));
+    worker->unix_received_messages[index].msg_name = malloc(sizeof(struct sockaddr_un));
+    worker->unix_received_messages[index].msg_namelen = sizeof(struct sockaddr_un);
   }
   worker->ring = malloc(sizeof(struct io_uring));
   int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
@@ -126,12 +134,12 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   memset(&message, 0, sizeof(message));
   if (socket_family == INET)
   {
-    struct sockaddr_in inet_address;
+    struct sockaddr_in inet_address = *((struct sockaddr_in *)address);
     message.msg_name = &inet_address;
   }
   if (socket_family == UNIX)
   {
-    struct sockaddr_un unix_address;
+    struct sockaddr_un unix_address = *((struct sockaddr_un *)address);
     message.msg_name = &unix_address;
   }
   message.msg_namelen = address_length;
@@ -146,17 +154,15 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   return io_uring_submit(ring);
 }
 
-int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, socklen_t address_length, int message_flags, uint16_t event)
+int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, uint16_t event)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct msghdr *message = &worker->used_messages[buffer_id];
-  memset(address, 0, address_length);
-  message->msg_name = address;
-  message->msg_namelen = address_length;
+  struct msghdr *message = socket_family == INET ? &worker->inet_received_messages[buffer_id] : &worker->unix_received_messages[buffer_id];
+  memset(message->msg_name, 0, message->msg_namelen);
   message->msg_iov = &worker->buffers[buffer_id];
   message->msg_iovlen = 1;
   io_uring_prep_recvmsg(sqe, fd, message, message_flags);
@@ -189,7 +195,7 @@ int transport_worker_accept(transport_worker_t *worker, transport_server_t *serv
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
-  io_uring_prep_accept(sqe, server->fd, server->mode == INET ? (struct sockaddr *)&server->inet_server_address : (struct sockaddr *)&server->unix_server_address, &server->server_address_length, 0);
+  io_uring_prep_accept(sqe, server->fd, server->family == INET ? (struct sockaddr *)&server->inet_server_address : (struct sockaddr *)&server->unix_server_address, &server->server_address_length, 0);
   sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);

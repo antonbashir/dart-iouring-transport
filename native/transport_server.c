@@ -23,7 +23,7 @@ transport_server_t *transport_server_initialize_tcp(transport_server_configurati
   {
     return NULL;
   }
-  server->mode = INET;
+  server->family = INET;
   memset(&server->inet_server_address, 0, sizeof(server->inet_server_address));
   server->inet_server_address.sin_addr.s_addr = inet_addr(ip);
   server->inet_server_address.sin_port = htons(port);
@@ -53,7 +53,7 @@ transport_server_t *transport_server_initialize_udp(transport_server_configurati
   {
     return NULL;
   }
-  server->mode = INET;
+  server->family = INET;
   memset(&server->inet_server_address, 0, sizeof(server->inet_server_address));
   server->inet_server_address.sin_addr.s_addr = inet_addr(ip);
   server->inet_server_address.sin_port = htons(port);
@@ -77,7 +77,7 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
   {
     return NULL;
   }
-  server->mode = UNIX;
+  server->family = UNIX;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
   server->unix_server_address.sun_family = AF_UNIX;
   strncpy(server->unix_server_address.sun_path, path, path_length);
@@ -106,7 +106,7 @@ transport_server_t *transport_server_initialize_unix_dgram(transport_server_conf
   {
     return NULL;
   }
-  server->mode = UNIX;
+  server->family = UNIX;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
   server->unix_server_address.sun_family = AF_UNIX;
   strncpy(server->unix_server_address.sun_path, path, path_length);

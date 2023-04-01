@@ -19376,8 +19376,7 @@ class TransportBindings {
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
-    ffi.Pointer<sockaddr> address,
-    int address_length,
+    int socket_family,
     int message_flags,
     int event,
   ) {
@@ -19385,8 +19384,7 @@ class TransportBindings {
       worker,
       fd,
       buffer_id,
-      address,
-      address_length,
+      socket_family,
       message_flags,
       event,
     );
@@ -19398,14 +19396,13 @@ class TransportBindings {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<sockaddr>,
-              socklen_t,
+              ffi.Int32,
               ffi.Int,
               ffi.Uint16)>>('transport_worker_receive_message');
   late final _transport_worker_receive_message =
       _transport_worker_receive_messagePtr.asFunction<
-          int Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr>, int, int, int)>();
+          int Function(
+              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
 
   int transport_worker_select_buffer(
     ffi.Pointer<transport_worker_t> worker,
@@ -23624,8 +23621,7 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<sockaddr>,
-              socklen_t,
+              ffi.Int32,
               ffi.Int,
               ffi.Uint16)>> get transport_worker_receive_message =>
       _library._transport_worker_receive_messagePtr;
@@ -26704,7 +26700,7 @@ class transport_server extends ffi.Struct {
   external int fd;
 
   @ffi.Int32()
-  external int mode;
+  external int family;
 
   external sockaddr_in inet_server_address;
 
@@ -26861,7 +26857,9 @@ class transport_worker extends ffi.Struct {
 
   external ffi.Pointer<ffi.Int64> used_buffers;
 
-  external ffi.Pointer<msghdr> used_messages;
+  external ffi.Pointer<msghdr> inet_received_messages;
+
+  external ffi.Pointer<msghdr> unix_received_messages;
 }
 
 typedef transport_worker_t = transport_worker;

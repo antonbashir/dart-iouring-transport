@@ -70,7 +70,8 @@ class TransportWorker {
   late final Pointer<io_uring> _ring;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
-  late final Pointer<msghdr> _usedMessages;
+  late final Pointer<msghdr> _inetReceivedMessages;
+  late final Pointer<msghdr> _unixReceivedMessages;
   late final Pointer<Pointer<io_uring_cqe>> _cqes;
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
@@ -145,7 +146,8 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
-    _usedMessages = _workerPointer.ref.used_messages;
+    _inetReceivedMessages = _workerPointer.ref.inet_received_messages;
+    _unixReceivedMessages = _workerPointer.ref.unix_received_messages;
     _ringSize = _transportPointer.ref.worker_configuration.ref.ring_size;
     _activator.close();
   }
@@ -338,7 +340,7 @@ class TransportWorker {
           return;
         }
         final buffer = _buffers[bufferId];
-        final message = _usedMessages[bufferId];
+        final message = server.socketFamily == TransportSocketFamily.inet ? _inetReceivedMessages[bufferId] : _unixReceivedMessages[bufferId];
         final bufferBytes = buffer.iov_base.cast<Uint8>();
         server.controller.add(TransportInboundPayload(
           bufferBytes.asTypedList(result),
@@ -346,24 +348,13 @@ class TransportWorker {
             _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
             bufferBytes.asTypedList(answer.length).setAll(0, answer);
             buffer.iov_len = answer.length;
-            if (server.pointer.ref.mode == transport_socket_mode.UDP) {
-              _bindings.transport_worker_send_message_inet(
-                _workerPointer,
-                fd,
-                bufferId,
-                message.msg_name,
-                message.msg_namelen,
-                MSG_TRUNC,
-                transportEventSendMessage,
-              );
-              return;
-            }
-            _bindings.transport_worker_send_message_unix(
+            _bindings.transport_worker_send_message(
               _workerPointer,
               fd,
               bufferId,
-              message.msg_name,
+              message.msg_name.cast(),
               message.msg_namelen,
+              server.socketFamily.index,
               MSG_TRUNC,
               transportEventSendMessage,
             );
@@ -385,22 +376,11 @@ class TransportWorker {
         final bufferId = ((userData >> 16) & 0xffff);
         final server = _server.get(fd);
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-        if (server.pointer.ref.mode == transport_socket_mode.UDP) {
-          _bindings.transport_worker_receive_message_inet(
-            _workerPointer,
-            fd,
-            bufferId,
-            server.pointer.ref.server_address_length,
-            MSG_TRUNC,
-            transportEventReceiveMessage,
-          );
-          return;
-        }
-        _bindings.transport_worker_receive_message_unix(
+        _bindings.transport_worker_receive_message(
           _workerPointer,
           fd,
           bufferId,
-          server.pointer.ref.server_address_length,
+          server.pointer.ref.family,
           MSG_TRUNC,
           transportEventReceiveMessage,
         );

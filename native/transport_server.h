@@ -23,7 +23,7 @@ extern "C"
   typedef struct transport_server
   {
     int fd;
-    transport_socket_family_t mode;
+    transport_socket_family_t family;
     struct sockaddr_in inet_server_address;
     struct sockaddr_un unix_server_address;
     socklen_t server_address_length;
