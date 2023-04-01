@@ -10,36 +10,36 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 void main() {
-  // group("[tcp]", () {
-  //   final echoTestsCount = 5;
-  //   for (var index = 0; index < echoTestsCount; index++) {
-  //     echoTcp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoTcp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoTcp(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoTcp(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoTcp(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
-  // group("[unix stream]", () {
-  //   final echoTestsCount = 5;
-  //   for (var index = 0; index < echoTestsCount; index++) {
-  //     echoUnixStream(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixStream(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixStream(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixStream(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixStream(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
-  // group("[unix dgram]", () {
-  //   final echoTestsCount = 5;
-  //   for (var index = 0; index < echoTestsCount; index++) {
-  //     echoUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
+  group("[tcp]", () {
+    final echoTestsCount = 5;
+    for (var index = 0; index < echoTestsCount; index++) {
+      echoTcp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
+  group("[unix stream]", () {
+    final echoTestsCount = 5;
+    for (var index = 0; index < echoTestsCount; index++) {
+      echoUnixStream(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
+  group("[unix dgram]", () {
+    final echoTestsCount = 5;
+    for (var index = 0; index < echoTestsCount; index++) {
+      echoUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 8, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
   group("[udp]", () {
     final echoTestsCount = 5;
     for (var index = 0; index < echoTestsCount; index++) {
@@ -155,6 +155,7 @@ void echoUnixStream({
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
+      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(serverData, response));
     done.close();
@@ -198,6 +199,10 @@ void echoUnixDgram({
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
+      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
+      for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
+        if (File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").deleteSync();
+      }
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(serverData, response));
     done.close();

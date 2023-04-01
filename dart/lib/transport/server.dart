@@ -84,7 +84,7 @@ class TransportServerRegistry {
 
   TransportServer getByServer(int fd) => _servers[fd]!;
 
-  TransportServer getByClient(int fd) => _servers[fd]!;
+  TransportServer getByClient(int fd) => _serversByClients[fd]!;
 
   void mapClient(int serverFd, int clientFd) {
     _serversByClients[clientFd] = _servers[serverFd]!;
