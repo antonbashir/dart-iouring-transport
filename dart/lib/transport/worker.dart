@@ -242,6 +242,41 @@ class TransportWorker {
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _bindings.transport_close_descritor(fd);
         return;
+      case transportEventReceiveMessage:
+        final bufferId = ((userData >> 16) & 0xffff);
+        final server = _server.get(fd);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_receive_message(
+            _workerPointer,
+            fd,
+            bufferId,
+            server.socketFamily.index,
+            MSG_TRUNC,
+            transportEventRead,
+          );
+          return;
+        }
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        return;
+      case transportEventSendMessage:
+        final bufferId = ((userData >> 16) & 0xffff);
+        final server = _server.get(fd);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_send_message(
+            _workerPointer,
+            fd,
+            bufferId,
+            server.socketFamily == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
+            server.socketFamily.index,
+            MSG_TRUNC,
+            transportEventWrite,
+          );
+          return;
+        }
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        return;
       case transportEventAccept:
         _bindings.transport_worker_accept(_workerPointer, _server.get(fd).pointer);
         return;
@@ -286,6 +321,61 @@ class TransportWorker {
         _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _bindings.transport_close_descritor(fd);
+        _callbacks.notifyWriteError(
+          bufferId,
+          TransportException.forEvent(
+            event,
+            result,
+            result.kernelErrorToString(_bindings),
+            fd,
+            bufferId: bufferId,
+          ),
+        );
+        return;
+      case transportEventReceiveMessageCallback:
+        final bufferId = ((userData >> 16) & 0xffff);
+        final client = _connector.get(fd);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_receive_message(
+            _workerPointer,
+            fd,
+            bufferId,
+            client.ref.family,
+            MSG_TRUNC,
+            transportEventRead,
+          );
+          return;
+        }
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        _callbacks.notifyReadError(
+          bufferId,
+          TransportException.forEvent(
+            event,
+            result,
+            result.kernelErrorToString(_bindings),
+            fd,
+            bufferId: bufferId,
+          ),
+        );
+        return;
+      case transportEventSendMessageCallback:
+        final bufferId = ((userData >> 16) & 0xffff);
+        final client = _connector.get(fd);
+        if (result == -EAGAIN) {
+          _bindings.transport_worker_send_message(
+            _workerPointer,
+            fd,
+            bufferId,
+            client.ref.family == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
+            client.ref.family,
+            MSG_TRUNC,
+            transportEventWrite,
+          );
+          return;
+        }
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _callbacks.notifyWriteError(
           bufferId,
           TransportException.forEvent(
