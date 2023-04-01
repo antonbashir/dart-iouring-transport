@@ -19454,6 +19454,27 @@ class TransportBindings {
   late final _transport_worker_free_buffer = _transport_worker_free_bufferPtr
       .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
+  ffi.Pointer<sockaddr> transport_worker_get_source_address(
+    ffi.Pointer<transport_worker_t> worker,
+    int buffer_id,
+    int socket_family,
+  ) {
+    return _transport_worker_get_source_address(
+      worker,
+      buffer_id,
+      socket_family,
+    );
+  }
+
+  late final _transport_worker_get_source_addressPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<sockaddr> Function(ffi.Pointer<transport_worker_t>,
+              ffi.Uint16, ffi.Int32)>>('transport_worker_get_source_address');
+  late final _transport_worker_get_source_address =
+      _transport_worker_get_source_addressPtr.asFunction<
+          ffi.Pointer<sockaddr> Function(
+              ffi.Pointer<transport_worker_t>, int, int)>();
+
   int transport_worker_peek(
     int cqe_count,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
@@ -23640,6 +23661,12 @@ class _SymbolAddresses {
       get transport_worker_free_buffer =>
           _library._transport_worker_free_bufferPtr;
   ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<sockaddr> Function(
+                  ffi.Pointer<transport_worker_t>, ffi.Uint16, ffi.Int32)>>
+      get transport_worker_get_source_address =>
+          _library._transport_worker_get_source_addressPtr;
+  ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
               ffi.Pointer<io_uring>)>> get transport_worker_peek =>
@@ -26857,9 +26884,9 @@ class transport_worker extends ffi.Struct {
 
   external ffi.Pointer<ffi.Int64> used_buffers;
 
-  external ffi.Pointer<msghdr> inet_received_messages;
+  external ffi.Pointer<sockaddr_in> inet_source_addresses;
 
-  external ffi.Pointer<msghdr> unix_received_messages;
+  external ffi.Pointer<sockaddr_un> unix_source_addresses;
 }
 
 typedef transport_worker_t = transport_worker;
@@ -30796,7 +30823,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 

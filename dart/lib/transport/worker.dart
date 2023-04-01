@@ -70,8 +70,8 @@ class TransportWorker {
   late final Pointer<io_uring> _ring;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
-  late final Pointer<msghdr> _inetReceivedMessages;
-  late final Pointer<msghdr> _unixReceivedMessages;
+  late final Pointer<sockaddr_in> _inetSourceAddresses;
+  late final Pointer<sockaddr_un> _unixSoruceAddresses;
   late final Pointer<Pointer<io_uring_cqe>> _cqes;
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
@@ -146,8 +146,8 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
-    _inetReceivedMessages = _workerPointer.ref.inet_received_messages;
-    _unixReceivedMessages = _workerPointer.ref.unix_received_messages;
+    _inetSourceAddresses = _workerPointer.ref.inet_source_addresses;
+    _unixSoruceAddresses = _workerPointer.ref.unix_source_addresses;
     _ringSize = _transportPointer.ref.worker_configuration.ref.ring_size;
     _activator.close();
   }
@@ -219,7 +219,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleError(int result, int userData, int fd, int event) {
-    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}");
+    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
 
     switch (event) {
       case transportEventRead:
@@ -302,7 +302,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd, int event) {
-    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd");
+    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((userData >> 16) & 0xffff)}");
 
     switch (event) {
       case transportEventRead:
@@ -340,7 +340,7 @@ class TransportWorker {
           return;
         }
         final buffer = _buffers[bufferId];
-        final message = server.socketFamily == TransportSocketFamily.inet ? _inetReceivedMessages[bufferId] : _unixReceivedMessages[bufferId];
+        final address = _bindings.transport_worker_get_source_address(_workerPointer, bufferId, server.pointer.ref.family);
         final bufferBytes = buffer.iov_base.cast<Uint8>();
         server.controller.add(TransportInboundPayload(
           bufferBytes.asTypedList(result),
@@ -352,9 +352,9 @@ class TransportWorker {
               _workerPointer,
               fd,
               bufferId,
-              message.msg_name.cast(),
-              message.msg_namelen,
-              server.socketFamily.index,
+              address,
+              server.pointer.ref.server_address_length,
+              server.pointer.ref.family,
               MSG_TRUNC,
               transportEventSendMessage,
             );

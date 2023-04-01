@@ -16,8 +16,8 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffers_count = configuration->buffers_count;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   worker->used_buffers = malloc(sizeof(int64_t) * configuration->buffers_count);
-  worker->inet_received_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
-  worker->unix_received_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
+  worker->inet_source_addresses = malloc(sizeof(struct sockaddr_in) * configuration->buffers_count);
+  worker->unix_source_addresses = malloc(sizeof(struct sockaddr_un) * configuration->buffers_count);
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
@@ -28,14 +28,6 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
     }
     worker->buffers[index].iov_len = configuration->buffer_size;
     worker->used_buffers[index] = TRANSPORT_BUFFER_AVAILABLE;
-
-    memset(&worker->inet_received_messages[index], 0, sizeof(worker->inet_received_messages[index]));
-    worker->inet_received_messages[index].msg_name = malloc(sizeof(struct sockaddr_in));
-    worker->inet_received_messages[index].msg_namelen = sizeof(struct sockaddr_in);
-
-    memset(&worker->unix_received_messages[index], 0, sizeof(worker->unix_received_messages[index]));
-    worker->unix_received_messages[index].msg_name = malloc(sizeof(struct sockaddr_un));
-    worker->unix_received_messages[index].msg_namelen = sizeof(struct sockaddr_un);
   }
   worker->ring = malloc(sizeof(struct io_uring));
   int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
@@ -141,6 +133,7 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   {
     struct sockaddr_un unix_address = *((struct sockaddr_un *)address);
     message.msg_name = &unix_address;
+    printf("[send message]: name = %s\n", ((struct sockaddr_un *)message.msg_name)->sun_path);
   }
   message.msg_namelen = address_length;
   message.msg_iov = &worker->buffers[buffer_id];
@@ -161,11 +154,24 @@ int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, ui
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct msghdr *message = socket_family == INET ? &worker->inet_received_messages[buffer_id] : &worker->unix_received_messages[buffer_id];
-  memset(message->msg_name, 0, message->msg_namelen);
-  message->msg_iov = &worker->buffers[buffer_id];
-  message->msg_iovlen = 1;
-  io_uring_prep_recvmsg(sqe, fd, message, message_flags);
+  struct msghdr message;
+  memset(&message, 0, sizeof(message));
+  if (socket_family == INET)
+  {
+    memset(&worker->inet_source_addresses[buffer_id], 0, sizeof(struct sockaddr_in));
+    message.msg_name = (struct sockaddr *)(&worker->inet_source_addresses[buffer_id]);
+    message.msg_namelen = sizeof(struct sockaddr_in);
+  }
+  if (socket_family == UNIX)
+  {
+    memset(&worker->unix_source_addresses[buffer_id], 0, sizeof(struct sockaddr_un));
+    message.msg_name = (struct sockaddr *)(&worker->unix_source_addresses[buffer_id]);
+    message.msg_namelen = sizeof(struct sockaddr_un);
+    printf("[receive message]: name = %s\n", ((struct sockaddr_un *)message.msg_name)->sun_path);
+  }
+  message.msg_iov = &worker->buffers[buffer_id];
+  message.msg_iovlen = 1;
+  io_uring_prep_recvmsg(sqe, fd, &message, message_flags);
   sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
@@ -218,6 +224,11 @@ void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
   worker->used_buffers[buffer_id] = TRANSPORT_BUFFER_AVAILABLE;
+}
+
+struct sockaddr *transport_worker_get_source_address(transport_worker_t *worker, uint16_t buffer_id, transport_socket_family_t socket_family)
+{
+  return socket_family == INET ? (struct sockaddr *)&worker->inet_source_addresses[buffer_id] : (struct sockaddr *)&worker->unix_source_addresses[buffer_id];
 }
 
 int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
