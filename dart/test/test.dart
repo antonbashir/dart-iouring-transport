@@ -126,9 +126,6 @@ void echoUdp({
   });
 }
 
-// 12304 + 1290
-// 13594
-
 void echoUnixStream({
   required int index,
   required int listeners,
