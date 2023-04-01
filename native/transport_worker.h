@@ -31,8 +31,8 @@ extern "C"
     uint32_t buffer_size;
     uint16_t buffers_count;
     int64_t *used_buffers;
-    struct sockaddr_in *inet_source_addresses;
-    struct sockaddr_un *unix_source_addresses;
+    struct msghdr *inet_used_messages;
+    struct msghdr *unix_used_messages;
   } transport_worker_t;
 
   transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id);
@@ -41,13 +41,11 @@ extern "C"
   int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint16_t event);
   int transport_worker_connect(transport_worker_t *worker, transport_client_t *client);
   int transport_worker_accept(transport_worker_t *worker, transport_server_t *server);
-  int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, socklen_t address_length, transport_socket_family_t socket_family, int message_flags, uint16_t event);
+  int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, uint16_t event);
   int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, uint16_t event);
   int transport_worker_select_buffer(transport_worker_t *worker);
   void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id);
   void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id);
-  
-  struct sockaddr* transport_worker_get_source_address(transport_worker_t *worker, uint16_t buffer_id, transport_socket_family_t socket_family);
 
   int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 

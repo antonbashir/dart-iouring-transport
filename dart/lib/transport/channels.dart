@@ -97,7 +97,6 @@ class TransportOutboundChannel extends TransportChannel {
       _descriptor,
       bufferId,
       _bindings.transport_client_get_destination_address(client).cast(),
-      client.ref.client_address_length,
       client.ref.family,
       flags | MSG_TRUNC,
       transportEventSendMessageCallback,

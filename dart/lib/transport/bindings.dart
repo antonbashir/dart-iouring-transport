@@ -19339,7 +19339,6 @@ class TransportBindings {
     int fd,
     int buffer_id,
     ffi.Pointer<sockaddr> address,
-    int address_length,
     int socket_family,
     int message_flags,
     int event,
@@ -19349,7 +19348,6 @@ class TransportBindings {
       fd,
       buffer_id,
       address,
-      address_length,
       socket_family,
       message_flags,
       event,
@@ -19363,14 +19361,13 @@ class TransportBindings {
               ffi.Uint32,
               ffi.Uint16,
               ffi.Pointer<sockaddr>,
-              socklen_t,
               ffi.Int32,
               ffi.Int,
               ffi.Uint16)>>('transport_worker_send_message');
   late final _transport_worker_send_message =
       _transport_worker_send_messagePtr.asFunction<
           int Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr>, int, int, int, int)>();
+              ffi.Pointer<sockaddr>, int, int, int)>();
 
   int transport_worker_receive_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19453,27 +19450,6 @@ class TransportBindings {
               ffi.Uint16)>>('transport_worker_free_buffer');
   late final _transport_worker_free_buffer = _transport_worker_free_bufferPtr
       .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
-
-  ffi.Pointer<sockaddr> transport_worker_get_source_address(
-    ffi.Pointer<transport_worker_t> worker,
-    int buffer_id,
-    int socket_family,
-  ) {
-    return _transport_worker_get_source_address(
-      worker,
-      buffer_id,
-      socket_family,
-    );
-  }
-
-  late final _transport_worker_get_source_addressPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<sockaddr> Function(ffi.Pointer<transport_worker_t>,
-              ffi.Uint16, ffi.Int32)>>('transport_worker_get_source_address');
-  late final _transport_worker_get_source_address =
-      _transport_worker_get_source_addressPtr.asFunction<
-          ffi.Pointer<sockaddr> Function(
-              ffi.Pointer<transport_worker_t>, int, int)>();
 
   int transport_worker_peek(
     int cqe_count,
@@ -23631,7 +23607,6 @@ class _SymbolAddresses {
               ffi.Uint32,
               ffi.Uint16,
               ffi.Pointer<sockaddr>,
-              socklen_t,
               ffi.Int32,
               ffi.Int,
               ffi.Uint16)>> get transport_worker_send_message =>
@@ -23660,12 +23635,6 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
       get transport_worker_free_buffer =>
           _library._transport_worker_free_bufferPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<sockaddr> Function(
-                  ffi.Pointer<transport_worker_t>, ffi.Uint16, ffi.Int32)>>
-      get transport_worker_get_source_address =>
-          _library._transport_worker_get_source_addressPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
@@ -26884,9 +26853,9 @@ class transport_worker extends ffi.Struct {
 
   external ffi.Pointer<ffi.Int64> used_buffers;
 
-  external ffi.Pointer<sockaddr_in> inet_source_addresses;
+  external ffi.Pointer<msghdr> inet_used_messages;
 
-  external ffi.Pointer<sockaddr_un> unix_source_addresses;
+  external ffi.Pointer<msghdr> unix_used_messages;
 }
 
 typedef transport_worker_t = transport_worker;

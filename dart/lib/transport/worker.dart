@@ -70,8 +70,8 @@ class TransportWorker {
   late final Pointer<io_uring> _ring;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
-  late final Pointer<sockaddr_in> _inetSourceAddresses;
-  late final Pointer<sockaddr_un> _unixSoruceAddresses;
+  late final Pointer<msghdr> _inetUsedMessages;
+  late final Pointer<msghdr> _unixUsedMessages;
   late final Pointer<Pointer<io_uring_cqe>> _cqes;
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
@@ -146,8 +146,8 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
-    _inetSourceAddresses = _workerPointer.ref.inet_source_addresses;
-    _unixSoruceAddresses = _workerPointer.ref.unix_source_addresses;
+    _inetUsedMessages = _workerPointer.ref.inet_used_messages;
+    _unixUsedMessages = _workerPointer.ref.unix_used_messages;
     _ringSize = _transportPointer.ref.worker_configuration.ref.ring_size;
     _activator.close();
   }
@@ -340,7 +340,6 @@ class TransportWorker {
           return;
         }
         final buffer = _buffers[bufferId];
-        final address = _bindings.transport_worker_get_source_address(_workerPointer, bufferId, server.pointer.ref.family);
         final bufferBytes = buffer.iov_base.cast<Uint8>();
         server.controller.add(TransportInboundPayload(
           bufferBytes.asTypedList(result),
@@ -352,8 +351,7 @@ class TransportWorker {
               _workerPointer,
               fd,
               bufferId,
-              address,
-              server.pointer.ref.server_address_length,
+              server.socketFamily == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
               server.pointer.ref.family,
               MSG_TRUNC,
               transportEventSendMessage,
