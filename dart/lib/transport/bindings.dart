@@ -19334,16 +19334,54 @@ class TransportBindings {
       int Function(
           ffi.Pointer<transport_worker_t>, ffi.Pointer<transport_server_t>)>();
 
-  int transport_worker_send_message_inet(
+  int transport_worker_send_message(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
-    ffi.Pointer<ffi.Void> address,
+    ffi.Pointer<sockaddr> address,
+    int address_length,
+    int socket_family,
+    int message_flags,
+    int event,
+  ) {
+    return _transport_worker_send_message(
+      worker,
+      fd,
+      buffer_id,
+      address,
+      address_length,
+      socket_family,
+      message_flags,
+      event,
+    );
+  }
+
+  late final _transport_worker_send_messagePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Pointer<sockaddr>,
+              socklen_t,
+              ffi.Int32,
+              ffi.Int,
+              ffi.Uint16)>>('transport_worker_send_message');
+  late final _transport_worker_send_message =
+      _transport_worker_send_messagePtr.asFunction<
+          int Function(ffi.Pointer<transport_worker_t>, int, int,
+              ffi.Pointer<sockaddr>, int, int, int, int)>();
+
+  int transport_worker_receive_message(
+    ffi.Pointer<transport_worker_t> worker,
+    int fd,
+    int buffer_id,
+    ffi.Pointer<sockaddr> address,
     int address_length,
     int message_flags,
     int event,
   ) {
-    return _transport_worker_send_message_inet(
+    return _transport_worker_receive_message(
       worker,
       fd,
       buffer_id,
@@ -19354,119 +19392,20 @@ class TransportBindings {
     );
   }
 
-  late final _transport_worker_send_message_inetPtr = _lookup<
+  late final _transport_worker_receive_messagePtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<ffi.Void>,
+              ffi.Pointer<sockaddr>,
               socklen_t,
               ffi.Int,
-              ffi.Uint16)>>('transport_worker_send_message_inet');
-  late final _transport_worker_send_message_inet =
-      _transport_worker_send_message_inetPtr.asFunction<
+              ffi.Uint16)>>('transport_worker_receive_message');
+  late final _transport_worker_receive_message =
+      _transport_worker_receive_messagePtr.asFunction<
           int Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<ffi.Void>, int, int, int)>();
-
-  int transport_worker_receive_message_inet(
-    ffi.Pointer<transport_worker_t> worker,
-    int fd,
-    int buffer_id,
-    int address_length,
-    int message_flags,
-    int event,
-  ) {
-    return _transport_worker_receive_message_inet(
-      worker,
-      fd,
-      buffer_id,
-      address_length,
-      message_flags,
-      event,
-    );
-  }
-
-  late final _transport_worker_receive_message_inetPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              socklen_t,
-              ffi.Int,
-              ffi.Uint16)>>('transport_worker_receive_message_inet');
-  late final _transport_worker_receive_message_inet =
-      _transport_worker_receive_message_inetPtr.asFunction<
-          int Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
-
-  int transport_worker_send_message_unix(
-    ffi.Pointer<transport_worker_t> worker,
-    int fd,
-    int buffer_id,
-    ffi.Pointer<ffi.Void> address,
-    int address_length,
-    int message_flags,
-    int event,
-  ) {
-    return _transport_worker_send_message_unix(
-      worker,
-      fd,
-      buffer_id,
-      address,
-      address_length,
-      message_flags,
-      event,
-    );
-  }
-
-  late final _transport_worker_send_message_unixPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              ffi.Pointer<ffi.Void>,
-              socklen_t,
-              ffi.Int,
-              ffi.Uint16)>>('transport_worker_send_message_unix');
-  late final _transport_worker_send_message_unix =
-      _transport_worker_send_message_unixPtr.asFunction<
-          int Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<ffi.Void>, int, int, int)>();
-
-  int transport_worker_receive_message_unix(
-    ffi.Pointer<transport_worker_t> worker,
-    int fd,
-    int buffer_id,
-    int address_length,
-    int message_flags,
-    int event,
-  ) {
-    return _transport_worker_receive_message_unix(
-      worker,
-      fd,
-      buffer_id,
-      address_length,
-      message_flags,
-      event,
-    );
-  }
-
-  late final _transport_worker_receive_message_unixPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              socklen_t,
-              ffi.Int,
-              ffi.Uint16)>>('transport_worker_receive_message_unix');
-  late final _transport_worker_receive_message_unix =
-      _transport_worker_receive_message_unixPtr.asFunction<
-          int Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+              ffi.Pointer<sockaddr>, int, int, int)>();
 
   int transport_worker_select_buffer(
     ffi.Pointer<transport_worker_t> worker,
@@ -23673,42 +23612,23 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<ffi.Void>,
+              ffi.Pointer<sockaddr>,
               socklen_t,
+              ffi.Int32,
               ffi.Int,
-              ffi.Uint16)>> get transport_worker_send_message_inet =>
-      _library._transport_worker_send_message_inetPtr;
+              ffi.Uint16)>> get transport_worker_send_message =>
+      _library._transport_worker_send_messagePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
+              ffi.Pointer<sockaddr>,
               socklen_t,
               ffi.Int,
-              ffi.Uint16)>> get transport_worker_receive_message_inet =>
-      _library._transport_worker_receive_message_inetPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              ffi.Pointer<ffi.Void>,
-              socklen_t,
-              ffi.Int,
-              ffi.Uint16)>> get transport_worker_send_message_unix =>
-      _library._transport_worker_send_message_unixPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              socklen_t,
-              ffi.Int,
-              ffi.Uint16)>> get transport_worker_receive_message_unix =>
-      _library._transport_worker_receive_message_unixPtr;
+              ffi.Uint16)>> get transport_worker_receive_message =>
+      _library._transport_worker_receive_messagePtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_select_buffer =>
@@ -26724,11 +26644,9 @@ typedef Dart_EnterScope_Type
 typedef Dart_ExitScope_Type
     = ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>;
 
-abstract class transport_socket_mode {
-  static const int TCP = 0;
-  static const int UDP = 1;
-  static const int UNIX_DGRAM = 2;
-  static const int UNIX_STREAM = 3;
+abstract class transport_socket_family {
+  static const int INET = 0;
+  static const int UNIX = 1;
 }
 
 class transport_listener_configuration extends ffi.Struct {
@@ -26863,7 +26781,7 @@ class transport_client extends ffi.Struct {
   external int client_address_length;
 
   @ffi.Int32()
-  external int mode;
+  external int family;
 }
 
 typedef transport_client_t = transport_client;

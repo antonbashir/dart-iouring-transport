@@ -115,7 +115,7 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   return io_uring_submit(ring);
 }
 
-int transport_worker_send_message_inet(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, void* address, socklen_t address_length, int message_flags, uint16_t event)
+int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, socklen_t address_length, transport_socket_family_t socket_family, int message_flags, uint16_t event)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -124,7 +124,16 @@ int transport_worker_send_message_inet(transport_worker_t *worker, uint32_t fd, 
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct msghdr message;
   memset(&message, 0, sizeof(message));
-  message.msg_name = (struct sockaddr_in*)address;
+  if (socket_family == INET)
+  {
+    struct sockaddr_in inet_address;
+    message.msg_name = &inet_address;
+  }
+  if (socket_family == UNIX)
+  {
+    struct sockaddr_un unix_address;
+    message.msg_name = &unix_address;
+  }
   message.msg_namelen = address_length;
   message.msg_iov = &worker->buffers[buffer_id];
   message.msg_iovlen = 1;
@@ -137,7 +146,7 @@ int transport_worker_send_message_inet(transport_worker_t *worker, uint32_t fd, 
   return io_uring_submit(ring);
 }
 
-int transport_worker_receive_message_inet(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, socklen_t address_length, int message_flags, uint16_t event)
+int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, socklen_t address_length, int message_flags, uint16_t event)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -145,49 +154,8 @@ int transport_worker_receive_message_inet(transport_worker_t *worker, uint32_t f
   worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct msghdr *message = &worker->used_messages[buffer_id];
-  message->msg_namelen = address_length;
-  message->msg_iov = &worker->buffers[buffer_id];
-  message->msg_iovlen = 1;
-  io_uring_prep_recvmsg(sqe, fd, message, message_flags);
-  sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
-  io_uring_sqe_set_data64(sqe, data);
-  sqe = provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
-  return io_uring_submit(ring);
-}
-
-int transport_worker_send_message_unix(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, void* address, socklen_t address_length, int message_flags, uint16_t event)
-{
-  struct io_uring *ring = worker->ring;
-  struct io_uring_sqe *sqe = provide_sqe(ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  worker->used_buffers[buffer_id] = 0;
-  uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct msghdr message;
-  memset(&message, 0, sizeof(message));
-  message.msg_name = (struct sockaddr_un*)address;
-  message.msg_namelen = address_length;
-  message.msg_iov = &worker->buffers[buffer_id];
-  message.msg_iovlen = 1;
-  io_uring_prep_sendmsg(sqe, fd, &message, message_flags);
-  sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
-  io_uring_sqe_set_data64(sqe, data);
-  sqe = provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
-  return io_uring_submit(ring);
-}
-
-int transport_worker_receive_message_unix(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, socklen_t address_length, int message_flags, uint16_t event)
-{
-  struct io_uring *ring = worker->ring;
-  struct io_uring_sqe *sqe = provide_sqe(ring);
-  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  worker->used_buffers[buffer_id] = 0;
-  uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct msghdr *message = &worker->used_messages[buffer_id];
-  message->msg_name = (struct sockaddr_un*)malloc(address_length);
+  memset(address, 0, address_length);
+  message->msg_name = address;
   message->msg_namelen = address_length;
   message->msg_iov = &worker->buffers[buffer_id];
   message->msg_iovlen = 1;
@@ -206,7 +174,7 @@ int transport_worker_connect(transport_worker_t *worker, transport_client_t *cli
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   uint64_t data = ((uint64_t)(client->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
-  io_uring_prep_connect(sqe, client->fd, client->mode == TCP ? (struct sockaddr *)&client->inet_destination_address : (struct sockaddr *)&client->unix_destination_address, client->client_address_length);
+  io_uring_prep_connect(sqe, client->fd, client->family == INET ? (struct sockaddr *)&client->inet_destination_address : (struct sockaddr *)&client->unix_destination_address, client->client_address_length);
   sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);
@@ -221,7 +189,7 @@ int transport_worker_accept(transport_worker_t *worker, transport_server_t *serv
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
-  io_uring_prep_accept(sqe, server->fd, server->mode == TCP ? (struct sockaddr *)&server->inet_server_address : (struct sockaddr *)&server->unix_server_address, &server->server_address_length, 0);
+  io_uring_prep_accept(sqe, server->fd, server->mode == INET ? (struct sockaddr *)&server->inet_server_address : (struct sockaddr *)&server->unix_server_address, &server->server_address_length, 0);
   sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = provide_sqe(ring);

@@ -30,7 +30,7 @@ extern "C"
     struct sockaddr_un unix_destination_address;
     struct sockaddr_un unix_source_address;
     socklen_t client_address_length;
-    transport_socket_mode_t mode;
+    transport_socket_family_t family;
   } transport_client_t;
 
   transport_client_t *transport_client_initialize_tcp(transport_client_configuration_t *configuration,

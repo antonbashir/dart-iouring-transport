@@ -23,13 +23,11 @@ extern "C"
 #define TRANSPORT_BUFFER_AVAILABLE -2
 #define TRANSPORT_BUFFER_USED -1
 
-  typedef enum transport_socket_mode
+  typedef enum transport_socket_family
   {
-    TCP = 0,
-    UDP,
-    UNIX_DGRAM,
-    UNIX_STREAM
-  } transport_socket_mode_t;
+    INET = 0,
+    UNIX,
+  } transport_socket_family_t;
 
 #if defined(__cplusplus)
 }

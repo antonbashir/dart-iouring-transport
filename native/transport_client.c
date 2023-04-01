@@ -23,7 +23,7 @@ transport_client_t *transport_client_initialize_tcp(transport_client_configurati
   {
     return NULL;
   }
-  client->mode = TCP;
+  client->family = INET;
   memset(&client->inet_destination_address, 0, sizeof(client->inet_destination_address));
   client->inet_destination_address.sin_addr.s_addr = inet_addr(ip);
   client->inet_destination_address.sin_port = htons(port);
@@ -49,7 +49,7 @@ transport_client_t *transport_client_initialize_udp(transport_client_configurati
   {
     return NULL;
   }
-  client->mode = UDP;
+  client->family = INET;
   client->client_address_length = sizeof(struct sockaddr_in);
 
   memset(&client->inet_destination_address, 0, sizeof(client->inet_destination_address));
@@ -82,7 +82,7 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
   {
     return NULL;
   }
-  client->mode = UNIX_DGRAM;
+  client->family = UNIX;
   client->client_address_length = sizeof(struct sockaddr_un);
 
   memset(&client->unix_destination_address, 0, sizeof(client->unix_destination_address));
@@ -110,7 +110,7 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
   {
     return NULL;
   }
-  client->mode = UNIX_STREAM;
+  client->family = UNIX;
   memset(&client->unix_destination_address, 0, sizeof(client->unix_destination_address));
   client->unix_destination_address.sun_family = AF_UNIX;
   strncpy(client->unix_destination_address.sun_path, path, path_length);
@@ -126,7 +126,7 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
 
 struct sockaddr *transport_client_get_destination_address(transport_client_t *client)
 {
-  return client->mode == TCP || client->mode == UDP ? (struct sockaddr *)&client->inet_destination_address : (struct sockaddr *)&client->unix_destination_address;
+  return client->family == INET ? (struct sockaddr *)&client->inet_destination_address : (struct sockaddr *)&client->unix_destination_address;
 }
 
 void transport_client_shutdown(transport_client_t *client)
