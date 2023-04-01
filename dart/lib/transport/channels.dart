@@ -33,8 +33,6 @@ class TransportChannel {
     }
     return bufferId;
   }
-
-  void close() => _bindings.transport_close_descritor(_descriptor);
 }
 
 class TransportInboundChannel extends TransportChannel {
@@ -44,8 +42,7 @@ class TransportInboundChannel extends TransportChannel {
 
   Future<void> read() async {
     final bufferId = await allocate();
-    final submitted = _bindings.transport_worker_read(_workerPointer, _descriptor, bufferId, 0, transportEventRead);
-    //worker.logger.debug("[inbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted =  $submitted");
+    _bindings.transport_worker_read(_workerPointer, _descriptor, bufferId, 0, transportEventRead);
   }
 
   Future<void> receiveMessage({int flags = 0}) async {
@@ -65,16 +62,14 @@ class TransportOutboundChannel extends TransportChannel {
   TransportOutboundChannel(super.pointer, super.descriptor, super._bindings, super._bufferFinalizers, super.worker) : super();
 
   void read(int bufferId, {int offset = 0}) {
-    final submitted = _bindings.transport_worker_read(_workerPointer, _descriptor, bufferId, offset, transportEventReadCallback);
-    //worker.logger.debug("[outbound send read]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
+    _bindings.transport_worker_read(_workerPointer, _descriptor, bufferId, offset, transportEventReadCallback);
   }
 
   void write(Uint8List bytes, int bufferId, {int offset = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    final submitted = _bindings.transport_worker_write(_workerPointer, _descriptor, bufferId, offset, transportEventWriteCallback);
-    //worker.logger.debug("[outbound send write]: worker = ${_pointer.ref.id}, fd = ${_descriptor}, submitted = $submitted");
+    _bindings.transport_worker_write(_workerPointer, _descriptor, bufferId, offset, transportEventWriteCallback);
   }
 
   void receiveMessage(int bufferId, Pointer<transport_client_t> client, {int flags = 0}) {
@@ -102,4 +97,6 @@ class TransportOutboundChannel extends TransportChannel {
       transportEventSendMessageCallback,
     );
   }
+
+  void close() => _bindings.transport_close_descritor(_descriptor);
 }

@@ -9,9 +9,10 @@ import 'package:iouring_transport/transport/extensions.dart';
 import 'bindings.dart';
 import 'callbacks.dart';
 import 'channels.dart';
-import 'connector.dart';
+import 'client.dart';
 import 'constants.dart';
 import 'exception.dart';
+import 'factory.dart';
 import 'file.dart';
 import 'logger.dart';
 import 'lookup.dart';
@@ -36,14 +37,20 @@ class TransportWorker {
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
   late final RawReceivePort _closer;
-  late final TransportConnector _connector;
-  late final TransportServer _server;
+  late final TransportClientRegistry _clientRegistry;
+  late final TransportServerRegistry _serverRegistry;
+  late final TransportClientsFactory _clientsfactory;
+  late final TransportServersFactory _serversfactory;
+  late final TransportFilesFactory _filesfactory;
   late final TransportCallbacks _callbacks;
   late int _ringSize;
 
   late final SendPort? transmitter;
 
   int get id => _workerPointer.ref.id;
+  TransportServersFactory get servers => _serversfactory;
+  TransportClientsFactory get clients => _clientsfactory;
+  TransportFilesFactory get files => _filesfactory;
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
@@ -72,8 +79,8 @@ class TransportWorker {
     _closer = RawReceivePort((_) async {
       _listener.close();
       _closer.close();
-      _server.shutdown();
-      _connector.shutdown();
+      _serverRegistry.shutdown();
+      _clientRegistry.shutdown();
       _bindings.transport_worker_destroy(_workerPointer);
       Isolate.exit();
     });
@@ -90,7 +97,7 @@ class TransportWorker {
     logger = TransportLogger(TransportLogLevel.values[_transportPointer.ref.transport_configuration.ref.log_level]);
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _callbacks = TransportCallbacks();
-    _connector = TransportConnector(
+    _clientRegistry = TransportClientRegistry(
       _callbacks,
       _transportPointer,
       _workerPointer,
@@ -98,7 +105,21 @@ class TransportWorker {
       _bufferFinalizers,
       this,
     );
-    _server = TransportServer(_transportPointer.ref.server_configuration, _bindings);
+    _serverRegistry = TransportServerRegistry(_transportPointer.ref.server_configuration, _bindings);
+    _serversfactory = TransportServersFactory(
+      _serverRegistry,
+      _workerPointer,
+      _bindings,
+      this,
+      _bufferFinalizers,
+    );
+    _filesfactory = TransportFilesFactory(
+      _workerPointer,
+      _bindings,
+      this,
+      _bufferFinalizers,
+      _callbacks,
+    );
     await _initializer.future;
     _ring = _workerPointer.ref.ring;
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
@@ -109,69 +130,6 @@ class TransportWorker {
     _ringSize = _transportPointer.ref.worker_configuration.ref.ring_size;
     _activator.close();
   }
-
-  void serveTcp(
-    String host,
-    int port,
-    void Function(TransportInboundChannel channel) onAccept,
-    void Function(Stream<TransportInboundPayload> stream) handler,
-  ) {
-    final server = _server.createTcp(host, port);
-    server.accept(_workerPointer, onAccept);
-    handler(server.stream);
-  }
-
-  void serveUdp(
-    String host,
-    int port,
-    void Function(TransportInboundChannel channel) onCreate,
-    void Function(Stream<TransportInboundPayload> stream) handler,
-  ) {
-    final server = _server.createUdp(host, port);
-    onCreate(TransportInboundChannel(_workerPointer, server.pointer.ref.fd, _bindings, _bufferFinalizers, this, server.pointer));
-    handler(server.stream);
-  }
-
-  void serveUnixStream(
-    String path,
-    void Function(TransportInboundChannel channel) onAccept,
-    void Function(Stream<TransportInboundPayload> stream) handler,
-  ) {
-    final server = _server.createUnixStream(path);
-    server.accept(_workerPointer, onAccept);
-    handler(server.stream);
-  }
-
-  void serveUnixDgram(
-    String path,
-    void Function(TransportInboundChannel channel) onCreate,
-    void Function(Stream<TransportInboundPayload> stream) handler,
-  ) {
-    final server = _server.createUnixDgram(path);
-    onCreate(TransportInboundChannel(_workerPointer, server.pointer.ref.fd, _bindings, _bufferFinalizers, this, server.pointer));
-    handler(server.stream);
-  }
-
-  Future<TransportFile> file(String path) async {
-    final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers, this));
-  }
-
-  Future<TransportClientPool> connectTcp(String host, int port, {int? pool}) => _connector.connectTcp(host, port, pool: pool);
-
-  Future<TransportClientPool> connectUnix(String path, {int? pool}) => _connector.connectUnix(path, pool: pool);
-
-  TransportClient createUdpClient(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {int? pool}) => _connector.createUdpClient(
-        sourceHost,
-        sourcePort,
-        destinationHost,
-        destinationPort,
-      );
-
-  TransportClient createUnixDgramClient(String sourcePath, String destinationPath, {int? pool}) => _connector.createUnixClient(
-        sourcePath,
-        destinationPath,
-      );
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
 
@@ -202,7 +160,7 @@ class TransportWorker {
         return;
       case transportEventReceiveMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.getByServer(fd);
+        final server = _serverRegistry.getByServer(fd);
         if (result == -EAGAIN) {
           _bindings.transport_worker_receive_message(
             _workerPointer,
@@ -219,7 +177,7 @@ class TransportWorker {
         return;
       case transportEventSendMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.getByServer(fd);
+        final server = _serverRegistry.getByServer(fd);
         if (result == -EAGAIN) {
           _bindings.transport_worker_send_message(
             _workerPointer,
@@ -236,7 +194,7 @@ class TransportWorker {
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         return;
       case transportEventAccept:
-        _bindings.transport_worker_accept(_workerPointer, _server.getByServer(fd).pointer);
+        _bindings.transport_worker_accept(_workerPointer, _serverRegistry.getByServer(fd).pointer);
         return;
       case transportEventConnect:
         _bindings.transport_close_descritor(fd);
@@ -292,7 +250,7 @@ class TransportWorker {
         return;
       case transportEventReceiveMessageCallback:
         final bufferId = ((userData >> 16) & 0xffff);
-        final client = _connector.get(fd);
+        final client = _clientRegistry.get(fd);
         if (result == -EAGAIN) {
           _bindings.transport_worker_receive_message(
             _workerPointer,
@@ -319,7 +277,7 @@ class TransportWorker {
         return;
       case transportEventSendMessageCallback:
         final bufferId = ((userData >> 16) & 0xffff);
-        final client = _connector.get(fd);
+        final client = _clientRegistry.get(fd);
         if (result == -EAGAIN) {
           _bindings.transport_worker_send_message(
             _workerPointer,
@@ -355,7 +313,7 @@ class TransportWorker {
     switch (event) {
       case transportEventRead:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.getByClient(fd);
+        final server = _serverRegistry.getByClient(fd);
         if (!server.controller.hasListener) {
           logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
@@ -380,7 +338,7 @@ class TransportWorker {
         return;
       case transportEventReceiveMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.getByServer(fd);
+        final server = _serverRegistry.getByServer(fd);
         if (!server.controller.hasListener) {
           logger.debug("[server]: stream hasn't listeners for fd = $fd");
           _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
@@ -420,7 +378,7 @@ class TransportWorker {
         return;
       case transportEventSendMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _server.getByServer(fd);
+        final server = _serverRegistry.getByServer(fd);
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
         _bindings.transport_worker_receive_message(
           _workerPointer,
@@ -453,11 +411,11 @@ class TransportWorker {
         _callbacks.notifyWrite(bufferId);
         return;
       case transportEventConnect:
-        _callbacks.notifyConnect(fd, _connector.createClient(fd));
+        _callbacks.notifyConnect(fd, _clientRegistry.createConnectedClient(fd));
         return;
       case transportEventAccept:
-        final server = _server.getByServer(fd);
-        _server.mapClient(fd, result);
+        final server = _serverRegistry.getByServer(fd);
+        _serverRegistry.mapClient(fd, result);
         _bindings.transport_worker_accept(_workerPointer, server.pointer);
         server.acceptor!(TransportInboundChannel(
           _workerPointer,

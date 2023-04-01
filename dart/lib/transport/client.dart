@@ -50,7 +50,7 @@ class TransportClient {
     return completer.future;
   }
 
-  void close() => _channel.close();
+  void shutdown() => _channel.close();
 }
 
 class TransportClientPool {
@@ -70,7 +70,7 @@ class TransportClientPool {
   Iterable<Future<M>> map<M>(Future<M> Function(TransportClient client) mapper) => _clients.map(mapper);
 }
 
-class TransportConnector {
+class TransportClientRegistry {
   final TransportBindings _bindings;
   final TransportCallbacks _callbacks;
   final Pointer<transport_t> _transportPointer;
@@ -79,13 +79,17 @@ class TransportConnector {
   final Queue<Completer<int>> _bufferFinalizers;
   final _clients = <int, Pointer<transport_client_t>>{};
 
-  TransportConnector(this._callbacks, this._transportPointer, this._workerPointer, this._bindings, this._bufferFinalizers, this._worker);
+  TransportClientRegistry(this._callbacks, this._transportPointer, this._workerPointer, this._bindings, this._bufferFinalizers, this._worker);
 
-  Future<TransportClientPool> connectTcp(String host, int port, {int? pool}) async {
+  Future<TransportClientPool> createTcp(String host, int port, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
-      final client = using((arena) => _bindings.transport_client_initialize_tcp(_transportPointer.ref.client_configuration, host.toNativeUtf8(allocator: arena).cast(), port));
+      final client = using((arena) => _bindings.transport_client_initialize_tcp(
+            _transportPointer.ref.client_configuration,
+            host.toNativeUtf8(allocator: arena).cast(),
+            port,
+          ));
       _clients[client.ref.fd] = client;
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(client.ref.fd, completer);
@@ -95,11 +99,15 @@ class TransportConnector {
     return TransportClientPool(await Future.wait(clients));
   }
 
-  Future<TransportClientPool> connectUnix(String path, {int? pool}) async {
+  Future<TransportClientPool> createUnixStream(String path, {int? pool}) async {
     final clients = <Future<TransportClient>>[];
     if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
     for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
-      final client = using((arena) => _bindings.transport_client_initialize_unix_stream(_transportPointer.ref.client_configuration, path.toNativeUtf8(allocator: arena).cast(), path.length));
+      final client = using((arena) => _bindings.transport_client_initialize_unix_stream(
+            _transportPointer.ref.client_configuration,
+            path.toNativeUtf8(allocator: arena).cast(),
+            path.length,
+          ));
       _clients[client.ref.fd] = client;
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(client.ref.fd, completer);
@@ -109,7 +117,7 @@ class TransportConnector {
     return TransportClientPool(await Future.wait(clients));
   }
 
-  TransportClient createUdpClient(String sourceHost, int sourcePort, String destinationHost, int destinationPort) {
+  TransportClient createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort) {
     final client = using(
       (arena) => _bindings.transport_client_initialize_udp(
         _transportPointer.ref.client_configuration,
@@ -133,7 +141,7 @@ class TransportConnector {
     );
   }
 
-  TransportClient createUnixClient(String sourcePath, String destinationPath) {
+  TransportClient createUnixDatagram(String sourcePath, String destinationPath) {
     final client = using(
       (arena) => _bindings.transport_client_initialize_unix_dgram(
         _transportPointer.ref.client_configuration,
@@ -157,7 +165,7 @@ class TransportConnector {
     );
   }
 
-  TransportClient createClient(int fd) => TransportClient(
+  TransportClient createConnectedClient(int fd) => TransportClient(
         _callbacks,
         TransportOutboundChannel(
           _workerPointer,

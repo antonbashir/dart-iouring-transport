@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'connector.dart';
+import 'client.dart';
 import 'constants.dart';
 import 'payload.dart';
 

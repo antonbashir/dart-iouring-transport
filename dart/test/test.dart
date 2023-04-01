@@ -75,8 +75,8 @@ void echoTcp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.serveTcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.connectTcp("127.0.0.1", 12345);
+      worker.servers.tcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
+      final clients = await worker.clients.tcp("127.0.0.1", 12345);
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
@@ -110,10 +110,10 @@ void echoUdp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.serveUdp("0.0.0.0", (worker.id + 1) * 2000, (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
+      worker.servers.udp("0.0.0.0", (worker.id + 1) * 2000, (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
       final responseFutures = <Future<TransportOutboundPayload>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        final client = worker.createUdpClient("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", (worker.id + 1) * 2000);
+        final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", (worker.id + 1) * 2000);
         responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()));
       }
       final responses = await Future.wait(responseFutures);
@@ -150,8 +150,8 @@ void echoUnixStream({
       final worker = TransportWorker(input);
       await worker.initialize();
       if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
-      worker.serveUnixStream(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.connectUnix(Directory.current.path + "/socket_${worker.id}.sock");
+      worker.servers.unixStream(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
+      final clients = await worker.clients.unixStream(Directory.current.path + "/socket_${worker.id}.sock");
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read())).toList());
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
@@ -189,10 +189,10 @@ void echoUnixDgram({
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         if (File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").deleteSync();
       }
-      worker.serveUnixDgram(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
+      worker.servers.unixDatagram(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
       final responseFutures = <Future<TransportOutboundPayload>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        final client = worker.createUnixDgramClient(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock", Directory.current.path + "/socket_${worker.id}.sock");
+        final client = worker.clients.unixDatagram(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock", Directory.current.path + "/socket_${worker.id}.sock");
         responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()));
       }
       final responses = await Future.wait(responseFutures);
