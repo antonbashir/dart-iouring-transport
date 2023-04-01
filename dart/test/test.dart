@@ -110,12 +110,13 @@ void echoUdp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.serveUdp("0.0.0.0", 123 * 10 + worker.id, (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final responses = <TransportOutboundPayload>[];
+      worker.serveUdp("0.0.0.0", (worker.id + 1) * 2000, (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
+      final responseFutures = <Future<TransportOutboundPayload>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        final client = worker.createUdpClient("127.0.0.1", 123 * 100 + worker.id + (clientIndex + 1) * 10, "127.0.0.1", 123 * 10 + worker.id);
-        responses.add(await client.sendMessage(clientData).then((value) => client.receiveMessage()));
+        final client = worker.createUdpClient("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", (worker.id + 1) * 2000);
+        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()));
       }
+      final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response.bytes));
       responses.forEach((response) => response.release());
     });
@@ -124,6 +125,9 @@ void echoUdp({
     await transport.shutdown();
   });
 }
+
+// 12304 + 1290
+// 13594
 
 void echoUnixStream({
   required int index,

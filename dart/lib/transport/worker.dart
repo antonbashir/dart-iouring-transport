@@ -302,7 +302,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handle(int result, int userData, int fd, int event) {
-    logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((userData >> 16) & 0xffff)}");
+    //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((userData >> 16) & 0xffff)}");
 
     switch (event) {
       case transportEventRead:
@@ -382,7 +382,6 @@ class TransportWorker {
           MSG_TRUNC,
           transportEventReceiveMessage,
         );
-        //logger.debug("[inbound send read]: worker = ${_workerPointer.ref.id}, fd = $fd");
         return;
       case transportEventReadCallback:
       case transportEventReceiveMessageCallback:
