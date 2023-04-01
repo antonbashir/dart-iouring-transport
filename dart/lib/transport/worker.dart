@@ -105,9 +105,19 @@ class TransportWorker {
       _bufferFinalizers,
       this,
     );
-    _serverRegistry = TransportServerRegistry(_transportPointer.ref.server_configuration, _bindings);
+    _serverRegistry = TransportServerRegistry(
+      _transportPointer.ref.server_configuration,
+      _bindings,
+    );
     _serversfactory = TransportServersFactory(
       _serverRegistry,
+      _workerPointer,
+      _bindings,
+      this,
+      _bufferFinalizers,
+    );
+    _clientsfactory = TransportClientsFactory(
+      _clientRegistry,
       _workerPointer,
       _bindings,
       this,
