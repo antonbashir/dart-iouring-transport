@@ -134,6 +134,9 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   message->msg_control = NULL;
   message->msg_controllen = 0;
   message->msg_name = address;
+  if(socket_family == UNIX) {
+    message->msg_namelen = SUN_LEN((struct sockaddr_un*)message->msg_name);
+  }
   message->msg_iov = &worker->buffers[buffer_id];
   message->msg_iovlen = 1;
   message->msg_flags = 0;
@@ -156,6 +159,7 @@ int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, ui
   struct msghdr *message = socket_family == INET ? &worker->inet_used_messages[buffer_id] : &worker->unix_used_messages[buffer_id];
   message->msg_control = NULL;
   message->msg_controllen = 0;
+  message->msg_namelen = socket_family == INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_un);
   memset(message->msg_name, 0, message->msg_namelen);
   message->msg_iov = &worker->buffers[buffer_id];
   message->msg_iovlen = 1;

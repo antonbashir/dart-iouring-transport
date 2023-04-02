@@ -87,11 +87,12 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
 
   memset(&client->unix_destination_address, 0, sizeof(client->unix_destination_address));
   client->unix_destination_address.sun_family = AF_UNIX;
-  strncpy(client->unix_destination_address.sun_path, destination_path, destination_length);
+  strcpy(client->unix_destination_address.sun_path, destination_path);
 
   memset(&client->unix_source_address, 0, sizeof(client->unix_source_address));
   client->unix_source_address.sun_family = AF_UNIX;
-  strncpy(client->unix_source_address.sun_path, source_path, source_length);
+  strcpy(client->unix_source_address.sun_path, source_path);
+  
   client->fd = transport_socket_create_client_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0 || bind(client->fd, (struct sockaddr *)&client->unix_source_address, client->client_address_length) < 0)
   {
