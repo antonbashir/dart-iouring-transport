@@ -181,6 +181,7 @@ class TransportWorker {
           _handleUnhandledError(result, data, fd, event);
           continue;
         }
+        //logger.debug("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         switch (event) {
           case transportEventRead:
             _handleRead((data >> 16) & 0xffff, fd, result);
@@ -189,10 +190,8 @@ class TransportWorker {
             _handleReceiveMessage((data >> 16) & 0xffff, fd, result);
             continue;
           case transportEventWrite:
-            _handleWriteMessage((data >> 16) & 0xffff, fd);
-            continue;
           case transportEventSendMessage:
-            _handleSendMessage((data >> 16) & 0xffff);
+            _handleWriteAndSendMessage((data >> 16) & 0xffff, fd);
             continue;
           case transportEventReadCallback:
           case transportEventReceiveMessageCallback:
@@ -356,6 +355,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   Future<void> _handleRead(int bufferId, int fd, int result) async {
     final server = _serverRegistry.getByClient(fd);
+    _allocateInbound().then((newBufferId) => _bindings.transport_worker_read(_inboundWorkerPointer, fd, newBufferId, 0, transportEventRead));
     if (!server.controller.hasListener) {
       logger.debug("[server]: stream hasn't listeners for fd = $fd");
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
@@ -364,15 +364,16 @@ class TransportWorker {
     }
     final buffer = _inboundBuffers[bufferId];
     final bufferBytes = buffer.iov_base.cast<Uint8>();
-    server.controller.add(TransportInboundPayload(bufferBytes.asTypedList(result), (answer) {
-      _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-      bufferBytes.asTypedList(answer.length).setAll(0, answer);
-      buffer.iov_len = answer.length;
-      _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, 0, transportEventWrite);
-    }, () {
-      _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-      _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, transportEventRead);
-    }));
+    server.controller.add(TransportInboundPayload(
+      bufferBytes.asTypedList(result),
+      (answer) {
+        _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
+        bufferBytes.asTypedList(answer.length).setAll(0, answer);
+        buffer.iov_len = answer.length;
+        _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, 0, transportEventWrite);
+      },
+      () => _releaseInboundBuffer(bufferId),
+    ));
   }
 
   @pragma(preferInlinePragma)
@@ -424,13 +425,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleWriteMessage(int bufferId, int fd) async {
-    _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-    _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, transportEventRead);
-  }
-
-  @pragma(preferInlinePragma)
-  Future<void> _handleSendMessage(int bufferId) async {
+  Future<void> _handleWriteAndSendMessage(int bufferId, int fd) async {
     _releaseInboundBuffer(bufferId);
   }
 
