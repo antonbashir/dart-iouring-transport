@@ -8,7 +8,6 @@ import 'bindings.dart';
 import 'configuration.dart';
 import 'exception.dart';
 import 'listener.dart';
-import 'logger.dart';
 import 'lookup.dart';
 
 class Transport {
@@ -23,7 +22,6 @@ class Transport {
   final _workerClosers = <SendPort>[];
   final _listenerClosers = <Pointer<transport_listener_t>>[];
 
-  late final TransportLogger _logger;
   late final String? _libraryPath;
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
@@ -34,8 +32,6 @@ class Transport {
 
     _library = TransportLibrary.load(libraryPath: libraryPath);
     _bindings = TransportBindings(_library.library);
-
-    _logger = TransportLogger(transportConfiguration.logLevel);
 
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
     nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel.index;
@@ -78,7 +74,6 @@ class Transport {
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
     _listenerExit.close();
     _bindings.transport_destroy(_transportPointer);
-    //_logger.debug("[transport]: destroyed");
   }
 
   Future<void> run(void Function(SendPort input) worker, {SendPort? transmitter}) async {
@@ -87,7 +82,8 @@ class Transport {
     var listeners = 0;
     final listenerCompleter = Completer();
     final workersCompleter = Completer();
-    final workerAddresses = <int>[];
+    final inboundWorkerAddresses = <int>[];
+    final outboundWorkerAddresses = <int>[];
     final workerMeessagePorts = <SendPort>[];
     final workerActivators = <SendPort>[];
 
@@ -96,20 +92,27 @@ class Transport {
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
       _workerClosers.add(ports[3]);
-      final workerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.worker_configuration, workerAddresses.length);
-      if (workerPointer == nullptr) {
+      final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.worker_configuration, inboundWorkerAddresses.length);
+      if (inboundWorkerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[worker] is null"));
         return;
       }
-      workerAddresses.add(workerPointer.address);
+      inboundWorkerAddresses.add(inboundWorkerPointer.address);
+      final outboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.worker_configuration, outboundWorkerAddresses.length);
+      if (outboundWorkerPointer == nullptr) {
+        listenerCompleter.completeError(TransportException("[worker] is null"));
+        return;
+      }
+      outboundWorkerAddresses.add(outboundWorkerPointer.address);
       final workerInput = [
         _libraryPath,
         _transportPointer.address,
-        workerPointer.address,
+        inboundWorkerPointer.address,
+        outboundWorkerPointer.address,
         transmitter,
       ];
       toWorker.send(workerInput);
-      if (workerAddresses.length == transportConfiguration.workerInsolates) {
+      if (inboundWorkerAddresses.length == transportConfiguration.workerInsolates) {
         fromTransportToWorker.close();
         workersCompleter.complete();
       }
@@ -125,8 +128,10 @@ class Transport {
       }
       _listenerClosers.add(listenerPointer);
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
-        final worker = Pointer.fromAddress(workerAddresses[workerIndex]).cast<transport_worker_t>();
-        _bindings.transport_listener_pool_add(worker.ref.listeners, listenerPointer);
+        final inboundWorker = Pointer.fromAddress(inboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
+        _bindings.transport_listener_pool_add(inboundWorker.ref.listeners, listenerPointer);
+        final outboundWorker = Pointer.fromAddress(outboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
+        _bindings.transport_listener_pool_add(outboundWorker.ref.listeners, listenerPointer);
       }
       (port as SendPort).send([
         _libraryPath,
@@ -158,7 +163,6 @@ class Transport {
     }
 
     await listenerCompleter.future;
-    //_logger.debug("[transport]: ready");
     workerActivators.forEach((port) => port.send(null));
   }
 }

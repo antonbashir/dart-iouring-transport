@@ -258,7 +258,7 @@ void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_i
   worker->used_buffers[buffer_id] = 0;
 }
 
-void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id)
+void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
 {
   struct iovec buffer = worker->buffers[buffer_id];
   memset(buffer.iov_base, 0, worker->buffer_size);

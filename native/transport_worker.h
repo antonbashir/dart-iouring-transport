@@ -46,7 +46,7 @@ extern "C"
   int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, uint16_t event);
   int transport_worker_select_buffer(transport_worker_t *worker);
   void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id);
-  void transport_worker_free_buffer(transport_worker_t *worker, uint16_t buffer_id);
+  void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id);
 
   int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 

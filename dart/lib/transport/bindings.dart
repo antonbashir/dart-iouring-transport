@@ -19466,22 +19466,23 @@ class TransportBindings {
   late final _transport_worker_reuse_buffer = _transport_worker_reuse_bufferPtr
       .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
-  void transport_worker_free_buffer(
+  void transport_worker_release_buffer(
     ffi.Pointer<transport_worker_t> worker,
     int buffer_id,
   ) {
-    return _transport_worker_free_buffer(
+    return _transport_worker_release_buffer(
       worker,
       buffer_id,
     );
   }
 
-  late final _transport_worker_free_bufferPtr = _lookup<
+  late final _transport_worker_release_bufferPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<transport_worker_t>,
-              ffi.Uint16)>>('transport_worker_free_buffer');
-  late final _transport_worker_free_buffer = _transport_worker_free_bufferPtr
-      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
+              ffi.Uint16)>>('transport_worker_release_buffer');
+  late final _transport_worker_release_buffer =
+      _transport_worker_release_bufferPtr
+          .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
   int transport_worker_peek(
     int cqe_count,
@@ -23675,8 +23676,8 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
-      get transport_worker_free_buffer =>
-          _library._transport_worker_free_bufferPtr;
+      get transport_worker_release_buffer =>
+          _library._transport_worker_release_bufferPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
