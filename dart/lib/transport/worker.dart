@@ -71,7 +71,33 @@ class TransportWorker {
             _handleError(result, data, fd, event);
             continue;
           }
-          _handle(result, data, fd, event);
+          logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
+          switch (event) {
+            case transportEventRead:
+              _handleRead((data >> 16) & 0xffff, fd, result);
+              continue;
+            case transportEventReceiveMessage:
+              _handleReceiveMessage((data >> 16) & 0xffff, fd, result);
+              continue;
+            case transportEventWrite:
+            case transportEventSendMessage:
+              _handleWriteAndSendMessage((data >> 16) & 0xffff);
+              continue;
+            case transportEventReadCallback:
+            case transportEventReceiveMessageCallback:
+              _handleReadAndReceiveMessageCallback((data >> 16) & 0xffff, result);
+              continue;
+            case transportEventWriteCallback:
+            case transportEventSendMessageCallback:
+              _handleWriteAndSendMessageCallback((data >> 16) & 0xffff, result);
+              continue;
+            case transportEventConnect:
+              _handleConnect(fd);
+              continue;
+            case transportEventAccept:
+              _handleAccept(fd, result);
+              continue;
+          }
         }
       }
     });
@@ -143,6 +169,7 @@ class TransportWorker {
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
 
+  @pragma(preferInlinePragma)
   Future<int> _allocate() async {
     var bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
     while (bufferId == -1) {
@@ -157,7 +184,7 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   Future<void> _handleError(int result, int userData, int fd, int event) async {
-    //logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
+    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
 
     switch (event) {
       case transportEventRead:
@@ -329,130 +356,128 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handle(int result, int userData, int fd, int event) async {
-    //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((userData >> 16) & 0xffff)}");
-
-    switch (event) {
-      case transportEventRead:
-        final bufferId = ((userData >> 16) & 0xffff);
-        final server = _serverRegistry.getByClient(fd);
-        if (!server.controller.hasListener) {
-          logger.debug("[server]: stream hasn't listeners for fd = $fd");
-          _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-          _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
-          return;
-        }
-        _allocate().then((newBufferId) => _bindings.transport_worker_read(_workerPointer, fd, newBufferId, 0, transportEventRead));
-        final buffer = _buffers[bufferId];
-        final bufferBytes = buffer.iov_base.cast<Uint8>();
-        server.controller.add(TransportInboundPayload(
-          bufferBytes.asTypedList(result),
-          (answer) {
-            _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-            bufferBytes.asTypedList(answer.length).setAll(0, answer);
-            buffer.iov_len = answer.length;
-            _bindings.transport_worker_write(_workerPointer, fd, bufferId, 0, transportEventWrite);
-          },
-          () {
-            _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-            if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-          },
-        ));
-        return;
-      case transportEventReceiveMessage:
-        final bufferId = ((userData >> 16) & 0xffff);
-        final server = _serverRegistry.getByServer(fd);
-        if (!server.controller.hasListener) {
-          logger.debug("[server]: stream hasn't listeners for fd = $fd");
-          _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-          _bindings.transport_worker_receive_message(
-            _workerPointer,
-            fd,
-            bufferId,
-            server.pointer.ref.family,
-            MSG_TRUNC,
-            transportEventReceiveMessage,
-          );
-          return;
-        }
-        _allocate().then(
-          (newBufferId) => _bindings.transport_worker_receive_message(
-            _workerPointer,
-            fd,
-            newBufferId,
-            server.pointer.ref.family,
-            MSG_TRUNC,
-            transportEventReceiveMessage,
-          ),
-        );
-        final buffer = _buffers[bufferId];
-        final bufferBytes = buffer.iov_base.cast<Uint8>();
-        server.controller.add(TransportInboundPayload(
-          bufferBytes.asTypedList(result),
-          (answer) {
-            _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-            bufferBytes.asTypedList(answer.length).setAll(0, answer);
-            buffer.iov_len = answer.length;
-            _bindings.transport_worker_send_message(
-              _workerPointer,
-              fd,
-              bufferId,
-              server.socketFamily == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
-              server.pointer.ref.family,
-              MSG_TRUNC,
-              transportEventSendMessage,
-            );
-            return;
-          },
-          () {
-            _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-            if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-          },
-        ));
-        return;
-      case transportEventWrite:
-      case transportEventSendMessage:
-        final bufferId = ((userData >> 16) & 0xffff);
-        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-        return;
-      case transportEventReadCallback:
-      case transportEventReceiveMessageCallback:
-        final bufferId = ((userData >> 16) & 0xffff);
-        _callbacks.notifyRead(
-          bufferId,
-          TransportOutboundPayload(
-            _buffers[bufferId].iov_base.cast<Uint8>().asTypedList(result),
-            () {
-              _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-              if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-            },
-          ),
-        );
-        return;
-      case transportEventWriteCallback:
-      case transportEventSendMessageCallback:
-        final bufferId = ((userData >> 16) & 0xffff);
-        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-        _callbacks.notifyWrite(bufferId);
-        return;
-      case transportEventConnect:
-        _callbacks.notifyConnect(fd, _clientRegistry.createConnectedClient(fd));
-        return;
-      case transportEventAccept:
-        final server = _serverRegistry.getByServer(fd);
-        _serverRegistry.mapClient(fd, result);
-        _bindings.transport_worker_accept(_workerPointer, server.pointer);
-        server.acceptor!(TransportInboundChannel(
-          _workerPointer,
-          result,
-          _bindings,
-          _bufferFinalizers,
-          this,
-          server.pointer,
-        ));
-        return;
+  Future<void> _handleRead(int bufferId, int fd, int result) async {
+    final server = _serverRegistry.getByClient(fd);
+    if (!server.controller.hasListener) {
+      logger.debug("[server]: stream hasn't listeners for fd = $fd");
+      _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
+      _bindings.transport_worker_read(_workerPointer, fd, bufferId, 0, transportEventRead);
+      return;
     }
+    _allocate().then((newBufferId) => _bindings.transport_worker_read(_workerPointer, fd, newBufferId, 0, transportEventRead));
+    final buffer = _buffers[bufferId];
+    final bufferBytes = buffer.iov_base.cast<Uint8>();
+    server.controller.add(TransportInboundPayload(
+      bufferBytes.asTypedList(result),
+      (answer) {
+        _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
+        bufferBytes.asTypedList(answer.length).setAll(0, answer);
+        buffer.iov_len = answer.length;
+        _bindings.transport_worker_write(_workerPointer, fd, bufferId, 0, transportEventWrite);
+      },
+      () {
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+      },
+    ));
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _handleReceiveMessage(int bufferId, int fd, int result) async {
+    final server = _serverRegistry.getByServer(fd);
+    if (!server.controller.hasListener) {
+      logger.debug("[server]: stream hasn't listeners for fd = $fd");
+      _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
+      _bindings.transport_worker_receive_message(
+        _workerPointer,
+        fd,
+        bufferId,
+        server.pointer.ref.family,
+        MSG_TRUNC,
+        transportEventReceiveMessage,
+      );
+      return;
+    }
+    _allocate().then(
+      (newBufferId) => _bindings.transport_worker_receive_message(
+        _workerPointer,
+        fd,
+        newBufferId,
+        server.pointer.ref.family,
+        MSG_TRUNC,
+        transportEventReceiveMessage,
+      ),
+    );
+    final buffer = _buffers[bufferId];
+    final bufferBytes = buffer.iov_base.cast<Uint8>();
+    server.controller.add(TransportInboundPayload(
+      bufferBytes.asTypedList(result),
+      (answer) {
+        _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
+        bufferBytes.asTypedList(answer.length).setAll(0, answer);
+        buffer.iov_len = answer.length;
+        _bindings.transport_worker_send_message(
+          _workerPointer,
+          fd,
+          bufferId,
+          server.socketFamily == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
+          server.pointer.ref.family,
+          MSG_TRUNC,
+          transportEventSendMessage,
+        );
+        return;
+      },
+      () {
+        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+      },
+    ));
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _handleWriteAndSendMessage(int bufferId) async {
+    _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _handleReadAndReceiveMessageCallback(int bufferId, int result) async {
+    _callbacks.notifyRead(
+      bufferId,
+      TransportOutboundPayload(
+        _buffers[bufferId].iov_base.cast<Uint8>().asTypedList(result),
+        () {
+          _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+          if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        },
+      ),
+    );
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _handleWriteAndSendMessageCallback(int bufferId, int result) async {
+    _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
+    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+    _callbacks.notifyWrite(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _handleConnect(int fd) async {
+    _callbacks.notifyConnect(fd, _clientRegistry.createConnectedClient(fd));
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _handleAccept(int fd, int result) async {
+    final server = _serverRegistry.getByServer(fd);
+    _serverRegistry.mapClient(fd, result);
+    _bindings.transport_worker_accept(_workerPointer, server.pointer);
+    server.acceptor!(TransportInboundChannel(
+      _workerPointer,
+      result,
+      _bindings,
+      _bufferFinalizers,
+      this,
+      server.pointer,
+    ));
   }
 }
