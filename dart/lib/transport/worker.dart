@@ -149,13 +149,13 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _releaseInboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_inboundWorkerPointer, bufferId);
-    while (_inboundBufferFinalizers.isNotEmpty) _inboundBufferFinalizers.removeLast().complete(bufferId);
+    if (_inboundBufferFinalizers.isNotEmpty) _inboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _releaseOutboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_outboundWorkerPointer, bufferId);
-    while (_outboundBufferFinalizers.isNotEmpty) _outboundBufferFinalizers.removeLast().complete(bufferId);
+    if (_outboundBufferFinalizers.isNotEmpty) _outboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
   @pragma(preferInlinePragma)
@@ -181,7 +181,6 @@ class TransportWorker {
           _handleUnhandledError(result, data, fd, event);
           continue;
         }
-        //logger.debug("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         switch (event) {
           case transportEventRead:
             _handleRead((data >> 16) & 0xffff, fd, result);
