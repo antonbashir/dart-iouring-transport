@@ -64,6 +64,7 @@ void echoTcp({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.client().copyWith(defaultPool: clients),
     );
@@ -98,6 +99,7 @@ void echoUdp({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.client(),
     );
@@ -140,6 +142,7 @@ void echoUnixStream({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.client().copyWith(defaultPool: clients),
     );
@@ -177,6 +180,7 @@ void echoUnixDgram({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
       TransportDefaults.client(),
     );

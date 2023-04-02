@@ -19522,14 +19522,16 @@ class TransportBindings {
   ffi.Pointer<transport_t> transport_initialize(
     ffi.Pointer<transport_configuration_t> transport_configuration,
     ffi.Pointer<transport_listener_configuration_t> listener_configuration,
-    ffi.Pointer<transport_worker_configuration_t> worker_configuration,
+    ffi.Pointer<transport_worker_configuration_t> inbound_worker_configuration,
+    ffi.Pointer<transport_worker_configuration_t> outbound_worker_configuration,
     ffi.Pointer<transport_client_configuration_t> client_configuration,
     ffi.Pointer<transport_server_configuration_t> server_configuration,
   ) {
     return _transport_initialize(
       transport_configuration,
       listener_configuration,
-      worker_configuration,
+      inbound_worker_configuration,
+      outbound_worker_configuration,
       client_configuration,
       server_configuration,
     );
@@ -19541,6 +19543,7 @@ class TransportBindings {
                   ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_listener_configuration_t>,
                   ffi.Pointer<transport_worker_configuration_t>,
+                  ffi.Pointer<transport_worker_configuration_t>,
                   ffi.Pointer<transport_client_configuration_t>,
                   ffi.Pointer<transport_server_configuration_t>)>>(
       'transport_initialize');
@@ -19548,6 +19551,7 @@ class TransportBindings {
       ffi.Pointer<transport_t> Function(
           ffi.Pointer<transport_configuration_t>,
           ffi.Pointer<transport_listener_configuration_t>,
+          ffi.Pointer<transport_worker_configuration_t>,
           ffi.Pointer<transport_worker_configuration_t>,
           ffi.Pointer<transport_client_configuration_t>,
           ffi.Pointer<transport_server_configuration_t>)>();
@@ -23693,6 +23697,7 @@ class _SymbolAddresses {
                   ffi.Pointer<transport_configuration_t>,
                   ffi.Pointer<transport_listener_configuration_t>,
                   ffi.Pointer<transport_worker_configuration_t>,
+                  ffi.Pointer<transport_worker_configuration_t>,
                   ffi.Pointer<transport_client_configuration_t>,
                   ffi.Pointer<transport_server_configuration_t>)>>
       get transport_initialize => _library._transport_initializePtr;
@@ -26919,7 +26924,11 @@ class transport extends ffi.Struct {
 
   external ffi.Pointer<transport_server_configuration_t> server_configuration;
 
-  external ffi.Pointer<transport_worker_configuration_t> worker_configuration;
+  external ffi.Pointer<transport_worker_configuration_t>
+      inbound_worker_configuration;
+
+  external ffi.Pointer<transport_worker_configuration_t>
+      outbound_worker_configuration;
 }
 
 typedef transport_configuration_t = transport_configuration;

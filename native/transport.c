@@ -19,7 +19,8 @@
 
 transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                   transport_listener_configuration_t *listener_configuration,
-                                  transport_worker_configuration_t *worker_configuration,
+                                  transport_worker_configuration_t *inbound_worker_configuration,
+                                  transport_worker_configuration_t *outbound_worker_configuration,
                                   transport_client_configuration_t *client_configuration,
                                   transport_server_configuration_t *server_configuration)
 {
@@ -33,7 +34,8 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
   transport->server_configuration = server_configuration;
   transport->listener_configuration = listener_configuration;
   transport->client_configuration = client_configuration;
-  transport->worker_configuration = worker_configuration;
+  transport->inbound_worker_configuration = inbound_worker_configuration;
+  transport->outbound_worker_configuration = outbound_worker_configuration;
 
   return transport;
 }
@@ -44,7 +46,8 @@ void transport_destroy(transport_t *transport)
   free(transport->server_configuration);
   free(transport->listener_configuration);
   free(transport->client_configuration);
-  free(transport->worker_configuration);
+  free(transport->inbound_worker_configuration);
+  free(transport->outbound_worker_configuration);
 }
 
 void transport_cqe_advance(struct io_uring *ring, int count)

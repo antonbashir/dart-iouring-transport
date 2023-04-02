@@ -14,7 +14,8 @@ class Transport {
   final TransportConfiguration transportConfiguration;
   final TransportServerConfiguration serverConfiguration;
   final TransportListenerConfiguration listenerConfiguration;
-  final TransportWorkerConfiguration workerConfiguration;
+  final TransportWorkerConfiguration inboundWorkerConfiguration;
+  final TransportWorkerConfiguration outboundWrkerConfiguration;
   final TransportClientConfiguration clientConfiguration;
 
   final _listenerExit = ReceivePort();
@@ -27,7 +28,8 @@ class Transport {
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transportPointer;
 
-  Transport(this.transportConfiguration, this.serverConfiguration, this.listenerConfiguration, this.workerConfiguration, this.clientConfiguration, {String? libraryPath}) {
+  Transport(this.transportConfiguration, this.serverConfiguration, this.listenerConfiguration, this.inboundWorkerConfiguration, this.outboundWrkerConfiguration, this.clientConfiguration,
+      {String? libraryPath}) {
     this._libraryPath = libraryPath;
 
     _library = TransportLibrary.load(libraryPath: libraryPath);
@@ -52,16 +54,23 @@ class Transport {
     nativeListenerConfiguration.ref.ring_size = listenerConfiguration.ringSize;
     nativeListenerConfiguration.ref.workers_count = transportConfiguration.workerInsolates;
 
-    final nativeWorkerConfiguration = calloc<transport_worker_configuration_t>();
-    nativeWorkerConfiguration.ref.ring_flags = workerConfiguration.ringFlags;
-    nativeWorkerConfiguration.ref.ring_size = workerConfiguration.ringSize;
-    nativeWorkerConfiguration.ref.buffer_size = workerConfiguration.bufferSize;
-    nativeWorkerConfiguration.ref.buffers_count = workerConfiguration.buffersCount;
+    final nativeInboundWorkerConfiguration = calloc<transport_worker_configuration_t>();
+    nativeInboundWorkerConfiguration.ref.ring_flags = inboundWorkerConfiguration.ringFlags;
+    nativeInboundWorkerConfiguration.ref.ring_size = inboundWorkerConfiguration.ringSize;
+    nativeInboundWorkerConfiguration.ref.buffer_size = inboundWorkerConfiguration.bufferSize;
+    nativeInboundWorkerConfiguration.ref.buffers_count = inboundWorkerConfiguration.buffersCount;
+
+    final nativeoOutboundWorkerConfiguration = calloc<transport_worker_configuration_t>();
+    nativeoOutboundWorkerConfiguration.ref.ring_flags = outboundWrkerConfiguration.ringFlags;
+    nativeoOutboundWorkerConfiguration.ref.ring_size = outboundWrkerConfiguration.ringSize;
+    nativeoOutboundWorkerConfiguration.ref.buffer_size = outboundWrkerConfiguration.bufferSize;
+    nativeoOutboundWorkerConfiguration.ref.buffers_count = outboundWrkerConfiguration.buffersCount;
 
     _transportPointer = _bindings.transport_initialize(
       nativeTransportConfiguration,
       nativeListenerConfiguration,
-      nativeWorkerConfiguration,
+      nativeInboundWorkerConfiguration,
+      nativeoOutboundWorkerConfiguration,
       nativeClientConfiguration,
       nativeServerConfiguration,
     );
@@ -92,13 +101,13 @@ class Transport {
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
       _workerClosers.add(ports[3]);
-      final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.worker_configuration, inboundWorkerAddresses.length);
+      final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.inbound_worker_configuration, inboundWorkerAddresses.length);
       if (inboundWorkerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[worker] is null"));
         return;
       }
       inboundWorkerAddresses.add(inboundWorkerPointer.address);
-      final outboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.worker_configuration, outboundWorkerAddresses.length);
+      final outboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.outbound_worker_configuration, outboundWorkerAddresses.length);
       if (outboundWorkerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[worker] is null"));
         return;

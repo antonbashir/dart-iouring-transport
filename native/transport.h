@@ -28,12 +28,14 @@ extern "C"
     transport_listener_configuration_t *listener_configuration;
     transport_client_configuration_t *client_configuration;
     transport_server_configuration_t *server_configuration;
-    transport_worker_configuration_t *worker_configuration;
+    transport_worker_configuration_t *inbound_worker_configuration;
+    transport_worker_configuration_t *outbound_worker_configuration;
   } transport_t;
 
   transport_t *transport_initialize(transport_configuration_t *transport_configuration,
                                     transport_listener_configuration_t *listener_configuration,
-                                    transport_worker_configuration_t *worker_configuration,
+                                    transport_worker_configuration_t *inbound_worker_configuration,
+                                    transport_worker_configuration_t *outbound_worker_configuration,
                                     transport_client_configuration_t *client_configuration,
                                     transport_server_configuration_t *server_configuration);
 
