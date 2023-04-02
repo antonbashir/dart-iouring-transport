@@ -59,5 +59,5 @@ struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count)
 
 int transport_close_descritor(int fd)
 {
-  return shutdown(fd, SHUT_RDWR);
+  return close(fd);
 }
