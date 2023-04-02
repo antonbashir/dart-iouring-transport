@@ -5,6 +5,7 @@ import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
+import 'constants.dart';
 import 'payload.dart';
 
 class TransportServer {
@@ -79,13 +80,14 @@ class TransportServerRegistry {
     return instance;
   }
 
+  @pragma(preferInlinePragma)
   TransportServer getByServer(int fd) => _servers[fd]!;
 
+  @pragma(preferInlinePragma)
   TransportServer getByClient(int fd) => _serversByClients[fd]!;
 
-  void mapClient(int serverFd, int clientFd) {
-    _serversByClients[clientFd] = _servers[serverFd]!;
-  }
+  @pragma(preferInlinePragma)
+  void mapClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
 
   void shutdown() => _servers.values.forEach((server) => server.shutdown());
 }

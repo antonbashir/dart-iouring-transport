@@ -8,6 +8,7 @@ import 'package:ffi/ffi.dart';
 import 'bindings.dart';
 import 'callbacks.dart';
 import 'channels.dart';
+import 'constants.dart';
 import 'payload.dart';
 import 'worker.dart';
 
@@ -177,6 +178,7 @@ class TransportClientRegistry {
         _clients[fd]!,
       );
 
+  @pragma(preferInlinePragma)
   Pointer<transport_client_t> get(int fd) => _clients[fd]!;
 
   void shutdown() => _clients.values.forEach((client) => _bindings.transport_client_shutdown(client));
