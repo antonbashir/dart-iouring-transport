@@ -134,15 +134,16 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   if (socket_family == INET)
   {
     message = &worker->inet_used_messages[buffer_id];
+    message->msg_name = address;
   }
   if (socket_family == UNIX)
   {
     message = &worker->unix_used_messages[buffer_id];
+    message->msg_name = address;
     message->msg_namelen = SUN_LEN((struct sockaddr_un *)message->msg_name);
   }
   message->msg_control = NULL;
   message->msg_controllen = 0;
-  message->msg_name = address;
   message->msg_iov = &worker->buffers[buffer_id];
   message->msg_iovlen = 1;
   message->msg_flags = 0;

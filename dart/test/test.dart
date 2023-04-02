@@ -150,12 +150,13 @@ void echoUnixStream({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
-      worker.servers.unixStream(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.clients.unixStream(Directory.current.path + "/socket_${worker.id}.sock");
+      final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
+      if (serverSocket.existsSync()) serverSocket.deleteSync();
+      worker.servers.unixStream(serverSocket.path, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
+      final clients = await worker.clients.unixStream(serverSocket.path);
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
-      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
+      if (serverSocket.existsSync()) serverSocket.deleteSync();
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
     done.close();
@@ -186,22 +187,20 @@ void echoUnixDgram({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
-      for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        if (File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").deleteSync();
-      }
-      worker.servers.unixDatagram(Directory.current.path + "/socket_${worker.id}.sock", (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
+      final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
+      final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
+      if (serverSocket.existsSync()) serverSocket.deleteSync();
+      clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
+      worker.servers.unixDatagram(serverSocket.path, (channel) => channel.receiveMessage(), (stream) => stream.listen((event) => event.respond(serverData)));
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        final client = worker.clients.unixDatagram(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock", Directory.current.path + "/socket_${worker.id}.sock");
+        final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
         responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
       }
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));
-      if (File(Directory.current.path + "/socket_${worker.id}.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}.sock").deleteSync();
-      for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        if (File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").existsSync()) File(Directory.current.path + "/socket_${worker.id}_$clientIndex.sock").deleteSync();
-      }
+      if (serverSocket.existsSync()) serverSocket.deleteSync();
+      clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
     done.close();
