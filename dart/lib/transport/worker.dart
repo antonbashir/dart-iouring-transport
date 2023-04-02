@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
 
-import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
@@ -13,7 +12,6 @@ import 'client.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'factory.dart';
-import 'file.dart';
 import 'logger.dart';
 import 'lookup.dart';
 import 'payload.dart';
@@ -71,7 +69,7 @@ class TransportWorker {
             _handleError(result, data, fd, event);
             continue;
           }
-          logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
+          //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
           switch (event) {
             case transportEventRead:
               _handleRead((data >> 16) & 0xffff, fd, result);
@@ -398,16 +396,16 @@ class TransportWorker {
       );
       return;
     }
-    _allocate().then(
-      (newBufferId) => _bindings.transport_worker_receive_message(
+    _allocate().then((newBufferId) {
+      _bindings.transport_worker_receive_message(
         _workerPointer,
         fd,
         newBufferId,
         server.pointer.ref.family,
         MSG_TRUNC,
         transportEventReceiveMessage,
-      ),
-    );
+      );
+    });
     final buffer = _buffers[bufferId];
     final bufferBytes = buffer.iov_base.cast<Uint8>();
     server.controller.add(TransportInboundPayload(

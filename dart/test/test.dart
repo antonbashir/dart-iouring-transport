@@ -29,26 +29,26 @@ void main() {
       echoUnixStream(index: index, listeners: 4, workers: 4, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
-  // group("[unix dgram]", () {
-  //   final echoTestsCount = 5;
-  //   for (var index = 0; index < echoTestsCount; index++) {
-  //     echoUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
-  // group("[udp]", () {
-  //   final echoTestsCount = 5;
-  //   for (var index = 0; index < echoTestsCount; index++) {
-  //     echoUdp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUdp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUdp(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUdp(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     echoUdp(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
+  group("[unix dgram]", () {
+    final echoTestsCount = 5;
+    for (var index = 0; index < echoTestsCount; index++) {
+      echoUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
+  group("[udp]", () {
+    final echoTestsCount = 5;
+    for (var index = 0; index < echoTestsCount; index++) {
+      echoUdp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUdp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUdp(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUdp(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUdp(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
 }
 
 void echoTcp({
@@ -112,7 +112,11 @@ void echoUdp({
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
-        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
+        responseFutures.add(client.sendMessage(clientData).then((value) {
+          return client.receiveMessage();
+        }).then((value) {
+          return value.extract();
+        }));
       }
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));

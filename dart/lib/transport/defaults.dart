@@ -26,14 +26,14 @@ class TransportDefaults {
 
   static TransportClientConfiguration client() => TransportClientConfiguration(
         maxConnections: 4096,
-        receiveBufferSize: 64 * 1024 * 1024,
-        sendBufferSize: 64 * 1024 * 1024,
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
         defaultPool: 1,
       );
 
   static TransportserverConfiguration server() => TransportserverConfiguration(
         maxConnections: 4096,
-        receiveBufferSize: 64 * 1024 * 1024,
-        sendBufferSize: 64 * 1024 * 1024,
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
       );
 }
