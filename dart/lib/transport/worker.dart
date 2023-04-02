@@ -31,8 +31,6 @@ class TransportWorker {
   late final Pointer<io_uring> _ring;
   late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
-  late final Pointer<msghdr> _inetUsedMessages;
-  late final Pointer<msghdr> _unixUsedMessages;
   late final Pointer<Pointer<io_uring_cqe>> _cqes;
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
@@ -68,10 +66,13 @@ class TransportWorker {
           }
           final fd = (data >> 32) & 0xffffffff;
           if (result < 0) {
-            _handleError(result, data, fd, event);
+            if (result == -EAGAIN) {
+              _handleAgainError(data, fd, event);
+              continue;
+            }
+            _handleUnhandledError(result, data, fd, event);
             continue;
           }
-          //logger.debug("${event.transportEventToString()} worker = ${_workerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
           switch (event) {
             case transportEventRead:
               _handleRead((data >> 16) & 0xffff, fd, result);
@@ -161,8 +162,6 @@ class TransportWorker {
     _cqes = _bindings.transport_allocate_cqes(_transportPointer.ref.worker_configuration.ref.ring_size);
     _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
-    _inetUsedMessages = _workerPointer.ref.inet_used_messages;
-    _unixUsedMessages = _workerPointer.ref.unix_used_messages;
     _ringSize = _transportPointer.ref.worker_configuration.ref.ring_size;
     _activator.close();
   }
@@ -183,63 +182,93 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleError(int result, int userData, int fd, int event) async {
+  Future<void> _handleAgainError(int data, int fd, int event) async {
+    switch (event) {
+      case transportEventRead:
+        final bufferId = ((data >> 16) & 0xffff);
+        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventRead);
+        return;
+      case transportEventWrite:
+        final bufferId = ((data >> 16) & 0xffff);
+        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWrite);
+        return;
+      case transportEventReceiveMessage:
+        final bufferId = ((data >> 16) & 0xffff);
+        final server = _serverRegistry.getByServer(fd);
+        _bindings.transport_worker_receive_message(
+          _workerPointer,
+          fd,
+          bufferId,
+          server.pointer.ref.family,
+          MSG_TRUNC,
+          transportEventRead,
+        );
+        return;
+      case transportEventSendMessage:
+        final bufferId = ((data >> 16) & 0xffff);
+        final server = _serverRegistry.getByServer(fd);
+        _bindings.transport_worker_respond_message(
+          _workerPointer,
+          fd,
+          bufferId,
+          server.pointer.ref.family,
+          MSG_TRUNC,
+          transportEventWrite,
+        );
+        return;
+      case transportEventReadCallback:
+        final bufferId = ((data >> 16) & 0xffff);
+        _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventReadCallback);
+        return;
+      case transportEventWriteCallback:
+        final bufferId = ((data >> 16) & 0xffff);
+        _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWriteCallback);
+        return;
+      case transportEventReceiveMessageCallback:
+        final bufferId = ((data >> 16) & 0xffff);
+        final client = _clientRegistry.get(fd);
+        _bindings.transport_worker_receive_message(
+          _workerPointer,
+          fd,
+          bufferId,
+          client.ref.family,
+          MSG_TRUNC,
+          transportEventRead,
+        );
+        return;
+      case transportEventSendMessageCallback:
+        final bufferId = ((data >> 16) & 0xffff);
+        final client = _clientRegistry.get(fd);
+        _bindings.transport_worker_respond_message(
+          _workerPointer,
+          fd,
+          bufferId,
+          client.ref.family,
+          MSG_TRUNC,
+          transportEventWrite,
+        );
+        return;
+      case transportEventAccept:
+        _bindings.transport_worker_accept(_workerPointer, _serverRegistry.getByServer(fd).pointer);
+        return;
+      case transportEventConnect:
+        _bindings.transport_worker_connect(_workerPointer, _clientRegistry.get(fd));
+        return;
+    }
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _handleUnhandledError(int result, int userData, int fd, int event) async {
     logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
 
     switch (event) {
       case transportEventRead:
-        final bufferId = ((userData >> 16) & 0xffff);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventRead);
-          return;
-        }
-        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-        _bindings.transport_close_descritor(fd);
-        return;
       case transportEventWrite:
-        final bufferId = ((userData >> 16) & 0xffff);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWrite);
-          return;
-        }
-        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-        _bindings.transport_close_descritor(fd);
-        return;
       case transportEventReceiveMessage:
         final bufferId = ((userData >> 16) & 0xffff);
-        final server = _serverRegistry.getByServer(fd);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_receive_message(
-            _workerPointer,
-            fd,
-            bufferId,
-            server.pointer.ref.family,
-            MSG_TRUNC,
-            transportEventRead,
-          );
-          return;
-        }
         _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-        return;
-      case transportEventSendMessage:
-        final bufferId = ((userData >> 16) & 0xffff);
-        final server = _serverRegistry.getByServer(fd);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_respond_message(
-            _workerPointer,
-            fd,
-            bufferId,
-            server.pointer.ref.family,
-            MSG_TRUNC,
-            transportEventWrite,
-          );
-          return;
-        }
-        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+        _bindings.transport_close_descritor(fd);
         return;
       case transportEventAccept:
         _bindings.transport_worker_accept(_workerPointer, _serverRegistry.getByServer(fd).pointer);
@@ -257,11 +286,8 @@ class TransportWorker {
         );
         return;
       case transportEventReadCallback:
+      case transportEventReceiveMessageCallback:
         final bufferId = ((userData >> 16) & 0xffff);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_read(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventReadCallback);
-          return;
-        }
         _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _bindings.transport_close_descritor(fd);
@@ -277,68 +303,11 @@ class TransportWorker {
         );
         return;
       case transportEventWriteCallback:
+      case transportEventSendMessageCallback:
         final bufferId = ((userData >> 16) & 0xffff);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_write(_workerPointer, fd, bufferId, _usedBuffers[bufferId], transportEventWriteCallback);
-          return;
-        }
         _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
         if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _bindings.transport_close_descritor(fd);
-        _callbacks.notifyWriteError(
-          bufferId,
-          TransportException.forEvent(
-            event,
-            result,
-            result.kernelErrorToString(_bindings),
-            fd,
-            bufferId: bufferId,
-          ),
-        );
-        return;
-      case transportEventReceiveMessageCallback:
-        final bufferId = ((userData >> 16) & 0xffff);
-        final client = _clientRegistry.get(fd);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_receive_message(
-            _workerPointer,
-            fd,
-            bufferId,
-            client.ref.family,
-            MSG_TRUNC,
-            transportEventRead,
-          );
-          return;
-        }
-        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-        _callbacks.notifyReadError(
-          bufferId,
-          TransportException.forEvent(
-            event,
-            result,
-            result.kernelErrorToString(_bindings),
-            fd,
-            bufferId: bufferId,
-          ),
-        );
-        return;
-      case transportEventSendMessageCallback:
-        final bufferId = ((userData >> 16) & 0xffff);
-        final client = _clientRegistry.get(fd);
-        if (result == -EAGAIN) {
-          _bindings.transport_worker_respond_message(
-            _workerPointer,
-            fd,
-            bufferId,
-            client.ref.family,
-            MSG_TRUNC,
-            transportEventWrite,
-          );
-          return;
-        }
-        _bindings.transport_worker_free_buffer(_workerPointer, bufferId);
-        if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
         _callbacks.notifyWriteError(
           bufferId,
           TransportException.forEvent(
