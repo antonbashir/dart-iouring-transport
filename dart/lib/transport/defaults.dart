@@ -9,7 +9,7 @@ class TransportDefaults {
   static TransportConfiguration transport() => TransportConfiguration(
         logLevel: TransportLogLevel.debug,
         listenerIsolates: 1,
-        workerInsolates: Platform.numberOfProcessors ~/ 2,
+        workerInsolates: 2,
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
