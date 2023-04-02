@@ -130,13 +130,50 @@ int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint1
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct msghdr *message = socket_family == INET ? &worker->inet_used_messages[buffer_id] : &worker->unix_used_messages[buffer_id];
+  struct msghdr *message;
+  if (socket_family == INET)
+  {
+    message = &worker->inet_used_messages[buffer_id];
+  }
+  if (socket_family == UNIX)
+  {
+    message = &worker->unix_used_messages[buffer_id];
+    message->msg_namelen = SUN_LEN((struct sockaddr_un *)message->msg_name);
+  }
   message->msg_control = NULL;
   message->msg_controllen = 0;
   message->msg_name = address;
-  if(socket_family == UNIX) {
-    message->msg_namelen = SUN_LEN((struct sockaddr_un*)message->msg_name);
+  message->msg_iov = &worker->buffers[buffer_id];
+  message->msg_iovlen = 1;
+  message->msg_flags = 0;
+  io_uring_prep_sendmsg(sqe, fd, message, message_flags);
+  sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
+  io_uring_sqe_set_data64(sqe, data);
+  sqe = provide_sqe(ring);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
+  return io_uring_submit(ring);
+}
+
+int transport_worker_respond_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, uint16_t event)
+{
+  struct io_uring *ring = worker->ring;
+  struct io_uring_sqe *sqe = provide_sqe(ring);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
+  worker->used_buffers[buffer_id] = 0;
+  uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
+  struct msghdr *message;
+  if (socket_family == INET)
+  {
+    message = &worker->inet_used_messages[buffer_id];
   }
+  if (socket_family == UNIX)
+  {
+    message = &worker->unix_used_messages[buffer_id];
+    message->msg_namelen = SUN_LEN((struct sockaddr_un *)message->msg_name);
+  }
+  message->msg_control = NULL;
+  message->msg_controllen = 0;
   message->msg_iov = &worker->buffers[buffer_id];
   message->msg_iovlen = 1;
   message->msg_flags = 0;
@@ -156,10 +193,19 @@ int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, ui
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct msghdr *message = socket_family == INET ? &worker->inet_used_messages[buffer_id] : &worker->unix_used_messages[buffer_id];
+  struct msghdr *message;
+  if (socket_family == INET)
+  {
+    message = &worker->inet_used_messages[buffer_id];
+    message->msg_namelen = sizeof(struct sockaddr_in);
+  }
+  if (socket_family == UNIX)
+  {
+    message = &worker->unix_used_messages[buffer_id];
+    message->msg_namelen = sizeof(struct sockaddr_un);
+  }
   message->msg_control = NULL;
   message->msg_controllen = 0;
-  message->msg_namelen = socket_family == INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_un);
   memset(message->msg_name, 0, message->msg_namelen);
   message->msg_iov = &worker->buffers[buffer_id];
   message->msg_iovlen = 1;

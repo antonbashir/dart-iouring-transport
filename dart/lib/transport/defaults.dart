@@ -31,7 +31,7 @@ class TransportDefaults {
         defaultPool: 1,
       );
 
-  static TransportserverConfiguration server() => TransportserverConfiguration(
+  static TransportServerConfiguration server() => TransportServerConfiguration(
         maxConnections: 4096,
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,

@@ -215,7 +215,7 @@ class TransportWorker {
             _workerPointer,
             fd,
             bufferId,
-            server.socketFamily.index,
+            server.pointer.ref.family,
             MSG_TRUNC,
             transportEventRead,
           );
@@ -228,12 +228,11 @@ class TransportWorker {
         final bufferId = ((userData >> 16) & 0xffff);
         final server = _serverRegistry.getByServer(fd);
         if (result == -EAGAIN) {
-          _bindings.transport_worker_send_message(
+          _bindings.transport_worker_respond_message(
             _workerPointer,
             fd,
             bufferId,
-            server.socketFamily == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
-            server.socketFamily.index,
+            server.pointer.ref.family,
             MSG_TRUNC,
             transportEventWrite,
           );
@@ -328,11 +327,10 @@ class TransportWorker {
         final bufferId = ((userData >> 16) & 0xffff);
         final client = _clientRegistry.get(fd);
         if (result == -EAGAIN) {
-          _bindings.transport_worker_send_message(
+          _bindings.transport_worker_respond_message(
             _workerPointer,
             fd,
             bufferId,
-            client.ref.family == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
             client.ref.family,
             MSG_TRUNC,
             transportEventWrite,
@@ -416,11 +414,10 @@ class TransportWorker {
         _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
         bufferBytes.asTypedList(answer.length).setAll(0, answer);
         buffer.iov_len = answer.length;
-        _bindings.transport_worker_send_message(
+        _bindings.transport_worker_respond_message(
           _workerPointer,
           fd,
           bufferId,
-          server.socketFamily == TransportSocketFamily.inet ? _inetUsedMessages[bufferId].msg_name.cast() : _unixUsedMessages[bufferId].msg_name.cast(),
           server.pointer.ref.family,
           MSG_TRUNC,
           transportEventSendMessage,

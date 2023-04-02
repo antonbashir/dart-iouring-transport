@@ -13,7 +13,7 @@ import 'lookup.dart';
 
 class Transport {
   final TransportConfiguration transportConfiguration;
-  final TransportserverConfiguration serverConfiguration;
+  final TransportServerConfiguration serverConfiguration;
   final TransportListenerConfiguration listenerConfiguration;
   final TransportWorkerConfiguration workerConfiguration;
   final TransportClientConfiguration clientConfiguration;
@@ -76,7 +76,7 @@ class Transport {
     await _workerExit.take(transportConfiguration.workerInsolates).toList();
     _listenerClosers.forEach((listener) => _bindings.transport_listener_close(listener));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
-    _listenerExit.close();    
+    _listenerExit.close();
     _bindings.transport_destroy(_transportPointer);
     //_logger.debug("[transport]: destroyed");
   }

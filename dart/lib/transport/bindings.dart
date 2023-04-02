@@ -19369,6 +19369,38 @@ class TransportBindings {
           int Function(ffi.Pointer<transport_worker_t>, int, int,
               ffi.Pointer<sockaddr>, int, int, int)>();
 
+  int transport_worker_respond_message(
+    ffi.Pointer<transport_worker_t> worker,
+    int fd,
+    int buffer_id,
+    int socket_family,
+    int message_flags,
+    int event,
+  ) {
+    return _transport_worker_respond_message(
+      worker,
+      fd,
+      buffer_id,
+      socket_family,
+      message_flags,
+      event,
+    );
+  }
+
+  late final _transport_worker_respond_messagePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Int32,
+              ffi.Int,
+              ffi.Uint16)>>('transport_worker_respond_message');
+  late final _transport_worker_respond_message =
+      _transport_worker_respond_messagePtr.asFunction<
+          int Function(
+              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+
   int transport_worker_receive_message(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
@@ -23611,6 +23643,16 @@ class _SymbolAddresses {
               ffi.Int,
               ffi.Uint16)>> get transport_worker_send_message =>
       _library._transport_worker_send_messagePtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Int32,
+              ffi.Int,
+              ffi.Uint16)>> get transport_worker_respond_message =>
+      _library._transport_worker_respond_messagePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -30792,7 +30834,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
