@@ -16,8 +16,8 @@ Future<void> main(List<String> args) async {
     TransportDefaults.transport().copyWith(logLevel: TransportLogLevel.info),
     TransportDefaults.server(),
     TransportDefaults.listener(),
-    TransportDefaults.inboundWorker(),
-    TransportDefaults.outboundWorker(),
+    TransportDefaults.inbound(),
+    TransportDefaults.outbound(),
     TransportDefaults.client(),
   ).run(
     transmitter: receiver.sendPort,

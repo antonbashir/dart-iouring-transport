@@ -64,8 +64,8 @@ void echoTcp({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
-      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
-      TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
+      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.client().copyWith(defaultPool: clients),
     );
     final done = ReceivePort();
@@ -99,8 +99,8 @@ void echoUdp({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
-      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
-      TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
+      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.client(),
     );
     final done = ReceivePort();
@@ -142,8 +142,8 @@ void echoUnixStream({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
-      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
-      TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
+      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.client().copyWith(defaultPool: clients),
     );
     final done = ReceivePort();
@@ -180,8 +180,8 @@ void echoUnixDgram({
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
-      TransportDefaults.inboundWorker().copyWith(ringFlags: workerFlags),
-      TransportDefaults.outboundWorker().copyWith(ringFlags: workerFlags),
+      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.client(),
     );
     final done = ReceivePort();

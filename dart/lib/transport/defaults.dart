@@ -17,14 +17,14 @@ class TransportDefaults {
         ringFlags: 0,
       );
 
-  static TransportWorkerConfiguration inboundWorker() => TransportWorkerConfiguration(
+  static TransportWorkerConfiguration inbound() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 32768,
         ringFlags: ringSetupSqpoll,
       );
 
-  static TransportWorkerConfiguration outboundWorker() => TransportWorkerConfiguration(
+  static TransportWorkerConfiguration outbound() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 32768,
