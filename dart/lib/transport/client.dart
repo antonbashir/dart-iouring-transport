@@ -4,13 +4,13 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/configuration.dart';
-import 'package:iouring_transport/transport/defaults.dart';
 
 import 'bindings.dart';
 import 'callbacks.dart';
 import 'channels.dart';
+import 'configuration.dart';
 import 'constants.dart';
+import 'defaults.dart';
 import 'payload.dart';
 import 'worker.dart';
 
