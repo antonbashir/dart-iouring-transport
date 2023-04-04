@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
@@ -49,6 +51,9 @@ void main() {
       echoUdp(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
+  group("[custom]", () {
+
+  })
 }
 
 void echoTcp({
@@ -199,6 +204,28 @@ void echoUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
+    done.close();
+    await transport.shutdown();
+  });
+}
+
+void testCustomCallback() {
+  test("callback", () async {
+      final transport = Transport(
+      TransportDefaults.transport(),
+      TransportDefaults.listener(),
+      TransportDefaults.inbound(),
+      TransportDefaults.outbound(),
+    );
+    final done = ReceivePort();
+    final data = Random().nextInt(100);
+    await transport.run(transmitter: done.sendPort, (input) async {
+      final completer = Completer<int>();
+      final worker = TransportWorker(input)..registerCallback(1, completer);
+      
+      worker.transmitter!.send(await completer.future);
+    });
+    expect(await done.first, data);
     done.close();
     await transport.shutdown();
   });

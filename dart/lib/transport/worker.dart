@@ -163,8 +163,8 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
-        if (event == transportEventCustomCallback) {
-          _callbacks.notifyCustom(result, data);
+        if ((result & 0xffff) == transportEventCustomCallback) {
+          _callbacks.notifyCustom((result >> 16) & 0xffff, data);
           continue;
         }
         if (result < 0) {
