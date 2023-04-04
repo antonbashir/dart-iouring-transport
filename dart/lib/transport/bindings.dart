@@ -19235,6 +19235,25 @@ class TransportBindings {
           ffi.Pointer<transport_worker_t> Function(
               ffi.Pointer<transport_worker_configuration_t>, int)>();
 
+  int transport_worker_custom(
+    ffi.Pointer<transport_worker_t> worker,
+    int callbackId,
+    int data,
+  ) {
+    return _transport_worker_custom(
+      worker,
+      callbackId,
+      data,
+    );
+  }
+
+  late final _transport_worker_customPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Uint16,
+              ffi.Int64)>>('transport_worker_custom');
+  late final _transport_worker_custom = _transport_worker_customPtr
+      .asFunction<int Function(ffi.Pointer<transport_worker_t>, int, int)>();
+
   int transport_worker_write(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
@@ -23591,6 +23610,11 @@ class _SymbolAddresses {
                   ffi.Pointer<transport_worker_configuration_t>, ffi.Uint8)>>
       get transport_worker_initialize =>
           _library._transport_worker_initializePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<transport_worker_t>, ffi.Uint16, ffi.Int64)>>
+      get transport_worker_custom => _library._transport_worker_customPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -30803,11 +30827,51 @@ const int TRANSPORT_EVENT_RECEIVE_MESSAGE = 256;
 
 const int TRANSPORT_EVENT_SEND_MESSAGE = 512;
 
-const int TRANSPORT_EVENT_CUSTOM = 1024;
+const int TRANSPORT_EVENT_CUSTOM = 32768;
 
 const int TRANSPORT_BUFFER_AVAILABLE = -2;
 
 const int TRANSPORT_BUFFER_USED = -1;
+
+const int TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK = 1;
+
+const int TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC = 2;
+
+const int TRANSPORT_SOCKET_OPTION_SOCKET_REUSEADDR = 4;
+
+const int TRANSPORT_SOCKET_OPTION_SOCKET_REUSEPORT = 8;
+
+const int TRANSPORT_SOCKET_OPTION_SOCKET_RCVBUF = 16;
+
+const int TRANSPORT_SOCKET_OPTION_SOCKET_SNDBUF = 32;
+
+const int TRANSPORT_SOCKET_OPTION_SOCKET_BUSY_POLL = 64;
+
+const int TRANSPORT_SOCKET_OPTION_IP_TTL = 128;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_CORK = 256;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_QUICKACK = 512;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_DEFER_ACCEPT = 1024;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_NOTSENT_LOWAT = 2048;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_FASTOPEN = 4096;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_KEEPIDLE = 8192;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_KEEPCNT = 16384;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_USER_TIMEOUT = 32768;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_FREEBIND = 65536;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_TRANSPARENT = 131072;
+
+const int TRANSPORT_SOCKET_OPTION_TCP_RECVORIGDSTADDR = 262144;
+
+const int TRANSPORT_SOCKET_OPTION_UDP_CORK = 524288;
 
 const String PACKAGE_VERSION = '';
 
