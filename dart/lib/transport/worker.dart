@@ -12,7 +12,6 @@ import 'client.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'factory.dart';
-import 'logger.dart';
 import 'lookup.dart';
 import 'payload.dart';
 import 'server.dart';
@@ -24,7 +23,6 @@ class TransportWorker {
   final _inboundBufferFinalizers = Queue<Completer<int>>();
   final _outboundBufferFinalizers = Queue<Completer<int>>();
 
-  late final TransportLogger logger;
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transportPointer;
   late final Pointer<transport_worker_t> _inboundWorkerPointer;
@@ -82,7 +80,6 @@ class TransportWorker {
     _outboundWorkerPointer = Pointer.fromAddress(configuration[3] as int).cast<transport_worker_t>();
     transmitter = configuration[4] as SendPort?;
     _fromTransport.close();
-    logger = TransportLogger(TransportLogLevel.values[_transportPointer.ref.transport_configuration.ref.log_level]);
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _callbacks = TransportCallbacks();
     _clientRegistry = TransportClientRegistry(
