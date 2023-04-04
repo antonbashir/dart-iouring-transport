@@ -45,8 +45,8 @@ class TransportWorker {
   late final TransportServersFactory _serversfactory;
   late final TransportFilesFactory _filesfactory;
   late final TransportCallbacks _callbacks;
-  late int _inboundRingSize;
-  late int _outboundRingSize;
+  late final int _inboundRingSize;
+  late final int _outboundRingSize;
 
   late final SendPort? transmitter;
 

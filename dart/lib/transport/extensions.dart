@@ -1,6 +1,6 @@
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/bindings.dart';
 
+import 'bindings.dart';
 import 'constants.dart';
 
 extension IntExtension on int {

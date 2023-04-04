@@ -3,16 +3,16 @@ import 'dart:collection';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/bindings.dart';
-import 'package:iouring_transport/transport/callbacks.dart';
-import 'package:iouring_transport/transport/configuration.dart';
-import 'package:iouring_transport/transport/file.dart';
-import 'package:iouring_transport/transport/server.dart';
-import 'package:iouring_transport/transport/worker.dart';
 
+import 'bindings.dart';
+import 'callbacks.dart';
 import 'channels.dart';
 import 'client.dart';
+import 'configuration.dart';
+import 'file.dart';
 import 'payload.dart';
+import 'server.dart';
+import 'worker.dart';
 
 class TransportServersFactory {
   final TransportServerRegistry _registry;
