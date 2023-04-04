@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'configuration.dart';
 import 'constants.dart';
 
@@ -13,21 +11,21 @@ class TransportDefaults {
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
-        ringSize: 32768,
+        ringSize: 16384,
         ringFlags: 0,
       );
 
   static TransportWorkerConfiguration inbound() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
-        ringSize: 32768,
+        ringSize: 16384,
         ringFlags: ringSetupSqpoll,
       );
 
   static TransportWorkerConfiguration outbound() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
-        ringSize: 32768,
+        ringSize: 16384,
         ringFlags: ringSetupSqpoll,
       );
 

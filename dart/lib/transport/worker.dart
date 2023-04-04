@@ -57,8 +57,8 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
-      _handleCqes(_inboundRingSize, _inboundRing, _inboundCqes);
-      _handleCqes(_outboundRingSize, _outboundRing, _outboundCqes);
+      _handleInboundCqes();
+      _handleOutboundCqes();
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
@@ -159,20 +159,20 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleCqes(int ringSize, Pointer<io_uring> ring, Pointer<Pointer<io_uring_cqe>> cqes) async {
-    final cqeCount = _bindings.transport_worker_peek(ringSize, cqes, ring);
+  void _handleOutboundCqes() {
+    final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-      final cqe = cqes[cqeIndex];
+      final cqe = _outboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
-      _bindings.transport_cqe_advance(ring, 1);
+      _bindings.transport_cqe_advance(_outboundRing, 1);
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
+        final fd = (data >> 32) & 0xffffffff;
         if (event == transportEventCustomCallback) {
           _callbacks.notifyCustom(result, data);
           continue;
         }
-        final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           if (result == -EAGAIN) {
             _handleAgainError(data, fd, event);
@@ -181,18 +181,7 @@ class TransportWorker {
           _handleUnhandledError(result, data, fd, event);
           continue;
         }
-        //logger.debug("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         switch (event) {
-          case transportEventRead:
-            _handleRead((data >> 16) & 0xffff, fd, result);
-            continue;
-          case transportEventReceiveMessage:
-            _handleReceiveMessage((data >> 16) & 0xffff, fd, result);
-            continue;
-          case transportEventWrite:
-          case transportEventSendMessage:
-            _handleWriteAndSendMessage((data >> 16) & 0xffff, fd);
-            continue;
           case transportEventReadCallback:
           case transportEventReceiveMessageCallback:
             _handleReadAndReceiveMessageCallback((data >> 16) & 0xffff, result);
@@ -204,6 +193,41 @@ class TransportWorker {
           case transportEventConnect:
             _handleConnect(fd);
             continue;
+        }
+      }
+    }
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleInboundCqes() {
+    final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
+    for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+      final cqe = _inboundCqes[cqeIndex];
+      final data = cqe.ref.user_data;
+      final result = cqe.ref.res;
+      _bindings.transport_cqe_advance(_inboundRing, 1);
+      final event = data & 0xffff;
+      if (event & transportEventAll != 0) {
+        final fd = (data >> 32) & 0xffffffff;
+        if (result < 0) {
+          if (result == -EAGAIN) {
+            _handleAgainError(data, fd, event);
+            continue;
+          }
+          _handleUnhandledError(result, data, fd, event);
+          continue;
+        }
+        switch (event) {
+          case transportEventRead:
+            _handleRead((data >> 16) & 0xffff, fd, result);
+            continue;
+          case transportEventReceiveMessage:
+            _handleReceiveMessage((data >> 16) & 0xffff, fd, result);
+            continue;
+          case transportEventWrite:
+          case transportEventSendMessage:
+            _handleWriteAndSendMessage((data >> 16) & 0xffff, fd);
+            continue;
           case transportEventAccept:
             _handleAccept(fd, result);
             continue;
@@ -213,7 +237,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleAgainError(int data, int fd, int event) async {
+  void _handleAgainError(int data, int fd, int event) {
     switch (event) {
       case transportEventRead:
         final bufferId = ((data >> 16) & 0xffff);
@@ -289,7 +313,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleUnhandledError(int result, int userData, int fd, int event) async {
+  void _handleUnhandledError(int result, int userData, int fd, int event) {
     logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
 
     switch (event) {
@@ -353,7 +377,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleRead(int bufferId, int fd, int result) async {
+  void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
     _allocateInbound().then((newBufferId) => _bindings.transport_worker_read(_inboundWorkerPointer, fd, newBufferId, 0, transportEventRead));
     if (!server.controller.hasListener) {
@@ -377,7 +401,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleReceiveMessage(int bufferId, int fd, int result) async {
+  void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.controller.hasListener) {
       logger.debug("[server]: stream hasn't listeners for fd = $fd");
@@ -425,12 +449,12 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleWriteAndSendMessage(int bufferId, int fd) async {
+  void _handleWriteAndSendMessage(int bufferId, int fd) {
     _releaseInboundBuffer(bufferId);
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleReadAndReceiveMessageCallback(int bufferId, int result) async {
+  void _handleReadAndReceiveMessageCallback(int bufferId, int result) {
     _callbacks.notifyRead(
       bufferId,
       TransportOutboundPayload(
@@ -441,18 +465,18 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleWriteAndSendMessageCallback(int bufferId, int result) async {
+  void _handleWriteAndSendMessageCallback(int bufferId, int result) {
     _releaseOutboundBuffer(bufferId);
     _callbacks.notifyWrite(bufferId);
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleConnect(int fd) async {
+  void _handleConnect(int fd) {
     _callbacks.notifyConnect(fd, _clientRegistry.createConnectedClient(fd));
   }
 
   @pragma(preferInlinePragma)
-  Future<void> _handleAccept(int fd, int result) async {
+  void _handleAccept(int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     _serverRegistry.mapClient(fd, result);
     _bindings.transport_worker_accept(_inboundWorkerPointer, server.pointer);
