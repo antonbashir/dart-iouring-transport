@@ -309,17 +309,28 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleUnhandledError(int result, int userData, int fd, int event) {
-    logger.debug("[error]: ${TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd).message}, bid = ${((userData >> 16) & 0xffff)}");
-
     switch (event) {
       case transportEventRead:
       case transportEventWrite:
+        final server = _serverRegistry.getByServer(fd);
+        if (!server.controller.hasListener) {
+          _releaseInboundBuffer(((userData >> 16) & 0xffff));
+          _bindings.transport_close_descritor(fd);
+          return;
+        }
         _releaseInboundBuffer(((userData >> 16) & 0xffff));
         _bindings.transport_close_descritor(fd);
+        server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
         return;
       case transportEventReceiveMessage:
       case transportEventSendMessage:
+        final server = _serverRegistry.getByClient(fd);
+        if (!server.controller.hasListener) {
+          _releaseInboundBuffer(((userData >> 16) & 0xffff));
+          return;
+        }
         _releaseInboundBuffer(((userData >> 16) & 0xffff));
+        server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
         return;
       case transportEventAccept:
         _bindings.transport_worker_accept(_inboundWorkerPointer, _serverRegistry.getByServer(fd).pointer);
@@ -376,7 +387,6 @@ class TransportWorker {
     final server = _serverRegistry.getByClient(fd);
     _allocateInbound().then((newBufferId) => _bindings.transport_worker_read(_inboundWorkerPointer, fd, newBufferId, 0, transportEventRead));
     if (!server.controller.hasListener) {
-      logger.debug("[server]: stream hasn't listeners for fd = $fd");
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
       _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, transportEventRead);
       return;
@@ -399,7 +409,6 @@ class TransportWorker {
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.controller.hasListener) {
-      logger.debug("[server]: stream hasn't listeners for fd = $fd");
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
       _bindings.transport_worker_receive_message(
         _inboundWorkerPointer,
