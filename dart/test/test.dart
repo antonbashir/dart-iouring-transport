@@ -4,10 +4,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
-import 'package:iouring_transport/transport/bindings.dart';
-import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/lookup.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
@@ -224,7 +221,7 @@ void testCustomCallback() {
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.registerCallback(1, completer);
-      TransportBindings(TransportLibrary.load().library).transport_worker_custom(worker.outboundWorkerPointer, 1, data);
+      worker.notifyCustom(1, data);
       worker.transmitter!.send(await completer.future);
     });
     expect(await done.first, data);
