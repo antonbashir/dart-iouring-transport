@@ -29,7 +29,7 @@ transport_server_t *transport_server_initialize_tcp(transport_server_configurati
   server->inet_server_address.sin_port = htons(port);
   server->inet_server_address.sin_family = AF_INET;
   server->server_address_length = sizeof(server->inet_server_address);
-  server->fd = transport_socket_create_server_tcp(configuration->max_connections, configuration->receive_buffer_size, configuration->send_buffer_size);
+  server->fd = transport_socket_create_server_tcp(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (server->fd < 0 || bind(server->fd, (struct sockaddr *)&server->inet_server_address, server->server_address_length) < 0)
   {
     free(server);
@@ -69,8 +69,7 @@ transport_server_t *transport_server_initialize_udp(transport_server_configurati
 }
 
 transport_server_t *transport_server_initialize_unix_stream(transport_server_configuration_t *configuration,
-                                                            const char *path,
-                                                            uint8_t path_length)
+                                                            const char *path)
 {
   transport_server_t *server = malloc(sizeof(transport_server_t));
   if (!server)
@@ -80,7 +79,7 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
   server->family = UNIX;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
   server->unix_server_address.sun_family = AF_UNIX;
-  strncpy(server->unix_server_address.sun_path, path, path_length);
+  strcpy(server->unix_server_address.sun_path, path);
   server->server_address_length = sizeof(server->unix_server_address);
   server->fd = transport_socket_create_server_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
   int32_t result = 0;
@@ -98,8 +97,7 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
 }
 
 transport_server_t *transport_server_initialize_unix_dgram(transport_server_configuration_t *configuration,
-                                                           const char *path,
-                                                           uint8_t path_length)
+                                                           const char *path)
 {
   transport_server_t *server = malloc(sizeof(transport_server_t));
   if (!server)
@@ -109,7 +107,7 @@ transport_server_t *transport_server_initialize_unix_dgram(transport_server_conf
   server->family = UNIX;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
   server->unix_server_address.sun_family = AF_UNIX;
-  strncpy(server->unix_server_address.sun_path, path, path_length);
+  strcpy(server->unix_server_address.sun_path, path);
   server->server_address_length = sizeof(server->unix_server_address);
   server->fd = transport_socket_create_server_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (server->fd < 0 || bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length) < 0)

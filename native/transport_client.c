@@ -72,9 +72,7 @@ transport_client_t *transport_client_initialize_udp(transport_client_configurati
 
 transport_client_t *transport_client_initialize_unix_dgram(transport_client_configuration_t *configuration,
                                                            const char *destination_path,
-                                                           uint8_t destination_length,
-                                                           const char *source_path,
-                                                           uint8_t source_length)
+                                                           const char *source_path)
 
 {
   transport_client_t *client = malloc(sizeof(transport_client_t));
@@ -103,8 +101,7 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
 }
 
 transport_client_t *transport_client_initialize_unix_stream(transport_client_configuration_t *configuration,
-                                                            const char *path,
-                                                            uint8_t path_length)
+                                                            const char *path)
 {
   transport_client_t *client = malloc(sizeof(transport_client_t));
   if (!client)
@@ -114,7 +111,7 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
   client->family = UNIX;
   memset(&client->unix_destination_address, 0, sizeof(client->unix_destination_address));
   client->unix_destination_address.sun_family = AF_UNIX;
-  strncpy(client->unix_destination_address.sun_path, path, path_length);
+  strcpy(client->unix_destination_address.sun_path, path);
   client->client_address_length = sizeof(client->unix_destination_address);
   client->fd = transport_socket_create_client_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0)

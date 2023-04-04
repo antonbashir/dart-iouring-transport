@@ -36,11 +36,9 @@ extern "C"
                                                       const char *ip,
                                                       int32_t port);
   transport_server_t *transport_server_initialize_unix_stream(transport_server_configuration_t *configuration,
-                                                              const char *path,
-                                                              uint8_t path_length);
+                                                              const char *path);
   transport_server_t *transport_server_initialize_unix_dgram(transport_server_configuration_t *configuration,
-                                                             const char *path,
-                                                             uint8_t path_length);
+                                                             const char *path);
   void transport_server_shutdown(transport_server_t *server);
 #if defined(__cplusplus)
 }

@@ -13,11 +13,9 @@ import 'lookup.dart';
 
 class Transport {
   final TransportConfiguration transportConfiguration;
-  final TransportServerConfiguration serverConfiguration;
   final TransportListenerConfiguration listenerConfiguration;
   final TransportWorkerConfiguration inboundWorkerConfiguration;
   final TransportWorkerConfiguration outboundWrkerConfiguration;
-  final TransportClientConfiguration clientConfiguration;
 
   final _listenerExit = ReceivePort();
   final _workerExit = ReceivePort();
@@ -29,8 +27,7 @@ class Transport {
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transportPointer;
 
-  Transport(this.transportConfiguration, this.serverConfiguration, this.listenerConfiguration, this.inboundWorkerConfiguration, this.outboundWrkerConfiguration, this.clientConfiguration,
-      {String? libraryPath}) {
+  Transport(this.transportConfiguration, this.listenerConfiguration, this.inboundWorkerConfiguration, this.outboundWrkerConfiguration, {String? libraryPath}) {
     this._libraryPath = libraryPath;
 
     _library = TransportLibrary.load(libraryPath: libraryPath);
@@ -38,17 +35,6 @@ class Transport {
 
     final nativeTransportConfiguration = calloc<transport_configuration_t>();
     nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel.index;
-
-    final nativeServerConfiguration = calloc<transport_server_configuration_t>();
-    nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
-    nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
-    nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
-
-    final nativeClientConfiguration = calloc<transport_client_configuration_t>();
-    nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
-    nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
-    nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
-    nativeClientConfiguration.ref.default_pool = clientConfiguration.defaultPool;
 
     final nativeListenerConfiguration = calloc<transport_listener_configuration_t>();
     nativeListenerConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
@@ -72,8 +58,6 @@ class Transport {
       nativeListenerConfiguration,
       nativeInboundWorkerConfiguration,
       nativeoOutboundWorkerConfiguration,
-      nativeClientConfiguration,
-      nativeServerConfiguration,
     );
   }
 

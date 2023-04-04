@@ -8,7 +8,7 @@
 extern "C"
 {
 #endif
-  int32_t transport_socket_create_server_tcp(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size);
+  int32_t transport_socket_create_server_tcp(uint32_t receive_buffer_size, uint32_t send_buffer_size);
   int32_t transport_socket_create_server_udp(uint32_t receive_buffer_size, uint32_t send_buffer_size);
   int32_t transport_socket_create_server_unix_stream(uint32_t receive_buffer_size, uint32_t send_buffer_size);
   int32_t transport_socket_create_server_unix_dgram(uint32_t receive_buffer_size, uint32_t send_buffer_size);

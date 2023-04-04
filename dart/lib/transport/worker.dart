@@ -86,14 +86,12 @@ class TransportWorker {
     _callbacks = TransportCallbacks();
     _clientRegistry = TransportClientRegistry(
       _callbacks,
-      _transportPointer,
       _outboundWorkerPointer,
       _bindings,
       _outboundBufferFinalizers,
       this,
     );
     _serverRegistry = TransportServerRegistry(
-      _transportPointer.ref.server_configuration,
       _bindings,
     );
     _serversfactory = TransportServersFactory(
@@ -105,10 +103,6 @@ class TransportWorker {
     );
     _clientsfactory = TransportClientsFactory(
       _clientRegistry,
-      _outboundWorkerPointer,
-      _bindings,
-      this,
-      _outboundBufferFinalizers,
     );
     _filesfactory = TransportFilesFactory(
       _outboundWorkerPointer,

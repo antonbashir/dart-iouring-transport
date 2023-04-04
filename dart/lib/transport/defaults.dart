@@ -29,15 +29,48 @@ class TransportDefaults {
         ringFlags: ringSetupSqpoll,
       );
 
-  static TransportClientConfiguration client() => TransportClientConfiguration(
+  static TransportTcpClientConfiguration tcpClient() => TransportTcpClientConfiguration(
         maxConnections: 4096,
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
-        defaultPool: 1,
+        pool: 1,
       );
 
-  static TransportServerConfiguration server() => TransportServerConfiguration(
+  static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
+      );
+
+  static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
         maxConnections: 4096,
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
+        pool: 1,
+      );
+
+  static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
+      );
+
+  static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
+        maxConnections: 4096,
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
+      );
+
+  static TransportUdpServerConfiguration udpServer() => TransportUdpServerConfiguration(
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
+      );
+
+  static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(
+        maxConnections: 4096,
+        receiveBufferSize: 4 * 1024 * 1024,
+        sendBufferSize: 4 * 1024 * 1024,
+      );
+
+  static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
       );

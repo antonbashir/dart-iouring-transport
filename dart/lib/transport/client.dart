@@ -4,6 +4,8 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/configuration.dart';
+import 'package:iouring_transport/transport/defaults.dart';
 
 import 'bindings.dart';
 import 'callbacks.dart';
@@ -74,20 +76,19 @@ class TransportClientPool {
 class TransportClientRegistry {
   final TransportBindings _bindings;
   final TransportCallbacks _callbacks;
-  final Pointer<transport_t> _transportPointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportWorker _worker;
   final Queue<Completer<int>> _bufferFinalizers;
   final _clients = <int, Pointer<transport_client_t>>{};
 
-  TransportClientRegistry(this._callbacks, this._transportPointer, this._workerPointer, this._bindings, this._bufferFinalizers, this._worker);
+  TransportClientRegistry(this._callbacks, this._workerPointer, this._bindings, this._bufferFinalizers, this._worker);
 
-  Future<TransportClientPool> createTcp(String host, int port, {int? pool}) async {
+  Future<TransportClientPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     final clients = <Future<TransportClient>>[];
-    if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
-    for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
+    configuration = configuration ?? TransportDefaults.tcpClient();
+    for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final client = using((arena) => _bindings.transport_client_initialize_tcp(
-            _transportPointer.ref.client_configuration,
+            _tcpConfiguration(configuration!, arena),
             host.toNativeUtf8(allocator: arena).cast(),
             port,
           ));
@@ -100,14 +101,13 @@ class TransportClientRegistry {
     return TransportClientPool(await Future.wait(clients));
   }
 
-  Future<TransportClientPool> createUnixStream(String path, {int? pool}) async {
+  Future<TransportClientPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
     final clients = <Future<TransportClient>>[];
-    if (pool == null) pool = _transportPointer.ref.client_configuration.ref.default_pool;
-    for (var clientIndex = 0; clientIndex < pool; clientIndex++) {
+    configuration = configuration ?? TransportDefaults.unixStreamClient();
+    for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final client = using((arena) => _bindings.transport_client_initialize_unix_stream(
-            _transportPointer.ref.client_configuration,
+            _unixStreamConfiguration(configuration!, arena),
             path.toNativeUtf8(allocator: arena).cast(),
-            path.length,
           ));
       _clients[client.ref.fd] = client;
       final completer = Completer<TransportClient>();
@@ -118,10 +118,11 @@ class TransportClientRegistry {
     return TransportClientPool(await Future.wait(clients));
   }
 
-  TransportClient createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort) {
+  TransportClient createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
+    configuration = configuration ?? TransportDefaults.udpClient();
     final client = using(
       (arena) => _bindings.transport_client_initialize_udp(
-        _transportPointer.ref.client_configuration,
+        _udpConfiguration(configuration!, arena),
         destinationHost.toNativeUtf8(allocator: arena).cast(),
         destinationPort,
         sourceHost.toNativeUtf8(allocator: arena).cast(),
@@ -142,14 +143,13 @@ class TransportClientRegistry {
     );
   }
 
-  TransportClient createUnixDatagram(String sourcePath, String destinationPath) {
+  TransportClient createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
+    configuration = configuration ?? TransportDefaults.unixDatagramClient();
     final client = using(
       (arena) => _bindings.transport_client_initialize_unix_dgram(
-        _transportPointer.ref.client_configuration,
+        _unixDatagramConfiguration(configuration!, arena),
         destinationPath.toNativeUtf8(allocator: arena).cast(),
-        destinationPath.length,
         sourcePath.toNativeUtf8(allocator: arena).cast(),
-        sourcePath.length,
       ),
     );
     _clients[client.ref.fd] = client;
@@ -182,4 +182,34 @@ class TransportClientRegistry {
   Pointer<transport_client_t> get(int fd) => _clients[fd]!;
 
   void shutdown() => _clients.values.forEach((client) => _bindings.transport_client_shutdown(client));
+
+  Pointer<transport_client_configuration_t> _tcpConfiguration(TransportTcpClientConfiguration clientConfiguration, Allocator allocator) {
+    final nativeClientConfiguration = allocator<transport_client_configuration_t>();
+    nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
+    nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
+    nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    return nativeClientConfiguration;
+  }
+
+  Pointer<transport_client_configuration_t> _udpConfiguration(TransportUdpClientConfiguration clientConfiguration, Allocator allocator) {
+    final nativeClientConfiguration = allocator<transport_client_configuration_t>();
+    nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
+    nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    return nativeClientConfiguration;
+  }
+
+  Pointer<transport_client_configuration_t> _unixStreamConfiguration(TransportUnixStreamClientConfiguration clientConfiguration, Allocator allocator) {
+    final nativeClientConfiguration = allocator<transport_client_configuration_t>();
+    nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
+    nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
+    nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    return nativeClientConfiguration;
+  }
+
+  Pointer<transport_client_configuration_t> _unixDatagramConfiguration(TransportUnixDatagramClientConfiguration clientConfiguration, Allocator allocator) {
+    final nativeClientConfiguration = allocator<transport_client_configuration_t>();
+    nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
+    nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    return nativeClientConfiguration;
+  }
 }

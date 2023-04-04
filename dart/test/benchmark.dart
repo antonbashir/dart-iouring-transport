@@ -14,11 +14,9 @@ Future<void> main(List<String> args) async {
   final ReceivePort receiver = ReceivePort();
   Transport(
     TransportDefaults.transport().copyWith(logLevel: TransportLogLevel.info),
-    TransportDefaults.server(),
     TransportDefaults.listener(),
     TransportDefaults.inbound(),
     TransportDefaults.outbound(),
-    TransportDefaults.client(),
   ).run(
     transmitter: receiver.sendPort,
     (input) async {
@@ -27,7 +25,7 @@ Future<void> main(List<String> args) async {
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.tcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(fromServer)));
-      final connector = await worker.clients.tcp("127.0.0.1", 12345, pool: 256);
+      final connector = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();
       time.start();

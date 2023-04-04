@@ -19,7 +19,6 @@ extern "C"
     int32_t max_connections;
     uint32_t receive_buffer_size;
     uint32_t send_buffer_size;
-    uint32_t default_pool;
   } transport_client_configuration_t;
 
   typedef struct transport_client
@@ -44,14 +43,11 @@ extern "C"
                                                       int32_t source_port);
 
   transport_client_t *transport_client_initialize_unix_stream(transport_client_configuration_t *configuration,
-                                                              const char *path,
-                                                              uint8_t path_length);
+                                                              const char *path);
 
   transport_client_t *transport_client_initialize_unix_dgram(transport_client_configuration_t *configuration,
                                                              const char *destination_path,
-                                                             uint8_t destination_length,
-                                                             const char *source_path,
-                                                             uint8_t source_length);
+                                                             const char *source_path);
 
   struct sockaddr *transport_client_get_destination_address(transport_client_t *client);
 

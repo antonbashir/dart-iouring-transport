@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-int32_t transport_socket_create_server_tcp(uint32_t max_connections, uint32_t receive_buffer_size, uint32_t send_buffer_size)
+int32_t transport_socket_create_server_tcp(uint32_t receive_buffer_size, uint32_t send_buffer_size)
 {
   int32_t option = 1;
 
@@ -56,11 +56,6 @@ int32_t transport_socket_create_server_tcp(uint32_t max_connections, uint32_t re
     return -1;
   }
 
-  result = setsockopt(fd, IPPROTO_TCP, TCP_FASTOPEN, &max_connections, sizeof(max_connections));
-  if (result == -1)
-  {
-    return -1;
-  }
   return (uint32_t)fd;
 }
 

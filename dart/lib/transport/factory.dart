@@ -5,6 +5,7 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/bindings.dart';
 import 'package:iouring_transport/transport/callbacks.dart';
+import 'package:iouring_transport/transport/configuration.dart';
 import 'package:iouring_transport/transport/file.dart';
 import 'package:iouring_transport/transport/server.dart';
 import 'package:iouring_transport/transport/worker.dart';
@@ -87,33 +88,27 @@ class TransportServersFactory {
 
 class TransportClientsFactory {
   final TransportClientRegistry _registry;
-  final Pointer<transport_worker_t> _workerPointer;
-  final TransportBindings _bindings;
-  final TransportWorker _worker;
-  final Queue<Completer<int>> _bufferFinalizers;
 
   TransportClientsFactory(
     this._registry,
-    this._workerPointer,
-    this._bindings,
-    this._worker,
-    this._bufferFinalizers,
   );
 
-  Future<TransportClientPool> tcp(String host, int port, {int? pool}) => _registry.createTcp(host, port, pool: pool);
+  Future<TransportClientPool> tcp(String host, int port, {TransportTcpClientConfiguration? configuration}) => _registry.createTcp(host, port, configuration: configuration);
 
-  TransportClient udp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {int? pool}) => _registry.createUdp(
+  TransportClient udp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) => _registry.createUdp(
         sourceHost,
         sourcePort,
         destinationHost,
         destinationPort,
+        configuration: configuration,
       );
 
-  Future<TransportClientPool> unixStream(String path, {int? pool}) => _registry.createUnixStream(path, pool: pool);
+  Future<TransportClientPool> unixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) => _registry.createUnixStream(path, configuration: configuration);
 
-  TransportClient unixDatagram(String sourcePath, String destinationPath, {int? pool}) => _registry.createUnixDatagram(
+  TransportClient unixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) => _registry.createUnixDatagram(
         sourcePath,
         destinationPath,
+        configuration: configuration,
       );
 }
 

@@ -12,21 +12,21 @@ void main() {
   group("[tcp]", () {
     final echoTestsCount = 5;
     for (var index = 0; index < echoTestsCount; index++) {
-      echoTcp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoTcp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoTcp(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoTcp(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoTcp(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoTcp(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
   group("[unix stream]", () {
     final echoTestsCount = 5;
     for (var index = 0; index < echoTestsCount; index++) {
-      echoUnixStream(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      echoUnixStream(index: index, listeners: 4, workers: 4, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      echoUnixStream(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
   group("[unix dgram]", () {
@@ -55,18 +55,16 @@ void echoTcp({
   required int index,
   required int listeners,
   required int workers,
-  required int clients,
+  required int clientsPool,
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("[index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
+  test("[index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
-      TransportDefaults.client().copyWith(defaultPool: clients),
     );
     final done = ReceivePort();
     final serverData = Utf8Encoder().convert("respond");
@@ -76,11 +74,11 @@ void echoTcp({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.tcp("0.0.0.0", 12345, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.clients.tcp("127.0.0.1", 12345);
+      final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
+    (await done.take(workers * clientsPool).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -97,11 +95,9 @@ void echoUdp({
   test("[index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
-      TransportDefaults.client(),
     );
     final done = ReceivePort();
     final serverData = Utf8Encoder().convert("respond");
@@ -133,18 +129,16 @@ void echoUnixStream({
   required int index,
   required int listeners,
   required int workers,
-  required int clients,
+  required int clientsPool,
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("[index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
+  test("[index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
-      TransportDefaults.client().copyWith(defaultPool: clients),
     );
     final done = ReceivePort();
     final serverData = Utf8Encoder().convert("respond");
@@ -156,12 +150,12 @@ void echoUnixStream({
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.servers.unixStream(serverSocket.path, (channel) => channel.read(), (stream) => stream.listen((event) => event.respond(serverData)));
-      final clients = await worker.clients.unixStream(serverSocket.path);
+      final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
+    (await done.take(workers * clientsPool).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -178,11 +172,9 @@ void echoUnixDgram({
   test("[index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.server(),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
-      TransportDefaults.client(),
     );
     final done = ReceivePort();
     final serverData = Utf8Encoder().convert("respond");
