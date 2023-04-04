@@ -154,26 +154,22 @@ class TransportUnixDatagramServerConfiguration {
 }
 
 class TransportTcpClientConfiguration {
-  final int maxConnections;
   final int receiveBufferSize;
   final int sendBufferSize;
   final int pool;
 
   TransportTcpClientConfiguration({
-    required this.maxConnections,
     required this.receiveBufferSize,
     required this.sendBufferSize,
     required this.pool,
   });
 
   TransportTcpClientConfiguration copyWith({
-    int? maxConnections,
     int? receiveBufferSize,
     int? sendBufferSize,
     int? pool,
   }) =>
       TransportTcpClientConfiguration(
-        maxConnections: maxConnections ?? this.maxConnections,
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         pool: pool ?? this.pool,
@@ -200,26 +196,22 @@ class TransportUdpClientConfiguration {
 }
 
 class TransportUnixStreamClientConfiguration {
-  final int maxConnections;
   final int receiveBufferSize;
   final int sendBufferSize;
   final int pool;
 
   TransportUnixStreamClientConfiguration({
-    required this.maxConnections,
     required this.receiveBufferSize,
     required this.sendBufferSize,
     required this.pool,
   });
 
   TransportUnixStreamClientConfiguration copyWith({
-    int? maxConnections,
     int? receiveBufferSize,
     int? sendBufferSize,
     int? pool,
   }) =>
       TransportUnixStreamClientConfiguration(
-        maxConnections: maxConnections ?? this.maxConnections,
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         pool: pool ?? this.pool,

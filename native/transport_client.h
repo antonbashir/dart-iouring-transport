@@ -16,7 +16,6 @@ extern "C"
 
   typedef struct transport_client_configuration
   {
-    int32_t max_connections;
     uint32_t receive_buffer_size;
     uint32_t send_buffer_size;
   } transport_client_configuration_t;

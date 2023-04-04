@@ -185,7 +185,6 @@ class TransportClientRegistry {
 
   Pointer<transport_client_configuration_t> _tcpConfiguration(TransportTcpClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
-    nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
     return nativeClientConfiguration;
@@ -200,7 +199,6 @@ class TransportClientRegistry {
 
   Pointer<transport_client_configuration_t> _unixStreamConfiguration(TransportUnixStreamClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
-    nativeClientConfiguration.ref.max_connections = clientConfiguration.maxConnections;
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
     return nativeClientConfiguration;

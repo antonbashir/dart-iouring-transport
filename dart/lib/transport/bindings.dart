@@ -26796,9 +26796,6 @@ class transport_listener_pool extends ffi.Struct {
 typedef transport_listener_pool_t = transport_listener_pool;
 
 class transport_client_configuration extends ffi.Struct {
-  @ffi.Int32()
-  external int max_connections;
-
   @ffi.Uint32()
   external int receive_buffer_size;
 
@@ -30827,7 +30824,7 @@ const int TRANSPORT_EVENT_RECEIVE_MESSAGE = 256;
 
 const int TRANSPORT_EVENT_SEND_MESSAGE = 512;
 
-const int TRANSPORT_EVENT_CUSTOM = 32768;
+const int TRANSPORT_EVENT_CUSTOM = 1024;
 
 const int TRANSPORT_BUFFER_AVAILABLE = -2;
 

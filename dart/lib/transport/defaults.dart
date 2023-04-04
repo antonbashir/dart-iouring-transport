@@ -30,7 +30,6 @@ class TransportDefaults {
       );
 
   static TransportTcpClientConfiguration tcpClient() => TransportTcpClientConfiguration(
-        maxConnections: 4096,
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
         pool: 1,
@@ -42,7 +41,6 @@ class TransportDefaults {
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
-        maxConnections: 4096,
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
         pool: 1,
