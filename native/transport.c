@@ -60,6 +60,11 @@ struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count)
   return malloc(sizeof(struct io_uring_cqe) * cqe_count);
 }
 
+int transport_get_kernel_error()
+{
+  return errno;
+}
+
 int transport_close_descritor(int fd)
 {
   return close(fd);

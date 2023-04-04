@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -103,13 +104,15 @@ class Transport {
       _workerClosers.add(ports[3]);
       final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.inbound_worker_configuration, inboundWorkerAddresses.length);
       if (inboundWorkerPointer == nullptr) {
-        listenerCompleter.completeError(TransportException("[worker] is null"));
+        final error = _bindings.transport_get_kernel_error();
+        listenerCompleter.completeError(TransportException("[worker] is null, error = $error, message = ${error.kernelErrorToString(_bindings)}"));
         return;
       }
       inboundWorkerAddresses.add(inboundWorkerPointer.address);
       final outboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.outbound_worker_configuration, outboundWorkerAddresses.length);
       if (outboundWorkerPointer == nullptr) {
-        listenerCompleter.completeError(TransportException("[worker] is null"));
+        final error = _bindings.transport_get_kernel_error();
+        listenerCompleter.completeError(TransportException("[worker] is null, error = $error, message = ${error.kernelErrorToString(_bindings)}"));
         return;
       }
       outboundWorkerAddresses.add(outboundWorkerPointer.address);
@@ -131,7 +134,8 @@ class Transport {
       await workersCompleter.future;
       final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration, listeners);
       if (listenerPointer == nullptr) {
-        listenerCompleter.completeError(TransportException("[listener] is null"));
+        final error = _bindings.transport_get_kernel_error();
+        listenerCompleter.completeError(TransportException("[listener] is null, error = $error, message = ${error.kernelErrorToString(_bindings)}"));
         fromTransportToListener.close();
         return;
       }

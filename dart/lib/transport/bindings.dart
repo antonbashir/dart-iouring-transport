@@ -19616,6 +19616,16 @@ class TransportBindings {
   late final _transport_close_descritor =
       _transport_close_descritorPtr.asFunction<int Function(int)>();
 
+  int transport_get_kernel_error() {
+    return _transport_get_kernel_error();
+  }
+
+  late final _transport_get_kernel_errorPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function()>>(
+          'transport_get_kernel_error');
+  late final _transport_get_kernel_error =
+      _transport_get_kernel_errorPtr.asFunction<int Function()>();
+
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
   ) {
@@ -23712,6 +23722,8 @@ class _SymbolAddresses {
       get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function()>>
+      get transport_get_kernel_error => _library._transport_get_kernel_errorPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<
@@ -30848,7 +30860,7 @@ const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'Debug';
+const String BUILD_TYPE = 'RelWithDebInfo';
 
 const String BUILD_INFO = '';
 

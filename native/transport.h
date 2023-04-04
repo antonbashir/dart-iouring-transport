@@ -46,6 +46,8 @@ extern "C"
   void transport_destroy(transport_t *transport);
 
   int transport_close_descritor(int fd);
+
+  int transport_get_kernel_error();
 #if defined(__cplusplus)
 }
 #endif
