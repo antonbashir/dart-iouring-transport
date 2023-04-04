@@ -114,7 +114,7 @@ const transportEventReceiveMessageCallback = 1 << 6;
 const transportEventSendMessageCallback = 1 << 7;
 const transportEventReceiveMessage = 1 << 8;
 const transportEventSendMessage = 1 << 9;
-const transportEventCustomCallback = 1 << 10;
+const transportEventCustomCallback = 1 << 15;
 
 const transportEventAll = transportEventRead |
     transportEventWrite |
