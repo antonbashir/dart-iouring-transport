@@ -5,6 +5,7 @@ VM_NAME="inner"
 DISK_IMAGE="./ubuntu.img"
 
 usermod -G libvirt -a $USER
+chown libvirt-qemu:libvirt-qemu $DISK_IMAGE
 
 virt-install --import \
     --name "$VM_NAME" \
