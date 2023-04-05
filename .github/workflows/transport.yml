@@ -25,10 +25,10 @@ jobs:
           key: ubuntu-22.10
       
       - name: Prepare runner
-        run: sudo ./prepare.sh
+        run: sudo ci/prepare.sh
       
       - name: Launch VM
-        run: sudo ./install.sh
+        run: sudo ci/install.sh
 
       - name: Run
-        run: ./run.sh
+        run: ci/run.sh
