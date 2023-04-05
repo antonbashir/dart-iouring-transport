@@ -20,6 +20,8 @@ system_info:
   default_user:
     name: ubuntu
     home: /home/ubuntu
+    plain_text_passwd: 'ubuntu'
+    lock_passwd: True
 
 network:
   version: 2
