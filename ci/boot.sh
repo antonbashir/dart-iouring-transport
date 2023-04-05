@@ -47,7 +47,7 @@ sudo cloud-localds \
 sudo virt-install --import \
     --name "$VM_NAME" \
     --vcpu 2 \
-    --ram 2048 \
+    --ram 4096 \
     --disk $ROOT_DISK,device=disk,bus=virtio \
     --disk /var/lib/libvirt/images/$VM_NAME/cloud-init.iso,device=cdrom \
     --os-variant ubuntu20.04 \
