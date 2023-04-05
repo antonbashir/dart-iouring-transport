@@ -166,7 +166,7 @@ class TransportWorker {
           continue;
         }
         if (result < 0) {
-          if (result == -EAGAIN|| result == -ECONNRESET) {
+          if (result == -EAGAIN) {
             _handleRetryableError(data, fd, event);
             continue;
           }
@@ -202,7 +202,7 @@ class TransportWorker {
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
-          if (result == -EAGAIN || result == -ECONNRESET) {
+          if (result == -EAGAIN) {
             _handleRetryableError(data, fd, event);
             continue;
           }
