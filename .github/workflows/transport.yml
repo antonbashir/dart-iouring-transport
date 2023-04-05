@@ -15,22 +15,22 @@ jobs:
       - uses: dart-lang/setup-dart@v1.3
       - uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.16.x'
+          cmake-version: "3.16.x"
 
       - name: Cache VM
         uses: actions/cache@v3.0.5
         id: cache
         with:
-          path: /tmp/ubuntu.img
+          path: ./ubuntu.img
           key: ubuntu-22.10
-      
+
       - name: Prepare runner
         run: sudo bash ci/prepare.sh
-      
+
       - name: Download VM
         if: steps.cache.outputs.cache-hit != 'true'
         run: sudo bash ci/download.sh
-      
+
       - name: Boot VM
         run: sudo bash ci/boot.sh
 

@@ -2,7 +2,9 @@
 
 OS_TYPE="ubuntu-22.10-cloud"
 VM_NAME="inner"
-DISK_IMAGE="/tmp/ubuntu.img"
+DISK_IMAGE="./ubuntu.img"
+
+usermod -G libvirt -a $USER
 
 virt-install --import \
     --name "$VM_NAME" \
