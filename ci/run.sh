@@ -8,7 +8,7 @@ set -x
 
 ssh -o "StrictHostKeyChecking=no" "runner@$IP" uname -a
 scp -r $(pwd) "runner@$IP:/home/runner"
-ssh "runner@$IP" "cd dart-iouring-transport && test/test.exe"
+ssh "runner@$IP" "cd dart-iouring-transport/dart && test/test.exe"
 
 if [ $? -eq 0 ]
 then
