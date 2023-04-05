@@ -2,10 +2,9 @@
 
 OS_TYPE="ubuntu-22.10-cloud"
 VM_NAME="inner"
-DISK_IMAGE="./ubuntu.img"
+DISK_IMAGE="/tmp/ubuntu.img"
 
 usermod -G libvirt -a $USER
-chown libvirt-qemu:libvirt-qemu $DISK_IMAGE
 
 virt-install --import \
     --name "$VM_NAME" \
