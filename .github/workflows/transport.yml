@@ -1,5 +1,4 @@
 name: Dart IOUring Transport
-
 on:
   push:
     branches: [main]
@@ -8,14 +7,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v2
-      - uses: dart-lang/setup-dart@v1.3
-      - uses: jwlawson/actions-setup-cmake@v1.13
-        with:
-          cmake-version: "3.16.x"
 
       - name: Native configure
         run: cd native && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
@@ -26,22 +21,5 @@ jobs:
       - name: Dart build
         run: cd dart && dart pub get && dart compile exe test/test.dart
 
-      - name: Cache VM
-        uses: actions/cache@v3.0.5
-        id: cache
-        with:
-          path: /tmp/ubuntu.qcow2
-          key: ubuntu-22.10
-
-      - name: Prepare runner
-        run: sudo bash ci/prepare.sh
-
-      - name: Download VM
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: sudo bash ci/download.sh
-
-      - name: Boot VM
-        run: bash ci/boot.sh
-
-      - name: Run
-        run: bash ci/run.sh
+      - name: Dart Test
+        run: cd dart && test/test.exe
