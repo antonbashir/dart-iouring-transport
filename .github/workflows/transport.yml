@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v3.0.5
         id: cache
         with:
-          path: /tmp/ubuntu.img
+          path: /tmp/ubuntu.qcow2
           key: ubuntu-22.10
 
       - name: Prepare runner

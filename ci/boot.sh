@@ -34,8 +34,6 @@ password: ubuntu
 chpasswd: { expire: False }
 hostname: $VM_NAME
 
-# configure sshd to allow users logging in using password 
-# rather than just keys
 ssh_pwauth: True
 " |  tee /var/lib/libvirt/images/$VM_NAME/cloud-init.cfg
 
