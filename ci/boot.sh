@@ -14,5 +14,4 @@ virt-install --import \
     --network network:default \
     --graphics none \
     --console pty,target_type=serial \
-    --noautoconsole \
-    --filesystem "`pwd`",runner
+    --noautoconsole
