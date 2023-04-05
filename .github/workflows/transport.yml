@@ -27,6 +27,10 @@ jobs:
       - name: Prepare runner
         run: sudo bash ci/prepare.sh
       
+      - name: Download VM
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo bash ci/download.sh
+      
       - name: Boot VM
         run: sudo bash ci/boot.sh
 
