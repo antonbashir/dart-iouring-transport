@@ -129,6 +129,6 @@ struct sockaddr *transport_client_get_destination_address(transport_client_t *cl
 
 void transport_client_shutdown(transport_client_t *client)
 {
-  close(client->fd);
+  shutdown(client->fd, SHUT_RDWR);
   free(client);
 }

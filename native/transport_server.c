@@ -120,6 +120,6 @@ transport_server_t *transport_server_initialize_unix_dgram(transport_server_conf
 
 void transport_server_shutdown(transport_server_t *server)
 {
-  close(server->fd);
+  shutdown(server->fd, SHUT_RDWR);
   free(server);
 }
