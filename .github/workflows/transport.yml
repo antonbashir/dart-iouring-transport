@@ -11,12 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: dart-lang/setup-dart@v1.3
-      - uses: jwlawson/actions-setup-cmake@v1.13
-        with:
-          cmake-version: "3.16.x"
-
       - name: Cache VM
         uses: actions/cache@v3.0.5
         id: cache

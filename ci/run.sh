@@ -8,6 +8,8 @@ set -x
 
 ssh -o "StrictHostKeyChecking=no" "runner@$IP" uname -a
 
+scp -r $(pwd) "runner@$IP:/home/runner"
+
 ssh "runner@$IP" "pwd; ls"
 
 ssh "runner@$IP" df -h
