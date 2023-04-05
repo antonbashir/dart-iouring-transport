@@ -38,13 +38,6 @@ network:
 
 hostname: $VM_NAME
 
-runcmd:
-  - apt-get update
-  - apt install build-essential cmake wget apt-transport-https
-  - wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/dart.gpg
-  - echo 'deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main' | tee /etc/apt/sources.list.d/dart_stable.list
-  - apt-get install dart
-
 " | sudo tee /var/lib/libvirt/images/$VM_NAME/cloud-init.cfg
 
 sudo cloud-localds \

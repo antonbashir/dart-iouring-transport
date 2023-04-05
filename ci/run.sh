@@ -7,9 +7,13 @@ wait-for-it "$IP:22" -t 300 -s -- echo ready
 set -x
 
 ssh -o "StrictHostKeyChecking=no" "runner@$IP" uname -a
-
 scp -r $(pwd) "runner@$IP:/home/runner"
-
+ssh "runner@$IP" "apt-get update"
+ssh "runner@$IP" "apt install build-essential cmake wget apt-transport-https"
+ssh "runner@$IP" "wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/dart.gpg"
+ssh "runner@$IP" "echo 'deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main' | tee /etc/apt/sources.list.d/dart_stable.list"
+ssh "runner@$IP" "apt-get update"
+ssh "runner@$IP" "apt-get install dart"
 ssh "runner@$IP" "cd dart-iouring-transport && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo . && make -j && cd dart && dart pub get && dart run test/test.dart"
 
 sudo virsh shutdown inner
