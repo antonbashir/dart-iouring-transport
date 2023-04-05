@@ -17,14 +17,18 @@ jobs:
         with:
           cmake-version: '3.16.x'
 
-      - name: Native configure
-        run: cd native && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+      - name: Cache VM
+        uses: actions/cache@v3.0.5
+        id: cache
+        with:
+          path: ./ubuntu-22.10-server-cloudimg-amd64.img
+          key: ubuntu-22.10
+      
+      - name: Prepare runner
+        run: sudo ./prepare.sh
+      
+      - name: Launch VM
+        run: sudo ./install.sh
 
-      - name: Native build
-        run: cd native &&  make -j 
-
-      - name: Dart dependencies
-        run: cd dart && dart pub get
-
-      - name: Run tests
-        run: cd dart && dart run test/test.dart
+      - name: Run
+        run: ./run.sh
