@@ -12,7 +12,8 @@ apt install -y \
     libguestfs-tools \
     wait-for-it \
     whois \
-    sshpass
+    sshpass \
+    cloud-image-utils
 
 virsh net-destroy default
 virsh net-undefine default
