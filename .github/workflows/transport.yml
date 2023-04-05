@@ -21,15 +21,15 @@ jobs:
         uses: actions/cache@v3.0.5
         id: cache
         with:
-          path: /tmp/ubuntu.img
+          path: /tmp/inner.qcow2
           key: ubuntu-22.10
 
       - name: Prepare runner
         run: sudo bash ci/prepare.sh
 
-      - name: Download VM
+      - name: Build VM
         if: steps.cache.outputs.cache-hit != 'true'
-        run: sudo bash ci/download.sh
+        run: sudo bash ci/build.sh
 
       - name: Boot VM
         run: sudo bash ci/boot.sh

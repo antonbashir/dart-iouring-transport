@@ -2,7 +2,7 @@
 
 OS_TYPE="ubuntu-22.10-cloud"
 VM_NAME="inner"
-DISK_IMAGE="/tmp/ubuntu.img"
+DISK_IMAGE="/tmp/$VM_NAME.qcow2"
 
 usermod -G libvirt -a $USER
 
