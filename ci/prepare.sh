@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+apt update
+
 apt install -y \
     bridge-utils \
     qemu-kvm \
