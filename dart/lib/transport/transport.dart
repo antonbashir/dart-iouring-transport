@@ -132,7 +132,7 @@ class Transport {
       }
       (port as SendPort).send([
         _libraryPath,
-        _transportPointer.address,
+        listenerPointer.address,
         listenerConfiguration.ringSize,
         workerMeessagePorts,
       ]);
