@@ -22,4 +22,4 @@ jobs:
         run: cd dart && dart pub get && dart compile exe test/test.dart
 
       - name: Dart Test
-        run: cd dart && test/test.exe
+        run: ulimit -n 131072 && cd dart && test/test.exe
