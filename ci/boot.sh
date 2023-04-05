@@ -1,8 +1,7 @@
 #!/bin/bash
 
-OS_TYPE="ubuntu-22.10-cloud"
 VM_NAME="inner"
-DISK_IMAGE="/tmp/$VM_NAME.qcow2"
+DISK_IMAGE="/tmp/ubuntu.qcow2"
 
 usermod -G libvirt -a $USER
 
@@ -16,4 +15,5 @@ virt-install --import \
     --graphics none \
     --console pty,target_type=serial \
     --noautoconsole \
-    --filesystem "`pwd`",runner
+    --filesystem "`pwd`",runner \
+    --import
