@@ -4,20 +4,20 @@ VM_NAME="inner"
 DISK_IMAGE="/tmp/ubuntu.qcow2"
 ROOT_DISK="/var/lib/libvirt/images/$VM_NAME/root-disk.qcow2"
 
-mkdir /var/lib/libvirt/images/$VM_NAME \
+sudo mkdir /var/lib/libvirt/images/$VM_NAME \
   && qemu-img convert \
   -f qcow2 \
   -O qcow2 \
   $DISK_IMAGE \
   $ROOT_DISK
 
-qemu-img resize \
+sudo qemu-img resize \
   $ROOT_DISK \
   20G
 
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -P ""
 
-echo "#cloud-config
+sudo echo "#cloud-config
 users:
   - default
   - name: runner
@@ -40,13 +40,13 @@ network:
 hostname: $VM_NAME
 
 ssh_pwauth: True
-" |  tee /var/lib/libvirt/images/$VM_NAME/cloud-init.cfg
+" | sudo tee /var/lib/libvirt/images/$VM_NAME/cloud-init.cfg
 
 sudo cloud-localds \
   /var/lib/libvirt/images/$VM_NAME/cloud-init.iso \
   /var/lib/libvirt/images/$VM_NAME/cloud-init.cfg
 
-virt-install --import \
+sudo virt-install --import \
     --name "$VM_NAME" \
     --vcpu 2 \
     --ram 2048 \
