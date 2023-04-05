@@ -21,6 +21,15 @@ system_info:
     name: ubuntu
     home: /home/ubuntu
 
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    alleths:
+      match:
+        name: en*
+      dhcp4: true
+
 password: ubuntu
 chpasswd: { expire: False }
 hostname: $VM_NAME
