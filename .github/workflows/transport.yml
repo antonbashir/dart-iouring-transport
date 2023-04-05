@@ -12,6 +12,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: dart-lang/setup-dart@v1.3
+      - uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: "3.16.x"
+
+      - name: Native configure
+        run: cd native && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+
+      - name: Native build
+        run: cd native &&  make -j
 
       - name: Cache VM
         uses: actions/cache@v3.0.5
