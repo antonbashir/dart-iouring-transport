@@ -37,7 +37,8 @@ network:
       dhcp4: true
 
 hostname: $VM_NAME
-
+package_update: true
+package_upgrade: true
 packages:
 - build-essential
 - cmake
