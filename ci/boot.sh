@@ -15,5 +15,4 @@ virt-install --import \
     --graphics none \
     --console pty,target_type=serial \
     --noautoconsole \
-    --filesystem "`pwd`",runner \
-    --import
+    --filesystem "`pwd`",runner
