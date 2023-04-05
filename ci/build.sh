@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-OS_TYPE="ubuntu-22.10"
+OS_TYPE="ubuntu-22.10-cloud"
 VM_NAME="inner"
 DISK_IMAGE="/tmp/$VM_NAME.qcow2"
 
