@@ -63,10 +63,10 @@ class TransportWorker {
     _closer = RawReceivePort((_) async {
       _listener.close();
       _closer.close();
-      _serverRegistry.shutdown();
       _clientRegistry.shutdown();
-      _bindings.transport_worker_destroy(_inboundWorkerPointer);
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
+      _serverRegistry.shutdown();
+      _bindings.transport_worker_destroy(_inboundWorkerPointer);
       Isolate.exit();
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);

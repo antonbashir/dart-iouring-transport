@@ -32,8 +32,8 @@ class TransportServer {
   }
 
   void shutdown() {
-    _bindings.transport_server_shutdown(pointer);
     controller.close();
+    _bindings.transport_server_shutdown(pointer);
   }
 }
 
