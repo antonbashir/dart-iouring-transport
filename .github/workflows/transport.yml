@@ -23,6 +23,9 @@ jobs:
       - name: Native build
         run: cd native &&  make -j
 
+      - name: Dart build
+        run: cd dart && dart pub get && dart compile exe test/test.dart
+
       - name: Cache VM
         uses: actions/cache@v3.0.5
         id: cache
