@@ -2,7 +2,7 @@
 
 OS_TYPE="ubuntu-22.10-cloud"
 VM_NAME="inner"
-DISK_IMAGE="ubuntu-22.10-server-cloudimg-amd64.img"
+DISK_IMAGE="/tmp/ubuntu.image"
 
 virt-install --import \
     --name "$VM_NAME" \
