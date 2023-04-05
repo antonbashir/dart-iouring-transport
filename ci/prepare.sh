@@ -16,7 +16,7 @@ apt install -y \
 
 virsh net-destroy default
 virsh net-undefine default
-virsh net-define ./default_network.xml
+virsh net-define ci/default_network.xml
 virsh net-autostart default
 virsh net-start default
 
