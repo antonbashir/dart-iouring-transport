@@ -167,7 +167,7 @@ class TransportWorker {
         }
         if (result < 0) {
           if (result == -EAGAIN) {
-            _handleAgainError(data, fd, event);
+            _handleRetryableError(data, fd, event);
             continue;
           }
           _handleUnhandledError(result, data, fd, event);
@@ -202,8 +202,8 @@ class TransportWorker {
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
-          if (result == -EAGAIN) {
-            _handleAgainError(data, fd, event);
+          if (result == -EAGAIN || result == -ECONNRESET) {
+            _handleRetryableError(data, fd, event);
             continue;
           }
           _handleUnhandledError(result, data, fd, event);
@@ -229,7 +229,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleAgainError(int data, int fd, int event) {
+  void _handleRetryableError(int data, int fd, int event) {
     switch (event) {
       case transportEventRead:
         final bufferId = ((data >> 16) & 0xffff);
