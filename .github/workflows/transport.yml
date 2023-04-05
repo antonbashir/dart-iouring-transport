@@ -16,7 +16,7 @@ jobs:
         run: cd native && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
 
       - name: Native build
-        run: cd native &&  make -j
+        run: cd native && make
 
       - name: Dart build
         run: cd dart && dart pub get && dart compile exe test/test.dart
