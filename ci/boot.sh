@@ -5,7 +5,7 @@ DISK_IMAGE="/tmp/ubuntu.qcow2"
 ROOT_DISK="/var/lib/libvirt/images/$VM_NAME/root-disk.qcow2"
 
 sudo mkdir /var/lib/libvirt/images/$VM_NAME \
-  && qemu-img convert \
+  && sudo qemu-img convert \
   -f qcow2 \
   -O qcow2 \
   $DISK_IMAGE \
