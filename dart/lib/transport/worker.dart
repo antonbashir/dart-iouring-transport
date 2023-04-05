@@ -309,7 +309,7 @@ class TransportWorker {
     switch (event) {
       case transportEventRead:
       case transportEventWrite:
-        final server = _serverRegistry.getByServer(fd);
+        final server = _serverRegistry.getByClient(fd);
         if (!server.controller.hasListener) {
           _releaseInboundBuffer(((userData >> 16) & 0xffff));
           _bindings.transport_close_descritor(fd);
@@ -321,7 +321,7 @@ class TransportWorker {
         return;
       case transportEventReceiveMessage:
       case transportEventSendMessage:
-        final server = _serverRegistry.getByClient(fd);
+        final server = _serverRegistry.getByServer(fd);
         if (!server.controller.hasListener) {
           _releaseInboundBuffer(((userData >> 16) & 0xffff));
           return;
