@@ -166,7 +166,7 @@ class TransportWorker {
           continue;
         }
         if (result < 0) {
-          if (result == -EAGAIN) {
+          if (result == -EAGAIN || result == -ECONNREFUSED) {
             _handleRetryableError(data, fd, event);
             continue;
           }
