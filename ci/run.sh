@@ -6,11 +6,11 @@ wait-for-it "$IP:22" -t 300 -s -- echo ready
 
 set -x
 
-sshpass -p ubuntu ssh -o "StrictHostKeyChecking=no" "ubuntu@$IP" uname -a
+ssh -o "StrictHostKeyChecking=no" "runner@$IP" uname -a
 
-sshpass -p ubuntu ssh "ubuntu@$IP" "pwd; ls"
+ssh "runner@$IP" "pwd; ls"
 
-sshpass -p ubuntu ssh "ubuntu@$IP" df -h
+ssh "runner@$IP" df -h
 
 sudo virsh shutdown inner
 until sudo virsh domstate inner | grep shut; do

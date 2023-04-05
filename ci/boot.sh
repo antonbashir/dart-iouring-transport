@@ -15,13 +15,17 @@ qemu-img resize \
   $ROOT_DISK \
   20G
 
+ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -P ""
+
 echo "#cloud-config
-system_info:
-  default_user:
-    name: ubuntu
-    home: /home/ubuntu
-    plain_text_passwd: 'ubuntu'
-    lock_passwd: True
+users:
+  - default
+  - name: runner
+    ssh-authorized-keys:
+      - $(cat ~/.ssh/id_rsa.pub)
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo
+    shell: /bin/bash
 
 network:
   version: 2
@@ -32,8 +36,7 @@ network:
         name: en*
       dhcp4: true
 
-password: ubuntu
-chpasswd: { expire: False }
+
 hostname: $VM_NAME
 
 ssh_pwauth: True
