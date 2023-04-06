@@ -35,11 +35,11 @@ class TransportCallbacks {
   void notifyCustom(int id, int data) => _customCallbacks[id]!.complete(data);
 
   @pragma(preferInlinePragma)
-  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)!.completeError(error);
+  void notifyConnectError(int fd, Exception error) => _connectCallbacks.remove(fd)?.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)!.completeError(error);
+  void notifyReadError(int bufferId, Exception error) => _readCallbacks.remove(bufferId)?.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)!.completeError(error);
+  void notifyWriteError(int bufferId, Exception error) => _writeCallbacks.remove(bufferId)?.completeError(error);
 }
