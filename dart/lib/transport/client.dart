@@ -4,7 +4,6 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/exception.dart';
 
 import 'bindings.dart';
 import 'callbacks.dart';
@@ -12,6 +11,7 @@ import 'channels.dart';
 import 'configuration.dart';
 import 'constants.dart';
 import 'defaults.dart';
+import 'exception.dart';
 import 'payload.dart';
 
 class TransportCommunicator {
@@ -41,7 +41,7 @@ class TransportClient {
   TransportClient(this._callbacks, this._channel, this.pointer);
 
   Future<TransportOutboundPayload> read() async {
-    if (_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
@@ -50,7 +50,7 @@ class TransportClient {
   }
 
   Future<void> write(Uint8List bytes) async {
-    if (_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
@@ -59,7 +59,7 @@ class TransportClient {
   }
 
   Future<TransportOutboundPayload> receiveMessage() async {
-    if (_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
@@ -68,7 +68,7 @@ class TransportClient {
   }
 
   Future<void> sendMessage(Uint8List bytes) async {
-    if (_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
