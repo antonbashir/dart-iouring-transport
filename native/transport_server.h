@@ -39,7 +39,7 @@ extern "C"
                                                               const char *path);
   transport_server_t *transport_server_initialize_unix_dgram(transport_server_configuration_t *configuration,
                                                              const char *path);
-  void transport_server_shutdown(transport_server_t *server);
+  void transport_server_close(transport_server_t *server);
 #if defined(__cplusplus)
 }
 #endif

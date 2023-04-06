@@ -118,7 +118,7 @@ transport_server_t *transport_server_initialize_unix_dgram(transport_server_conf
   return server;
 }
 
-void transport_server_shutdown(transport_server_t *server)
+void transport_server_close(transport_server_t *server)
 {
   shutdown(server->fd, SHUT_RDWR);
   close(server->fd);
