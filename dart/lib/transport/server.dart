@@ -18,6 +18,9 @@ class TransportServer {
   late final Stream<TransportInboundPayload> stream;
   late final void Function(TransportInboundChannel channel)? acceptor;
 
+  var _active = true;
+  bool get active => _active;
+
   TransportServer(this.pointer, this._bindings) {
     controller = StreamController();
     stream = controller.stream;
@@ -32,8 +35,11 @@ class TransportServer {
   }
 
   void close() {
-    controller.close();
-    _bindings.transport_server_close(pointer);
+    if (_active) {
+      controller.close();
+      _bindings.transport_server_close(pointer);
+      _active = false;
+    }
   }
 }
 
@@ -104,10 +110,10 @@ class TransportServerRegistry {
   }
 
   @pragma(preferInlinePragma)
-  TransportServer getByServer(int fd) => _servers[fd]!;
+  TransportServer? getByServer(int fd) => _servers[fd];
 
   @pragma(preferInlinePragma)
-  TransportServer getByClient(int fd) => _serversByClients[fd]!;
+  TransportServer? getByClient(int fd) => _serversByClients[fd];
 
   @pragma(preferInlinePragma)
   void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
@@ -115,9 +121,13 @@ class TransportServerRegistry {
   @pragma(preferInlinePragma)
   void removeClient(int fd) => _serversByClients.remove(fd);
 
-  void close() {
-    _servers.values.forEach((server) => server.close());
+  @pragma(preferInlinePragma)
+  void removeServer(int fd) => _servers.remove(fd);
+
+  @pragma(preferInlinePragma)
+  void clear() {
     _servers.clear();
+    _serversByClients.clear();
   }
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {

@@ -18,14 +18,12 @@ class TransportServersFactory {
   final TransportServerRegistry _registry;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
-  final TransportWorker _worker;
   final Queue<Completer<int>> _bufferFinalizers;
 
   TransportServersFactory(
     this._registry,
     this._workerPointer,
     this._bindings,
-    this._worker,
     this._bufferFinalizers,
   );
 
@@ -52,7 +50,6 @@ class TransportServersFactory {
       server.pointer.ref.fd,
       _bindings,
       _bufferFinalizers,
-      _worker,
       server,
     ));
     handler(server.stream);
@@ -79,7 +76,6 @@ class TransportServersFactory {
       server.pointer.ref.fd,
       _bindings,
       _bufferFinalizers,
-      _worker,
       server,
     ));
     handler(server.stream);
@@ -129,6 +125,6 @@ class TransportFilesFactory {
 
   TransportFile open(String path) {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers, _worker));
+    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
   }
 }

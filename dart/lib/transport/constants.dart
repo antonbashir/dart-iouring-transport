@@ -81,8 +81,6 @@ class PackageConfigFields {
   static const packages = 'packages';
 }
 
-enum TransportChannelPoolMode { RoundRobbin, LeastConnections }
-
 enum TransportLogLevel {
   trace,
   debug,
@@ -100,6 +98,7 @@ const transportLogLevels = [
   "ERROR",
   "FATAL",
 ];
+
 
 const transportBufferAvailable = -2;
 const transportBufferUsed = -1;
