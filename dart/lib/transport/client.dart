@@ -14,6 +14,22 @@ import 'constants.dart';
 import 'defaults.dart';
 import 'payload.dart';
 
+class TransportCommunicator {
+  final TransportClient _client;
+
+  TransportCommunicator(this._client);
+
+  Future<TransportOutboundPayload> read() => _client.read();
+
+  Future<void> write(Uint8List bytes) => _client.write(bytes);
+
+  Future<TransportOutboundPayload> receiveMessage() => _client.receiveMessage();
+
+  Future<void> sendMessage(Uint8List bytes) => _client.sendMessage(bytes);
+
+  void close() => _client.close();
+}
+
 class TransportClient {
   final TransportCallbacks _callbacks;
   final Pointer<transport_client_t> pointer;
@@ -68,21 +84,21 @@ class TransportClient {
   }
 }
 
-class TransportClientPool {
-  final List<TransportClient> _clients;
+class TransportCommunicators {
+  final List<TransportCommunicator> _communicators;
   var _next = 0;
 
-  TransportClientPool(this._clients);
+  TransportCommunicators(this._communicators);
 
-  TransportClient select() {
-    final client = _clients[_next];
-    if (++_next == _clients.length) _next = 0;
+  TransportCommunicator select() {
+    final client = _communicators[_next];
+    if (++_next == _communicators.length) _next = 0;
     return client;
   }
 
-  void forEach(FutureOr<void> Function(TransportClient client) action) => _clients.forEach(action);
+  void forEach(FutureOr<void> Function(TransportCommunicator communicator) action) => _communicators.forEach(action);
 
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportClient client) mapper) => _clients.map(mapper);
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportCommunicator communicator) mapper) => _communicators.map(mapper);
 }
 
 class TransportClientRegistry {
@@ -94,8 +110,8 @@ class TransportClientRegistry {
 
   TransportClientRegistry(this._callbacks, this._workerPointer, this._bindings, this._bufferFinalizers);
 
-  Future<TransportClientPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
-    final clients = <Future<TransportClient>>[];
+  Future<TransportCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
+    final communicators = <Future<TransportCommunicator>>[];
     configuration = configuration ?? TransportDefaults.tcpClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = using((arena) => _bindings.transport_client_initialize_tcp(
@@ -116,13 +132,13 @@ class TransportClientRegistry {
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(clientPointer.ref.fd, completer);
       _bindings.transport_worker_connect(_workerPointer, clientPointer);
-      clients.add(completer.future);
+      communicators.add(completer.future.then((client) => TransportCommunicator(client)));
     }
-    return TransportClientPool(await Future.wait(clients));
+    return TransportCommunicators(await Future.wait(communicators));
   }
 
-  Future<TransportClientPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
-    final clients = <Future<TransportClient>>[];
+  Future<TransportCommunicators> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
+    final clients = <Future<TransportCommunicator>>[];
     configuration = configuration ?? TransportDefaults.unixStreamClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = using((arena) => _bindings.transport_client_initialize_unix_stream(
@@ -142,12 +158,12 @@ class TransportClientRegistry {
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(clientPointer.ref.fd, completer);
       _bindings.transport_worker_connect(_workerPointer, clientPointer);
-      clients.add(completer.future);
+      clients.add(completer.future.then((client) => TransportCommunicator(client)));
     }
-    return TransportClientPool(await Future.wait(clients));
+    return TransportCommunicators(await Future.wait(clients));
   }
 
-  TransportClient createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
+  TransportCommunicator createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpClient();
     final clientPointer = using(
       (arena) => _bindings.transport_client_initialize_udp(
@@ -169,10 +185,10 @@ class TransportClientRegistry {
       clientPointer,
     );
     _clients[clientPointer.ref.fd] = client;
-    return client;
+    return TransportCommunicator(client);
   }
 
-  TransportClient createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
+  TransportCommunicator createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramClient();
     final clientPointer = using(
       (arena) => _bindings.transport_client_initialize_unix_dgram(
@@ -192,7 +208,7 @@ class TransportClientRegistry {
       clientPointer,
     );
     _clients[clientPointer.ref.fd] = client;
-    return client;
+    return TransportCommunicator(client);
   }
 
   @pragma(preferInlinePragma)

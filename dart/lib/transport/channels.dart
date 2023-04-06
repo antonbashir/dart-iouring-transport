@@ -7,7 +7,6 @@ import 'bindings.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'server.dart';
-import 'worker.dart';
 
 class TransportChannel {
   final int _fd;
@@ -48,13 +47,13 @@ class TransportInboundChannel extends TransportChannel {
   }
 
   Future<void> read() async {
-    if (_server.active) throw TransportClosedException.forServer();
+    if (!_server.active) throw TransportClosedException.forServer();
     final bufferId = await _allocate();
     _bindings.transport_worker_read(_workerPointer, _fd, bufferId, 0, transportEventRead);
   }
 
   Future<void> receiveMessage({int flags = 0}) async {
-    if (_server.active) throw TransportClosedException.forServer();
+    if (!_server.active) throw TransportClosedException.forServer();
     final bufferId = await _allocate();
     _bindings.transport_worker_receive_message(
       _workerPointer,

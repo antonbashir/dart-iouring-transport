@@ -89,9 +89,9 @@ class TransportClientsFactory {
     this._registry,
   );
 
-  Future<TransportClientPool> tcp(String host, int port, {TransportTcpClientConfiguration? configuration}) => _registry.createTcp(host, port, configuration: configuration);
+  Future<TransportCommunicators> tcp(String host, int port, {TransportTcpClientConfiguration? configuration}) => _registry.createTcp(host, port, configuration: configuration);
 
-  TransportClient udp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) => _registry.createUdp(
+  TransportCommunicator udp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) => _registry.createUdp(
         sourceHost,
         sourcePort,
         destinationHost,
@@ -99,9 +99,9 @@ class TransportClientsFactory {
         configuration: configuration,
       );
 
-  Future<TransportClientPool> unixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) => _registry.createUnixStream(path, configuration: configuration);
+  Future<TransportCommunicators> unixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) => _registry.createUnixStream(path, configuration: configuration);
 
-  TransportClient unixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) => _registry.createUnixDatagram(
+  TransportCommunicator unixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) => _registry.createUnixDatagram(
         sourcePath,
         destinationPath,
         configuration: configuration,
