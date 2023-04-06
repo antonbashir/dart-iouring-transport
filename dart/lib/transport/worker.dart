@@ -55,26 +55,23 @@ class TransportWorker {
   TransportClientsFactory get clients => _clientsfactory;
   TransportFilesFactory get files => _filesfactory;
 
-  var _active = true;
-
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
-      if (!_active) return;
       _handleInboundCqes();
       _handleOutboundCqes();
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
-      _active = false;
-
       _handleInboundCqes();
       _handleOutboundCqes();
 
       _clientRegistry.close();
+
+      await _serverRegistry.close();
+      
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
       malloc.free(_outboundCqes);
 
-      _serverRegistry.close();
       _bindings.transport_worker_destroy(_inboundWorkerPointer);
       malloc.free(_inboundCqes);
 
@@ -257,7 +254,7 @@ class TransportWorker {
     if (!server.active) {
       if (bufferId != null) _releaseInboundBuffer(bufferId);
       if (clientFd != null) _serverRegistry.removeClient(clientFd);
-      _serverRegistry.removeServer(server.pointer.ref.fd);
+      _serverRegistry.removeServer(server.fd);
       return false;
     }
     return true;
@@ -433,7 +430,7 @@ class TransportWorker {
         return;
       case transportEventAccept:
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, null, result)) return;
+        if (!_ensureServerIsActive(server, null, null)) return;
         _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
         return;
       case transportEventConnect:

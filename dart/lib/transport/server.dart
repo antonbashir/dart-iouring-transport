@@ -14,6 +14,7 @@ class TransportServer {
   final Pointer<transport_server_t> pointer;
   final TransportBindings _bindings;
 
+  late final int fd;
   late final StreamController<TransportInboundPayload> controller;
   late final Stream<TransportInboundPayload> stream;
   late final void Function(TransportInboundChannel channel)? acceptor;
@@ -24,6 +25,7 @@ class TransportServer {
   TransportServer(this.pointer, this._bindings) {
     controller = StreamController();
     stream = controller.stream;
+    fd = pointer.ref.fd;
   }
 
   void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportInboundChannel channel) acceptor) {
@@ -48,6 +50,9 @@ class TransportServerRegistry {
   final _serversByClients = <int, TransportServer>{};
 
   final TransportBindings _bindings;
+
+  var _closing = false;
+  final _closingCompleter = Completer();
 
   TransportServerRegistry(this._bindings);
 
@@ -119,16 +124,24 @@ class TransportServerRegistry {
   void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
 
   @pragma(preferInlinePragma)
-  void removeClient(int fd) => _serversByClients.remove(fd);
+  void removeClient(int fd) {
+    if (_serversByClients.remove(fd) != null && _closing && _servers.isEmpty && _serversByClients.isEmpty) {
+      _closingCompleter.complete();
+    }
+  }
 
   @pragma(preferInlinePragma)
-  void removeServer(int fd) => _servers.remove(fd);
+  void removeServer(int fd) {
+    if (_servers.remove(fd) != null && _closing && _servers.isEmpty && _serversByClients.isEmpty) {
+      _closingCompleter.complete();
+    }
+  }
 
   @pragma(preferInlinePragma)
-  void close() {
+  Future<void> close() async {
+    _closing = true;
     _servers.values.forEach((server) => server.close());
-    _servers.clear();
-    _serversByClients.clear();
+    if (_servers.isNotEmpty) await _closingCompleter.future;
   }
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {
