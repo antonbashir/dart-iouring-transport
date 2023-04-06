@@ -367,7 +367,7 @@ class TransportWorker {
         return;
       case transportEventAccept:
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, null, fd)) return;
+        if (!_ensureServerIsActive(server, null, null)) return;
         _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
         return;
       case transportEventConnect:
