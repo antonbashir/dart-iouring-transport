@@ -215,7 +215,10 @@ class TransportClientRegistry {
   TransportClient? get(int fd) => _clients[fd];
 
   @pragma(preferInlinePragma)
-  void clear() => _clients.clear();
+  void close() {
+    _clients.values.forEach((client) => client.close());
+    _clients.clear();
+  }
 
   @pragma(preferInlinePragma)
   void removeClient(int fd) => _clients.remove(fd);

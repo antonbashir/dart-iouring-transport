@@ -65,11 +65,11 @@ class TransportWorker {
       _handleInboundCqes();
       _handleOutboundCqes();
 
-      _clientRegistry.clear();
+      _clientRegistry.close();
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
       malloc.free(_outboundCqes);
 
-      _serverRegistry.clear();
+      _serverRegistry.close();
       _bindings.transport_worker_destroy(_inboundWorkerPointer);
       malloc.free(_inboundCqes);
 
@@ -171,6 +171,7 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
+        print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if ((result & 0xffff) == transportEventCustomCallback) {
           _callbacks.notifyCustom((result >> 16) & 0xffff, data);
           continue;
@@ -211,6 +212,7 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
+        print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if (result < 0) {
           if (_errorIsRetryable(result)) {
             _handleRetryableError(data, fd, event);
@@ -472,7 +474,7 @@ class TransportWorker {
         final client = _clientRegistry.get(fd);
         final bufferId = ((data >> 16) & 0xffff);
         if (!_ensureClientIsActive(client, bufferId, fd)) {
-          _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+          _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
           return;
         }
         _releaseOutboundBuffer(bufferId);

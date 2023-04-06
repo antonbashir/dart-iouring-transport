@@ -125,7 +125,8 @@ class TransportServerRegistry {
   void removeServer(int fd) => _servers.remove(fd);
 
   @pragma(preferInlinePragma)
-  void clear() {
+  void close() {
+    _servers.values.forEach((server) => server.close());
     _servers.clear();
     _serversByClients.clear();
   }
