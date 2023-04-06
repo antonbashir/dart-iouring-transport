@@ -55,13 +55,18 @@ class TransportWorker {
   TransportClientsFactory get clients => _clientsfactory;
   TransportFilesFactory get files => _filesfactory;
 
+  var _active = true;
+
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
+      if (!_active) return;
       _handleInboundCqes();
       _handleOutboundCqes();
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
+      _active = false;
+
       _handleInboundCqes();
       _handleOutboundCqes();
 
@@ -171,7 +176,7 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
-        print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
+        //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if ((result & 0xffff) == transportEventCustomCallback) {
           _callbacks.notifyCustom((result >> 16) & 0xffff, data);
           continue;
@@ -212,7 +217,7 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
-        print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
+        //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if (result < 0) {
           if (_errorIsRetryable(result)) {
             _handleRetryableError(data, fd, event);
