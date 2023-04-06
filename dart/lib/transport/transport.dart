@@ -71,8 +71,6 @@ class Transport {
     _listenerExit.close();
 
     _bindings.transport_destroy(_transportPointer);
-
-    await Future.delayed(Duration(seconds: 1));
   }
 
   Future<void> run(void Function(SendPort input) worker, {SendPort? transmitter}) async {
