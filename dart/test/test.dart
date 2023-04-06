@@ -42,7 +42,7 @@ void main() {
     }
   });
   group("[udp]", () {
-    final testTestsCount = 5;
+    final testTestsCount = 20;
     for (var index = 0; index < testTestsCount; index++) {
       testUdp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUdp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);

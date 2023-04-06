@@ -173,12 +173,12 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
-        //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if ((result & 0xffff) == transportEventCustomCallback) {
           _callbacks.notifyCustom((result >> 16) & 0xffff, data);
           continue;
         }
         if (result < 0) {
+          print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
           if (_errorIsRetryable(result)) {
             _handleRetryableError(data, fd, event);
             continue;
@@ -214,8 +214,8 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
-        //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if (result < 0) {
+          print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
           if (_errorIsRetryable(result)) {
             _handleRetryableError(data, fd, event);
             continue;
