@@ -20,7 +20,7 @@ class Transport {
   final _listenerExit = ReceivePort();
   final _workerExit = ReceivePort();
   final _workerClosers = <SendPort>[];
-  final _listenerClosers = <Pointer<transport_listener_t>>[];
+  final _listenerPointers = <Pointer<transport_listener_t>>[];
 
   late final String? _libraryPath;
   late final TransportBindings _bindings;
@@ -64,9 +64,12 @@ class Transport {
   Future<void> shutdown() async {
     _workerClosers.forEach((worker) => worker.send(null));
     await _workerExit.take(transportConfiguration.workerInsolates).toList();
-    _listenerClosers.forEach((listener) => _bindings.transport_listener_close(listener));
+    _workerExit.close();
+
+    _listenerPointers.forEach((listener) => _bindings.transport_listener_close(listener));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
     _listenerExit.close();
+
     _bindings.transport_destroy(_transportPointer);
   }
 
@@ -88,14 +91,14 @@ class Transport {
       _workerClosers.add(ports[3]);
       final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.inbound_worker_configuration, inboundWorkerAddresses.length);
       if (inboundWorkerPointer == nullptr) {
-        final error = _bindings.transport_get_kernel_error();
+        final error = -_bindings.transport_get_kernel_error();
         listenerCompleter.completeError(TransportException("[worker] is null, error = $error, message = ${error.kernelErrorToString(_bindings)}"));
         return;
       }
       inboundWorkerAddresses.add(inboundWorkerPointer.address);
       final outboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.outbound_worker_configuration, outboundWorkerAddresses.length);
       if (outboundWorkerPointer == nullptr) {
-        final error = _bindings.transport_get_kernel_error();
+        final error = -_bindings.transport_get_kernel_error();
         listenerCompleter.completeError(TransportException("[worker] is null, error = $error, message = ${error.kernelErrorToString(_bindings)}"));
         return;
       }
@@ -118,12 +121,12 @@ class Transport {
       await workersCompleter.future;
       final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration, listeners);
       if (listenerPointer == nullptr) {
-        final error = _bindings.transport_get_kernel_error();
+        final error = -_bindings.transport_get_kernel_error();
         listenerCompleter.completeError(TransportException("[listener] is null, error = $error, message = ${error.kernelErrorToString(_bindings)}"));
         fromTransportToListener.close();
         return;
       }
-      _listenerClosers.add(listenerPointer);
+      _listenerPointers.add(listenerPointer);
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
         final inboundWorker = Pointer.fromAddress(inboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
         _bindings.transport_listener_pool_add(inboundWorker.ref.listeners, listenerPointer);

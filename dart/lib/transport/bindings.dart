@@ -14995,19 +14995,19 @@ class TransportBindings {
               ffi.Pointer<transport_server_configuration_t>,
               ffi.Pointer<ffi.Char>)>();
 
-  void transport_server_shutdown(
+  void transport_server_close(
     ffi.Pointer<transport_server_t> server,
   ) {
-    return _transport_server_shutdown(
+    return _transport_server_close(
       server,
     );
   }
 
-  late final _transport_server_shutdownPtr = _lookup<
+  late final _transport_server_closePtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<transport_server_t>)>>('transport_server_shutdown');
-  late final _transport_server_shutdown = _transport_server_shutdownPtr
+              ffi.Pointer<transport_server_t>)>>('transport_server_close');
+  late final _transport_server_close = _transport_server_closePtr
       .asFunction<void Function(ffi.Pointer<transport_server_t>)>();
 
   int access(
@@ -17205,19 +17205,19 @@ class TransportBindings {
       _transport_client_get_destination_addressPtr.asFunction<
           ffi.Pointer<sockaddr> Function(ffi.Pointer<transport_client_t>)>();
 
-  void transport_client_shutdown(
+  void transport_client_close(
     ffi.Pointer<transport_client_t> client,
   ) {
-    return _transport_client_shutdown(
+    return _transport_client_close(
       client,
     );
   }
 
-  late final _transport_client_shutdownPtr = _lookup<
+  late final _transport_client_closePtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(
-              ffi.Pointer<transport_client_t>)>>('transport_client_shutdown');
-  late final _transport_client_shutdown = _transport_client_shutdownPtr
+              ffi.Pointer<transport_client_t>)>>('transport_client_close');
+  late final _transport_client_close = _transport_client_closePtr
       .asFunction<void Function(ffi.Pointer<transport_client_t>)>();
 
   double acos(
@@ -22798,7 +22798,7 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_server_t>)>>
-      get transport_server_shutdown => _library._transport_server_shutdownPtr;
+      get transport_server_close => _library._transport_server_closePtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int)>>
       get access => _library._accessPtr;
@@ -23274,7 +23274,7 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_client_t>)>>
-      get transport_client_shutdown => _library._transport_client_shutdownPtr;
+      get transport_client_close => _library._transport_client_closePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Double Function(ffi.Double)>> get acos =>
       _library._acosPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Double Function(ffi.Double)>> get asin =>

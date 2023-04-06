@@ -181,7 +181,16 @@ class TransportClientRegistry {
   @pragma(preferInlinePragma)
   Pointer<transport_client_t> get(int fd) => _clients[fd]!;
 
-  void shutdown() => _clients.values.forEach((client) => _bindings.transport_client_shutdown(client));
+  void close() {
+    _clients.values.forEach((client) => _bindings.transport_client_close(client));
+    _clients.clear();
+  }
+
+  void closeClient(int fd) {
+    final client = _clients[fd]!;
+    _bindings.transport_client_close(client);
+    _clients.clear();
+  }
 
   Pointer<transport_client_configuration_t> _tcpConfiguration(TransportTcpClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();

@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
 
+import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
@@ -61,12 +62,20 @@ class TransportWorker {
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
-      _clientRegistry.shutdown();
+      _handleInboundCqes();
+      _handleOutboundCqes();
+
+      _clientRegistry.close();
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
-      _serverRegistry.shutdown();
+      malloc.free(_outboundCqes);
+
+      _serverRegistry.close();
       _bindings.transport_worker_destroy(_inboundWorkerPointer);
+      malloc.free(_inboundCqes);
+
       _listener.close();
       _closer.close();
+
       Isolate.exit();
     });
     toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
@@ -166,7 +175,7 @@ class TransportWorker {
           continue;
         }
         if (result < 0) {
-          if (result == -EAGAIN || result == -ECONNREFUSED) {
+          if (result == -EAGAIN) {
             _handleRetryableError(data, fd, event);
             continue;
           }
@@ -313,15 +322,26 @@ class TransportWorker {
         if (!server.controller.hasListener) {
           _releaseInboundBuffer(((userData >> 16) & 0xffff));
           _bindings.transport_close_descritor(fd);
+          _serverRegistry.removeClient(fd);
           return;
         }
         _releaseInboundBuffer(((userData >> 16) & 0xffff));
         _bindings.transport_close_descritor(fd);
+        _serverRegistry.removeClient(fd);
         server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
         return;
       case transportEventReceiveMessage:
-      case transportEventSendMessage:
         final server = _serverRegistry.getByServer(fd);
+        _allocateInbound().then((newBufferId) {
+          _bindings.transport_worker_receive_message(
+            _inboundWorkerPointer,
+            fd,
+            newBufferId,
+            server.pointer.ref.family,
+            MSG_TRUNC,
+            transportEventReceiveMessage,
+          );
+        });
         if (!server.controller.hasListener) {
           _releaseInboundBuffer(((userData >> 16) & 0xffff));
           return;
@@ -329,11 +349,16 @@ class TransportWorker {
         _releaseInboundBuffer(((userData >> 16) & 0xffff));
         server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
         return;
+      case transportEventSendMessage:
+        final server = _serverRegistry.getByServer(fd);
+        _releaseInboundBuffer(((userData >> 16) & 0xffff));
+        server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+        return;
       case transportEventAccept:
         _bindings.transport_worker_accept(_inboundWorkerPointer, _serverRegistry.getByServer(fd).pointer);
         return;
       case transportEventConnect:
-        _bindings.transport_close_descritor(fd);
+        _clientRegistry.closeClient(fd);
         _callbacks.notifyConnectError(
           fd,
           TransportException.forEvent(
@@ -348,7 +373,7 @@ class TransportWorker {
       case transportEventReceiveMessageCallback:
         final bufferId = ((userData >> 16) & 0xffff);
         _releaseOutboundBuffer(((userData >> 16) & 0xffff));
-        _bindings.transport_close_descritor(fd);
+        _clientRegistry.closeClient(fd);
         _callbacks.notifyReadError(
           bufferId,
           TransportException.forEvent(
@@ -364,7 +389,7 @@ class TransportWorker {
       case transportEventSendMessageCallback:
         final bufferId = ((userData >> 16) & 0xffff);
         _releaseOutboundBuffer(((userData >> 16) & 0xffff));
-        _bindings.transport_close_descritor(fd);
+        _clientRegistry.closeClient(fd);
         _callbacks.notifyWriteError(
           bufferId,
           TransportException.forEvent(
@@ -479,7 +504,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleAccept(int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
-    _serverRegistry.mapClient(fd, result);
+    _serverRegistry.addClient(fd, result);
     _bindings.transport_worker_accept(_inboundWorkerPointer, server.pointer);
     server.acceptor!(TransportInboundChannel(
       _inboundWorkerPointer,

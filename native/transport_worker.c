@@ -297,9 +297,14 @@ void transport_worker_destroy(transport_worker_t *worker)
   for (size_t index = 0; index < worker->buffers_count; index++)
   {
     free(worker->buffers[index].iov_base);
+    free(worker->inet_used_messages[index].msg_name);
+    free(worker->unix_used_messages[index].msg_name);
   }
   free(worker->buffers);
   free(worker->used_buffers);
+  free(worker->inet_used_messages);
+  free(worker->unix_used_messages);
+  free(worker->listeners);
   free(worker->ring);
   free(worker);
 }

@@ -87,5 +87,6 @@ void transport_listener_destroy(transport_listener_t *listener)
 {
   io_uring_queue_exit(listener->ring);
   free(listener->ring);
+  free(listener->ready_workers);
   free(listener);
 }

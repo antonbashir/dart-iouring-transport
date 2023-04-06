@@ -1,6 +1,8 @@
 import 'dart:ffi';
 import 'dart:isolate';
 
+import 'package:ffi/ffi.dart';
+
 import 'bindings.dart';
 import 'lookup.dart';
 
@@ -22,6 +24,7 @@ class TransportListener {
     final cqes = bindings.transport_allocate_cqes(ringSize);
     while (true) {
       if (!bindings.transport_listener_reap(listenerPointer, cqes)) {
+        malloc.free(cqes);
         bindings.transport_listener_destroy(listenerPointer);
         Isolate.exit();
       }

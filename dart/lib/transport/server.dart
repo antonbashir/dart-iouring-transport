@@ -31,9 +31,9 @@ class TransportServer {
     );
   }
 
-  void shutdown() {
+  void close() {
     controller.close();
-    _bindings.transport_server_shutdown(pointer);
+    _bindings.transport_server_close(pointer);
   }
 }
 
@@ -110,9 +110,15 @@ class TransportServerRegistry {
   TransportServer getByClient(int fd) => _serversByClients[fd]!;
 
   @pragma(preferInlinePragma)
-  void mapClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
+  void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
 
-  void shutdown() => _servers.values.forEach((server) => server.shutdown());
+  @pragma(preferInlinePragma)
+  void removeClient(int fd) => _serversByClients.remove(fd);
+
+  void close() {
+    _servers.values.forEach((server) => server.close());
+    _servers.clear();
+  }
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
