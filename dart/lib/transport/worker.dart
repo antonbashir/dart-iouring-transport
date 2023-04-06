@@ -96,7 +96,6 @@ class TransportWorker {
       _outboundWorkerPointer,
       _bindings,
       _outboundBufferFinalizers,
-      this,
     );
     _serverRegistry = TransportServerRegistry(
       _bindings,
@@ -187,11 +186,11 @@ class TransportWorker {
         switch (event) {
           case transportEventReadCallback:
           case transportEventReceiveMessageCallback:
-            _handleReadAndReceiveMessageCallback((data >> 16) & 0xffff, result);
+            _handleReadAndReceiveMessageCallback((data >> 16) & 0xffff, result, fd);
             continue;
           case transportEventWriteCallback:
           case transportEventSendMessageCallback:
-            _handleWriteAndSendMessageCallback((data >> 16) & 0xffff, result);
+            _handleWriteAndSendMessageCallback((data >> 16) & 0xffff, result, fd);
             continue;
           case transportEventConnect:
             _handleConnect(fd);
@@ -228,8 +227,10 @@ class TransportWorker {
             _handleReceiveMessage((data >> 16) & 0xffff, fd, result);
             continue;
           case transportEventWrite:
+            _handleWrite((data >> 16) & 0xffff, fd);
+            continue;
           case transportEventSendMessage:
-            _handleWriteAndSendMessage((data >> 16) & 0xffff, fd);
+            _handleSendMessage((data >> 16) & 0xffff, fd);
             continue;
           case transportEventAccept:
             _handleAccept(fd, result);
@@ -240,14 +241,14 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  bool _ensureServerIsActive(TransportServer? server, int userData, int? clientFd) {
+  bool _ensureServerIsActive(TransportServer? server, int? bufferId, int? clientFd) {
     if (server == null) {
-      _releaseInboundBuffer(((userData >> 16) & 0xffff));
+      if (bufferId != null) _releaseInboundBuffer(bufferId);
       if (clientFd != null) _serverRegistry.removeClient(clientFd);
       return false;
     }
     if (!server.active) {
-      _releaseInboundBuffer(((userData >> 16) & 0xffff));
+      if (bufferId != null) _releaseInboundBuffer(bufferId);
       if (clientFd != null) _serverRegistry.removeClient(clientFd);
       _serverRegistry.removeServer(server.pointer.ref.fd);
       return false;
@@ -256,13 +257,13 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  bool _ensureClientIsActive(TransportClient? client, int userData, int fd) {
+  bool _ensureClientIsActive(TransportClient? client, int? bufferId, int fd) {
     if (client == null) {
-      _releaseOutboundBuffer(((userData >> 16) & 0xffff));
+      if (bufferId != null) _releaseOutboundBuffer(bufferId);
       return false;
     }
     if (!client.active) {
-      _releaseOutboundBuffer(((userData >> 16) & 0xffff));
+      if (bufferId != null) _releaseOutboundBuffer(bufferId);
       _clientRegistry.removeClient(fd);
       return false;
     }
@@ -274,20 +275,20 @@ class TransportWorker {
     switch (event) {
       case transportEventRead:
         final server = _serverRegistry.getByClient(fd);
-        if (!_ensureServerIsActive(server, data, fd)) return;
         final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureServerIsActive(server, bufferId, fd)) return;
         _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, _inboundUsedBuffers[bufferId], transportEventRead);
         return;
       case transportEventWrite:
         final server = _serverRegistry.getByClient(fd);
-        if (!_ensureServerIsActive(server, data, fd)) return;
         final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureServerIsActive(server, bufferId, fd)) return;
         _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, _inboundUsedBuffers[bufferId], transportEventWrite);
         return;
       case transportEventReceiveMessage:
         final bufferId = ((data >> 16) & 0xffff);
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, data, null)) return;
+        if (!_ensureServerIsActive(server, bufferId, null)) return;
         _bindings.transport_worker_receive_message(
           _inboundWorkerPointer,
           fd,
@@ -300,7 +301,7 @@ class TransportWorker {
       case transportEventSendMessage:
         final bufferId = ((data >> 16) & 0xffff);
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, data, null)) return;
+        if (!_ensureServerIsActive(server, bufferId, null)) return;
         _bindings.transport_worker_respond_message(
           _inboundWorkerPointer,
           fd,
@@ -312,20 +313,29 @@ class TransportWorker {
         return;
       case transportEventReadCallback:
         final client = _clientRegistry.get(fd);
-        if (!_ensureClientIsActive(client, data, fd)) return;
         final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureClientIsActive(client, bufferId, fd)) {
+          _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+          return;
+        }
         _bindings.transport_worker_read(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventReadCallback);
         return;
       case transportEventWriteCallback:
         final client = _clientRegistry.get(fd);
-        if (!_ensureClientIsActive(client, data, fd)) return;
         final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureClientIsActive(client, bufferId, fd)) {
+          _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+          return;
+        }
         _bindings.transport_worker_write(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventWriteCallback);
         return;
       case transportEventReceiveMessageCallback:
         final bufferId = ((data >> 16) & 0xffff);
         final client = _clientRegistry.get(fd);
-        if (!_ensureClientIsActive(client, data, fd)) return;
+        if (!_ensureClientIsActive(client, bufferId, fd)) {
+          _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+          return;
+        }
         _bindings.transport_worker_receive_message(
           _outboundWorkerPointer,
           fd,
@@ -338,7 +348,10 @@ class TransportWorker {
       case transportEventSendMessageCallback:
         final bufferId = ((data >> 16) & 0xffff);
         final client = _clientRegistry.get(fd);
-        if (!_ensureClientIsActive(client, data, fd)) return;
+        if (!_ensureClientIsActive(client, bufferId, fd)) {
+          _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+          return;
+        }
         _bindings.transport_worker_respond_message(
           _outboundWorkerPointer,
           fd,
@@ -350,38 +363,43 @@ class TransportWorker {
         return;
       case transportEventAccept:
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, data, fd)) return;
+        if (!_ensureServerIsActive(server, null, fd)) return;
         _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
         return;
       case transportEventConnect:
         final client = _clientRegistry.get(fd);
-        if (!_ensureClientIsActive(client, data, fd)) return;
+        if (!_ensureClientIsActive(client, null, fd)) {
+          _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
+          return;
+        }
         _bindings.transport_worker_connect(_outboundWorkerPointer, client!.pointer);
         return;
     }
   }
 
   @pragma(preferInlinePragma)
-  void _handleNonRetryableError(int result, int userData, int fd, int event) {
+  void _handleNonRetryableError(int result, int data, int fd, int event) {
     switch (event) {
       case transportEventRead:
       case transportEventWrite:
         final server = _serverRegistry.getByClient(fd);
-        if (!_ensureServerIsActive(server, userData, fd)) return;
+        final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureServerIsActive(server, bufferId, fd)) return;
         if (!server!.controller.hasListener) {
-          _releaseInboundBuffer(((userData >> 16) & 0xffff));
+          _releaseInboundBuffer(bufferId);
           _bindings.transport_close_descritor(fd);
           _serverRegistry.removeClient(fd);
           return;
         }
-        _releaseInboundBuffer(((userData >> 16) & 0xffff));
+        _releaseInboundBuffer(bufferId);
         _bindings.transport_close_descritor(fd);
         _serverRegistry.removeClient(fd);
         server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
         return;
       case transportEventReceiveMessage:
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, userData, null)) return;
+        final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureServerIsActive(server, bufferId, null)) return;
         _allocateInbound().then((newBufferId) {
           _bindings.transport_worker_receive_message(
             _inboundWorkerPointer,
@@ -393,24 +411,30 @@ class TransportWorker {
           );
         });
         if (!server!.controller.hasListener) {
-          _releaseInboundBuffer(((userData >> 16) & 0xffff));
+          _releaseInboundBuffer(bufferId);
           return;
         }
-        _releaseInboundBuffer(((userData >> 16) & 0xffff));
+        _releaseInboundBuffer(bufferId);
         server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
         return;
       case transportEventSendMessage:
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, userData, null)) return;
-        _releaseInboundBuffer(((userData >> 16) & 0xffff));
+        final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureServerIsActive(server, bufferId, null)) return;
+        _releaseInboundBuffer(bufferId);
         server!.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
         return;
       case transportEventAccept:
         final server = _serverRegistry.getByServer(fd);
-        if (!_ensureServerIsActive(server, userData, null)) return;
+        if (!_ensureServerIsActive(server, null, result)) return;
         _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
         return;
       case transportEventConnect:
+        final client = _clientRegistry.get(fd);
+        if (!_ensureClientIsActive(client, null, fd)) {
+          _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
+          return;
+        }
         _clientRegistry.removeClient(fd);
         _callbacks.notifyConnectError(
           fd,
@@ -424,9 +448,13 @@ class TransportWorker {
         return;
       case transportEventReadCallback:
       case transportEventReceiveMessageCallback:
-        if (!_ensureClientIsActive(server, userData, null)) return;
-        final bufferId = ((userData >> 16) & 0xffff);
-        _releaseOutboundBuffer(((userData >> 16) & 0xffff));
+        final client = _clientRegistry.get(fd);
+        final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureClientIsActive(client, bufferId, fd)) {
+          _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+          return;
+        }
+        _releaseOutboundBuffer(bufferId);
         _clientRegistry.removeClient(fd);
         _callbacks.notifyReadError(
           bufferId,
@@ -441,8 +469,13 @@ class TransportWorker {
         return;
       case transportEventWriteCallback:
       case transportEventSendMessageCallback:
-        final bufferId = ((userData >> 16) & 0xffff);
-        _releaseOutboundBuffer(((userData >> 16) & 0xffff));
+        final client = _clientRegistry.get(fd);
+        final bufferId = ((data >> 16) & 0xffff);
+        if (!_ensureClientIsActive(client, bufferId, fd)) {
+          _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+          return;
+        }
+        _releaseOutboundBuffer(bufferId);
         _clientRegistry.removeClient(fd);
         _callbacks.notifyWriteError(
           bufferId,
@@ -461,8 +494,9 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
+    if (!_ensureServerIsActive(server, bufferId, fd)) return;
     _allocateInbound().then((newBufferId) => _bindings.transport_worker_read(_inboundWorkerPointer, fd, newBufferId, 0, transportEventRead));
-    if (!server.controller.hasListener) {
+    if (!server!.controller.hasListener) {
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
       _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, transportEventRead);
       return;
@@ -472,6 +506,7 @@ class TransportWorker {
     server.controller.add(TransportInboundPayload(
       bufferBytes.asTypedList(result),
       (answer) {
+        if (!_ensureServerIsActive(server, bufferId, fd)) return;
         _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
         bufferBytes.asTypedList(answer.length).setAll(0, answer);
         buffer.iov_len = answer.length;
@@ -484,7 +519,8 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
-    if (!server.controller.hasListener) {
+    if (!_ensureServerIsActive(server, bufferId, null)) return;
+    if (!server!.controller.hasListener) {
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
       _bindings.transport_worker_receive_message(
         _inboundWorkerPointer,
@@ -511,6 +547,7 @@ class TransportWorker {
     server.controller.add(TransportInboundPayload(
       bufferBytes.asTypedList(result),
       (answer) {
+        if (!_ensureServerIsActive(server, bufferId, null)) return;
         _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
         bufferBytes.asTypedList(answer.length).setAll(0, answer);
         buffer.iov_len = answer.length;
@@ -529,12 +566,26 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleWriteAndSendMessage(int bufferId, int fd) {
+  void _handleWrite(int bufferId, int fd) {
+    final server = _serverRegistry.getByClient(fd);
+    if (!_ensureServerIsActive(server, bufferId, fd)) return;
     _releaseInboundBuffer(bufferId);
   }
 
   @pragma(preferInlinePragma)
-  void _handleReadAndReceiveMessageCallback(int bufferId, int result) {
+  void _handleSendMessage(int bufferId, int fd) {
+    final server = _serverRegistry.getByServer(fd);
+    if (!_ensureServerIsActive(server, bufferId, null)) return;
+    _releaseInboundBuffer(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleReadAndReceiveMessageCallback(int bufferId, int result, int fd) {
+    final client = _clientRegistry.get(fd);
+    if (!_ensureClientIsActive(client, bufferId, fd)) {
+      _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+      return;
+    }
     _callbacks.notifyRead(
       bufferId,
       TransportOutboundPayload(
@@ -545,7 +596,12 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleWriteAndSendMessageCallback(int bufferId, int result) {
+  void _handleWriteAndSendMessageCallback(int bufferId, int result, int fd) {
+    final client = _clientRegistry.get(fd);
+    if (!_ensureClientIsActive(client, bufferId, fd)) {
+      _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+      return;
+    }
     _releaseOutboundBuffer(bufferId);
     _callbacks.notifyWrite(bufferId);
   }
@@ -553,29 +609,24 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
-    if (client == null) {
+    if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       return;
     }
-    if (!client.active) {
-      _clientRegistry.removeClient(fd);
-      _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
-      return;
-    }
-    _callbacks.notifyConnect(fd, client);
+    _callbacks.notifyConnect(fd, client!);
   }
 
   @pragma(preferInlinePragma)
   void _handleAccept(int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
+    if (!_ensureServerIsActive(server, null, result)) return;
     _serverRegistry.addClient(fd, result);
-    _bindings.transport_worker_accept(_inboundWorkerPointer, server.pointer);
+    _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
     server.acceptor!(TransportInboundChannel(
       _inboundWorkerPointer,
       result,
       _bindings,
       _inboundBufferFinalizers,
-      this,
       server,
     ));
   }
