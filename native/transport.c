@@ -61,5 +61,6 @@ int transport_get_kernel_error()
 
 int transport_close_descritor(int fd)
 {
+  shutdown(fd, SHUT_RDWR);
   return close(fd);
 }

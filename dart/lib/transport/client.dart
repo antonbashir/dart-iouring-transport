@@ -53,7 +53,7 @@ class TransportClient {
     return completer.future;
   }
 
-  void shutdown() => _channel.close();
+  void close() => _channel.close();
 }
 
 class TransportClientPool {

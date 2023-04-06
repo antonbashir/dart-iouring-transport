@@ -53,7 +53,7 @@ class TransportServersFactory {
       _bindings,
       _bufferFinalizers,
       _worker,
-      server.pointer,
+      server,
     ));
     handler(server.stream);
   }
@@ -80,7 +80,7 @@ class TransportServersFactory {
       _bindings,
       _bufferFinalizers,
       _worker,
-      server.pointer,
+      server,
     ));
     handler(server.stream);
   }

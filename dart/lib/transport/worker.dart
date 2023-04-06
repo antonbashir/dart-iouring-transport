@@ -323,7 +323,7 @@ class TransportWorker {
           _releaseInboundBuffer(((userData >> 16) & 0xffff));
           _bindings.transport_close_descritor(fd);
           _serverRegistry.removeClient(fd);
-          return;
+          return; 
         }
         _releaseInboundBuffer(((userData >> 16) & 0xffff));
         _bindings.transport_close_descritor(fd);
@@ -512,7 +512,7 @@ class TransportWorker {
       _bindings,
       _inboundBufferFinalizers,
       this,
-      server.pointer,
+      server,
     ));
   }
 
