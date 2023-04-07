@@ -50,7 +50,7 @@ extern "C"
 
   struct sockaddr *transport_client_get_destination_address(transport_client_t *client);
 
-  void transport_client_close(transport_client_t *client);
+  void transport_client_destroy(transport_client_t *client);
 #if defined(__cplusplus)
 }
 #endif

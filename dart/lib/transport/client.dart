@@ -26,18 +26,22 @@ class TransportCommunicator {
 
   Future<void> sendMessage(Uint8List bytes) => _client.sendMessage(bytes);
 
-  void close() => _client.close();
+  Future<void> close() => _client.close();
 }
 
 class TransportClient {
   final TransportCallbacks _callbacks;
   final Pointer<transport_client_t> pointer;
   final TransportOutboundChannel _channel;
+  final TransportBindings _bindings;
 
   var _active = true;
   bool get active => _active;
+  final closer = Completer();
 
-  TransportClient(this._callbacks, this._channel, this.pointer);
+  var _pending = 0;
+
+  TransportClient(this._callbacks, this._channel, this.pointer, this._bindings);
 
   Future<TransportOutboundPayload> read() async {
     if (!_active) throw TransportClosedException.forClient();
@@ -45,6 +49,7 @@ class TransportClient {
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
     _channel.read(bufferId, offset: 0);
+    _pending++;
     return completer.future;
   }
 
@@ -54,6 +59,7 @@ class TransportClient {
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
     _channel.write(bytes, bufferId);
+    _pending++;
     return completer.future;
   }
 
@@ -63,6 +69,7 @@ class TransportClient {
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
     _channel.receiveMessage(bufferId, pointer);
+    _pending++;
     return completer.future;
   }
 
@@ -72,13 +79,20 @@ class TransportClient {
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
     _channel.sendMessage(bytes, bufferId, pointer);
+    _pending++;
     return completer.future;
   }
 
-  void close() {
+  void onComplete() {
+    if (--_pending == 0 && !_active) closer.complete();
+  }
+
+  Future<void> close() async {
     if (_active) {
-      _channel.close();
       _active = false;
+      _channel.close();
+      await closer.future;
+      _bindings.transport_client_destroy(pointer);
     }
   }
 }
@@ -127,6 +141,7 @@ class TransportClientRegistry {
           _bufferFinalizers,
         ),
         clientPointer,
+        _bindings,
       );
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(clientPointer.ref.fd, completer);
@@ -153,6 +168,7 @@ class TransportClientRegistry {
           _bufferFinalizers,
         ),
         clientPointer,
+        _bindings,
       );
       final completer = Completer<TransportClient>();
       _callbacks.putConnect(clientPointer.ref.fd, completer);
@@ -182,6 +198,7 @@ class TransportClientRegistry {
         _bufferFinalizers,
       ),
       clientPointer,
+      _bindings,
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);
@@ -205,6 +222,7 @@ class TransportClientRegistry {
         _bufferFinalizers,
       ),
       clientPointer,
+      _bindings,
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);
@@ -212,8 +230,8 @@ class TransportClientRegistry {
 
   TransportClient? get(int fd) => _clients[fd];
 
-  void close() {
-    _clients.values.forEach((client) => client.close());
+  Future<void> close() async {
+    await Future.wait(_clients.values.map((client) => client.close()));
     _clients.clear();
   }
 

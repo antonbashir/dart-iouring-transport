@@ -2,12 +2,11 @@ import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/defaults.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
 import 'configuration.dart';
-import 'constants.dart';
+import 'defaults.dart';
 import 'payload.dart';
 
 class TransportServer {
@@ -21,6 +20,7 @@ class TransportServer {
 
   var _active = true;
   bool get active => _active;
+  final _closer = Completer();
 
   TransportServer(this.pointer, this._bindings) {
     controller = StreamController();
@@ -36,11 +36,17 @@ class TransportServer {
     );
   }
 
-  void close() {
+  void onRemove() {
+    if (!_active) _closer.complete();
+  }
+
+  Future<void> close() async {
     if (_active) {
-      controller.close();
-      _bindings.transport_server_close(pointer);
       _active = false;
+      controller.close();
+      _bindings.transport_close_descritor(pointer.ref.fd);
+      await _closer.future;
+      _bindings.transport_server_destroy(pointer);
     }
   }
 }
@@ -50,9 +56,6 @@ class TransportServerRegistry {
   final _serversByClients = <int, TransportServer>{};
 
   final TransportBindings _bindings;
-
-  var _closing = false;
-  final _closingCompleter = Completer();
 
   TransportServerRegistry(this._bindings);
 
@@ -121,21 +124,15 @@ class TransportServerRegistry {
   void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
 
   void removeClient(int fd) {
-    if (_serversByClients.remove(fd) != null && _closing && _servers.isEmpty && _serversByClients.isEmpty) {
-      _closingCompleter.complete();
-    }
+    _serversByClients.remove(fd);
   }
 
   void removeServer(int fd) {
-    if (_servers.remove(fd) != null && _closing && _servers.isEmpty && _serversByClients.isEmpty) {
-      _closingCompleter.complete();
-    }
+    _servers.remove(fd)?.onRemove();
   }
 
   Future<void> close() async {
-    _closing = true;
-    _servers.values.forEach((server) => server.close());
-    if (_servers.isNotEmpty) await _closingCompleter.future;
+    await Future.wait(_servers.values.map((server) => server.close()));
   }
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {

@@ -68,7 +68,7 @@ class TransportWorker {
     _closer = RawReceivePort((_) async {
       _handleInboundCqes();
       _handleOutboundCqes();
-      _clientRegistry.close();
+      await _clientRegistry.close();
       await _serverRegistry.close();
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
       malloc.free(_outboundCqes);
@@ -194,7 +194,6 @@ class TransportWorker {
           _callbacks.notifyCustom((result >> 16) & 0xffff, data);
           continue;
         }
-        print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if (result < 0) {
           if (_errorIsRetryable(result)) {
             _retryHandler.handle(data, fd, event);
@@ -230,7 +229,6 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
-        print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result, fd = $fd, bid = ${((data >> 16) & 0xffff)}");
         if (result < 0) {
           if (_errorIsRetryable(result)) {
             _retryHandler.handle(data, fd, event);

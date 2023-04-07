@@ -127,9 +127,7 @@ struct sockaddr *transport_client_get_destination_address(transport_client_t *cl
   return client->family == INET ? (struct sockaddr *)&client->inet_destination_address : (struct sockaddr *)&client->unix_destination_address;
 }
 
-void transport_client_close(transport_client_t *client)
+void transport_client_destroy(transport_client_t *client)
 {
-  shutdown(client->fd, SHUT_RDWR);
-  close(client->fd);
   free(client);
 }
