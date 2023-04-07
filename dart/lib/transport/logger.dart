@@ -5,7 +5,6 @@ class TransportLogger {
 
   TransportLogger(this.level);
 
-  @pragma(preferInlinePragma)
   void _log(TransportLogLevel level, String message) {
     if (level.index < this.level.index) return;
     print("${transportLogLevels[level.index]} ${DateTime.now()} $message");

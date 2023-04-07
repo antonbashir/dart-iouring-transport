@@ -114,30 +114,24 @@ class TransportServerRegistry {
     return instance;
   }
 
-  @pragma(preferInlinePragma)
   TransportServer? getByServer(int fd) => _servers[fd];
 
-  @pragma(preferInlinePragma)
   TransportServer? getByClient(int fd) => _serversByClients[fd];
 
-  @pragma(preferInlinePragma)
   void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
 
-  @pragma(preferInlinePragma)
   void removeClient(int fd) {
     if (_serversByClients.remove(fd) != null && _closing && _servers.isEmpty && _serversByClients.isEmpty) {
       _closingCompleter.complete();
     }
   }
 
-  @pragma(preferInlinePragma)
   void removeServer(int fd) {
     if (_servers.remove(fd) != null && _closing && _servers.isEmpty && _serversByClients.isEmpty) {
       _closingCompleter.complete();
     }
   }
 
-  @pragma(preferInlinePragma)
   Future<void> close() async {
     _closing = true;
     _servers.values.forEach((server) => server.close());

@@ -8,10 +8,8 @@ class TransportOutboundPayload {
 
   TransportOutboundPayload(this.bytes, this._releaser);
 
-  @pragma(preferInlinePragma)
   void release() => _releaser();
 
-  @pragma(preferInlinePragma)
   List<int> extract({bool release = true}) {
     final result = bytes.toList();
     if (release) _releaser();
@@ -26,13 +24,10 @@ class TransportInboundPayload {
 
   TransportInboundPayload(this.bytes, this._responder, this._releaser);
 
-  @pragma(preferInlinePragma)
   void release() => _releaser();
 
-  @pragma(preferInlinePragma)
   void respond(Uint8List answer) => _responder(answer);
 
-  @pragma(preferInlinePragma)
   List<int> extract({bool release = true}) {
     final result = bytes.toList();
     if (release) _releaser();

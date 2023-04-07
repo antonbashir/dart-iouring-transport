@@ -9,7 +9,6 @@ import 'bindings.dart';
 import 'callbacks.dart';
 import 'channels.dart';
 import 'configuration.dart';
-import 'constants.dart';
 import 'defaults.dart';
 import 'exception.dart';
 import 'payload.dart';
@@ -211,16 +210,13 @@ class TransportClientRegistry {
     return TransportCommunicator(client);
   }
 
-  @pragma(preferInlinePragma)
   TransportClient? get(int fd) => _clients[fd];
 
-  @pragma(preferInlinePragma)
   void close() {
     _clients.values.forEach((client) => client.close());
     _clients.clear();
   }
 
-  @pragma(preferInlinePragma)
   void removeClient(int fd) => _clients.remove(fd);
 
   Pointer<transport_client_configuration_t> _tcpConfiguration(TransportTcpClientConfiguration clientConfiguration, Allocator allocator) {
