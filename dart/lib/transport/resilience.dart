@@ -140,6 +140,7 @@ class ErrorHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _clientRegistry.removeClient(fd);
@@ -147,12 +148,14 @@ class ErrorHandler {
       fd,
       TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd),
     );
+    client!.onComplete();
   }
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
@@ -161,12 +164,14 @@ class ErrorHandler {
       bufferId,
       TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId),
     );
+    client!.onComplete();
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
@@ -175,6 +180,7 @@ class ErrorHandler {
       bufferId,
       TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId),
     );
+    client!.onComplete();
   }
 
   void handle(int result, int data, int fd, int event) {

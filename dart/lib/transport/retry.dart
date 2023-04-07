@@ -114,6 +114,7 @@ class RetryHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _bindings.transport_worker_read(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventReadCallback);
@@ -123,6 +124,7 @@ class RetryHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _bindings.transport_worker_write(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventWriteCallback);
@@ -133,6 +135,7 @@ class RetryHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _bindings.transport_worker_receive_message(
@@ -149,6 +152,7 @@ class RetryHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _bindings.transport_worker_respond_message(
@@ -172,6 +176,7 @@ class RetryHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _bindings.transport_worker_connect(_outboundWorkerPointer, client!.pointer);

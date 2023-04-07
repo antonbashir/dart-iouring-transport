@@ -47,14 +47,14 @@ class TransportInboundChannel extends TransportChannel {
   }
 
   Future<void> read() async {
-    if (!_server.active) throw TransportClosedException.forServer();
     final bufferId = await _allocate();
+    if (!_server.active) throw TransportClosedException.forServer();
     _bindings.transport_worker_read(_workerPointer, _fd, bufferId, 0, transportEventRead);
   }
 
   Future<void> receiveMessage({int flags = 0}) async {
-    if (!_server.active) throw TransportClosedException.forServer();
     final bufferId = await _allocate();
+    if (!_server.active) throw TransportClosedException.forServer();
     _bindings.transport_worker_receive_message(
       _workerPointer,
       _fd,
@@ -65,7 +65,7 @@ class TransportInboundChannel extends TransportChannel {
     );
   }
 
-  void close() => _server.close();
+  Future<void> close() => _server.close();
 }
 
 class TransportOutboundChannel extends TransportChannel {

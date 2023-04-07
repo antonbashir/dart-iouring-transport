@@ -37,15 +37,15 @@ class TransportClient {
 
   var _active = true;
   bool get active => _active;
-  final closer = Completer();
+  final _closer = Completer();
 
   var _pending = 0;
 
   TransportClient(this._callbacks, this._channel, this.pointer, this._bindings);
 
   Future<TransportOutboundPayload> read() async {
-    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
     _channel.read(bufferId, offset: 0);
@@ -54,8 +54,8 @@ class TransportClient {
   }
 
   Future<void> write(Uint8List bytes) async {
-    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
     _channel.write(bytes, bufferId);
@@ -64,8 +64,8 @@ class TransportClient {
   }
 
   Future<TransportOutboundPayload> receiveMessage() async {
-    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
     _channel.receiveMessage(bufferId, pointer);
@@ -74,8 +74,8 @@ class TransportClient {
   }
 
   Future<void> sendMessage(Uint8List bytes) async {
-    if (!_active) throw TransportClosedException.forClient();
     final bufferId = await _channel.allocate();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
     _channel.sendMessage(bytes, bufferId, pointer);
@@ -83,15 +83,24 @@ class TransportClient {
     return completer.future;
   }
 
+  Future<TransportClient> connect(Pointer<transport_worker_t> workerPointer) {
+    final completer = Completer<TransportClient>();
+    _callbacks.putConnect(pointer.ref.fd, completer);
+    _bindings.transport_worker_connect(workerPointer, pointer);
+    _pending++;
+    return completer.future;
+  }
+
   void onComplete() {
-    if (--_pending == 0 && !_active) closer.complete();
+    _pending--;
+    if (!_active && _pending == 0) _closer.complete();
   }
 
   Future<void> close() async {
     if (_active) {
       _active = false;
       _channel.close();
-      await closer.future;
+      if (_pending > 0) await _closer.future;
       _bindings.transport_client_destroy(pointer);
     }
   }
@@ -132,7 +141,7 @@ class TransportClientRegistry {
             host.toNativeUtf8(allocator: arena).cast(),
             port,
           ));
-      _clients[clientPointer.ref.fd] = TransportClient(
+      final client = TransportClient(
         _callbacks,
         TransportOutboundChannel(
           _workerPointer,
@@ -143,10 +152,8 @@ class TransportClientRegistry {
         clientPointer,
         _bindings,
       );
-      final completer = Completer<TransportClient>();
-      _callbacks.putConnect(clientPointer.ref.fd, completer);
-      _bindings.transport_worker_connect(_workerPointer, clientPointer);
-      communicators.add(completer.future.then((client) => TransportCommunicator(client)));
+      _clients[clientPointer.ref.fd] = client;
+      communicators.add(client.connect(_workerPointer).then((client) => TransportCommunicator(client)));
     }
     return TransportCommunicators(await Future.wait(communicators));
   }
@@ -159,7 +166,7 @@ class TransportClientRegistry {
             _unixStreamConfiguration(configuration!, arena),
             path.toNativeUtf8(allocator: arena).cast(),
           ));
-      _clients[clientPointer.ref.fd] = TransportClient(
+      final clinet = TransportClient(
         _callbacks,
         TransportOutboundChannel(
           _workerPointer,
@@ -170,10 +177,8 @@ class TransportClientRegistry {
         clientPointer,
         _bindings,
       );
-      final completer = Completer<TransportClient>();
-      _callbacks.putConnect(clientPointer.ref.fd, completer);
-      _bindings.transport_worker_connect(_workerPointer, clientPointer);
-      clients.add(completer.future.then((client) => TransportCommunicator(client)));
+      _clients[clientPointer.ref.fd] = clinet;
+      clients.add(clinet.connect(_workerPointer).then((client) => TransportCommunicator(client)));
     }
     return TransportCommunicators(await Future.wait(clients));
   }

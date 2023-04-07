@@ -66,8 +66,6 @@ class TransportWorker {
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
-      _handleInboundCqes();
-      _handleOutboundCqes();
       await _clientRegistry.close();
       await _serverRegistry.close();
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
@@ -374,6 +372,7 @@ class TransportWorker {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _callbacks.notifyRead(
@@ -383,16 +382,19 @@ class TransportWorker {
         () => _releaseOutboundBuffer(bufferId),
       ),
     );
+    client!.onComplete();
   }
 
   void _handleWriteSendMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+      client!.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
     _callbacks.notifyWrite(bufferId);
+    client!.onComplete();
   }
 
   void _handleConnect(int fd) {
@@ -402,6 +404,7 @@ class TransportWorker {
       return;
     }
     _callbacks.notifyConnect(fd, client!);
+    client.onComplete();
   }
 
   void _handleAccept(int fd, int result) {
