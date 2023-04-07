@@ -166,16 +166,19 @@ class TransportWorker {
     return bufferId;
   }
 
+  @pragma(preferInlinePragma)
   void _releaseInboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_inboundWorkerPointer, bufferId);
     if (_inboundBufferFinalizers.isNotEmpty) _inboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _releaseOutboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_outboundWorkerPointer, bufferId);
     if (_outboundBufferFinalizers.isNotEmpty) _outboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   bool _errorIsRetryable(int error) => error == -EINTR || error == -EAGAIN;
 
   void _handleOutboundCqes() {
@@ -256,6 +259,7 @@ class TransportWorker {
     }
   }
 
+  @pragma(preferInlinePragma)
   bool _ensureServerIsActive(TransportServer? server, int? bufferId, int? clientFd) {
     if (server == null) {
       if (bufferId != null) _releaseInboundBuffer(bufferId);
@@ -271,6 +275,7 @@ class TransportWorker {
     return true;
   }
 
+  @pragma(preferInlinePragma)
   bool _ensureClientIsActive(TransportClient? client, int? bufferId, int fd) {
     if (client == null) {
       if (bufferId != null) _releaseOutboundBuffer(bufferId);

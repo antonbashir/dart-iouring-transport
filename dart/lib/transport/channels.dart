@@ -88,10 +88,13 @@ class TransportOutboundChannel extends TransportChannel {
     return bufferId;
   }
 
+  
+  @pragma(preferInlinePragma)
   void read(int bufferId, {int offset = 0}) {
     _bindings.transport_worker_read(_workerPointer, _fd, bufferId, offset, transportEventReadCallback);
   }
 
+  @pragma(preferInlinePragma)
   void write(Uint8List bytes, int bufferId, {int offset = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
@@ -99,6 +102,7 @@ class TransportOutboundChannel extends TransportChannel {
     _bindings.transport_worker_write(_workerPointer, _fd, bufferId, offset, transportEventWriteCallback);
   }
 
+  @pragma(preferInlinePragma)
   void receiveMessage(int bufferId, Pointer<transport_client_t> client, {int flags = 0}) {
     _bindings.transport_worker_receive_message(
       _workerPointer,
@@ -110,6 +114,7 @@ class TransportOutboundChannel extends TransportChannel {
     );
   }
 
+  @pragma(preferInlinePragma)
   void sendMessage(Uint8List bytes, int bufferId, Pointer<transport_client_t> client, {int flags = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
@@ -125,5 +130,6 @@ class TransportOutboundChannel extends TransportChannel {
     );
   }
 
+  @pragma(preferInlinePragma)
   void close() => _bindings.transport_close_descritor(_fd);
 }

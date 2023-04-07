@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/constants.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -117,16 +118,21 @@ class TransportServerRegistry {
     return instance;
   }
 
+  @pragma(preferInlinePragma)
   TransportServer? getByServer(int fd) => _servers[fd];
 
+  @pragma(preferInlinePragma)
   TransportServer? getByClient(int fd) => _serversByClients[fd];
 
+  @pragma(preferInlinePragma)
   void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
 
+  @pragma(preferInlinePragma)
   void removeClient(int fd) {
     _serversByClients.remove(fd);
   }
 
+  @pragma(preferInlinePragma)
   void removeServer(int fd) {
     _servers.remove(fd)?.onRemove();
   }
