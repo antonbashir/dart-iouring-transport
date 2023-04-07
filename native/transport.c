@@ -42,6 +42,7 @@ void transport_destroy(transport_t *transport)
   free(transport->listener_configuration);
   free(transport->inbound_worker_configuration);
   free(transport->outbound_worker_configuration);
+  free(transport);
 }
 
 void transport_cqe_advance(struct io_uring *ring, int count)
