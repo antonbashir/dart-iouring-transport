@@ -140,7 +140,7 @@ class ErrorHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
-      client!.onComplete();
+      client?.onComplete();
       return;
     }
     _clientRegistry.removeClient(fd);
@@ -155,7 +155,7 @@ class ErrorHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
-      client!.onComplete();
+      client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
@@ -171,7 +171,7 @@ class ErrorHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
-      client!.onComplete();
+      client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);

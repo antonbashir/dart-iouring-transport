@@ -188,13 +188,13 @@ class TransportWorker {
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_outboundRing, 1);
+      if ((result & 0xffff) == transportEventCustomCallback) {
+        _callbacks.notifyCustom((result >> 16) & 0xffff, data);
+        continue;
+      }
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
-        if ((result & 0xffff) == transportEventCustomCallback) {
-          _callbacks.notifyCustom((result >> 16) & 0xffff, data);
-          continue;
-        }
         if (result < 0) {
           if (_errorIsRetryable(result)) {
             _retryHandler.handle(data, fd, event);
@@ -377,7 +377,7 @@ class TransportWorker {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
-      client!.onComplete();
+      client?.onComplete();
       return;
     }
     _callbacks.notifyRead(
@@ -394,7 +394,7 @@ class TransportWorker {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
-      client!.onComplete();
+      client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);

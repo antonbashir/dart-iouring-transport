@@ -98,8 +98,7 @@ int transport_worker_custom(transport_worker_t *worker, uint16_t callback_id, in
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   int32_t result = (((int32_t)callback_id) << 16) | ((int32_t)TRANSPORT_EVENT_CUSTOM);
   io_uring_prep_msg_ring(sqe, worker->ring->ring_fd, result, data, 0);
-  sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK;
-  io_uring_sqe_set_data64(sqe, data);
+  sqe->flags |= IOSQE_IO_LINK | IOSQE_IO_HARDLINK | IOSQE_CQE_SKIP_SUCCESS;
   sqe = provide_sqe(ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
