@@ -4,6 +4,7 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/constants.dart';
 
 import 'bindings.dart';
 import 'callbacks.dart';
@@ -91,6 +92,7 @@ class TransportClient {
     return completer.future;
   }
 
+  @pragma(preferInlinePragma)
   void onComplete() {
     _pending--;
     if (!_active && _pending == 0) _closer.complete();
