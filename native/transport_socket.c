@@ -75,12 +75,6 @@ int32_t transport_socket_create_server_udp(uint32_t receive_buffer_size, uint32_
     return -1;
   }
 
-  result = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(option));
-  if (result == -1)
-  {
-    return -1;
-  }
-
   result = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &receive_buffer_size, sizeof(receive_buffer_size));
   if (result == -1)
   {
