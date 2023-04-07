@@ -233,7 +233,7 @@ void testUnixDgram({
 void testCustomCallback() {
   test("callback", () async {
     final transport = Transport(
-      TransportDefaults.transport(),
+      TransportDefaults.transport().copyWith(workerInsolates: 2),
       TransportDefaults.listener(),
       TransportDefaults.inbound(),
       TransportDefaults.outbound(),
@@ -248,7 +248,7 @@ void testCustomCallback() {
       worker.notifyCustom(1, data);
       worker.transmitter!.send(await completer.future);
     });
-    expect(await done.first, data);
+    expect(await done.take(2).toList(), [data, data]);
     done.close();
     await transport.shutdown();
   });
