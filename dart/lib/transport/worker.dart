@@ -188,7 +188,7 @@ class TransportWorker {
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_outboundRing, 1);
-      if ((result & 0xffff) == transportEventCustomCallback) {
+      if ((result & 0xffff) == transportEventCustom) {
         _callbacks.notifyCustom((result >> 16) & 0xffff, data);
         continue;
       }
@@ -203,18 +203,17 @@ class TransportWorker {
           _errorHandler.handle(result, data, fd, event);
           continue;
         }
-        switch (event) {
-          case transportEventReadCallback:
-          case transportEventReceiveMessageCallback:
-            _handleReadReceiveMessageCallback((data >> 16) & 0xffff, result, fd);
-            continue;
-          case transportEventWriteCallback:
-          case transportEventSendMessageCallback:
-            _handleWriteSendMessageCallback((data >> 16) & 0xffff, result, fd);
-            continue;
-          case transportEventConnect:
-            _handleConnect(fd);
-            continue;
+        if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
+          _handleReadReceiveMessageCallback((data >> 16) & 0xffff, result, fd);
+          continue;
+        }
+        if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
+          _handleWriteSendMessageCallback((data >> 16) & 0xffff, result, fd);
+          continue;
+        }
+        if (event & transportEventConnect != 0) {
+          _handleConnect(fd);
+          continue;
         }
       }
     }

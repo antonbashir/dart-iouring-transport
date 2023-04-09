@@ -117,7 +117,7 @@ class RetryHandler {
       client?.onComplete();
       return;
     }
-    _bindings.transport_worker_read(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventReadCallback);
+    _bindings.transport_worker_read(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventRead | transportEventClient);
   }
 
   void _handleWriteCallback(int bufferId, int fd) {
@@ -127,7 +127,7 @@ class RetryHandler {
       client?.onComplete();
       return;
     }
-    _bindings.transport_worker_write(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventWriteCallback);
+    _bindings.transport_worker_write(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventWrite | transportEventClient);
     return;
   }
 
@@ -144,7 +144,7 @@ class RetryHandler {
       bufferId,
       client!.pointer.ref.family,
       MSG_TRUNC,
-      transportEventRead,
+      transportEventRead | transportEventClient,
     );
   }
 
@@ -161,7 +161,7 @@ class RetryHandler {
       bufferId,
       client!.pointer.ref.family,
       MSG_TRUNC,
-      transportEventWrite,
+      transportEventWrite | transportEventClient,
     );
     return;
   }
@@ -183,37 +183,47 @@ class RetryHandler {
   }
 
   void handle(int data, int fd, int event) {
-    switch (event) {
-      case transportEventRead:
-        _handleRead(((data >> 16) & 0xffff), fd);
-        return;
-      case transportEventWrite:
-        _handleWrite(((data >> 16) & 0xffff), fd);
-        return;
-      case transportEventReceiveMessage:
-        _handleReceiveMessage(((data >> 16) & 0xffff), fd);
-        return;
-      case transportEventSendMessage:
-        _handleSendMessage(((data >> 16) & 0xffff), fd);
-        return;
-      case transportEventReadCallback:
+    if (event & transportEventClient != 0) {
+      if (event & transportEventRead != 0) {
         _handleReadCallback(((data >> 16) & 0xffff), fd);
         return;
-      case transportEventWriteCallback:
+      }
+      if (event & transportEventWrite != 0) {
         _handleWriteCallback(((data >> 16) & 0xffff), fd);
         return;
-      case transportEventReceiveMessageCallback:
+      }
+      if (event & transportEventReceiveMessage != 0) {
         _handleReceiveMessageCallback(((data >> 16) & 0xffff), fd);
         return;
-      case transportEventSendMessageCallback:
+      }
+      if (event & transportEventSendMessage != 0) {
         _handleSendMessageCallback(((data >> 16) & 0xffff), fd);
         return;
-      case transportEventAccept:
-        _handleAccept(fd);
-        return;
-      case transportEventConnect:
-        _handleConnect(fd);
-        return;
+      }
+    }
+    if (event & transportEventRead != 0) {
+      _handleRead(((data >> 16) & 0xffff), fd);
+      return;
+    }
+    if (event & transportEventWrite != 0) {
+      _handleWrite(((data >> 16) & 0xffff), fd);
+      return;
+    }
+    if (event & transportEventReceiveMessage != 0) {
+      _handleReceiveMessage(((data >> 16) & 0xffff), fd);
+      return;
+    }
+    if (event & transportEventSendMessage != 0) {
+      _handleSendMessage(((data >> 16) & 0xffff), fd);
+      return;
+    }
+    if (event & transportEventAccept != 0) {
+      _handleAccept(fd);
+      return;
+    }
+    if (event & transportEventConnect != 0) {
+      _handleConnect(fd);
+      return;
     }
   }
 }

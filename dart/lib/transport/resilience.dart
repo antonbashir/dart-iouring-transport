@@ -184,31 +184,33 @@ class ErrorHandler {
   }
 
   void handle(int result, int data, int fd, int event) {
-    switch (event) {
-      case transportEventRead:
-      case transportEventWrite:
-        _handleReadWrite(((data >> 16) & 0xffff), fd, event, result);
-        return;
-      case transportEventReceiveMessage:
-        _handleReceiveMessage(((data >> 16) & 0xffff), fd, event, result);
-        return;
-      case transportEventSendMessage:
-        _handleSendMessage(((data >> 16) & 0xffff), fd, event, result);
-        return;
-      case transportEventAccept:
-        _handleAccept(fd);
-        return;
-      case transportEventConnect:
-        _handleConnect(fd, event, result);
-        return;
-      case transportEventReadCallback:
-      case transportEventReceiveMessageCallback:
-        _handleReadReceiveCallbacks(((data >> 16) & 0xffff), fd, event, result);
-        return;
-      case transportEventWriteCallback:
-      case transportEventSendMessageCallback:
-        _handleWriteSendCallbacks(((data >> 16) & 0xffff), fd, event, result);
-        return;
+    if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
+      _handleReadReceiveCallbacks(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
+      _handleWriteSendCallbacks(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == transportEventRead || event == transportEventWrite) {
+      _handleReadWrite(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == transportEventReceiveMessage) {
+      _handleReceiveMessage(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == transportEventSendMessage) {
+      _handleSendMessage(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == transportEventAccept) {
+      _handleAccept(fd);
+      return;
+    }
+    if (event == transportEventConnect) {
+      _handleConnect(fd, event, result);
+      return;
     }
   }
 }

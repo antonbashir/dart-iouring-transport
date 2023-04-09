@@ -113,40 +113,20 @@ void testUdp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      var clientSent = 0;
-      var clientReceive = 0;
-      var serverReceive = 0;
-      var serverSent = 0;
-      final timer = Timer.periodic(Duration(seconds: 1), (timer) {
-        if (!timer.isActive) return;
-        print("clientSent: $clientSent");
-        print("clientReceive: $clientReceive");
-        print("serverReceive: $serverReceive");
-        print("serverSent: $serverSent");
-      });
       worker.servers.udp(
         "0.0.0.0",
         12345,
         (channel) => channel.receiveMessage(),
         (stream) => stream.listen(onError: (error) => print(error), (event) {
-          serverReceive++;
           event.respond(serverData);
-          serverSent++;
         }),
       );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
-        responseFutures.add(client.sendMessage(clientData).then((value) {
-          clientSent++;
-          return client.receiveMessage();
-        }).then((value) {
-          clientReceive++;
-          return value.extract();
-        }));
+        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
       }
       final responses = await Future.wait(responseFutures);
-      timer.cancel();
       responses.forEach((response) => worker.transmitter!.send(response));
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));

@@ -99,33 +99,28 @@ const transportLogLevels = [
   "FATAL",
 ];
 
-
 const transportBufferAvailable = -2;
 const transportBufferUsed = -1;
 
-const transportEventRead = 1 << 0;
-const transportEventWrite = 1 << 1;
-const transportEventAccept = 1 << 2;
-const transportEventConnect = 1 << 3;
-const transportEventReadCallback = 1 << 4;
-const transportEventWriteCallback = 1 << 5;
-const transportEventReceiveMessageCallback = 1 << 6;
-const transportEventSendMessageCallback = 1 << 7;
-const transportEventReceiveMessage = 1 << 8;
-const transportEventSendMessage = 1 << 9;
-const transportEventCustomCallback = 1 << 10;
+const transportEventRead = (1 << 0);
+const transportEventWrite = (1 << 1);
+const transportEventReceiveMessage = (1 << 2);
+const transportEventSendMessage = (1 << 3);
+const transportEventAccept = (1 << 4);
+const transportEventConnect = (1 << 5);
+const transportEventClient = (1 << 6);
+const transportEventCustom = (1 << 7);
+const transportEventFile = (1 << 8);
 
 const transportEventAll = transportEventRead |
     transportEventWrite |
     transportEventAccept |
     transportEventConnect |
-    transportEventReadCallback |
-    transportEventWriteCallback |
-    transportEventReceiveMessageCallback |
-    transportEventSendMessageCallback |
     transportEventReceiveMessage |
     transportEventSendMessage |
-    transportEventCustomCallback;
+    transportEventClient |
+    transportEventCustom |
+    transportEventFile;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;
