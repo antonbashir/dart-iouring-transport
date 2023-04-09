@@ -75,13 +75,27 @@ class RetryHandler {
   void _handleRead(int bufferId, int fd) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, _inboundUsedBuffers[bufferId], transportEventRead);
+    _bindings.transport_worker_read(
+      _inboundWorkerPointer,
+      fd,
+      bufferId,
+      _inboundUsedBuffers[bufferId],
+      server!.pointer.ref.read_timeout,
+      transportEventRead,
+    );
   }
 
   void _handleWrite(int bufferId, int fd) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, _inboundUsedBuffers[bufferId], transportEventWrite);
+    _bindings.transport_worker_write(
+      _inboundWorkerPointer,
+      fd,
+      bufferId,
+      _inboundUsedBuffers[bufferId],
+      server!.pointer.ref.write_timeout,
+      transportEventWrite,
+    );
   }
 
   void _handleReceiveMessage(int bufferId, int fd) {
@@ -93,6 +107,7 @@ class RetryHandler {
       bufferId,
       server!.pointer.ref.family,
       MSG_TRUNC,
+      server.pointer.ref.read_timeout,
       transportEventRead,
     );
   }
@@ -106,6 +121,7 @@ class RetryHandler {
       bufferId,
       server!.pointer.ref.family,
       MSG_TRUNC,
+      server.pointer.ref.write_timeout,
       transportEventWrite,
     );
   }
@@ -117,7 +133,14 @@ class RetryHandler {
       client?.onComplete();
       return;
     }
-    _bindings.transport_worker_read(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventRead | transportEventClient);
+    _bindings.transport_worker_read(
+      _outboundWorkerPointer,
+      fd,
+      bufferId,
+      _outboundUsedBuffers[bufferId],
+      client!.pointer.ref.read_timeout,
+      transportEventRead | transportEventClient,
+    );
   }
 
   void _handleWriteCallback(int bufferId, int fd) {
@@ -127,7 +150,14 @@ class RetryHandler {
       client?.onComplete();
       return;
     }
-    _bindings.transport_worker_write(_outboundWorkerPointer, fd, bufferId, _outboundUsedBuffers[bufferId], transportEventWrite | transportEventClient);
+    _bindings.transport_worker_write(
+      _outboundWorkerPointer,
+      fd,
+      bufferId,
+      _outboundUsedBuffers[bufferId],
+      client!.pointer.ref.write_timeout,
+      transportEventWrite | transportEventClient,
+    );
     return;
   }
 
@@ -144,6 +174,7 @@ class RetryHandler {
       bufferId,
       client!.pointer.ref.family,
       MSG_TRUNC,
+      client.pointer.ref.read_timeout,
       transportEventRead | transportEventClient,
     );
   }
@@ -161,6 +192,7 @@ class RetryHandler {
       bufferId,
       client!.pointer.ref.family,
       MSG_TRUNC,
+      client.pointer.ref.write_timeout,
       transportEventWrite | transportEventClient,
     );
     return;
@@ -179,7 +211,7 @@ class RetryHandler {
       client?.onComplete();
       return;
     }
-    _bindings.transport_worker_connect(_outboundWorkerPointer, client!.pointer);
+    _bindings.transport_worker_connect(_outboundWorkerPointer, client!.pointer, client.pointer.ref.connect_timeout);
   }
 
   void handle(int data, int fd, int event) {

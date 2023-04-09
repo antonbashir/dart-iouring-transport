@@ -19259,6 +19259,7 @@ class TransportBindings {
     int fd,
     int buffer_id,
     int offset,
+    int timeout,
     int event,
   ) {
     return _transport_worker_write(
@@ -19266,22 +19267,29 @@ class TransportBindings {
       fd,
       buffer_id,
       offset,
+      timeout,
       event,
     );
   }
 
   late final _transport_worker_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Uint32,
-              ffi.Uint16, ffi.Uint32, ffi.Uint16)>>('transport_worker_write');
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Uint32,
+              ffi.Uint64,
+              ffi.Uint16)>>('transport_worker_write');
   late final _transport_worker_write = _transport_worker_writePtr.asFunction<
-      int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
+      int Function(ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
 
   int transport_worker_read(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
     int offset,
+    int timeout,
     int event,
   ) {
     return _transport_worker_read(
@@ -19289,35 +19297,45 @@ class TransportBindings {
       fd,
       buffer_id,
       offset,
+      timeout,
       event,
     );
   }
 
   late final _transport_worker_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Uint32,
-              ffi.Uint16, ffi.Uint32, ffi.Uint16)>>('transport_worker_read');
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint32,
+              ffi.Uint16,
+              ffi.Uint32,
+              ffi.Uint64,
+              ffi.Uint16)>>('transport_worker_read');
   late final _transport_worker_read = _transport_worker_readPtr.asFunction<
-      int Function(ffi.Pointer<transport_worker_t>, int, int, int, int)>();
+      int Function(ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
 
   int transport_worker_connect(
     ffi.Pointer<transport_worker_t> worker,
     ffi.Pointer<transport_client_t> client,
+    int timeout,
   ) {
     return _transport_worker_connect(
       worker,
       client,
+      timeout,
     );
   }
 
   late final _transport_worker_connectPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>,
-              ffi.Pointer<transport_client_t>)>>('transport_worker_connect');
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Pointer<transport_client_t>,
+              ffi.Uint64)>>('transport_worker_connect');
   late final _transport_worker_connect =
       _transport_worker_connectPtr.asFunction<
           int Function(ffi.Pointer<transport_worker_t>,
-              ffi.Pointer<transport_client_t>)>();
+              ffi.Pointer<transport_client_t>, int)>();
 
   int transport_worker_accept(
     ffi.Pointer<transport_worker_t> worker,
@@ -19344,6 +19362,7 @@ class TransportBindings {
     ffi.Pointer<sockaddr> address,
     int socket_family,
     int message_flags,
+    int timeout,
     int event,
   ) {
     return _transport_worker_send_message(
@@ -19353,6 +19372,7 @@ class TransportBindings {
       address,
       socket_family,
       message_flags,
+      timeout,
       event,
     );
   }
@@ -19366,11 +19386,12 @@ class TransportBindings {
               ffi.Pointer<sockaddr>,
               ffi.Int32,
               ffi.Int,
+              ffi.Uint64,
               ffi.Uint16)>>('transport_worker_send_message');
   late final _transport_worker_send_message =
       _transport_worker_send_messagePtr.asFunction<
           int Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr>, int, int, int)>();
+              ffi.Pointer<sockaddr>, int, int, int, int)>();
 
   int transport_worker_respond_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19378,6 +19399,7 @@ class TransportBindings {
     int buffer_id,
     int socket_family,
     int message_flags,
+    int timeout,
     int event,
   ) {
     return _transport_worker_respond_message(
@@ -19386,6 +19408,7 @@ class TransportBindings {
       buffer_id,
       socket_family,
       message_flags,
+      timeout,
       event,
     );
   }
@@ -19398,11 +19421,12 @@ class TransportBindings {
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
+              ffi.Uint64,
               ffi.Uint16)>>('transport_worker_respond_message');
   late final _transport_worker_respond_message =
       _transport_worker_respond_messagePtr.asFunction<
           int Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+              ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
   int transport_worker_receive_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19410,6 +19434,7 @@ class TransportBindings {
     int buffer_id,
     int socket_family,
     int message_flags,
+    int timeout,
     int event,
   ) {
     return _transport_worker_receive_message(
@@ -19418,6 +19443,7 @@ class TransportBindings {
       buffer_id,
       socket_family,
       message_flags,
+      timeout,
       event,
     );
   }
@@ -19430,11 +19456,12 @@ class TransportBindings {
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
+              ffi.Uint64,
               ffi.Uint16)>>('transport_worker_receive_message');
   late final _transport_worker_receive_message =
       _transport_worker_receive_messagePtr.asFunction<
           int Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+              ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
   int transport_worker_select_buffer(
     ffi.Pointer<transport_worker_t> worker,
@@ -23622,6 +23649,7 @@ class _SymbolAddresses {
               ffi.Uint32,
               ffi.Uint16,
               ffi.Uint32,
+              ffi.Uint64,
               ffi.Uint16)>> get transport_worker_write =>
       _library._transport_worker_writePtr;
   ffi.Pointer<
@@ -23631,12 +23659,15 @@ class _SymbolAddresses {
               ffi.Uint32,
               ffi.Uint16,
               ffi.Uint32,
+              ffi.Uint64,
               ffi.Uint16)>> get transport_worker_read =>
       _library._transport_worker_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>,
-              ffi.Pointer<transport_client_t>)>> get transport_worker_connect =>
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Pointer<transport_client_t>,
+              ffi.Uint64)>> get transport_worker_connect =>
       _library._transport_worker_connectPtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -23652,6 +23683,7 @@ class _SymbolAddresses {
               ffi.Pointer<sockaddr>,
               ffi.Int32,
               ffi.Int,
+              ffi.Uint64,
               ffi.Uint16)>> get transport_worker_send_message =>
       _library._transport_worker_send_messagePtr;
   ffi.Pointer<
@@ -23662,6 +23694,7 @@ class _SymbolAddresses {
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
+              ffi.Uint64,
               ffi.Uint16)>> get transport_worker_respond_message =>
       _library._transport_worker_respond_messagePtr;
   ffi.Pointer<
@@ -23672,6 +23705,7 @@ class _SymbolAddresses {
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
+              ffi.Uint64,
               ffi.Uint16)>> get transport_worker_receive_message =>
       _library._transport_worker_receive_messagePtr;
   ffi.Pointer<
@@ -26741,6 +26775,12 @@ class transport_server_configuration extends ffi.Struct {
 
   @ffi.Uint32()
   external int send_buffer_size;
+
+  @ffi.Uint64()
+  external int read_timeout;
+
+  @ffi.Uint64()
+  external int write_timeout;
 }
 
 class transport_server extends ffi.Struct {
@@ -26756,6 +26796,12 @@ class transport_server extends ffi.Struct {
 
   @socklen_t()
   external int server_address_length;
+
+  @ffi.Uint64()
+  external int read_timeout;
+
+  @ffi.Uint64()
+  external int write_timeout;
 }
 
 typedef transport_server_t = transport_server;
@@ -26801,6 +26847,15 @@ class transport_client_configuration extends ffi.Struct {
 
   @ffi.Uint32()
   external int send_buffer_size;
+
+  @ffi.Uint64()
+  external int connect_timeout;
+
+  @ffi.Uint64()
+  external int read_timeout;
+
+  @ffi.Uint64()
+  external int write_timeout;
 }
 
 class transport_client extends ffi.Struct {
@@ -26820,6 +26875,15 @@ class transport_client extends ffi.Struct {
 
   @ffi.Int32()
   external int family;
+
+  @ffi.Uint64()
+  external int connect_timeout;
+
+  @ffi.Uint64()
+  external int read_timeout;
+
+  @ffi.Uint64()
+  external int write_timeout;
 }
 
 typedef transport_client_t = transport_client;
@@ -30878,7 +30942,7 @@ const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'RelWithDebInfo';
+const String BUILD_TYPE = 'Debug';
 
 const String BUILD_INFO = '';
 

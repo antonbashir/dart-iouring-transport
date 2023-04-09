@@ -18,6 +18,8 @@ extern "C"
     int32_t max_connections;
     uint32_t receive_buffer_size;
     uint32_t send_buffer_size;
+    uint64_t read_timeout;
+    uint64_t write_timeout;
   } transport_server_configuration_t;
 
   typedef struct transport_server
@@ -27,6 +29,8 @@ extern "C"
     struct sockaddr_in inet_server_address;
     struct sockaddr_un unix_server_address;
     socklen_t server_address_length;
+    uint64_t read_timeout;
+    uint64_t write_timeout;
   } transport_server_t;
 
   transport_server_t *transport_server_initialize_tcp(transport_server_configuration_t *configuration,

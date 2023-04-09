@@ -33,43 +33,61 @@ class TransportDefaults {
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
         pool: 1,
+        connectTimeout: Duration(seconds: 1),
+        readTimeout: Duration(seconds: 1),
+        writeTimeout: Duration(seconds: 1),
       );
 
   static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
+        readTimeout: Duration(seconds: 1),
+        writeTimeout: Duration(seconds: 1),
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
         pool: 1,
+        connectTimeout: Duration(seconds: 1),
+        readTimeout: Duration(seconds: 1),
+        writeTimeout: Duration(seconds: 1),
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
+        readTimeout: Duration(seconds: 1),
+        writeTimeout: Duration(seconds: 1),
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
         maxConnections: 4096,
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
+        readTimeout: Duration(days: 1),
+        writeTimeout: Duration(days: 1),
       );
 
   static TransportUdpServerConfiguration udpServer() => TransportUdpServerConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
+        readTimeout: Duration(days: 1),
+        writeTimeout: Duration(days: 1),
       );
 
   static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(
         maxConnections: 4096,
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
+        readTimeout: Duration(days: 1),
+        writeTimeout: Duration(days: 1),
       );
 
   static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
+        readTimeout: Duration(days: 1),
+        writeTimeout: Duration(days: 1),
       );
 }

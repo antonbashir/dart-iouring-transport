@@ -150,6 +150,16 @@ class TransportWorker {
       _callbacks,
     );
     _activator.close();
+    Timer.periodic(Duration(seconds: 1), (timer) {
+      final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
+      for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+        print(_inboundCqes[cqeIndex].ref.res);
+      }
+      final ocqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
+      for (var cqeIndex = 0; cqeIndex < ocqeCount; cqeIndex++) {
+        print(_outboundCqes[cqeIndex].ref.res);
+      }
+    });
   }
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.putCustom(id, completer);
@@ -179,7 +189,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  bool _errorIsRetryable(int error) => error == -EINTR || error == -EAGAIN;
+  bool _errorIsRetryable(int error) => error == -EINTR || error == -EAGAIN || error == -EALREADY;
 
   void _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
@@ -193,6 +203,7 @@ class TransportWorker {
         continue;
       }
       final event = data & 0xffff;
+      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
@@ -227,6 +238,7 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_inboundRing, 1);
       final event = data & 0xffff;
+      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
@@ -291,10 +303,19 @@ class TransportWorker {
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    _allocateInbound().then((newBufferId) => _bindings.transport_worker_read(_inboundWorkerPointer, fd, newBufferId, 0, transportEventRead));
+    _allocateInbound().then(
+      (newBufferId) => _bindings.transport_worker_read(
+        _inboundWorkerPointer,
+        fd,
+        newBufferId,
+        0,
+        server!.pointer.ref.read_timeout,
+        transportEventRead,
+      ),
+    );
     if (!server!.controller.hasListener) {
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-      _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, transportEventRead);
+      _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, server.pointer.ref.read_timeout, transportEventRead);
       return;
     }
     final buffer = _inboundBuffers[bufferId];
@@ -306,7 +327,7 @@ class TransportWorker {
         _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
         bufferBytes.asTypedList(answer.length).setAll(0, answer);
         buffer.iov_len = answer.length;
-        _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, 0, transportEventWrite);
+        _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, 0, server.pointer.ref.write_timeout, transportEventWrite);
       },
       () => _releaseInboundBuffer(bufferId),
     ));
@@ -323,6 +344,7 @@ class TransportWorker {
         bufferId,
         server.pointer.ref.family,
         MSG_TRUNC,
+        server.pointer.ref.read_timeout,
         transportEventReceiveMessage,
       );
       return;
@@ -334,6 +356,7 @@ class TransportWorker {
         newBufferId,
         server.pointer.ref.family,
         MSG_TRUNC,
+        server.pointer.ref.read_timeout,
         transportEventReceiveMessage,
       );
     });
@@ -352,6 +375,7 @@ class TransportWorker {
           bufferId,
           server.pointer.ref.family,
           MSG_TRUNC,
+          server.pointer.ref.write_timeout,
           transportEventSendMessage,
         );
         return;

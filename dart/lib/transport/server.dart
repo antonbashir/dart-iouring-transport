@@ -146,6 +146,8 @@ class TransportServerRegistry {
     nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
+    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 
@@ -153,6 +155,8 @@ class TransportServerRegistry {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
+    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 
@@ -161,6 +165,8 @@ class TransportServerRegistry {
     nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
+    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 
@@ -168,6 +174,8 @@ class TransportServerRegistry {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
+    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 }

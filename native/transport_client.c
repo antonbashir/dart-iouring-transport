@@ -29,6 +29,9 @@ transport_client_t *transport_client_initialize_tcp(transport_client_configurati
   client->inet_destination_address.sin_port = htons(port);
   client->inet_destination_address.sin_family = AF_INET;
   client->client_address_length = sizeof(client->inet_destination_address);
+  client->connect_timeout = configuration->connect_timeout;
+  client->read_timeout = configuration->read_timeout;
+  client->write_timeout = configuration->write_timeout;
   client->fd = transport_socket_create_client_tcp(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0)
   {
@@ -51,6 +54,8 @@ transport_client_t *transport_client_initialize_udp(transport_client_configurati
   }
   client->family = INET;
   client->client_address_length = sizeof(struct sockaddr_in);
+  client->read_timeout = configuration->read_timeout;
+  client->write_timeout = configuration->write_timeout;
 
   memset(&client->inet_destination_address, 0, sizeof(client->inet_destination_address));
   client->inet_destination_address.sin_addr.s_addr = inet_addr(destination_ip);
@@ -82,6 +87,8 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
   }
   client->family = UNIX;
   client->client_address_length = sizeof(struct sockaddr_un);
+  client->read_timeout = configuration->read_timeout;
+  client->write_timeout = configuration->write_timeout;
 
   memset(&client->unix_destination_address, 0, sizeof(client->unix_destination_address));
   client->unix_destination_address.sun_family = AF_UNIX;
@@ -90,7 +97,7 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
   memset(&client->unix_source_address, 0, sizeof(client->unix_source_address));
   client->unix_source_address.sun_family = AF_UNIX;
   strcpy(client->unix_source_address.sun_path, source_path);
-  
+
   client->fd = transport_socket_create_client_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0 || bind(client->fd, (struct sockaddr *)&client->unix_source_address, client->client_address_length) < 0)
   {
@@ -113,6 +120,9 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
   client->unix_destination_address.sun_family = AF_UNIX;
   strcpy(client->unix_destination_address.sun_path, path);
   client->client_address_length = sizeof(client->unix_destination_address);
+  client->connect_timeout = configuration->connect_timeout;
+  client->read_timeout = configuration->read_timeout;
+  client->write_timeout = configuration->write_timeout;
   client->fd = transport_socket_create_client_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0)
   {

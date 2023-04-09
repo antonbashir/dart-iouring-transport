@@ -18,6 +18,9 @@ extern "C"
   {
     uint32_t receive_buffer_size;
     uint32_t send_buffer_size;
+    uint64_t connect_timeout;
+    uint64_t read_timeout;
+    uint64_t write_timeout;
   } transport_client_configuration_t;
 
   typedef struct transport_client
@@ -29,6 +32,9 @@ extern "C"
     struct sockaddr_un unix_source_address;
     socklen_t client_address_length;
     transport_socket_family_t family;
+    uint64_t connect_timeout;
+    uint64_t read_timeout;
+    uint64_t write_timeout;
   } transport_client_t;
 
   transport_client_t *transport_client_initialize_tcp(transport_client_configuration_t *configuration,

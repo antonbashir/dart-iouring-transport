@@ -49,7 +49,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
-    _channel.read(bufferId, offset: 0);
+    _channel.read(bufferId, pointer.ref.read_timeout, offset: 0);
     _pending++;
     return completer.future;
   }
@@ -59,7 +59,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
-    _channel.write(bytes, bufferId);
+    _channel.write(bytes, bufferId, pointer.ref.write_timeout);
     _pending++;
     return completer.future;
   }
@@ -87,7 +87,7 @@ class TransportClient {
   Future<TransportClient> connect(Pointer<transport_worker_t> workerPointer) {
     final completer = Completer<TransportClient>();
     _callbacks.putConnect(pointer.ref.fd, completer);
-    _bindings.transport_worker_connect(workerPointer, pointer);
+    _bindings.transport_worker_connect(workerPointer, pointer, pointer.ref.connect_timeout);
     _pending++;
     return completer.future;
   }
@@ -248,6 +248,9 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    nativeClientConfiguration.ref.connect_timeout = clientConfiguration.connectTimeout.inSeconds;
+    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
+    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 
@@ -255,6 +258,8 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
+    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 
@@ -262,6 +267,9 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    nativeClientConfiguration.ref.connect_timeout = clientConfiguration.connectTimeout.inSeconds;
+    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
+    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 
@@ -269,6 +277,8 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
+    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
+    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 }

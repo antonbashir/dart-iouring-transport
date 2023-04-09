@@ -15,7 +15,7 @@ class TransportFile {
     final completer = Completer<TransportOutboundPayload>();
     final bufferId = await _channel.allocate();
     _callbacks.putRead(bufferId, completer);
-    _channel.read(bufferId, offset: offset);
+    _channel.read(bufferId, -1, offset: offset);
     return completer.future;
   }
 
@@ -23,7 +23,7 @@ class TransportFile {
     final completer = Completer<void>();
     final bufferId = await _channel.allocate();
     _callbacks.putWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, offset: offset);
+    _channel.write(bytes, bufferId, -1, offset: offset);
     return completer.future;
   }
 

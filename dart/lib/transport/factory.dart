@@ -31,9 +31,10 @@ class TransportServersFactory {
     String host,
     int port,
     void Function(TransportInboundChannel channel) onAccept,
-    void Function(Stream<TransportInboundPayload> stream) handler,
-  ) {
-    final server = _registry.createTcp(host, port);
+    void Function(Stream<TransportInboundPayload> stream) handler, {
+    TransportTcpServerConfiguration? configuration,
+  }) {
+    final server = _registry.createTcp(host, port, configuration: configuration);
     server.accept(_workerPointer, onAccept);
     handler(server.stream);
   }

@@ -49,7 +49,7 @@ class TransportInboundChannel extends TransportChannel {
   Future<void> read() async {
     final bufferId = await _allocate();
     if (!_server.active) throw TransportClosedException.forServer();
-    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, 0, transportEventRead);
+    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, 0, _server.pointer.ref.read_timeout, transportEventRead);
   }
 
   Future<void> receiveMessage({int flags = 0}) async {
@@ -61,6 +61,7 @@ class TransportInboundChannel extends TransportChannel {
       bufferId,
       _server.pointer.ref.family,
       flags | MSG_TRUNC,
+      _server.pointer.ref.read_timeout,
       transportEventReceiveMessage,
     );
   }
@@ -89,16 +90,16 @@ class TransportOutboundChannel extends TransportChannel {
   }
 
   @pragma(preferInlinePragma)
-  void read(int bufferId, {int offset = 0}) {
-    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, offset, transportEventRead | transportEventClient);
+  void read(int bufferId, int timeout, {int offset = 0}) {
+    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, offset, timeout, transportEventRead | transportEventClient);
   }
 
   @pragma(preferInlinePragma)
-  void write(Uint8List bytes, int bufferId, {int offset = 0}) {
+  void write(Uint8List bytes, int bufferId, int timeout, {int offset = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_worker_write(_workerPointer, _fd, bufferId, offset, transportEventWrite | transportEventClient);
+    _bindings.transport_worker_write(_workerPointer, _fd, bufferId, offset, timeout, transportEventWrite | transportEventClient);
   }
 
   @pragma(preferInlinePragma)
@@ -109,6 +110,7 @@ class TransportOutboundChannel extends TransportChannel {
       bufferId,
       client.ref.family,
       flags | MSG_TRUNC,
+      client.ref.read_timeout,
       transportEventReceiveMessage | transportEventClient,
     );
   }
@@ -125,6 +127,7 @@ class TransportOutboundChannel extends TransportChannel {
       _bindings.transport_client_get_destination_address(client).cast(),
       client.ref.family,
       flags | MSG_TRUNC,
+      client.ref.write_timeout,
       transportEventSendMessage | transportEventClient,
     );
   }
