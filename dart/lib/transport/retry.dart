@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi';
 
-import 'package:iouring_transport/transport/configuration.dart';
-
 import 'bindings.dart';
 import 'callbacks.dart';
 import 'client.dart';
+import 'configuration.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'server.dart';
@@ -20,17 +19,21 @@ class _TransportRetryValues {
 
 class TransportRetryStates {
   final _connectState = <int, _TransportRetryValues>{};
-  final _readState = <int, _TransportRetryValues>{};
-  final _writeState = <int, _TransportRetryValues>{};
+  final _inboundReadState = <int, _TransportRetryValues>{};
+  final _inboundWriteState = <int, _TransportRetryValues>{};
+  final _outboundReadState = <int, _TransportRetryValues>{};
+  final _outboundWriteState = <int, _TransportRetryValues>{};
 
-  @pragma(preferInlinePragma)
   Future<bool> incrementConnect(int fd, TransportRetryConfiguration retry) async {
     final current = _connectState[fd];
     if (current == null) {
       _connectState[fd] = _TransportRetryValues(retry.initialDelay, 1);
       return true;
     }
-    if (current.count == retry.maxRetries) return false;
+    if (current.count == retry.maxRetries) {
+      _connectState.remove(fd);
+      return false;
+    }
     final newDelay = Duration(
       microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
     );
@@ -38,33 +41,71 @@ class TransportRetryStates {
     return Future.delayed(newDelay).then((value) => true);
   }
 
-  @pragma(preferInlinePragma)
-  Future<bool> incrementRead(int bufferId, TransportRetryConfiguration retry) async {
-    final current = _readState[bufferId];
+  Future<bool> incrementInboundRead(int bufferId, TransportRetryConfiguration retry) async {
+    final current = _inboundReadState[bufferId];
     if (current == null) {
-      _readState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
+      _inboundReadState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
       return true;
     }
-    if (current.count == retry.maxRetries) return false;
+    if (current.count == retry.maxRetries) {
+      _inboundReadState.remove(bufferId);
+      return false;
+    }
     final newDelay = Duration(
       microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
     );
-    _readState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
+    _inboundReadState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
     return Future.delayed(newDelay).then((value) => true);
   }
 
-  @pragma(preferInlinePragma)
-  Future<bool> incrementWrite(int bufferId, TransportRetryConfiguration retry) async {
-    final current = _writeState[bufferId];
+  Future<bool> incrementInboundWrite(int bufferId, TransportRetryConfiguration retry) async {
+    final current = _inboundWriteState[bufferId];
     if (current == null) {
-      _writeState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
+      _inboundWriteState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
       return true;
     }
-    if (current.count == retry.maxRetries) return false;
+    if (current.count == retry.maxRetries) {
+      _inboundWriteState.remove(bufferId);
+      return false;
+    }
     final newDelay = Duration(
       microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
     );
-    _writeState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
+    _inboundWriteState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
+    return Future.delayed(newDelay).then((value) => true);
+  }
+
+  Future<bool> incrementOutboundRead(int bufferId, TransportRetryConfiguration retry) async {
+    final current = _outboundReadState[bufferId];
+    if (current == null) {
+      _outboundReadState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
+      return true;
+    }
+    if (current.count == retry.maxRetries) {
+      _outboundReadState.remove(bufferId);
+      return false;
+    }
+    final newDelay = Duration(
+      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+    );
+    _outboundReadState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
+    return Future.delayed(newDelay).then((value) => true);
+  }
+
+  Future<bool> incrementOutboundWrite(int bufferId, TransportRetryConfiguration retry) async {
+    final current = _outboundWriteState[bufferId];
+    if (current == null) {
+      _outboundWriteState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
+      return true;
+    }
+    if (current.count == retry.maxRetries) {
+      _outboundWriteState.remove(bufferId);
+      return false;
+    }
+    final newDelay = Duration(
+      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+    );
+    _outboundWriteState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
     return Future.delayed(newDelay).then((value) => true);
   }
 
@@ -72,10 +113,16 @@ class TransportRetryStates {
   void clearConnect(int fd) => _connectState.remove(fd);
 
   @pragma(preferInlinePragma)
-  void clearRead(int bufferId) => _readState.remove(bufferId);
+  void clearInboundRead(int bufferId) => _inboundReadState.remove(bufferId);
 
   @pragma(preferInlinePragma)
-  void clearWrite(int bufferId) => _writeState.remove(bufferId);
+  void clearInboundWrite(int bufferId) => _inboundWriteState.remove(bufferId);
+
+  @pragma(preferInlinePragma)
+  void clearOutboundRead(int bufferId) => _outboundReadState.remove(bufferId);
+
+  @pragma(preferInlinePragma)
+  void clearOutboundWrite(int bufferId) => _outboundWriteState.remove(bufferId);
 }
 
 class TransportRetryHandler {
@@ -150,7 +197,7 @@ class TransportRetryHandler {
   Future<void> _handleRead(int bufferId, int fd) async {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    if (!(await _retryState.incrementRead(bufferId, server!.retry))) {
+    if (!(await _retryState.incrementInboundRead(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       _serverRegistry.removeClient(fd);
       server.controller.addError(TransportTimeoutException.forServer());
@@ -169,7 +216,7 @@ class TransportRetryHandler {
   Future<void> _handleWrite(int bufferId, int fd) async {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    if (!(await _retryState.incrementWrite(bufferId, server!.retry))) {
+    if (!(await _retryState.incrementInboundWrite(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       _serverRegistry.removeClient(fd);
       server.controller.addError(TransportTimeoutException.forServer());
@@ -188,7 +235,7 @@ class TransportRetryHandler {
   Future<void> _handleReceiveMessage(int bufferId, int fd) async {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
-    if (!(await _retryState.incrementRead(bufferId, server!.retry))) {
+    if (!(await _retryState.incrementInboundRead(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       server.controller.addError(TransportTimeoutException.forServer());
       return;
@@ -207,7 +254,7 @@ class TransportRetryHandler {
   Future<void> _handleSendMessage(int bufferId, int fd) async {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
-    if (!(await _retryState.incrementWrite(bufferId, server!.retry))) {
+    if (!(await _retryState.incrementInboundWrite(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       server.controller.addError(TransportTimeoutException.forServer());
       return;
@@ -230,7 +277,7 @@ class TransportRetryHandler {
       client?.onComplete();
       return;
     }
-    if (!(await _retryState.incrementRead(bufferId, client!.retry))) {
+    if (!(await _retryState.incrementOutboundRead(bufferId, client!.retry))) {
       _releaseOutboundBuffer(bufferId);
       _clientRegistry.removeClient(fd);
       _callbacks.notifyReadError(bufferId, TransportTimeoutException.forClient());
@@ -253,7 +300,7 @@ class TransportRetryHandler {
       client?.onComplete();
       return;
     }
-    if (!(await _retryState.incrementWrite(bufferId, client!.retry))) {
+    if (!(await _retryState.incrementOutboundWrite(bufferId, client!.retry))) {
       _releaseOutboundBuffer(bufferId);
       _clientRegistry.removeClient(fd);
       _callbacks.notifyWriteError(bufferId, TransportTimeoutException.forClient());
@@ -277,7 +324,7 @@ class TransportRetryHandler {
       client?.onComplete();
       return;
     }
-    if (!(await _retryState.incrementRead(bufferId, client!.retry))) {
+    if (!(await _retryState.incrementOutboundRead(bufferId, client!.retry))) {
       _releaseOutboundBuffer(bufferId);
       _clientRegistry.removeClient(fd);
       _callbacks.notifyReadError(bufferId, TransportTimeoutException.forClient());
@@ -301,7 +348,7 @@ class TransportRetryHandler {
       client!.onComplete();
       return;
     }
-    if (!(await _retryState.incrementWrite(bufferId, client!.retry))) {
+    if (!(await _retryState.incrementOutboundWrite(bufferId, client!.retry))) {
       _releaseOutboundBuffer(bufferId);
       _clientRegistry.removeClient(fd);
       _callbacks.notifyWriteError(bufferId, TransportTimeoutException.forClient());

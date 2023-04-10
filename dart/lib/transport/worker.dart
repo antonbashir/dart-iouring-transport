@@ -338,6 +338,7 @@ class TransportWorker {
 
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
+    _retryStates.clearInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     if (!server!.controller.hasListener) {
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
