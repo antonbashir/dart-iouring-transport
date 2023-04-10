@@ -29,7 +29,7 @@ transport_client_t *transport_client_initialize_tcp(transport_client_configurati
   client->inet_destination_address.sin_port = htons(port);
   client->inet_destination_address.sin_family = AF_INET;
   client->client_address_length = sizeof(client->inet_destination_address);
-  client->fd = transport_socket_create_client_tcp(configuration->receive_buffer_size, configuration->send_buffer_size);
+  client->fd = transport_socket_create_tcp(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0)
   {
     free(client);
@@ -61,7 +61,7 @@ transport_client_t *transport_client_initialize_udp(transport_client_configurati
   client->inet_source_address.sin_addr.s_addr = inet_addr(source_ip);
   client->inet_source_address.sin_port = htons(source_port);
   client->inet_source_address.sin_family = AF_INET;
-  client->fd = transport_socket_create_client_udp(configuration->receive_buffer_size, configuration->send_buffer_size);
+  client->fd = transport_socket_create_udp(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0 || bind(client->fd, (struct sockaddr *)&client->inet_source_address, client->client_address_length) < 0)
   {
     free(client);
@@ -91,7 +91,7 @@ transport_client_t *transport_client_initialize_unix_dgram(transport_client_conf
   client->unix_source_address.sun_family = AF_UNIX;
   strcpy(client->unix_source_address.sun_path, source_path);
 
-  client->fd = transport_socket_create_client_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
+  client->fd = transport_socket_create_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0 || bind(client->fd, (struct sockaddr *)&client->unix_source_address, client->client_address_length) < 0)
   {
     free(client);
@@ -113,7 +113,7 @@ transport_client_t *transport_client_initialize_unix_stream(transport_client_con
   client->unix_destination_address.sun_family = AF_UNIX;
   strcpy(client->unix_destination_address.sun_path, path);
   client->client_address_length = sizeof(client->unix_destination_address);
-  client->fd = transport_socket_create_client_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
+  client->fd = transport_socket_create_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (client->fd < 0)
   {
     free(client);

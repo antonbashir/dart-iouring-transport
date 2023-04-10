@@ -29,7 +29,7 @@ transport_server_t *transport_server_initialize_tcp(transport_server_configurati
   server->inet_server_address.sin_port = htons(port);
   server->inet_server_address.sin_family = AF_INET;
   server->server_address_length = sizeof(server->inet_server_address);
-  server->fd = transport_socket_create_server_tcp(configuration->receive_buffer_size, configuration->send_buffer_size);
+  server->fd = transport_socket_create_tcp(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (server->fd < 0 || bind(server->fd, (struct sockaddr *)&server->inet_server_address, server->server_address_length) < 0)
   {
     free(server);
@@ -59,7 +59,7 @@ transport_server_t *transport_server_initialize_udp(transport_server_configurati
   server->inet_server_address.sin_port = htons(port);
   server->inet_server_address.sin_family = AF_INET;
   server->server_address_length = sizeof(server->inet_server_address);
-  server->fd = transport_socket_create_server_udp(configuration->receive_buffer_size, configuration->send_buffer_size);
+  server->fd = transport_socket_create_udp(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (server->fd < 0 || bind(server->fd, (struct sockaddr *)&server->inet_server_address, server->server_address_length) < 0)
   {
     free(server);
@@ -81,7 +81,7 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
   server->unix_server_address.sun_family = AF_UNIX;
   strcpy(server->unix_server_address.sun_path, path);
   server->server_address_length = sizeof(server->unix_server_address);
-  server->fd = transport_socket_create_server_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
+  server->fd = transport_socket_create_unix_stream(configuration->receive_buffer_size, configuration->send_buffer_size);
   int32_t result = 0;
   if (server->fd < 0 || (result = bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length)) < 0)
   {
@@ -109,7 +109,7 @@ transport_server_t *transport_server_initialize_unix_dgram(transport_server_conf
   server->unix_server_address.sun_family = AF_UNIX;
   strcpy(server->unix_server_address.sun_path, path);
   server->server_address_length = sizeof(server->unix_server_address);
-  server->fd = transport_socket_create_server_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
+  server->fd = transport_socket_create_unix_dgram(configuration->receive_buffer_size, configuration->send_buffer_size);
   if (server->fd < 0 || bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length) < 0)
   {
     free(server);

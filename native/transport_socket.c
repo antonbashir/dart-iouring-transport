@@ -183,7 +183,7 @@ int32_t transport_socket_create_udp(uint64_t flags,
                                     uint32_t socket_receive_low_at,
                                     uint32_t socket_send_low_at,
                                     uint16_t ip_ttl,
-                                    struct ip_mreqn ip_multicast_interface,
+                                    struct ip_mreqn *ip_multicast_interface,
                                     uint32_t ip_multicast_ttl)
 {
   int32_t activate_option = 1;
@@ -281,7 +281,7 @@ int32_t transport_socket_create_udp(uint64_t flags,
   }
   if (flags & TRANSPORT_SOCKET_OPTION_IP_MULTICAST_IF)
   {
-    if (setsockopt(fd, SOL_IP, IP_MULTICAST_IF, &ip_multicast_interface, sizeof(ip_multicast_interface)))
+    if (setsockopt(fd, SOL_IP, IP_MULTICAST_IF, ip_multicast_interface, sizeof(*ip_multicast_interface)))
     {
       return -TRANSPORT_SOCKET_OPTION_IP_MULTICAST_IF;
     }
@@ -436,4 +436,13 @@ int32_t transport_socket_create_unix_dgram(uint64_t flags,
   }
 
   return (uint32_t)fd;
+}
+
+struct ip_mreqn *transport_socket_create_multicast_request(const char *multicast_group_address, const char *multicast_local_address, int interface_index)
+{
+  struct ip_mreqn *request = malloc(sizeof(struct ip_mreqn));
+  request->imr_multiaddr.s_addr = inet_addr(multicast_group_address);
+  request->imr_address.s_addr = inet_addr(multicast_local_address);
+  request->imr_ifindex = interface_index;
+  return request;
 }
