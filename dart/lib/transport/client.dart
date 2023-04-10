@@ -33,6 +33,7 @@ class TransportCommunicator {
 class TransportClient {
   final TransportCallbacks _callbacks;
   final Pointer<transport_client_t> pointer;
+  final Pointer<transport_worker_t> _workerPointer;
   final TransportOutboundChannel _channel;
   final TransportBindings _bindings;
   final TransportRetryConfiguration retry;
@@ -50,6 +51,7 @@ class TransportClient {
     this._callbacks,
     this._channel,
     this.pointer,
+    this._workerPointer,
     this._bindings,
     this.retry,
     this.connectTimeout,
@@ -114,8 +116,9 @@ class TransportClient {
   Future<void> close() async {
     if (_active) {
       _active = false;
-      _channel.close();
+      _bindings.transport_worker_cancel(_workerPointer);
       if (_pending > 0) await _closer.future;
+      _channel.close();
       _bindings.transport_client_destroy(pointer);
     }
   }
@@ -165,6 +168,7 @@ class TransportClientRegistry {
           _bufferFinalizers,
         ),
         clientPointer,
+        _workerPointer,
         _bindings,
         configuration.retryConfiguration,
         configuration.connectTimeout.inSeconds,
@@ -194,6 +198,7 @@ class TransportClientRegistry {
           _bufferFinalizers,
         ),
         clientPointer,
+        _workerPointer,
         _bindings,
         configuration.retryConfiguration,
         configuration.connectTimeout.inSeconds,
@@ -226,6 +231,7 @@ class TransportClientRegistry {
         _bufferFinalizers,
       ),
       clientPointer,
+      _workerPointer,
       _bindings,
       configuration.retryConfiguration,
       -1,
@@ -254,6 +260,7 @@ class TransportClientRegistry {
         _bufferFinalizers,
       ),
       clientPointer,
+      _workerPointer,
       _bindings,
       configuration.retryConfiguration,
       -1,

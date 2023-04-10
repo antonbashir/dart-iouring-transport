@@ -196,7 +196,10 @@ class TransportRetryHandler {
 
   Future<void> _handleRead(int bufferId, int fd) async {
     final server = _serverRegistry.getByClient(fd);
-    if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    if (!_ensureServerIsActive(server, bufferId, fd)) {
+      _retryState.clearInboundRead(bufferId);
+      return;
+    }
     if (!(await _retryState.incrementInboundRead(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       _serverRegistry.removeClient(fd);
@@ -215,7 +218,10 @@ class TransportRetryHandler {
 
   Future<void> _handleWrite(int bufferId, int fd) async {
     final server = _serverRegistry.getByClient(fd);
-    if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    if (!_ensureServerIsActive(server, bufferId, fd)) {
+      _retryState.clearInboundWrite(bufferId);
+      return;
+    }
     if (!(await _retryState.incrementInboundWrite(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       _serverRegistry.removeClient(fd);
@@ -234,7 +240,10 @@ class TransportRetryHandler {
 
   Future<void> _handleReceiveMessage(int bufferId, int fd) async {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, bufferId, null)) return;
+    if (!_ensureServerIsActive(server, bufferId, null)) {
+      _retryState.clearInboundRead(bufferId);
+      return;
+    }
     if (!(await _retryState.incrementInboundRead(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       server.controller.addError(TransportTimeoutException.forServer());
@@ -253,7 +262,10 @@ class TransportRetryHandler {
 
   Future<void> _handleSendMessage(int bufferId, int fd) async {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, bufferId, null)) return;
+    if (!_ensureServerIsActive(server, bufferId, null)) {
+      _retryState.clearInboundWrite(bufferId);
+      return;
+    }
     if (!(await _retryState.incrementInboundWrite(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       server.controller.addError(TransportTimeoutException.forServer());
@@ -275,6 +287,7 @@ class TransportRetryHandler {
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
+      _retryState.clearOutboundRead(bufferId);
       return;
     }
     if (!(await _retryState.incrementOutboundRead(bufferId, client!.retry))) {
@@ -298,6 +311,7 @@ class TransportRetryHandler {
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
+      _retryState.clearOutboundWrite(bufferId);
       return;
     }
     if (!(await _retryState.incrementOutboundWrite(bufferId, client!.retry))) {
@@ -322,6 +336,7 @@ class TransportRetryHandler {
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
+      _retryState.clearOutboundRead(bufferId);
       return;
     }
     if (!(await _retryState.incrementOutboundRead(bufferId, client!.retry))) {
@@ -346,6 +361,7 @@ class TransportRetryHandler {
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
       client!.onComplete();
+      _retryState.clearOutboundWrite(bufferId);
       return;
     }
     if (!(await _retryState.incrementOutboundWrite(bufferId, client!.retry))) {
@@ -377,6 +393,7 @@ class TransportRetryHandler {
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       client?.onComplete();
+      _retryState.clearConnect(fd);
       return;
     }
     if (!(await _retryState.incrementConnect(fd, client!.retry))) {
