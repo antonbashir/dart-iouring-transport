@@ -10,7 +10,8 @@
 #include <unistd.h>
 #include <stdint.h>
 
-int32_t transport_socket_create_server_tcp(uint32_t receive_buffer_size, uint32_t send_buffer_size)
+int32_t transport_socket_create_server_tcp(uint64_t flags, uint32_t receive_buffer_size, uint32_t send_buffer_size)
+ )
 {
   int32_t option = 1;
 
