@@ -12,7 +12,9 @@ import 'payload.dart';
 
 class TransportServer {
   final Pointer<transport_server_t> pointer;
+  final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
+  final TransportRetryConfiguration retry;
 
   late final int fd;
   late final StreamController<TransportInboundPayload> controller;
@@ -23,7 +25,7 @@ class TransportServer {
   bool get active => _active;
   final _closer = Completer();
 
-  TransportServer(this.pointer, this._bindings) {
+  TransportServer(this.pointer, this._bindings, this.retry, this._workerPointer) {
     controller = StreamController();
     stream = controller.stream;
     fd = pointer.ref.fd;
@@ -45,8 +47,9 @@ class TransportServer {
     if (_active) {
       _active = false;
       controller.close();
-      _bindings.transport_close_descritor(pointer.ref.fd);
+      _bindings.transport_worker_cancel(_workerPointer);
       await _closer.future;
+      _bindings.transport_close_descritor(pointer.ref.fd);
       _bindings.transport_server_destroy(pointer);
     }
   }
@@ -55,20 +58,24 @@ class TransportServer {
 class TransportServerRegistry {
   final _servers = <int, TransportServer>{};
   final _serversByClients = <int, TransportServer>{};
+  final Pointer<transport_worker_t> _workerPointer;
 
   final TransportBindings _bindings;
 
-  TransportServerRegistry(this._bindings);
+  TransportServerRegistry(this._bindings, this._workerPointer);
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
+    configuration = configuration ?? TransportDefaults.tcpServer();
     final instance = using(
       (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_tcp(
-          _tcpConfiguration(configuration ?? TransportDefaults.tcpServer(), arena),
+          _tcpConfiguration(configuration!, arena),
           host.toNativeUtf8(allocator: arena).cast(),
           port,
         ),
         _bindings,
+        configuration.retryConfiguration,
+        _workerPointer,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;

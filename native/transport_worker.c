@@ -91,6 +91,19 @@ static inline transport_listener_t *transport_listener_pool_next(transport_liste
   return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
 }
 
+int transport_worker_cancel(transport_worker_t *worker)
+{
+  struct io_uring *ring = worker->ring;
+  struct io_uring_sqe *sqe = provide_sqe(ring);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
+  io_uring_prep_cancel(sqe, NULL, IORING_ASYNC_CANCEL_ALL);
+  sqe->flags |= IOSQE_IO_HARDLINK | IOSQE_CQE_SKIP_SUCCESS;
+  sqe = provide_sqe(ring);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
+  return io_uring_submit(ring);
+}
+
 int transport_worker_custom(transport_worker_t *worker, uint16_t callback_id, int64_t data)
 {
   struct io_uring *ring = worker->ring;

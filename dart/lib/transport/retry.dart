@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi';
 
+import 'package:iouring_transport/transport/configuration.dart';
+
 import 'bindings.dart';
 import 'callbacks.dart';
 import 'client.dart';
@@ -9,7 +11,74 @@ import 'constants.dart';
 import 'exception.dart';
 import 'server.dart';
 
-class RetryHandler {
+class _TransportRetryValues {
+  final Duration delay;
+  final int count;
+
+  const _TransportRetryValues(this.delay, this.count);
+}
+
+class TransportRetryStates {
+  final _connectState = <int, _TransportRetryValues>{};
+  final _readState = <int, _TransportRetryValues>{};
+  final _writeState = <int, _TransportRetryValues>{};
+
+  @pragma(preferInlinePragma)
+  bool incrementConnect(int fd, TransportRetryConfiguration retry) {
+    final current = _connectState[fd];
+    if (current == null) {
+      _connectState[fd] = _TransportRetryValues(retry.initialDelay, 1);
+      return true;
+    }
+    if (current.count == retry.maxRetries) return false;
+    final newDelay = Duration(
+      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+    );
+    _connectState[fd] = _TransportRetryValues(newDelay, current.count + 1);
+    return true;
+  }
+
+  @pragma(preferInlinePragma)
+  bool incrementRead(int bufferId, TransportRetryConfiguration retry) {
+    final current = _readState[bufferId];
+    if (current == null) {
+      _readState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
+      return true;
+    }
+    if (current.count == retry.maxRetries) return false;
+    final newDelay = Duration(
+      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+    );
+    _readState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
+    return true;
+  }
+
+  @pragma(preferInlinePragma)
+  bool incrementWrite(int bufferId, TransportRetryConfiguration retry) {
+    final current = _writeState[bufferId];
+    if (current == null) {
+      _writeState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
+      return true;
+    }
+    if (current.count == retry.maxRetries) return false;
+    final newDelay = Duration(
+      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+    );
+    _writeState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
+    return true;
+  }
+
+  @pragma(preferInlinePragma)
+  void clearConnect(int fd) => _connectState.remove(fd);
+
+  @pragma(preferInlinePragma)
+  void clearRead(int bufferId) => _readState.remove(bufferId);
+
+  @pragma(preferInlinePragma)
+  void clearWrite(int bufferId) => _writeState.remove(bufferId);
+}
+
+class TransportRetryHandler {
   final TransportServerRegistry _serverRegistry;
   final TransportClientRegistry _clientRegistry;
   final TransportBindings _bindings;
@@ -20,8 +89,9 @@ class RetryHandler {
   final Queue<Completer<int>> _inboundBufferFinalizers;
   final Queue<Completer<int>> _outboundBufferFinalizers;
   final TransportCallbacks _callbacks;
+  final TransportRetryStates _retryState;
 
-  RetryHandler(
+  TransportRetryHandler(
     this._serverRegistry,
     this._clientRegistry,
     this._bindings,
@@ -32,18 +102,22 @@ class RetryHandler {
     this._inboundBufferFinalizers,
     this._outboundBufferFinalizers,
     this._callbacks,
+    this._retryState,
   );
 
+  @pragma(preferInlinePragma)
   void _releaseInboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_inboundWorkerPointer, bufferId);
     if (_inboundBufferFinalizers.isNotEmpty) _inboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _releaseOutboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_outboundWorkerPointer, bufferId);
     if (_outboundBufferFinalizers.isNotEmpty) _outboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   bool _ensureServerIsActive(TransportServer? server, int? bufferId, int? clientFd) {
     if (server == null) {
       if (bufferId != null) _releaseInboundBuffer(bufferId);
@@ -59,6 +133,7 @@ class RetryHandler {
     return true;
   }
 
+  @pragma(preferInlinePragma)
   bool _ensureClientIsActive(TransportClient? client, int? bufferId, int fd) {
     if (client == null) {
       if (bufferId != null) _releaseOutboundBuffer(bufferId);
@@ -75,12 +150,18 @@ class RetryHandler {
   void _handleRead(int bufferId, int fd) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    if (!_retryState.incrementRead(bufferId, server!.retry)) {
+      _releaseInboundBuffer(bufferId);
+      _serverRegistry.removeClient(fd);
+      server.controller.addError(TransportTimeoutException.forServer());
+      return;
+    }
     _bindings.transport_worker_read(
       _inboundWorkerPointer,
       fd,
       bufferId,
       _inboundUsedBuffers[bufferId],
-      server!.pointer.ref.read_timeout,
+      server.pointer.ref.read_timeout,
       transportEventRead,
     );
   }
@@ -214,7 +295,7 @@ class RetryHandler {
     _bindings.transport_worker_connect(_outboundWorkerPointer, client!.pointer, client.pointer.ref.connect_timeout);
   }
 
-  void handle(int data, int fd, int event) {
+  void handle(int data, int fd, int event, int result) {
     if (event & transportEventClient != 0) {
       if (event & transportEventRead != 0) {
         _handleReadCallback(((data >> 16) & 0xffff), fd);

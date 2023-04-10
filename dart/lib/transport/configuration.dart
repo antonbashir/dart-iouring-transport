@@ -69,12 +69,40 @@ class TransportWorkerConfiguration {
       );
 }
 
+class TransportRetryConfiguration {
+  final int maxRetries;
+  final Duration initialDelay;
+  final Duration maxDelay;
+  final double backoffFactor;
+
+  TransportRetryConfiguration({
+    required this.initialDelay,
+    required this.maxDelay,
+    required this.maxRetries,
+    required this.backoffFactor,
+  });
+
+  TransportRetryConfiguration copyWith({
+    int? maxRetries,
+    Duration? initialDelay,
+    Duration? maxDelay,
+    double? backoffFactor,
+  }) =>
+      TransportRetryConfiguration(
+        maxRetries: maxRetries ?? this.maxRetries,
+        initialDelay: initialDelay ?? this.initialDelay,
+        maxDelay: maxDelay ?? this.maxDelay,
+        backoffFactor: backoffFactor ?? this.backoffFactor,
+      );
+}
+
 class TransportTcpServerConfiguration {
   final int maxConnections;
   final int receiveBufferSize;
   final int sendBufferSize;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportTcpServerConfiguration({
     required this.maxConnections,
@@ -82,6 +110,7 @@ class TransportTcpServerConfiguration {
     required this.sendBufferSize,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportTcpServerConfiguration copyWith({
@@ -90,6 +119,7 @@ class TransportTcpServerConfiguration {
     int? sendBufferSize,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportTcpServerConfiguration(
         maxConnections: maxConnections ?? this.maxConnections,
@@ -97,6 +127,7 @@ class TransportTcpServerConfiguration {
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }
 

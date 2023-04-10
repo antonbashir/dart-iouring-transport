@@ -11,6 +11,17 @@ class TransportException implements Exception {
   String toString() => message;
 }
 
+class TransportTimeoutException implements Exception {
+  final String message;
+  TransportTimeoutException(this.message);
+  factory TransportTimeoutException.forServer() => TransportTimeoutException("Server closed");
+  factory TransportTimeoutException.forClient() => TransportTimeoutException("Client closed");
+  factory TransportTimeoutException.forFile() => TransportTimeoutException("File closed");
+
+  @override
+  String toString() => message;
+}
+
 class TransportClosedException implements Exception {
   final String message;
   TransportClosedException(this.message);

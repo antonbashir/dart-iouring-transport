@@ -19463,6 +19463,21 @@ class TransportBindings {
           int Function(
               ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
+  int transport_worker_cancel(
+    ffi.Pointer<transport_worker_t> worker,
+  ) {
+    return _transport_worker_cancel(
+      worker,
+    );
+  }
+
+  late final _transport_worker_cancelPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>)>>('transport_worker_cancel');
+  late final _transport_worker_cancel = _transport_worker_cancelPtr
+      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
+
   int transport_worker_select_buffer(
     ffi.Pointer<transport_worker_t> worker,
   ) {
@@ -23708,6 +23723,9 @@ class _SymbolAddresses {
               ffi.Uint64,
               ffi.Uint16)>> get transport_worker_receive_message =>
       _library._transport_worker_receive_messagePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_cancel => _library._transport_worker_cancelPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_select_buffer =>

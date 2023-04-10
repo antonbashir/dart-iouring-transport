@@ -33,32 +33,32 @@ class TransportDefaults {
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
         pool: 1,
-        connectTimeout: Duration(seconds: 1),
-        readTimeout: Duration(seconds: 1),
-        writeTimeout: Duration(seconds: 1),
+        connectTimeout: Duration(seconds: 10),
+        readTimeout: Duration(seconds: 10),
+        writeTimeout: Duration(seconds: 10),
       );
 
   static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(seconds: 1),
-        writeTimeout: Duration(seconds: 1),
+        readTimeout: Duration(seconds: 10),
+        writeTimeout: Duration(seconds: 10),
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
         pool: 1,
-        connectTimeout: Duration(seconds: 1),
-        readTimeout: Duration(seconds: 1),
-        writeTimeout: Duration(seconds: 1),
+        connectTimeout: Duration(seconds: 10),
+        readTimeout: Duration(seconds: 10),
+        writeTimeout: Duration(seconds: 10),
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
         receiveBufferSize: 4 * 1024 * 1024,
         sendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(seconds: 1),
-        writeTimeout: Duration(seconds: 1),
+        readTimeout: Duration(seconds: 10),
+        writeTimeout: Duration(seconds: 10),
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
@@ -67,6 +67,7 @@ class TransportDefaults {
         sendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
+        retryConfiguration: retry(),
       );
 
   static TransportUdpServerConfiguration udpServer() => TransportUdpServerConfiguration(
@@ -89,5 +90,12 @@ class TransportDefaults {
         sendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
+      );
+
+  static TransportRetryConfiguration retry() => TransportRetryConfiguration(
+        initialDelay: Duration(milliseconds: 100),
+        maxDelay: Duration(seconds: 1),
+        maxRetries: 5,
+        backoffFactor: 2.0,
       );
 }

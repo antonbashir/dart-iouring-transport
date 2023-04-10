@@ -95,17 +95,24 @@ void testTcp({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.tcp(
-        configuration: TransportDefaults.tcpServer().copyWith(readTimeout: serverTimeout),
+        configuration: TransportDefaults.tcpServer().copyWith(
+          readTimeout: serverTimeout,
+          writeTimeout: serverTimeout,
+        ),
         "0.0.0.0",
         12345,
         (channel) => channel.read(),
-        (stream) => stream.listen(onError: (error) => print(error), (event) => Future.delayed(Duration(seconds: 5)).then((value) => event.respond(serverData))),
+        (stream) => stream.listen(
+          onError: (error) => print(error),
+          (event) => Future.delayed(Duration(seconds: 5)).then((value) => event.respond(serverData)),
+        ),
       );
       final clients = await worker.clients.tcp(
         "127.0.0.1",
         12345,
         configuration: TransportDefaults.tcpClient().copyWith(
           pool: clientsPool,
+          connectTimeout: clientTimeout,
           writeTimeout: clientTimeout,
           readTimeout: clientTimeout,
         ),
@@ -187,7 +194,11 @@ void testUnixStream({
       await worker.initialize();
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       if (serverSocket.existsSync()) serverSocket.deleteSync();
-      worker.servers.unixStream(serverSocket.path, (channel) => channel.read(), (stream) => stream.listen(onError: (error) => print(error), (event) => event.respond(serverData)));
+      worker.servers.unixStream(
+        serverSocket.path,
+        (channel) => channel.read(),
+        (stream) => stream.listen(onError: (error) => print(error), (event) => event.respond(serverData)),
+      );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
@@ -225,7 +236,11 @@ void testUnixDgram({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
-      worker.servers.unixDatagram(serverSocket.path, (channel) => channel.receiveMessage(), (stream) => stream.listen(onError: (error) => print(error), (event) => event.respond(serverData)));
+      worker.servers.unixDatagram(
+        serverSocket.path,
+        (channel) => channel.receiveMessage(),
+        (stream) => stream.listen(onError: (error) => print(error), (event) => event.respond(serverData)),
+      );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);

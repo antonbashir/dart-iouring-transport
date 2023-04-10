@@ -47,10 +47,11 @@ class TransportWorker {
   late final TransportServersFactory _serversfactory;
   late final TransportFilesFactory _filesfactory;
   late final TransportCallbacks _callbacks;
+  late final TransportRetryStates _retryStates;
   late final int _inboundRingSize;
   late final int _outboundRingSize;
   late final ErrorHandler _errorHandler;
-  late final RetryHandler _retryHandler;
+  late final TransportRetryHandler _retryHandler;
 
   late final SendPort? transmitter;
 
@@ -97,6 +98,7 @@ class TransportWorker {
     );
     _serverRegistry = TransportServerRegistry(
       _bindings,
+      _inboundWorkerPointer,
     );
     _serversfactory = TransportServersFactory(
       _serverRegistry,
@@ -137,7 +139,7 @@ class TransportWorker {
       _outboundBufferFinalizers,
       _callbacks,
     );
-    _retryHandler = RetryHandler(
+    _retryHandler = TransportRetryHandler(
       _serverRegistry,
       _clientRegistry,
       _bindings,
@@ -148,6 +150,7 @@ class TransportWorker {
       _inboundBufferFinalizers,
       _outboundBufferFinalizers,
       _callbacks,
+      _retryStates,
     );
     _activator.close();
     Timer.periodic(Duration(seconds: 1), (timer) {
@@ -189,7 +192,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  bool _errorIsRetryable(int error) => error == -EINTR || error == -EAGAIN || error == -EALREADY;
+  bool _errorIsRetryable(int error) => error == -EINTR || error == -EAGAIN || error == -EALREADY || error == -ECANCELED;
 
   void _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
@@ -208,7 +211,7 @@ class TransportWorker {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           if (_errorIsRetryable(result)) {
-            _retryHandler.handle(data, fd, event);
+            _retryHandler.handle(data, fd, event, result);
             continue;
           }
           _errorHandler.handle(result, data, fd, event);
@@ -243,7 +246,7 @@ class TransportWorker {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           if (_errorIsRetryable(result)) {
-            _retryHandler.handle(data, fd, event);
+            _retryHandler.handle(data, fd, event, result);
             continue;
           }
           _errorHandler.handle(result, data, fd, event);
