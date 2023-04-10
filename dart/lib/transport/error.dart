@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'dart:ffi';
 
 import 'package:iouring_transport/transport/extensions.dart';
-import 'package:iouring_transport/transport/retry.dart';
 
 import 'constants.dart';
 
@@ -11,9 +10,10 @@ import 'bindings.dart';
 import 'callbacks.dart';
 import 'client.dart';
 import 'exception.dart';
+import 'retry.dart';
 import 'server.dart';
 
-class ErrorHandler {
+class TransportErrorHandler {
   final TransportServerRegistry _serverRegistry;
   final TransportClientRegistry _clientRegistry;
   final TransportBindings _bindings;
@@ -25,7 +25,7 @@ class ErrorHandler {
   final TransportCallbacks _callbacks;
   final TransportRetryStates _retryStates;
 
-  ErrorHandler(
+  TransportErrorHandler(
     this._serverRegistry,
     this._clientRegistry,
     this._bindings,

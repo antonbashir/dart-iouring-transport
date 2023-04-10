@@ -5,8 +5,6 @@ import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/extensions.dart';
-import 'package:iouring_transport/transport/resilience.dart';
-import 'package:iouring_transport/transport/retry.dart';
 
 import 'bindings.dart';
 import 'callbacks.dart';
@@ -17,6 +15,8 @@ import 'exception.dart';
 import 'factory.dart';
 import 'lookup.dart';
 import 'payload.dart';
+import 'error.dart';
+import 'retry.dart';
 import 'server.dart';
 import 'package:meta/meta.dart';
 
@@ -50,7 +50,7 @@ class TransportWorker {
   late final TransportRetryStates _retryStates;
   late final int _inboundRingSize;
   late final int _outboundRingSize;
-  late final ErrorHandler _errorHandler;
+  late final TransportErrorHandler _errorHandler;
   late final TransportRetryHandler _retryHandler;
 
   late final SendPort? transmitter;
@@ -127,7 +127,7 @@ class TransportWorker {
     _outboundBuffers = _outboundWorkerPointer.ref.buffers;
     _inboundRingSize = _transportPointer.ref.inbound_worker_configuration.ref.ring_size;
     _outboundRingSize = _transportPointer.ref.outbound_worker_configuration.ref.ring_size;
-    _errorHandler = ErrorHandler(
+    _errorHandler = TransportErrorHandler(
       _serverRegistry,
       _clientRegistry,
       _bindings,
