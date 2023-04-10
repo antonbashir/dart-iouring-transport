@@ -1,23 +1,17 @@
-import 'constants.dart';
-
 class TransportConfiguration {
-  final TransportLogLevel logLevel;
   final int listenerIsolates;
   final int workerInsolates;
 
   TransportConfiguration({
-    required this.logLevel,
     required this.listenerIsolates,
     required this.workerInsolates,
   });
 
   TransportConfiguration copyWith({
-    TransportLogLevel? logLevel,
     int? listenerIsolates,
     int? workerInsolates,
   }) =>
       TransportConfiguration(
-        logLevel: logLevel ?? this.logLevel,
         listenerIsolates: listenerIsolates ?? this.listenerIsolates,
         workerInsolates: workerInsolates ?? this.workerInsolates,
       );

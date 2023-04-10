@@ -17,8 +17,7 @@
 #include "transport_server.h"
 #include "small/include/small/rlist.h"
 
-transport_t *transport_initialize(transport_configuration_t *transport_configuration,
-                                  transport_listener_configuration_t *listener_configuration,
+transport_t *transport_initialize(transport_listener_configuration_t *listener_configuration,
                                   transport_worker_configuration_t *inbound_worker_configuration,
                                   transport_worker_configuration_t *outbound_worker_configuration)
 {
@@ -28,7 +27,6 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
     return NULL;
   }
 
-  transport->transport_configuration = transport_configuration;
   transport->listener_configuration = listener_configuration;
   transport->inbound_worker_configuration = inbound_worker_configuration;
   transport->outbound_worker_configuration = outbound_worker_configuration;
@@ -38,7 +36,6 @@ transport_t *transport_initialize(transport_configuration_t *transport_configura
 
 void transport_destroy(transport_t *transport)
 {
-  free(transport->transport_configuration);
   free(transport->listener_configuration);
   free(transport->inbound_worker_configuration);
   free(transport->outbound_worker_configuration);

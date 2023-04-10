@@ -33,9 +33,6 @@ class Transport {
     _library = TransportLibrary.load(libraryPath: libraryPath);
     _bindings = TransportBindings(_library.library);
 
-    final nativeTransportConfiguration = calloc<transport_configuration_t>();
-    nativeTransportConfiguration.ref.log_level = transportConfiguration.logLevel.index;
-
     final nativeListenerConfiguration = calloc<transport_listener_configuration_t>();
     nativeListenerConfiguration.ref.ring_flags = listenerConfiguration.ringFlags;
     nativeListenerConfiguration.ref.ring_size = listenerConfiguration.ringSize;
@@ -54,7 +51,6 @@ class Transport {
     nativeoOutboundWorkerConfiguration.ref.buffers_count = outboundWrkerConfiguration.buffersCount;
 
     _transportPointer = _bindings.transport_initialize(
-      nativeTransportConfiguration,
       nativeListenerConfiguration,
       nativeInboundWorkerConfiguration,
       nativeoOutboundWorkerConfiguration,

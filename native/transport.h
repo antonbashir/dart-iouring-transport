@@ -17,21 +17,14 @@ extern "C"
 {
 #endif
 
-  typedef struct transport_configuration
-  {
-    uint8_t log_level;
-  } transport_configuration_t;
-
   typedef struct transport
   {
-    transport_configuration_t *transport_configuration;
     transport_listener_configuration_t *listener_configuration;
     transport_worker_configuration_t *inbound_worker_configuration;
     transport_worker_configuration_t *outbound_worker_configuration;
   } transport_t;
 
-  transport_t *transport_initialize(transport_configuration_t *transport_configuration,
-                                    transport_listener_configuration_t *listener_configuration,
+  transport_t *transport_initialize(transport_listener_configuration_t *listener_configuration,
                                     transport_worker_configuration_t *inbound_worker_configuration,
                                     transport_worker_configuration_t *outbound_worker_configuration);
 

@@ -5,7 +5,6 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportConfiguration transport() => TransportConfiguration(
-        logLevel: TransportLogLevel.debug,
         listenerIsolates: 1,
         workerInsolates: 2,
       );
