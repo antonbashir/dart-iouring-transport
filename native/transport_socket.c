@@ -177,7 +177,7 @@ int64_t transport_socket_create_tcp(uint64_t flags,
   return (uint32_t)fd;
 }
 
-int32_t transport_socket_create_udp(uint64_t flags,
+int64_t transport_socket_create_udp(uint64_t flags,
                                     uint32_t socket_receive_buffer_size,
                                     uint32_t socket_send_buffer_size,
                                     uint32_t socket_receive_low_at,
@@ -304,7 +304,7 @@ int32_t transport_socket_create_udp(uint64_t flags,
   return (uint32_t)fd;
 }
 
-int32_t transport_socket_create_unix_stream(uint64_t flags,
+int64_t transport_socket_create_unix_stream(uint64_t flags,
                                             uint32_t socket_receive_buffer_size,
                                             uint32_t socket_send_buffer_size,
                                             uint32_t socket_receive_low_at,
@@ -371,7 +371,7 @@ int32_t transport_socket_create_unix_stream(uint64_t flags,
   return (uint32_t)fd;
 }
 
-int32_t transport_socket_create_unix_dgram(uint64_t flags,
+int64_t transport_socket_create_unix_dgram(uint64_t flags,
                                            uint32_t socket_receive_buffer_size,
                                            uint32_t socket_send_buffer_size,
                                            uint32_t socket_receive_low_at,
