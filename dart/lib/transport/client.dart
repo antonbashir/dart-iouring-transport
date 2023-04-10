@@ -4,12 +4,12 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/constants.dart';
 
 import 'bindings.dart';
 import 'callbacks.dart';
 import 'channels.dart';
 import 'configuration.dart';
+import 'constants.dart';
 import 'defaults.dart';
 import 'exception.dart';
 import 'payload.dart';
@@ -35,6 +35,7 @@ class TransportClient {
   final Pointer<transport_client_t> pointer;
   final TransportOutboundChannel _channel;
   final TransportBindings _bindings;
+  final TransportRetryConfiguration retry;
 
   var _active = true;
   bool get active => _active;
@@ -42,7 +43,7 @@ class TransportClient {
 
   var _pending = 0;
 
-  TransportClient(this._callbacks, this._channel, this.pointer, this._bindings);
+  TransportClient(this._callbacks, this._channel, this.pointer, this._bindings, this.retry);
 
   Future<TransportOutboundPayload> read() async {
     final bufferId = await _channel.allocate();
@@ -153,6 +154,7 @@ class TransportClientRegistry {
         ),
         clientPointer,
         _bindings,
+        configuration.retryConfiguration,
       );
       _clients[clientPointer.ref.fd] = client;
       communicators.add(client.connect(_workerPointer).then((client) => TransportCommunicator(client)));
@@ -178,6 +180,7 @@ class TransportClientRegistry {
         ),
         clientPointer,
         _bindings,
+        configuration.retryConfiguration,
       );
       _clients[clientPointer.ref.fd] = clinet;
       clients.add(clinet.connect(_workerPointer).then((client) => TransportCommunicator(client)));
@@ -206,6 +209,7 @@ class TransportClientRegistry {
       ),
       clientPointer,
       _bindings,
+      configuration.retryConfiguration,
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);
@@ -230,6 +234,7 @@ class TransportClientRegistry {
       ),
       clientPointer,
       _bindings,
+      configuration.retryConfiguration,
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);

@@ -136,12 +136,14 @@ class TransportUdpServerConfiguration {
   final int sendBufferSize;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportUdpServerConfiguration({
     required this.receiveBufferSize,
     required this.sendBufferSize,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportUdpServerConfiguration copyWith({
@@ -149,12 +151,14 @@ class TransportUdpServerConfiguration {
     int? sendBufferSize,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportUdpServerConfiguration(
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }
 
@@ -164,6 +168,7 @@ class TransportUnixStreamServerConfiguration {
   final int sendBufferSize;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportUnixStreamServerConfiguration({
     required this.maxConnections,
@@ -171,6 +176,7 @@ class TransportUnixStreamServerConfiguration {
     required this.sendBufferSize,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportUnixStreamServerConfiguration copyWith({
@@ -179,6 +185,7 @@ class TransportUnixStreamServerConfiguration {
     int? sendBufferSize,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportUnixStreamServerConfiguration(
         maxConnections: maxConnections ?? this.maxConnections,
@@ -186,6 +193,7 @@ class TransportUnixStreamServerConfiguration {
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }
 
@@ -194,12 +202,14 @@ class TransportUnixDatagramServerConfiguration {
   final int sendBufferSize;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportUnixDatagramServerConfiguration({
     required this.receiveBufferSize,
     required this.sendBufferSize,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportUnixDatagramServerConfiguration copyWith({
@@ -207,12 +217,14 @@ class TransportUnixDatagramServerConfiguration {
     int? sendBufferSize,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportUnixDatagramServerConfiguration(
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }
 
@@ -223,6 +235,7 @@ class TransportTcpClientConfiguration {
   final Duration connectTimeout;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportTcpClientConfiguration({
     required this.receiveBufferSize,
@@ -231,6 +244,7 @@ class TransportTcpClientConfiguration {
     required this.connectTimeout,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportTcpClientConfiguration copyWith({
@@ -240,6 +254,7 @@ class TransportTcpClientConfiguration {
     Duration? connectTimeout,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportTcpClientConfiguration(
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
@@ -248,6 +263,7 @@ class TransportTcpClientConfiguration {
         connectTimeout: connectTimeout ?? this.connectTimeout,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }
 
@@ -256,12 +272,14 @@ class TransportUdpClientConfiguration {
   final int sendBufferSize;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportUdpClientConfiguration({
     required this.receiveBufferSize,
     required this.sendBufferSize,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportUdpClientConfiguration copyWith({
@@ -269,12 +287,14 @@ class TransportUdpClientConfiguration {
     int? sendBufferSize,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportUdpClientConfiguration(
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }
 
@@ -285,6 +305,7 @@ class TransportUnixStreamClientConfiguration {
   final Duration connectTimeout;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportUnixStreamClientConfiguration({
     required this.receiveBufferSize,
@@ -293,6 +314,7 @@ class TransportUnixStreamClientConfiguration {
     required this.connectTimeout,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportUnixStreamClientConfiguration copyWith({
@@ -302,6 +324,7 @@ class TransportUnixStreamClientConfiguration {
     Duration? connectTimeout,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportUnixStreamClientConfiguration(
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
@@ -310,6 +333,7 @@ class TransportUnixStreamClientConfiguration {
         connectTimeout: connectTimeout ?? this.connectTimeout,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }
 
@@ -318,12 +342,14 @@ class TransportUnixDatagramClientConfiguration {
   final int sendBufferSize;
   final Duration readTimeout;
   final Duration writeTimeout;
+  final TransportRetryConfiguration retryConfiguration;
 
   TransportUnixDatagramClientConfiguration({
     required this.receiveBufferSize,
     required this.sendBufferSize,
     required this.readTimeout,
     required this.writeTimeout,
+    required this.retryConfiguration,
   });
 
   TransportUnixDatagramClientConfiguration copyWith({
@@ -331,11 +357,13 @@ class TransportUnixDatagramClientConfiguration {
     int? sendBufferSize,
     Duration? readTimeout,
     Duration? writeTimeout,
+    TransportRetryConfiguration? retryConfiguration,
   }) =>
       TransportUnixDatagramClientConfiguration(
         receiveBufferSize: receiveBufferSize ?? this.receiveBufferSize,
         sendBufferSize: sendBufferSize ?? this.sendBufferSize,
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
+        retryConfiguration: retryConfiguration ?? this.retryConfiguration,
       );
 }

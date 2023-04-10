@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/constants.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
 import 'configuration.dart';
+import 'constants.dart';
 import 'defaults.dart';
 import 'payload.dart';
 
@@ -83,14 +83,17 @@ class TransportServerRegistry {
   }
 
   TransportServer createUdp(String host, int port, {TransportUdpServerConfiguration? configuration}) {
+    configuration = configuration ?? TransportDefaults.udpServer();
     final instance = using(
       (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_udp(
-          _udpConfiguration(configuration ?? TransportDefaults.udpServer(), arena),
+          _udpConfiguration(configuration!, arena),
           host.toNativeUtf8(allocator: arena).cast(),
           port,
         ),
         _bindings,
+        configuration.retryConfiguration,
+        _workerPointer,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -98,13 +101,16 @@ class TransportServerRegistry {
   }
 
   TransportServer createUnixStream(String path, {TransportUnixStreamServerConfiguration? configuration}) {
+    configuration = configuration ?? TransportDefaults.unixStreamServer();
     final instance = using(
       (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_unix_stream(
-          _unixStreamConfiguration(configuration ?? TransportDefaults.unixStreamServer(), arena),
+          _unixStreamConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
         ),
         _bindings,
+        configuration.retryConfiguration,
+        _workerPointer,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -112,13 +118,16 @@ class TransportServerRegistry {
   }
 
   TransportServer createUnixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
+    configuration = configuration ?? TransportDefaults.unixDatagramServer();
     final instance = using(
       (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_unix_dgram(
-          _unixDatagramConfiguration(configuration ?? TransportDefaults.unixDatagramServer(), arena),
+          _unixDatagramConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
         ),
         _bindings,
+        configuration.retryConfiguration,
+        _workerPointer,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;

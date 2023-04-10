@@ -24,7 +24,7 @@ class TransportRetryStates {
   final _writeState = <int, _TransportRetryValues>{};
 
   @pragma(preferInlinePragma)
-  bool incrementConnect(int fd, TransportRetryConfiguration retry) {
+  Future<bool> incrementConnect(int fd, TransportRetryConfiguration retry) async {
     final current = _connectState[fd];
     if (current == null) {
       _connectState[fd] = _TransportRetryValues(retry.initialDelay, 1);
@@ -35,11 +35,11 @@ class TransportRetryStates {
       microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
     );
     _connectState[fd] = _TransportRetryValues(newDelay, current.count + 1);
-    return true;
+    return Future.delayed(newDelay).then((value) => true);
   }
 
   @pragma(preferInlinePragma)
-  bool incrementRead(int bufferId, TransportRetryConfiguration retry) {
+  Future<bool> incrementRead(int bufferId, TransportRetryConfiguration retry) async {
     final current = _readState[bufferId];
     if (current == null) {
       _readState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
@@ -50,11 +50,11 @@ class TransportRetryStates {
       microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
     );
     _readState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
-    return true;
+    return Future.delayed(newDelay).then((value) => true);
   }
 
   @pragma(preferInlinePragma)
-  bool incrementWrite(int bufferId, TransportRetryConfiguration retry) {
+  Future<bool> incrementWrite(int bufferId, TransportRetryConfiguration retry) async {
     final current = _writeState[bufferId];
     if (current == null) {
       _writeState[bufferId] = _TransportRetryValues(retry.initialDelay, 1);
@@ -65,7 +65,7 @@ class TransportRetryStates {
       microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
     );
     _writeState[bufferId] = _TransportRetryValues(newDelay, current.count + 1);
-    return true;
+    return Future.delayed(newDelay).then((value) => true);
   }
 
   @pragma(preferInlinePragma)
@@ -147,10 +147,10 @@ class TransportRetryHandler {
     return true;
   }
 
-  void _handleRead(int bufferId, int fd) {
+  Future<void> _handleRead(int bufferId, int fd) async {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    if (!_retryState.incrementRead(bufferId, server!.retry)) {
+    if (!(await _retryState.incrementRead(bufferId, server!.retry))) {
       _releaseInboundBuffer(bufferId);
       _serverRegistry.removeClient(fd);
       server.controller.addError(TransportTimeoutException.forServer());
@@ -166,52 +166,74 @@ class TransportRetryHandler {
     );
   }
 
-  void _handleWrite(int bufferId, int fd) {
+  Future<void> _handleWrite(int bufferId, int fd) async {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    if (!(await _retryState.incrementWrite(bufferId, server!.retry))) {
+      _releaseInboundBuffer(bufferId);
+      _serverRegistry.removeClient(fd);
+      server.controller.addError(TransportTimeoutException.forServer());
+      return;
+    }
     _bindings.transport_worker_write(
       _inboundWorkerPointer,
       fd,
       bufferId,
       _inboundUsedBuffers[bufferId],
-      server!.pointer.ref.write_timeout,
+      server.pointer.ref.write_timeout,
       transportEventWrite,
     );
   }
 
-  void _handleReceiveMessage(int bufferId, int fd) {
+  Future<void> _handleReceiveMessage(int bufferId, int fd) async {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
+    if (!(await _retryState.incrementRead(bufferId, server!.retry))) {
+      _releaseInboundBuffer(bufferId);
+      server.controller.addError(TransportTimeoutException.forServer());
+      return;
+    }
     _bindings.transport_worker_receive_message(
       _inboundWorkerPointer,
       fd,
       bufferId,
-      server!.pointer.ref.family,
+      server.pointer.ref.family,
       MSG_TRUNC,
       server.pointer.ref.read_timeout,
       transportEventRead,
     );
   }
 
-  void _handleSendMessage(int bufferId, int fd) {
+  Future<void> _handleSendMessage(int bufferId, int fd) async {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
+    if (!(await _retryState.incrementWrite(bufferId, server!.retry))) {
+      _releaseInboundBuffer(bufferId);
+      server.controller.addError(TransportTimeoutException.forServer());
+      return;
+    }
     _bindings.transport_worker_respond_message(
       _inboundWorkerPointer,
       fd,
       bufferId,
-      server!.pointer.ref.family,
+      server.pointer.ref.family,
       MSG_TRUNC,
       server.pointer.ref.write_timeout,
       transportEventWrite,
     );
   }
 
-  void _handleReadCallback(int bufferId, int fd) {
+  Future<void> _handleReadCallback(int bufferId, int fd) async {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
+      return;
+    }
+    if (!(await _retryState.incrementRead(bufferId, client!.retry))) {
+      _releaseOutboundBuffer(bufferId);
+      _clientRegistry.removeClient(fd);
+      _callbacks.notifyReadError(bufferId, TransportTimeoutException.forClient());
       return;
     }
     _bindings.transport_worker_read(
@@ -219,16 +241,22 @@ class TransportRetryHandler {
       fd,
       bufferId,
       _outboundUsedBuffers[bufferId],
-      client!.pointer.ref.read_timeout,
+      client.pointer.ref.read_timeout,
       transportEventRead | transportEventClient,
     );
   }
 
-  void _handleWriteCallback(int bufferId, int fd) {
+  Future<void> _handleWriteCallback(int bufferId, int fd) async {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
+      return;
+    }
+    if (!(await _retryState.incrementWrite(bufferId, client!.retry))) {
+      _releaseOutboundBuffer(bufferId);
+      _clientRegistry.removeClient(fd);
+      _callbacks.notifyWriteError(bufferId, TransportTimeoutException.forClient());
       return;
     }
     _bindings.transport_worker_write(
@@ -236,42 +264,54 @@ class TransportRetryHandler {
       fd,
       bufferId,
       _outboundUsedBuffers[bufferId],
-      client!.pointer.ref.write_timeout,
+      client.pointer.ref.write_timeout,
       transportEventWrite | transportEventClient,
     );
     return;
   }
 
-  void _handleReceiveMessageCallback(int bufferId, int fd) {
+  Future<void> _handleReceiveMessageCallback(int bufferId, int fd) async {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
+    if (!(await _retryState.incrementRead(bufferId, client!.retry))) {
+      _releaseOutboundBuffer(bufferId);
+      _clientRegistry.removeClient(fd);
+      _callbacks.notifyReadError(bufferId, TransportTimeoutException.forClient());
+      return;
+    }
     _bindings.transport_worker_receive_message(
       _outboundWorkerPointer,
       fd,
       bufferId,
-      client!.pointer.ref.family,
+      client.pointer.ref.family,
       MSG_TRUNC,
       client.pointer.ref.read_timeout,
       transportEventRead | transportEventClient,
     );
   }
 
-  void _handleSendMessageCallback(int bufferId, int fd) {
+  Future<void> _handleSendMessageCallback(int bufferId, int fd) async {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
       client!.onComplete();
       return;
     }
+    if (!(await _retryState.incrementWrite(bufferId, client!.retry))) {
+      _releaseOutboundBuffer(bufferId);
+      _clientRegistry.removeClient(fd);
+      _callbacks.notifyWriteError(bufferId, TransportTimeoutException.forClient());
+      return;
+    }
     _bindings.transport_worker_respond_message(
       _outboundWorkerPointer,
       fd,
       bufferId,
-      client!.pointer.ref.family,
+      client.pointer.ref.family,
       MSG_TRUNC,
       client.pointer.ref.write_timeout,
       transportEventWrite | transportEventClient,
@@ -285,17 +325,22 @@ class TransportRetryHandler {
     _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
   }
 
-  void _handleConnect(int fd) {
+  Future<void> _handleConnect(int fd) async {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
-    _bindings.transport_worker_connect(_outboundWorkerPointer, client!.pointer, client.pointer.ref.connect_timeout);
+    if (!(await _retryState.incrementConnect(fd, client!.retry))) {
+      _clientRegistry.removeClient(fd);
+      _callbacks.notifyConnectError(fd, TransportTimeoutException.forClient());
+      return;
+    }
+    _bindings.transport_worker_connect(_outboundWorkerPointer, client.pointer, client.pointer.ref.connect_timeout);
   }
 
-  void handle(int data, int fd, int event, int result) {
+  Future<void> handle(int data, int fd, int event, int result) async {
     if (event & transportEventClient != 0) {
       if (event & transportEventRead != 0) {
         _handleReadCallback(((data >> 16) & 0xffff), fd);

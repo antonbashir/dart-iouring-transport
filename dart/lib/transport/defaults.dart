@@ -36,6 +36,7 @@ class TransportDefaults {
         connectTimeout: Duration(seconds: 10),
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
+        retryConfiguration: retry(),
       );
 
   static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
@@ -43,6 +44,7 @@ class TransportDefaults {
         sendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
+        retryConfiguration: retry(),
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
@@ -52,6 +54,7 @@ class TransportDefaults {
         connectTimeout: Duration(seconds: 10),
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
+        retryConfiguration: retry(),
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
@@ -59,6 +62,7 @@ class TransportDefaults {
         sendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
+        retryConfiguration: retry(),
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
@@ -75,6 +79,7 @@ class TransportDefaults {
         sendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
+        retryConfiguration: retry(),
       );
 
   static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(
@@ -83,6 +88,7 @@ class TransportDefaults {
         sendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
+        retryConfiguration: retry(),
       );
 
   static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
@@ -90,6 +96,7 @@ class TransportDefaults {
         sendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
+        retryConfiguration: retry(),
       );
 
   static TransportRetryConfiguration retry() => TransportRetryConfiguration(
