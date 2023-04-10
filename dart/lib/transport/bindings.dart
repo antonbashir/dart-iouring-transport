@@ -26793,12 +26793,6 @@ class transport_server_configuration extends ffi.Struct {
 
   @ffi.Uint32()
   external int send_buffer_size;
-
-  @ffi.Uint64()
-  external int read_timeout;
-
-  @ffi.Uint64()
-  external int write_timeout;
 }
 
 class transport_server extends ffi.Struct {
@@ -26814,12 +26808,6 @@ class transport_server extends ffi.Struct {
 
   @socklen_t()
   external int server_address_length;
-
-  @ffi.Uint64()
-  external int read_timeout;
-
-  @ffi.Uint64()
-  external int write_timeout;
 }
 
 typedef transport_server_t = transport_server;
@@ -26865,15 +26853,6 @@ class transport_client_configuration extends ffi.Struct {
 
   @ffi.Uint32()
   external int send_buffer_size;
-
-  @ffi.Uint64()
-  external int connect_timeout;
-
-  @ffi.Uint64()
-  external int read_timeout;
-
-  @ffi.Uint64()
-  external int write_timeout;
 }
 
 class transport_client extends ffi.Struct {
@@ -26893,15 +26872,6 @@ class transport_client extends ffi.Struct {
 
   @ffi.Int32()
   external int family;
-
-  @ffi.Uint64()
-  external int connect_timeout;
-
-  @ffi.Uint64()
-  external int read_timeout;
-
-  @ffi.Uint64()
-  external int write_timeout;
 }
 
 typedef transport_client_t = transport_client;

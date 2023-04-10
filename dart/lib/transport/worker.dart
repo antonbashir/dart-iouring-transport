@@ -312,13 +312,13 @@ class TransportWorker {
         fd,
         newBufferId,
         0,
-        server!.pointer.ref.read_timeout,
+        server!.readTimeout,
         transportEventRead,
       ),
     );
     if (!server!.controller.hasListener) {
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-      _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, server.pointer.ref.read_timeout, transportEventRead);
+      _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, server.readTimeout, transportEventRead);
       return;
     }
     final buffer = _inboundBuffers[bufferId];
@@ -330,7 +330,7 @@ class TransportWorker {
         _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
         bufferBytes.asTypedList(answer.length).setAll(0, answer);
         buffer.iov_len = answer.length;
-        _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, 0, server.pointer.ref.write_timeout, transportEventWrite);
+        _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, 0, server.writeTimeout, transportEventWrite);
       },
       () => _releaseInboundBuffer(bufferId),
     ));
@@ -347,7 +347,7 @@ class TransportWorker {
         bufferId,
         server.pointer.ref.family,
         MSG_TRUNC,
-        server.pointer.ref.read_timeout,
+        server.readTimeout,
         transportEventReceiveMessage,
       );
       return;
@@ -359,7 +359,7 @@ class TransportWorker {
         newBufferId,
         server.pointer.ref.family,
         MSG_TRUNC,
-        server.pointer.ref.read_timeout,
+        server.readTimeout,
         transportEventReceiveMessage,
       );
     });
@@ -378,7 +378,7 @@ class TransportWorker {
           bufferId,
           server.pointer.ref.family,
           MSG_TRUNC,
-          server.pointer.ref.write_timeout,
+          server.writeTimeout,
           transportEventSendMessage,
         );
         return;

@@ -161,7 +161,7 @@ class TransportRetryHandler {
       fd,
       bufferId,
       _inboundUsedBuffers[bufferId],
-      server.pointer.ref.read_timeout,
+      server.readTimeout,
       transportEventRead,
     );
   }
@@ -180,7 +180,7 @@ class TransportRetryHandler {
       fd,
       bufferId,
       _inboundUsedBuffers[bufferId],
-      server.pointer.ref.write_timeout,
+      server.writeTimeout,
       transportEventWrite,
     );
   }
@@ -199,7 +199,7 @@ class TransportRetryHandler {
       bufferId,
       server.pointer.ref.family,
       MSG_TRUNC,
-      server.pointer.ref.read_timeout,
+      server.readTimeout,
       transportEventRead,
     );
   }
@@ -218,7 +218,7 @@ class TransportRetryHandler {
       bufferId,
       server.pointer.ref.family,
       MSG_TRUNC,
-      server.pointer.ref.write_timeout,
+      server.writeTimeout,
       transportEventWrite,
     );
   }
@@ -241,7 +241,7 @@ class TransportRetryHandler {
       fd,
       bufferId,
       _outboundUsedBuffers[bufferId],
-      client.pointer.ref.read_timeout,
+      client.readTimeout,
       transportEventRead | transportEventClient,
     );
   }
@@ -264,7 +264,7 @@ class TransportRetryHandler {
       fd,
       bufferId,
       _outboundUsedBuffers[bufferId],
-      client.pointer.ref.write_timeout,
+      client.writeTimeout,
       transportEventWrite | transportEventClient,
     );
     return;
@@ -289,7 +289,7 @@ class TransportRetryHandler {
       bufferId,
       client.pointer.ref.family,
       MSG_TRUNC,
-      client.pointer.ref.read_timeout,
+      client.readTimeout,
       transportEventRead | transportEventClient,
     );
   }
@@ -313,7 +313,7 @@ class TransportRetryHandler {
       bufferId,
       client.pointer.ref.family,
       MSG_TRUNC,
-      client.pointer.ref.write_timeout,
+      client.writeTimeout,
       transportEventWrite | transportEventClient,
     );
     return;
@@ -337,7 +337,7 @@ class TransportRetryHandler {
       _callbacks.notifyConnectError(fd, TransportTimeoutException.forClient());
       return;
     }
-    _bindings.transport_worker_connect(_outboundWorkerPointer, client.pointer, client.pointer.ref.connect_timeout);
+    _bindings.transport_worker_connect(_outboundWorkerPointer, client.pointer, client.connectTimeout);
   }
 
   Future<void> handle(int data, int fd, int event, int result) async {

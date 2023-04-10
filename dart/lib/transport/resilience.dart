@@ -112,7 +112,7 @@ class ErrorHandler {
         newBufferId,
         server!.pointer.ref.family,
         MSG_TRUNC,
-        server.pointer.ref.read_timeout,
+        server.readTimeout,
         transportEventReceiveMessage,
       );
     });

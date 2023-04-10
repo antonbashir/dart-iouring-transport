@@ -49,7 +49,7 @@ class TransportInboundChannel extends TransportChannel {
   Future<void> read() async {
     final bufferId = await _allocate();
     if (!_server.active) throw TransportClosedException.forServer();
-    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, 0, _server.pointer.ref.read_timeout, transportEventRead);
+    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, 0, _server.readTimeout, transportEventRead);
   }
 
   Future<void> receiveMessage({int flags = 0}) async {
@@ -61,7 +61,7 @@ class TransportInboundChannel extends TransportChannel {
       bufferId,
       _server.pointer.ref.family,
       flags | MSG_TRUNC,
-      _server.pointer.ref.read_timeout,
+      _server.readTimeout,
       transportEventReceiveMessage,
     );
   }
@@ -103,20 +103,20 @@ class TransportOutboundChannel extends TransportChannel {
   }
 
   @pragma(preferInlinePragma)
-  void receiveMessage(int bufferId, Pointer<transport_client_t> client, {int flags = 0}) {
+  void receiveMessage(int bufferId, Pointer<transport_client_t> client, int timeout, {int flags = 0}) {
     _bindings.transport_worker_receive_message(
       _workerPointer,
       _fd,
       bufferId,
       client.ref.family,
       flags | MSG_TRUNC,
-      client.ref.read_timeout,
+      timeout,
       transportEventReceiveMessage | transportEventClient,
     );
   }
 
   @pragma(preferInlinePragma)
-  void sendMessage(Uint8List bytes, int bufferId, Pointer<transport_client_t> client, {int flags = 0}) {
+  void sendMessage(Uint8List bytes, int bufferId, Pointer<transport_client_t> client, int timeout, {int flags = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
@@ -127,7 +127,7 @@ class TransportOutboundChannel extends TransportChannel {
       _bindings.transport_client_get_destination_address(client).cast(),
       client.ref.family,
       flags | MSG_TRUNC,
-      client.ref.write_timeout,
+      timeout,
       transportEventSendMessage | transportEventClient,
     );
   }

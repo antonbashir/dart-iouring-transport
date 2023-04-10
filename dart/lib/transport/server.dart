@@ -15,6 +15,8 @@ class TransportServer {
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
   final TransportRetryConfiguration retry;
+  final int readTimeout;
+  final int writeTimeout;
 
   late final int fd;
   late final StreamController<TransportInboundPayload> controller;
@@ -25,7 +27,14 @@ class TransportServer {
   bool get active => _active;
   final _closer = Completer();
 
-  TransportServer(this.pointer, this._bindings, this.retry, this._workerPointer) {
+  TransportServer(
+    this.pointer,
+    this._bindings,
+    this.retry,
+    this._workerPointer,
+    this.readTimeout,
+    this.writeTimeout,
+  ) {
     controller = StreamController();
     stream = controller.stream;
     fd = pointer.ref.fd;
@@ -76,6 +85,8 @@ class TransportServerRegistry {
         _bindings,
         configuration.retryConfiguration,
         _workerPointer,
+        configuration.readTimeout.inSeconds,
+        configuration.writeTimeout.inSeconds,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -94,6 +105,8 @@ class TransportServerRegistry {
         _bindings,
         configuration.retryConfiguration,
         _workerPointer,
+        configuration.readTimeout.inSeconds,
+        configuration.writeTimeout.inSeconds,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -111,6 +124,8 @@ class TransportServerRegistry {
         _bindings,
         configuration.retryConfiguration,
         _workerPointer,
+        configuration.readTimeout.inSeconds,
+        configuration.writeTimeout.inSeconds,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -128,6 +143,8 @@ class TransportServerRegistry {
         _bindings,
         configuration.retryConfiguration,
         _workerPointer,
+        configuration.readTimeout.inSeconds,
+        configuration.writeTimeout.inSeconds,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -162,8 +179,6 @@ class TransportServerRegistry {
     nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
-    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
-    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 
@@ -171,8 +186,6 @@ class TransportServerRegistry {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
-    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
-    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 
@@ -181,8 +194,6 @@ class TransportServerRegistry {
     nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
-    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
-    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 
@@ -190,8 +201,6 @@ class TransportServerRegistry {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
     nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
-    nativeServerConfiguration.ref.read_timeout = serverConfiguration.readTimeout.inSeconds;
-    nativeServerConfiguration.ref.write_timeout = serverConfiguration.writeTimeout.inSeconds;
     return nativeServerConfiguration;
   }
 }

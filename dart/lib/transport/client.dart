@@ -36,6 +36,9 @@ class TransportClient {
   final TransportOutboundChannel _channel;
   final TransportBindings _bindings;
   final TransportRetryConfiguration retry;
+  final int connectTimeout;
+  final int readTimeout;
+  final int writeTimeout;
 
   var _active = true;
   bool get active => _active;
@@ -43,14 +46,23 @@ class TransportClient {
 
   var _pending = 0;
 
-  TransportClient(this._callbacks, this._channel, this.pointer, this._bindings, this.retry);
+  TransportClient(
+    this._callbacks,
+    this._channel,
+    this.pointer,
+    this._bindings,
+    this.retry,
+    this.connectTimeout,
+    this.readTimeout,
+    this.writeTimeout,
+  );
 
   Future<TransportOutboundPayload> read() async {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
-    _channel.read(bufferId, pointer.ref.read_timeout, offset: 0);
+    _channel.read(bufferId, readTimeout, offset: 0);
     _pending++;
     return completer.future;
   }
@@ -60,7 +72,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, pointer.ref.write_timeout);
+    _channel.write(bytes, bufferId, writeTimeout);
     _pending++;
     return completer.future;
   }
@@ -70,7 +82,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
     _callbacks.putRead(bufferId, completer);
-    _channel.receiveMessage(bufferId, pointer);
+    _channel.receiveMessage(bufferId, pointer, readTimeout);
     _pending++;
     return completer.future;
   }
@@ -80,7 +92,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.putWrite(bufferId, completer);
-    _channel.sendMessage(bytes, bufferId, pointer);
+    _channel.sendMessage(bytes, bufferId, pointer, writeTimeout);
     _pending++;
     return completer.future;
   }
@@ -88,7 +100,7 @@ class TransportClient {
   Future<TransportClient> connect(Pointer<transport_worker_t> workerPointer) {
     final completer = Completer<TransportClient>();
     _callbacks.putConnect(pointer.ref.fd, completer);
-    _bindings.transport_worker_connect(workerPointer, pointer, pointer.ref.connect_timeout);
+    _bindings.transport_worker_connect(workerPointer, pointer, connectTimeout);
     _pending++;
     return completer.future;
   }
@@ -155,6 +167,9 @@ class TransportClientRegistry {
         clientPointer,
         _bindings,
         configuration.retryConfiguration,
+        configuration.connectTimeout.inSeconds,
+        configuration.readTimeout.inSeconds,
+        configuration.writeTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
       communicators.add(client.connect(_workerPointer).then((client) => TransportCommunicator(client)));
@@ -181,6 +196,9 @@ class TransportClientRegistry {
         clientPointer,
         _bindings,
         configuration.retryConfiguration,
+        configuration.connectTimeout.inSeconds,
+        configuration.readTimeout.inSeconds,
+        configuration.writeTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = clinet;
       clients.add(clinet.connect(_workerPointer).then((client) => TransportCommunicator(client)));
@@ -210,6 +228,9 @@ class TransportClientRegistry {
       clientPointer,
       _bindings,
       configuration.retryConfiguration,
+      -1,
+      configuration.readTimeout.inSeconds,
+      configuration.writeTimeout.inSeconds,
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);
@@ -235,6 +256,9 @@ class TransportClientRegistry {
       clientPointer,
       _bindings,
       configuration.retryConfiguration,
+      -1,
+      configuration.readTimeout.inSeconds,
+      configuration.writeTimeout.inSeconds,
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);
@@ -253,9 +277,6 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
-    nativeClientConfiguration.ref.connect_timeout = clientConfiguration.connectTimeout.inSeconds;
-    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
-    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 
@@ -263,8 +284,6 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
-    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
-    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 
@@ -272,9 +291,6 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
-    nativeClientConfiguration.ref.connect_timeout = clientConfiguration.connectTimeout.inSeconds;
-    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
-    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 
@@ -282,8 +298,6 @@ class TransportClientRegistry {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     nativeClientConfiguration.ref.receive_buffer_size = clientConfiguration.receiveBufferSize;
     nativeClientConfiguration.ref.send_buffer_size = clientConfiguration.sendBufferSize;
-    nativeClientConfiguration.ref.read_timeout = clientConfiguration.readTimeout.inSeconds;
-    nativeClientConfiguration.ref.write_timeout = clientConfiguration.writeTimeout.inSeconds;
     return nativeClientConfiguration;
   }
 }
