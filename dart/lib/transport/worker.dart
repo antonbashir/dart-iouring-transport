@@ -134,10 +134,10 @@ class TransportWorker {
       _inboundWorkerPointer,
       _outboundWorkerPointer,
       _inboundUsedBuffers,
-      _outboundUsedBuffers,
       _inboundBufferFinalizers,
       _outboundBufferFinalizers,
       _callbacks,
+      _retryStates,
     );
     _retryHandler = TransportRetryHandler(
       _serverRegistry,
@@ -305,6 +305,7 @@ class TransportWorker {
 
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
+    _retryStates.clearInboundRead(bufferId);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
     _allocateInbound().then(
       (newBufferId) => _bindings.transport_worker_read(
@@ -338,7 +339,7 @@ class TransportWorker {
 
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
-    _retryStates.clearInboundWrite(bufferId);
+    _retryStates.clearInboundRead(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     if (!server!.controller.hasListener) {
       _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
@@ -390,23 +391,27 @@ class TransportWorker {
 
   void _handleWrite(int bufferId, int fd) {
     final server = _serverRegistry.getByClient(fd);
+    _retryStates.clearInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
     _releaseInboundBuffer(bufferId);
   }
 
   void _handleSendMessage(int bufferId, int fd) {
     final server = _serverRegistry.getByServer(fd);
+    _retryStates.clearInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     _releaseInboundBuffer(bufferId);
   }
 
   void _handleReadReceiveMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
+    _retryStates.clearOutboundRead(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
+    client!.onComplete();
     _callbacks.notifyRead(
       bufferId,
       TransportOutboundPayload(
@@ -414,29 +419,30 @@ class TransportWorker {
         () => _releaseOutboundBuffer(bufferId),
       ),
     );
-    client!.onComplete();
   }
 
   void _handleWriteSendMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
+    _retryStates.clearOutboundWrite(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
-    _callbacks.notifyWrite(bufferId);
     client!.onComplete();
+    _callbacks.notifyWrite(bufferId);
   }
 
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
+    _retryStates.clearConnect(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       return;
     }
-    _callbacks.notifyConnect(fd, client!);
-    client.onComplete();
+    client!.onComplete();
+    _callbacks.notifyConnect(fd, client);
   }
 
   void _handleAccept(int fd, int result) {

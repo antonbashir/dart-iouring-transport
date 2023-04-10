@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:ffi';
 
 import 'package:iouring_transport/transport/extensions.dart';
+import 'package:iouring_transport/transport/retry.dart';
 
 import 'constants.dart';
 
@@ -19,10 +20,10 @@ class ErrorHandler {
   final Pointer<transport_worker_t> _inboundWorkerPointer;
   final Pointer<transport_worker_t> _outboundWorkerPointer;
   final Pointer<Int64> _inboundUsedBuffers;
-  final Pointer<Int64> _outboundUsedBuffers;
   final Queue<Completer<int>> _inboundBufferFinalizers;
   final Queue<Completer<int>> _outboundBufferFinalizers;
   final TransportCallbacks _callbacks;
+  final TransportRetryStates _retryStates;
 
   ErrorHandler(
     this._serverRegistry,
@@ -31,10 +32,10 @@ class ErrorHandler {
     this._inboundWorkerPointer,
     this._outboundWorkerPointer,
     this._inboundUsedBuffers,
-    this._outboundUsedBuffers,
     this._inboundBufferFinalizers,
     this._outboundBufferFinalizers,
     this._callbacks,
+    this._retryStates,
   );
 
   Future<int> _allocateInbound() async {
@@ -49,16 +50,19 @@ class ErrorHandler {
     return bufferId;
   }
 
+  @pragma(preferInlinePragma)
   void _releaseInboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_inboundWorkerPointer, bufferId);
     if (_inboundBufferFinalizers.isNotEmpty) _inboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _releaseOutboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_outboundWorkerPointer, bufferId);
     if (_outboundBufferFinalizers.isNotEmpty) _outboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   bool _ensureServerIsActive(TransportServer? server, int? bufferId, int? clientFd) {
     if (server == null) {
       if (bufferId != null) _releaseInboundBuffer(bufferId);
@@ -74,6 +78,7 @@ class ErrorHandler {
     return true;
   }
 
+  @pragma(preferInlinePragma)
   bool _ensureClientIsActive(TransportClient? client, int? bufferId, int fd) {
     if (client == null) {
       if (bufferId != null) _releaseOutboundBuffer(bufferId);
@@ -89,6 +94,8 @@ class ErrorHandler {
 
   void _handleReadWrite(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByClient(fd);
+    if (event == transportEventRead) _retryStates.clearInboundRead(bufferId);
+    if (event == transportEventWrite) _retryStates.clearInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
     if (!server!.controller.hasListener) {
       _releaseInboundBuffer(bufferId);
@@ -104,6 +111,7 @@ class ErrorHandler {
 
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
+    _retryStates.clearInboundRead(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     _allocateInbound().then((newBufferId) {
       _bindings.transport_worker_receive_message(
@@ -126,6 +134,7 @@ class ErrorHandler {
 
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
+    _retryStates.clearInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     _releaseInboundBuffer(bufferId);
     server!.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
@@ -139,6 +148,7 @@ class ErrorHandler {
 
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
+    _retryStates.clearConnect(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       client?.onComplete();
@@ -154,6 +164,7 @@ class ErrorHandler {
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
+    _retryStates.clearOutboundRead(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
@@ -170,6 +181,7 @@ class ErrorHandler {
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
+    _retryStates.clearOutboundWrite(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
