@@ -53,6 +53,12 @@ class TransportServerStreamCommunicator {
     );
   }
 
+  Stream<TransportInboundStreamPayload> stream() async* {
+    while (_server.active) {
+      yield await read();
+    }
+  }
+
   Future<void> close() => _server.close();
 }
 
@@ -62,7 +68,7 @@ class TransportServerDatagramCommunicator {
 
   TransportServerDatagramCommunicator(this._server, this._channel);
 
-  Future<TransportInboundDatagramPayload> receiveMessage({int? flags}) async {
+  Future<TransportInboundDatagramPayload> receive({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = await _channel.allocate();
     if (!_server.active) throw TransportClosedException.forServer();
@@ -83,6 +89,12 @@ class TransportServerDatagramCommunicator {
         },
       ),
     );
+  }
+
+  Stream<TransportInboundDatagramPayload> stream({int? flags}) async* {
+    while (_server.active) {
+      yield await receive(flags: flags);
+    }
   }
 
   Future<void> close() => _server.close();

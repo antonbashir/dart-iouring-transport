@@ -32,17 +32,6 @@ class TransportErrorHandler {
     this._eventStates,
   );
 
-  Future<int> _allocateInbound() async {
-    var bufferId = _bindings.transport_worker_get_buffer(_inboundWorkerPointer);
-    while (bufferId == transportBufferUsed) {
-      final completer = Completer<int>();
-      _inboundBufferFinalizers.add(completer);
-      await completer.future;
-      bufferId = _bindings.transport_worker_get_buffer(_inboundWorkerPointer);
-    }
-    return bufferId;
-  }
-
   @pragma(preferInlinePragma)
   void _releaseInboundBuffer(int bufferId) {
     _bindings.transport_worker_release_buffer(_inboundWorkerPointer, bufferId);
