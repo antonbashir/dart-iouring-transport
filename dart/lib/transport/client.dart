@@ -6,13 +6,14 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
-import 'callbacks.dart';
 import 'channels.dart';
 import 'configuration.dart';
 import 'constants.dart';
 import 'defaults.dart';
 import 'exception.dart';
 import 'payload.dart';
+import 'retry.dart';
+import 'state.dart';
 
 class TransportCommunicator {
   final TransportClient _client;
@@ -31,7 +32,7 @@ class TransportCommunicator {
 }
 
 class TransportClient {
-  final TransportCallbacks _callbacks;
+  final TransportEventStates _eventStates;
   final Pointer<transport_client_t> pointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportOutboundChannel _channel;
@@ -48,7 +49,7 @@ class TransportClient {
   var _pending = 0;
 
   TransportClient(
-    this._callbacks,
+    this._eventStates,
     this._channel,
     this.pointer,
     this._workerPointer,
@@ -63,7 +64,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
-    _callbacks.putRead(bufferId, completer);
+    _eventStates.setOutboundReadCallback(bufferId, completer, TransportRetryState(retry, 0));
     _channel.read(bufferId, readTimeout, offset: 0);
     _pending++;
     return completer.future;
@@ -73,7 +74,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _callbacks.putWrite(bufferId, completer);
+    _eventStates.setOutboundWriteCallback(bufferId, completer, TransportRetryState(retry, 0));
     _channel.write(bytes, bufferId, writeTimeout);
     _pending++;
     return completer.future;
@@ -83,7 +84,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
-    _callbacks.putRead(bufferId, completer);
+    _eventStates.setOutboundReadCallback(bufferId, completer, TransportRetryState(retry, 0));
     _channel.receiveMessage(bufferId, pointer, readTimeout);
     _pending++;
     return completer.future;
@@ -93,7 +94,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _callbacks.putWrite(bufferId, completer);
+    _eventStates.setOutboundWriteCallback(bufferId, completer, TransportRetryState(retry, 0));
     _channel.sendMessage(bytes, bufferId, pointer, writeTimeout);
     _pending++;
     return completer.future;
@@ -101,7 +102,7 @@ class TransportClient {
 
   Future<TransportClient> connect(Pointer<transport_worker_t> workerPointer) {
     final completer = Completer<TransportClient>();
-    _callbacks.putConnect(pointer.ref.fd, completer);
+    _eventStates.setConnectCallback(pointer.ref.fd, completer, TransportRetryState(retry, 0));
     _bindings.transport_worker_connect(workerPointer, pointer, connectTimeout);
     _pending++;
     return completer.future;
@@ -143,12 +144,12 @@ class TransportCommunicators {
 
 class TransportClientRegistry {
   final TransportBindings _bindings;
-  final TransportCallbacks _callbacks;
+  final TransportEventStates _eventStates;
   final Pointer<transport_worker_t> _workerPointer;
   final Queue<Completer<int>> _bufferFinalizers;
   final _clients = <int, TransportClient>{};
 
-  TransportClientRegistry(this._callbacks, this._workerPointer, this._bindings, this._bufferFinalizers);
+  TransportClientRegistry(this._eventStates, this._workerPointer, this._bindings, this._bufferFinalizers);
 
   Future<TransportCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     final communicators = <Future<TransportCommunicator>>[];
@@ -160,7 +161,7 @@ class TransportClientRegistry {
             port,
           ));
       final client = TransportClient(
-        _callbacks,
+        _eventStates,
         TransportOutboundChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -190,7 +191,7 @@ class TransportClientRegistry {
             path.toNativeUtf8(allocator: arena).cast(),
           ));
       final clinet = TransportClient(
-        _callbacks,
+        _eventStates,
         TransportOutboundChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -223,7 +224,7 @@ class TransportClientRegistry {
       ),
     );
     final client = TransportClient(
-      _callbacks,
+      _eventStates,
       TransportOutboundChannel(
         _workerPointer,
         clientPointer.ref.fd,
@@ -252,7 +253,7 @@ class TransportClientRegistry {
       ),
     );
     final client = TransportClient(
-      _callbacks,
+      _eventStates,
       TransportOutboundChannel(
         _workerPointer,
         clientPointer.ref.fd,

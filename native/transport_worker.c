@@ -15,7 +15,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
-  fifo_create(&worker->used_buffers, configuration->buffers_count);
+  fifo_create(&worker->free_buffers, configuration->buffers_count);
   worker->inet_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
   worker->unix_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
 
@@ -27,7 +27,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
       return NULL;
     }
     worker->buffers[index].iov_len = configuration->buffer_size;
-    fifo_push(&worker->used_buffers, index);
+    fifo_push(&worker->free_buffers, index);
 
     memset(&worker->inet_used_messages[index], 0, sizeof(struct msghdr));
     worker->inet_used_messages[index].msg_name = malloc(sizeof(struct sockaddr_in));
@@ -57,10 +57,10 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   return worker;
 }
 
-int transport_worker_select_buffer(transport_worker_t *worker)
+int transport_worker_get_buffer(transport_worker_t *worker)
 {
   int buffer_id;
-  if (unlikely(buffer_id = fifo_pop(&worker->used_buffers) == NULL))
+  if (unlikely(buffer_id = fifo_pop(&worker->free_buffers) == NULL))
   {
     return TRANSPORT_BUFFER_USED;
   }
@@ -333,7 +333,7 @@ void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_i
   struct iovec buffer = worker->buffers[buffer_id];
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
-  fifo_push(&worker->used_buffers, buffer_id);
+  fifo_push(&worker->free_buffers, buffer_id);
 }
 
 void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
@@ -341,7 +341,7 @@ void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer
   struct iovec buffer = worker->buffers[buffer_id];
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
-  fifo_push(&worker->used_buffers, buffer_id);
+  fifo_push(&worker->free_buffers, buffer_id);
 }
 
 int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
@@ -364,7 +364,7 @@ void transport_worker_destroy(transport_worker_t *worker)
     free(worker->unix_used_messages[index].msg_name);
   }
   free(worker->buffers);
-  fifo_destroy(&worker->used_buffers);
+  fifo_destroy(&worker->free_buffers);
   free(worker->inet_used_messages);
   free(worker->unix_used_messages);
   free(worker->listeners);

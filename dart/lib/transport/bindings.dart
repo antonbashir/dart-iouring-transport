@@ -19478,21 +19478,20 @@ class TransportBindings {
   late final _transport_worker_cancel = _transport_worker_cancelPtr
       .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
 
-  int transport_worker_select_buffer(
+  int transport_worker_get_buffer(
     ffi.Pointer<transport_worker_t> worker,
   ) {
-    return _transport_worker_select_buffer(
+    return _transport_worker_get_buffer(
       worker,
     );
   }
 
-  late final _transport_worker_select_bufferPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<transport_worker_t>)>>(
-      'transport_worker_select_buffer');
-  late final _transport_worker_select_buffer =
-      _transport_worker_select_bufferPtr
-          .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
+  late final _transport_worker_get_bufferPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>)>>('transport_worker_get_buffer');
+  late final _transport_worker_get_buffer = _transport_worker_get_bufferPtr
+      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
 
   void transport_worker_reuse_buffer(
     ffi.Pointer<transport_worker_t> worker,
@@ -23744,8 +23743,8 @@ class _SymbolAddresses {
       get transport_worker_cancel => _library._transport_worker_cancelPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
-      get transport_worker_select_buffer =>
-          _library._transport_worker_select_bufferPtr;
+      get transport_worker_get_buffer =>
+          _library._transport_worker_get_bufferPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
@@ -26999,7 +26998,7 @@ class transport_worker extends ffi.Struct {
   @ffi.Uint16()
   external int buffers_count;
 
-  external fifo used_buffers;
+  external fifo free_buffers;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 

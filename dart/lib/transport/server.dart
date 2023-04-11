@@ -48,6 +48,7 @@ class TransportServer {
     );
   }
 
+  @pragma(preferInlinePragma)
   void onRemove() {
     if (!_active) _closer.complete();
   }

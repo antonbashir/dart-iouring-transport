@@ -33,12 +33,12 @@ class TransportInboundChannel extends TransportChannel {
   ) : super();
 
   Future<int> _allocate() async {
-    var bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
+    var bufferId = _bindings.transport_worker_get_buffer(_workerPointer);
     while (bufferId == transportBufferUsed) {
       final completer = Completer<int>();
       _bufferFinalizers.add(completer);
       await completer.future;
-      bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
+      bufferId = _bindings.transport_worker_get_buffer(_workerPointer);
     }
     return bufferId;
   }
@@ -75,12 +75,12 @@ class TransportOutboundChannel extends TransportChannel {
   ) : super();
 
   Future<int> allocate() async {
-    var bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
+    var bufferId = _bindings.transport_worker_get_buffer(_workerPointer);
     while (bufferId == transportBufferUsed) {
       final completer = Completer<int>();
       _bufferFinalizers.add(completer);
       await completer.future;
-      bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
+      bufferId = _bindings.transport_worker_get_buffer(_workerPointer);
     }
     return bufferId;
   }

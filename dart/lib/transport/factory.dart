@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/defaults.dart';
+import 'package:iouring_transport/transport/state.dart';
 
 import 'bindings.dart';
 import 'callbacks.dart';
@@ -110,7 +112,7 @@ class TransportClientsFactory {
 }
 
 class TransportFilesFactory {
-  final TransportCallbacks _callbacks;
+  final TransportEventStates _eventStates;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
   final TransportWorker _worker;
@@ -121,11 +123,11 @@ class TransportFilesFactory {
     this._bindings,
     this._worker,
     this._bufferFinalizers,
-    this._callbacks,
+    this._eventStates,
   );
 
   TransportFile open(String path) {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_callbacks, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
+    return TransportFile(_eventStates, TransportOutboundChannel(_workerPointer, fd, _bindings, _bufferFinalizers), TransportDefaults.retry());
   }
 }
