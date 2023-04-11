@@ -35,7 +35,6 @@ class TransportDefaults {
         connectTimeout: Duration(seconds: 10),
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
-        retryConfiguration: retry(),
       );
 
   static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
@@ -43,8 +42,6 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
-        retryConfiguration: retry(),
-        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
@@ -54,7 +51,6 @@ class TransportDefaults {
         connectTimeout: Duration(seconds: 10),
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
-        retryConfiguration: retry(),
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
@@ -62,8 +58,6 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
-        retryConfiguration: retry(),
-        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
@@ -72,7 +66,6 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
-        retryConfiguration: retry(),
       );
 
   static TransportUdpServerConfiguration udpServer() => TransportUdpServerConfiguration(
@@ -80,8 +73,6 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
-        retryConfiguration: retry(),
-        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
   static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(
@@ -90,7 +81,6 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
-        retryConfiguration: retry(),
       );
 
   static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
@@ -98,14 +88,6 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
-        retryConfiguration: retry(),
-        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
-  static TransportRetryConfiguration retry() => TransportRetryConfiguration(
-        initialDelay: Duration(milliseconds: 100),
-        maxDelay: Duration(seconds: 1),
-        maxRetries: 5,
-        backoffFactor: 2.0,
-      );
 }

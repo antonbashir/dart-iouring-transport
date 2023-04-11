@@ -49,7 +49,6 @@ class TransportWorker {
   late final int _inboundRingSize;
   late final int _outboundRingSize;
   late final TransportErrorHandler _errorHandler;
-  late final TransportRetryHandler _retryHandler;
 
   late final SendPort? transmitter;
 
@@ -133,16 +132,6 @@ class TransportWorker {
       _outboundBufferFinalizers,
       _eventStates,
     );
-    _retryHandler = TransportRetryHandler(
-      _serverRegistry,
-      _clientRegistry,
-      _bindings,
-      _inboundWorkerPointer,
-      _outboundWorkerPointer,
-      _inboundBufferFinalizers,
-      _outboundBufferFinalizers,
-      _eventStates,
-    );
     _activator.close();
     Timer.periodic(Duration(seconds: 1), (timer) {
       final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
@@ -156,7 +145,7 @@ class TransportWorker {
     });
   }
 
-  void registerCallback(int id, Completer<int> completer) => _eventStates.setCustomCallback(id, completer);
+  void register(int id, Completer<int> completer) => _eventStates.setCustom(id, completer);
 
   Future<int> _allocateInbound() async {
     var bufferId = _bindings.transport_worker_get_buffer(_inboundWorkerPointer);
@@ -181,9 +170,6 @@ class TransportWorker {
     if (_outboundBufferFinalizers.isNotEmpty) _outboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
-  @pragma(preferInlinePragma)
-  bool _errorIsRetryable(int error) => error == -EINTR || error == -EAGAIN || error == -EALREADY || error == -ECANCELED;
-
   void _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
@@ -192,7 +178,7 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_outboundRing, 1);
       if ((result & 0xffff) == transportEventCustom) {
-        _eventStates.notifyCustomCallback((result >> 16) & 0xffff, data);
+        _eventStates.notifyCustom((result >> 16) & 0xffff, data);
         continue;
       }
       final event = data & 0xffff;
@@ -200,19 +186,15 @@ class TransportWorker {
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
-          if (_errorIsRetryable(result)) {
-            _retryHandler.handle(data, fd, event, result);
-            continue;
-          }
           _errorHandler.handle(result, data, fd, event);
           continue;
         }
         if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-          _handleReadReceiveMessageCallback((data >> 16) & 0xffff, result, fd);
+          _handleReadReceiveMessage((data >> 16) & 0xffff, result, fd);
           continue;
         }
         if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-          _handleWriteSendMessageCallback((data >> 16) & 0xffff, result, fd);
+          _handleWriteSendMessage((data >> 16) & 0xffff, result, fd);
           continue;
         }
         if (event & transportEventConnect != 0) {
@@ -235,10 +217,6 @@ class TransportWorker {
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
-          if (_errorIsRetryable(result)) {
-            _retryHandler.handle(data, fd, event, result);
-            continue;
-          }
           _errorHandler.handle(result, data, fd, event);
           continue;
         }
@@ -338,7 +316,7 @@ class TransportWorker {
         fd,
         bufferId,
         server.pointer.ref.family,
-        MSG_TRUNC,
+        server.messageFlags!,
         server.readTimeout,
         transportEventReceiveMessage,
       );
@@ -350,7 +328,7 @@ class TransportWorker {
         fd,
         newBufferId,
         server.pointer.ref.family,
-        MSG_TRUNC,
+        server.messageFlags!,
         server.readTimeout,
         transportEventReceiveMessage,
       );
@@ -359,7 +337,7 @@ class TransportWorker {
     final bufferBytes = buffer.iov_base.cast<Uint8>();
     server.controller.add(TransportInboundPayload(
       bufferBytes.asTypedList(result),
-      (answer) {
+      (answer, flags) {
         if (!_ensureServerIsActive(server, bufferId, null)) return;
         _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
         bufferBytes.asTypedList(answer.length).setAll(0, answer);
@@ -393,17 +371,17 @@ class TransportWorker {
     _releaseInboundBuffer(bufferId);
   }
 
-  void _handleReadReceiveMessageCallback(int bufferId, int result, int fd) {
+  void _handleReadReceiveMessage(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
-    _eventStates.resetOutboundRead(bufferId);
+    final state = _eventStates.getOutboundRead(bufferId);
+    state.retry.reset();
     if (!_ensureClientIsActive(client, bufferId, fd)) {
-      _eventStates.notifyOutboundReadCallbackError(bufferId, TransportClosedException.forClient());
+      state.callback.completeError(TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     client!.onComplete();
-    _eventStates.notifyOutboundReadCallback(
-      bufferId,
+    state.callback.complete(
       TransportOutboundPayload(
         _outboundBuffers[bufferId].iov_base.cast<Uint8>().asTypedList(result),
         () => _releaseOutboundBuffer(bufferId),
@@ -411,7 +389,7 @@ class TransportWorker {
     );
   }
 
-  void _handleWriteSendMessageCallback(int bufferId, int result, int fd) {
+  void _handleWriteSendMessage(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     final state = _eventStates.getOutboundWrite(bufferId);
     state.retry.reset();
@@ -427,13 +405,12 @@ class TransportWorker {
 
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
-    _eventStates.resetConnect(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
-      _eventStates.notifyConnectCallbackError(fd, TransportClosedException.forClient());
+      _eventStates.notifyConnectError(fd, TransportClosedException.forClient());
       return;
     }
     client!.onComplete();
-    _eventStates.notifyConnectCallback(fd, client);
+    _eventStates.notifyConnect(fd, client);
   }
 
   void _handleAccept(int fd, int result) {
@@ -441,13 +418,15 @@ class TransportWorker {
     if (!_ensureServerIsActive(server, null, result)) return;
     _serverRegistry.addClient(fd, result);
     _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
-    server.acceptor!(TransportInboundChannel(
-      _inboundWorkerPointer,
-      result,
-      _bindings,
-      _inboundBufferFinalizers,
-      server,
-    ));
+    _eventStates.notifyAccept(
+      fd,
+      TransportChannel(
+        _inboundWorkerPointer,
+        result,
+        _bindings,
+        _inboundBufferFinalizers,
+      ),
+    );
   }
 
   @visibleForTesting

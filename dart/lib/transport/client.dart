@@ -8,41 +8,23 @@ import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
+import 'communicator.dart';
 import 'configuration.dart';
 import 'constants.dart';
 import 'defaults.dart';
 import 'exception.dart';
 import 'payload.dart';
-import 'retry.dart';
 import 'state.dart';
-
-class TransportCommunicator {
-  final TransportClient _client;
-
-  TransportCommunicator(this._client);
-
-  Future<TransportOutboundPayload> read() => _client.read();
-
-  Future<void> write(Uint8List bytes) => _client.write(bytes);
-
-  Future<TransportOutboundPayload> receiveMessage() => _client.receiveMessage();
-
-  Future<void> sendMessage(Uint8List bytes) => _client.sendMessage(bytes);
-
-  Future<void> close() => _client.close();
-}
 
 class TransportClient {
   final TransportEventStates _eventStates;
   final Pointer<transport_client_t> pointer;
   final Pointer<transport_worker_t> _workerPointer;
-  final TransportOutboundChannel _channel;
+  final TransportChannel _channel;
   final TransportBindings _bindings;
-  final TransportRetryConfiguration retry;
   final int? connectTimeout;
   final int readTimeout;
   final int writeTimeout;
-  final int? messageFlags;
 
   var _active = true;
   bool get active => _active;
@@ -56,20 +38,17 @@ class TransportClient {
     this.pointer,
     this._workerPointer,
     this._bindings,
-    this.retry,
     this.connectTimeout,
     this.readTimeout,
     this.writeTimeout,
-    this.messageFlags,
   );
 
   factory TransportClient.withConnection(
     TransportEventStates _eventStates,
-    TransportOutboundChannel _channel,
+    TransportChannel _channel,
     Pointer<transport_client_t> pointer,
     Pointer<transport_worker_t> _workerPointer,
     TransportBindings _bindings,
-    TransportRetryConfiguration retry,
     int connectTimeout,
     int readTimeout,
     int writeTimeout,
@@ -80,23 +59,19 @@ class TransportClient {
         pointer,
         _workerPointer,
         _bindings,
-        retry,
         connectTimeout,
         readTimeout,
         writeTimeout,
-        null,
       );
 
   factory TransportClient.withoutConnection(
     TransportEventStates _eventStates,
-    TransportOutboundChannel _channel,
+    TransportChannel _channel,
     Pointer<transport_client_t> pointer,
     Pointer<transport_worker_t> _workerPointer,
     TransportBindings _bindings,
-    TransportRetryConfiguration retry,
     int readTimeout,
     int writeTimeout,
-    int messageFlags,
   ) =>
       TransportClient._(
         _eventStates,
@@ -104,18 +79,16 @@ class TransportClient {
         pointer,
         _workerPointer,
         _bindings,
-        retry,
         null,
         readTimeout,
         writeTimeout,
-        messageFlags,
       );
 
   Future<TransportOutboundPayload> read() async {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
-    _eventStates.setOutboundReadCallback(bufferId, completer, TransportRetryState(retry, 0));
+    _eventStates.setOutboundRead(bufferId, completer);
     _channel.read(bufferId, readTimeout, offset: 0);
     _pending++;
     return completer.future;
@@ -125,35 +98,37 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _eventStates.setOutboundWriteCallback(bufferId, completer, TransportRetryState(retry, 0));
+    _eventStates.setOutboundWrite(bufferId, completer);
     _channel.write(bytes, bufferId, writeTimeout);
     _pending++;
     return completer.future;
   }
 
-  Future<TransportOutboundPayload> receiveMessage() async {
+  Future<TransportOutboundPayload> receiveMessage({int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
-    _eventStates.setOutboundReadCallback(bufferId, completer, TransportRetryState(retry, 0));
-    _channel.receiveMessage(bufferId, this, readTimeout);
+    _eventStates.setOutboundRead(bufferId, completer);
+    _channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags);
     _pending++;
     return completer.future;
   }
 
-  Future<void> sendMessage(Uint8List bytes) async {
+  Future<void> sendMessage(Uint8List bytes, {int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _eventStates.setOutboundWriteCallback(bufferId, completer, TransportRetryState(retry, 0));
-    _channel.sendMessage(bytes, bufferId, this, writeTimeout);
+    _eventStates.setOutboundWrite(bufferId, completer);
+    _channel.sendMessage(bytes, bufferId, pointer.ref.family, _bindings.transport_client_get_destination_address(pointer), writeTimeout, flags);
     _pending++;
     return completer.future;
   }
 
   Future<TransportClient> connect(Pointer<transport_worker_t> workerPointer) {
     final completer = Completer<TransportClient>();
-    _eventStates.setConnectCallback(pointer.ref.fd, completer, TransportRetryState(retry, 0));
+    _eventStates.setConnect(pointer.ref.fd, completer);
     _bindings.transport_worker_connect(workerPointer, pointer, connectTimeout!);
     _pending++;
     return completer.future;
@@ -176,21 +151,21 @@ class TransportClient {
   }
 }
 
-class TransportCommunicators {
-  final List<TransportCommunicator> _communicators;
+class TransportClientCommunicators {
+  final List<TransportClientCommunicator> _communicators;
   var _next = 0;
 
-  TransportCommunicators(this._communicators);
+  TransportClientCommunicators(this._communicators);
 
-  TransportCommunicator select() {
+  TransportClientCommunicator select() {
     final client = _communicators[_next];
     if (++_next == _communicators.length) _next = 0;
     return client;
   }
 
-  void forEach(FutureOr<void> Function(TransportCommunicator communicator) action) => _communicators.forEach(action);
+  void forEach(FutureOr<void> Function(TransportClientCommunicator communicator) action) => _communicators.forEach(action);
 
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportCommunicator communicator) mapper) => _communicators.map(mapper);
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientCommunicator communicator) mapper) => _communicators.map(mapper);
 }
 
 class TransportClientRegistry {
@@ -202,8 +177,8 @@ class TransportClientRegistry {
 
   TransportClientRegistry(this._eventStates, this._workerPointer, this._bindings, this._bufferFinalizers);
 
-  Future<TransportCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
-    final communicators = <Future<TransportCommunicator>>[];
+  Future<TransportClientCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
+    final communicators = <Future<TransportClientCommunicator>>[];
     configuration = configuration ?? TransportDefaults.tcpClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = using((arena) => _bindings.transport_client_initialize_tcp(
@@ -213,7 +188,7 @@ class TransportClientRegistry {
           ));
       final client = TransportClient.withConnection(
         _eventStates,
-        TransportOutboundChannel(
+        TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
           _bindings,
@@ -222,19 +197,18 @@ class TransportClientRegistry {
         clientPointer,
         _workerPointer,
         _bindings,
-        configuration.retryConfiguration,
         configuration.connectTimeout.inSeconds,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      communicators.add(client.connect(_workerPointer).then((client) => TransportCommunicator(client)));
+      communicators.add(client.connect(_workerPointer).then((client) => TransportClientCommunicator(client)));
     }
-    return TransportCommunicators(await Future.wait(communicators));
+    return TransportClientCommunicators(await Future.wait(communicators));
   }
 
-  Future<TransportCommunicators> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
-    final clients = <Future<TransportCommunicator>>[];
+  Future<TransportClientCommunicators> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
+    final clients = <Future<TransportClientCommunicator>>[];
     configuration = configuration ?? TransportDefaults.unixStreamClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = using((arena) => _bindings.transport_client_initialize_unix_stream(
@@ -243,7 +217,7 @@ class TransportClientRegistry {
           ));
       final clinet = TransportClient.withConnection(
         _eventStates,
-        TransportOutboundChannel(
+        TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
           _bindings,
@@ -252,18 +226,17 @@ class TransportClientRegistry {
         clientPointer,
         _workerPointer,
         _bindings,
-        configuration.retryConfiguration,
         configuration.connectTimeout.inSeconds,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = clinet;
-      clients.add(clinet.connect(_workerPointer).then((client) => TransportCommunicator(client)));
+      clients.add(clinet.connect(_workerPointer).then((client) => TransportClientCommunicator(client)));
     }
-    return TransportCommunicators(await Future.wait(clients));
+    return TransportClientCommunicators(await Future.wait(clients));
   }
 
-  TransportCommunicator createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
+  TransportClientCommunicator createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpClient();
     final clientPointer = using((arena) {
       final pointer = _bindings.transport_client_initialize_udp(
@@ -309,10 +282,11 @@ class TransportClientRegistry {
           ),
         );
       }
+      return pointer;
     });
     final client = TransportClient.withoutConnection(
       _eventStates,
-      TransportOutboundChannel(
+      TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
         _bindings,
@@ -321,16 +295,14 @@ class TransportClientRegistry {
       clientPointer,
       _workerPointer,
       _bindings,
-      configuration.retryConfiguration,
       configuration.readTimeout.inSeconds,
       configuration.writeTimeout.inSeconds,
-      configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportCommunicator(client);
+    return TransportClientCommunicator(client);
   }
 
-  TransportCommunicator createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
+  TransportClientCommunicator createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramClient();
     final clientPointer = using(
       (arena) => _bindings.transport_client_initialize_unix_dgram(
@@ -341,7 +313,7 @@ class TransportClientRegistry {
     );
     final client = TransportClient.withoutConnection(
       _eventStates,
-      TransportOutboundChannel(
+      TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
         _bindings,
@@ -350,13 +322,11 @@ class TransportClientRegistry {
       clientPointer,
       _workerPointer,
       _bindings,
-      configuration.retryConfiguration,
       configuration.readTimeout.inSeconds,
       configuration.writeTimeout.inSeconds,
-      configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportCommunicator(client);
+    return TransportClientCommunicator(client);
   }
 
   TransportClient? get(int fd) => _clients[fd];

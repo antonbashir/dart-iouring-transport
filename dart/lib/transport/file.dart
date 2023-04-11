@@ -2,31 +2,29 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'channels.dart';
-import 'configuration.dart';
+import 'constants.dart';
 import 'payload.dart';
-import 'retry.dart';
 import 'state.dart';
 
 class TransportFile {
-  final TransportOutboundChannel _channel;
+  final TransportChannel _channel;
   final TransportEventStates _states;
-  final TransportRetryConfiguration _retryConfiguration;
 
-  TransportFile(this._states, this._channel, this._retryConfiguration);
+  TransportFile(this._states, this._channel);
 
   Future<TransportOutboundPayload> readBuffer({int offset = 0}) async {
     final completer = Completer<TransportOutboundPayload>();
     final bufferId = await _channel.allocate();
-    _states.setOutboundReadCallback(bufferId, completer, TransportRetryState(_retryConfiguration, offset));
-    _channel.read(bufferId, -1, offset: offset);
+    _states.setOutboundRead(bufferId, completer);
+    _channel.read(bufferId, int32Max, offset: offset);
     return completer.future;
   }
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
     final completer = Completer<void>();
     final bufferId = await _channel.allocate();
-    _states.setOutboundWriteCallback(bufferId, completer, TransportRetryState(_retryConfiguration, offset));
-    _channel.write(bytes, bufferId, -1, offset: offset);
+    _states.setOutboundWrite(bufferId, completer);
+    _channel.write(bytes, bufferId, int32Max, offset: offset);
     return completer.future;
   }
 

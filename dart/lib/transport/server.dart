@@ -2,83 +2,49 @@ import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/communicator.dart';
 import 'package:iouring_transport/transport/extensions.dart';
+import 'package:iouring_transport/transport/state.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
 import 'configuration.dart';
 import 'constants.dart';
 import 'defaults.dart';
-import 'payload.dart';
 
 class TransportServer {
   final Pointer<transport_server_t> pointer;
-  final Pointer<transport_worker_t> _workerPointer;
+  final Pointer<transport_worker_t> workerPointer;
   final TransportBindings _bindings;
-  final TransportRetryConfiguration retry;
   final int readTimeout;
   final int writeTimeout;
-  final int? messageFlags;
+  final TransportEventStates eventStates;
 
   late final int fd;
-  late final StreamController<TransportInboundPayload> controller;
-  late final Stream<TransportInboundPayload> stream;
-  late final void Function(TransportInboundChannel channel)? acceptor;
 
   var _active = true;
   bool get active => _active;
   final _closer = Completer();
 
-  TransportServer._(
+  TransportServer(
     this.pointer,
+    this.workerPointer,
     this._bindings,
-    this.retry,
-    this._workerPointer,
+    this.eventStates,
     this.readTimeout,
     this.writeTimeout,
-    this.messageFlags,
   ) {
-    controller = StreamController();
-    stream = controller.stream;
     fd = pointer.ref.fd;
   }
 
-  factory TransportServer.withConnection(
-    Pointer<transport_server_t> pointer,
-    Pointer<transport_worker_t> _workerPointer,
-    TransportBindings _bindings,
-    TransportRetryConfiguration retry,
-    int readTimeout,
-    int writeTimeout,
-  ) =>
-      TransportServer._(
-        pointer,
-        _bindings,
-        retry,
-        _workerPointer,
-        readTimeout,
-        writeTimeout,
-        null,
-      );
-
-  factory TransportServer.withoutConnection(Pointer<transport_server_t> pointer, Pointer<transport_worker_t> _workerPointer, TransportBindings _bindings, TransportRetryConfiguration retry,
-          int readTimeout, int writeTimeout, int messageFlags) =>
-      TransportServer._(
-        pointer,
-        _bindings,
-        retry,
-        _workerPointer,
-        readTimeout,
-        writeTimeout,
-        messageFlags,
-      );
-
-  void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportInboundChannel channel) acceptor) {
-    this.acceptor = acceptor;
+  Stream<TransportServerStreamCommunicator> accept(Pointer<transport_worker_t> workerPointer) {
+    final controller = StreamController<TransportChannel>();
+    eventStates.setAccept(fd, controller);
     _bindings.transport_worker_accept(
       workerPointer,
       pointer,
     );
+    return controller.stream.map((channel) => TransportServerStreamCommunicator(this, channel));
   }
 
   @pragma(preferInlinePragma)
@@ -89,8 +55,7 @@ class TransportServer {
   Future<void> close() async {
     if (_active) {
       _active = false;
-      controller.close();
-      _bindings.transport_worker_cancel(_workerPointer);
+      _bindings.transport_worker_cancel(workerPointer);
       await _closer.future;
       _bindings.transport_close_descritor(pointer.ref.fd);
       _bindings.transport_server_destroy(pointer);
@@ -101,16 +66,17 @@ class TransportServer {
 class TransportServerRegistry {
   final _servers = <int, TransportServer>{};
   final _serversByClients = <int, TransportServer>{};
+
   final Pointer<transport_worker_t> _workerPointer;
-
   final TransportBindings _bindings;
+  final TransportEventStates _eventStates;
 
-  TransportServerRegistry(this._bindings, this._workerPointer);
+  TransportServerRegistry(this._bindings, this._workerPointer, this._eventStates);
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
     final instance = using(
-      (Arena arena) => TransportServer.withConnection(
+      (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_tcp(
           _tcpConfiguration(configuration!, arena),
           host.toNativeUtf8(allocator: arena).cast(),
@@ -118,7 +84,7 @@ class TransportServerRegistry {
         ),
         _workerPointer,
         _bindings,
-        configuration.retryConfiguration,
+        _eventStates,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
       ),
@@ -172,14 +138,13 @@ class TransportServerRegistry {
             ),
           );
         }
-        return TransportServer.withoutConnection(
+        return TransportServer(
           pointer,
           _workerPointer,
           _bindings,
-          configuration.retryConfiguration,
+          _eventStates,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
-          configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
         );
       },
     );
@@ -190,14 +155,14 @@ class TransportServerRegistry {
   TransportServer createUnixStream(String path, {TransportUnixStreamServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixStreamServer();
     final instance = using(
-      (Arena arena) => TransportServer.withConnection(
+      (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_unix_stream(
           _unixStreamConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
         ),
         _workerPointer,
         _bindings,
-        configuration.retryConfiguration,
+        _eventStates,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
       ),
@@ -209,17 +174,16 @@ class TransportServerRegistry {
   TransportServer createUnixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramServer();
     final instance = using(
-      (Arena arena) => TransportServer.withoutConnection(
+      (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_unix_dgram(
           _unixDatagramConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
         ),
         _workerPointer,
         _bindings,
-        configuration.retryConfiguration,
+        _eventStates,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
-        configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;

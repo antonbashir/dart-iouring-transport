@@ -1,185 +1,71 @@
 import 'dart:async';
 
+import 'package:iouring_transport/transport/channels.dart';
+
 import 'client.dart';
-import 'configuration.dart';
 import 'constants.dart';
 import 'payload.dart';
-import 'retry.dart';
-
-class TransportEventState {
-  late Completer<dynamic> callback;
-  late TransportRetryState retry;
-
-  TransportEventState();
-
-  factory TransportEventState.forCallback(Completer<dynamic> callback) {
-    final state = TransportEventState();
-    state.callback = callback;
-    return state;
-  }
-
-  factory TransportEventState.forRetry(TransportRetryState retryState) {
-    final state = TransportEventState();
-    state.retry = retryState;
-    return state;
-  }
-
-  factory TransportEventState.forRetryCallback(Completer<dynamic> callback, TransportRetryState retryState) {
-    final state = TransportEventState();
-    state.callback = callback;
-    state.retry = retryState;
-    return state;
-  }
-}
 
 class TransportEventStates {
-  final _connect = <int, TransportEventState>{};
-  final _inboundRead = <TransportEventState>[];
-  final _inboundWrite = <TransportEventState>[];
-  final _outboundRead = <TransportEventState>[];
-  final _outboundWrite = <TransportEventState>[];
-  final _custom = <int, TransportEventState>{};
+  final _connect = <int, Completer<TransportClient>>{};
+  final _accept = <int, StreamController<TransportChannel>>{};
+  final _inboundRead = <Completer<TransportPayload>>[];
+  final _inboundWrite = <Completer<void>>[];
+  final _outboundRead = <Completer<TransportOutboundPayload>>[];
+  final _outboundWrite = <Completer<void>>[];
+  final _custom = <int, Completer<int>>{};
 
   void initliaze(int buffersCount) {
     for (var index = 0; index < buffersCount; index++) {
-      _inboundRead[index] = TransportEventState();
-      _inboundWrite[index] = TransportEventState();
-      _outboundRead[index] = TransportEventState();
-      _outboundWrite[index] = TransportEventState();
+      _inboundRead[index] = Completer();
+      _inboundWrite[index] = Completer();
+      _outboundRead[index] = Completer();
+      _outboundWrite[index] = Completer();
     }
   }
 
   @pragma(preferInlinePragma)
-  void setConnectCallback(int fd, Completer<TransportClient> completer, TransportRetryState retryState) => _connect[fd] = TransportEventState.forRetryCallback(completer, retryState);
+  void setConnect(int fd, Completer<TransportClient> completer) => _connect[fd] = completer;
 
   @pragma(preferInlinePragma)
-  void setOutboundReadCallback(int bufferId, Completer<TransportOutboundPayload> completer, TransportRetryState retryState) {
-    final state = _outboundRead[bufferId];
-    state.callback = completer;
-    state.retry = retryState;
-  }
+  void setAccept(int fd, StreamController<TransportChannel> controller) => _accept[fd] = controller;
 
   @pragma(preferInlinePragma)
-  void setOutboundWriteCallback(int bufferId, Completer<void> completer, TransportRetryState retryState) {
-    final state = _outboundWrite[bufferId];
-    state.callback = completer;
-    state.retry = retryState;
-  }
+  void setOutboundRead(int bufferId, Completer<TransportOutboundPayload> completer) => _outboundRead[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void setCustomCallback(int id, Completer<int> completer) => _custom[id] = TransportEventState.forCallback(completer);
+  void setOutboundWrite(int bufferId, Completer<void> completer) => _outboundWrite[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void notifyConnectCallback(int fd, TransportClient client) => _connect[fd]!.callback.complete(client);
+  void setInboundRead(int bufferId, Completer<TransportPayload> completer) => _inboundRead[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void notifyOutboundReadCallback(int bufferId, TransportOutboundPayload payload) => _outboundRead[bufferId].callback.complete(payload);
+  void setInboundWrite(int bufferId, Completer<void> completer) => _inboundWrite[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void notifyOutboundWriteCallback(int bufferId) => _outboundWrite[bufferId].callback.complete();
+  void setCustom(int id, Completer<int> completer) => _custom[id] = completer;
 
   @pragma(preferInlinePragma)
-  void notifyCustomCallback(int id, int data) => _custom[id]!.callback.complete(data);
+  void notifyConnect(int fd, TransportClient client) => _connect[fd]!.complete(client);
 
   @pragma(preferInlinePragma)
-  void notifyConnectCallbackError(int fd, Exception error) => _connect[fd]!.callback.completeError(error);
+  void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!.add(channel);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundReadCallbackError(int bufferId, Exception error) => _outboundRead[bufferId].callback.completeError(error);
+  void notifyOutboundRead(int bufferId, TransportOutboundPayload payload) => _outboundRead[bufferId].complete(payload);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundWriteCallbackError(int bufferId, Exception error) => _outboundWrite[bufferId].callback.completeError(error);
-
-  Future<bool> incrementConnect(TransportRetryState state, TransportRetryConfiguration configuration) async {
-    if (state.count == configuration.maxRetries) {
-      state.reset();
-      return false;
-    }
-    final newDelay = Duration(
-      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
-    );
-    state.update(newDelay, state.count + 1);
-    return Future.delayed(newDelay).then((value) => true);
-  }
-
-  Future<bool> incrementInboundRead(TransportRetryState state, TransportRetryConfiguration configuration) async {
-    if (state.count == configuration.maxRetries) {
-      state.reset();
-      return false;
-    }
-    final newDelay = Duration(
-      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
-    );
-    state.update(newDelay, state.count + 1);
-    return Future.delayed(newDelay).then((value) => true);
-  }
-
-  Future<bool> incrementInboundWrite(TransportRetryState state, TransportRetryConfiguration configuration) async {
-    if (state.count == configuration.maxRetries) {
-      state.reset();
-      return false;
-    }
-    final newDelay = Duration(
-      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
-    );
-    state.update(newDelay, state.count + 1);
-    return Future.delayed(newDelay).then((value) => true);
-  }
-
-  Future<bool> incrementOutboundRead(TransportRetryState state, TransportRetryConfiguration configuration) async {
-    if (state.count == configuration.maxRetries) {
-      state.reset();
-      return false;
-    }
-    final newDelay = Duration(
-      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
-    );
-    state.update(newDelay, state.count + 1);
-    return Future.delayed(newDelay).then((value) => true);
-  }
-
-  Future<bool> incrementOutboundWrite(TransportRetryState state, TransportRetryConfiguration configuration) async {
-    if (state.count == configuration.maxRetries) {
-      state.reset();
-      return false;
-    }
-    final newDelay = Duration(
-      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
-    );
-    state.update(newDelay, state.count + 1);
-    return Future.delayed(newDelay).then((value) => true);
-  }
+  void notifyOutboundWrite(int bufferId) => _outboundWrite[bufferId].complete();
 
   @pragma(preferInlinePragma)
-  void resetConnect(int fd) => _connect[fd]!.retry.reset();
+  void notifyCustom(int id, int data) => _custom[id]!.complete(data);
 
   @pragma(preferInlinePragma)
-  void resetInboundRead(int bufferId) => _inboundRead[bufferId].retry.reset();
+  void notifyConnectError(int fd, Exception error) => _connect[fd]!.completeError(error);
 
   @pragma(preferInlinePragma)
-  void resetInboundWrite(int bufferId) => _inboundWrite[bufferId].retry.reset();
+  void notifyOutboundReadError(int bufferId, Exception error) => _outboundRead[bufferId].completeError(error);
 
   @pragma(preferInlinePragma)
-  void resetOutboundRead(int bufferId) => _outboundRead[bufferId].retry.reset();
-
-  @pragma(preferInlinePragma)
-  void resetOutboundWrite(int bufferId) => _outboundWrite[bufferId].retry.reset();
-
-  @pragma(preferInlinePragma)
-  TransportEventState removeConnect(int fd) => _connect.remove(fd)!;
-
-  @pragma(preferInlinePragma)
-  TransportEventState getConnect(int fd) => _connect[fd]!;
-
-  @pragma(preferInlinePragma)
-  TransportEventState getInboundRead(int bufferId) => _inboundRead[bufferId];
-
-  @pragma(preferInlinePragma)
-  TransportEventState getInboundWrite(int bufferId) => _inboundWrite[bufferId];
-
-  @pragma(preferInlinePragma)
-  TransportEventState getOutboundRead(int bufferId) => _outboundRead[bufferId];
-
-  @pragma(preferInlinePragma)
-  TransportEventState getOutboundWrite(int bufferId) => _outboundWrite[bufferId];
+  void notifyOutboundWriteError(int bufferId, Exception error) => _outboundWrite[bufferId].completeError(error);
 }

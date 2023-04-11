@@ -1,6 +1,15 @@
 import 'dart:typed_data';
 
-import 'constants.dart';
+import 'package:iouring_transport/transport/constants.dart';
+
+class TransportPayload {
+  final Uint8List bytes;
+  final int bufferId;
+  final void Function() releaser;
+  final void Function() reuser;
+
+  TransportPayload(this.bytes, this.bufferId, this.releaser, this.reuser);
+}
 
 class TransportOutboundPayload {
   final Uint8List bytes;
@@ -17,16 +26,34 @@ class TransportOutboundPayload {
   }
 }
 
-class TransportInboundPayload {
+class TransportInboundStreamPayload {
   final Uint8List bytes;
-  final void Function(Uint8List answer) _responder;
   final void Function() _releaser;
+  final Future<void> Function(Uint8List bytes) _responder;
 
-  TransportInboundPayload(this.bytes, this._responder, this._releaser);
+  TransportInboundStreamPayload(this.bytes, this._releaser, this._responder);
 
   void release() => _releaser();
 
-  void respond(Uint8List answer) => _responder(answer);
+  Future<void> respond(Uint8List bytes) => _responder(bytes);
+
+  List<int> extract({bool release = true}) {
+    final result = bytes.toList();
+    if (release) _releaser();
+    return result;
+  }
+}
+
+class TransportInboundDatagramPayload {
+  final Uint8List bytes;
+  final void Function() _releaser;
+  final Future<void> Function(Uint8List bytes, int flags) _responder;
+
+  TransportInboundDatagramPayload(this.bytes, this._releaser, this._responder);
+
+  void release() => _releaser();
+
+  Future<void> respond(Uint8List bytes, {int? flags}) => _responder(bytes, flags ?? TransportDatagramMessageFlag.trunc.flag);
 
   List<int> extract({bool release = true}) {
     final result = bytes.toList();

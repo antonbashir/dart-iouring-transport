@@ -87,15 +87,7 @@ class TransportErrorHandler {
 
   void _handleReadWrite(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByClient(fd);
-    if (event == transportEventRead) _eventStates.resetInboundRead(bufferId);
-    if (event == transportEventWrite) _eventStates.resetInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    if (!server!.controller.hasListener) {
-      _releaseInboundBuffer(bufferId);
-      _bindings.transport_close_descritor(fd);
-      _serverRegistry.removeClient(fd);
-      return;
-    }
     _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
     _serverRegistry.removeClient(fd);
@@ -106,17 +98,6 @@ class TransportErrorHandler {
     final server = _serverRegistry.getByServer(fd);
     _eventStates.resetInboundRead(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
-    _allocateInbound().then((newBufferId) {
-      _bindings.transport_worker_receive_message(
-        _inboundWorkerPointer,
-        fd,
-        newBufferId,
-        server!.pointer.ref.family,
-        server.messageFlags!,
-        server.readTimeout,
-        transportEventReceiveMessage,
-      );
-    });
     if (!server!.controller.hasListener) {
       _releaseInboundBuffer(bufferId);
       return;
