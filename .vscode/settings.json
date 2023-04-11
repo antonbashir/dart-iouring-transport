@@ -101,6 +101,10 @@
     "mhash.h": "c",
     "transport_worker.h": "c",
     "transport_collections.h": "c",
-    "transport_server.h": "c"
+    "fifo.h": "c",
+    "io_uring.h": "c",
+    "compat.h": "c",
+    "barrier.h": "c",
+    "time_types.h": "c"
   },
 }

@@ -1,5 +1,6 @@
 #ifndef TRANSPORT_SOCKET_H_INCLUDED
 #define TRANSPORT_SOCKET_H_INCLUDED
+
 #include <stdbool.h>
 #include <netinet/in.h>
 #include <stdint.h>
@@ -37,7 +38,15 @@ extern "C"
                                              uint32_t socket_send_buffer_size,
                                              uint32_t socket_receive_low_at,
                                              uint32_t socket_send_low_at);
-  struct ip_mreqn *transport_socket_create_multicast_request(const char *multicast_group_address, const char *multicast_local_address, int interface_index);
+
+  int transport_socket_multicast_add_membership(int fd, const char *group_address, const char *local_address, int interface_index);
+  int transport_socket_multicast_drop_membership(int fd, const char *group_address, const char *local_address, int interface_index);
+
+  int transport_socket_multicast_add_source_membership(int fd, const char *group_address, const char *local_address, const char *source_address);
+  int transport_socket_multicast_drop_source_membership(int fd, const char *group_address, const char *local_address, const char *source_address);
+
+  int transport_socket_get_interface_index(const char *interface);
+
 #if defined(__cplusplus)
 }
 #endif

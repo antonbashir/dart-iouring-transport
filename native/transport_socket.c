@@ -1,15 +1,17 @@
 #include "transport_constants.h"
 #include "transport_socket.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include <liburing.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <liburing.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <stdint.h>
+#include <net/if.h>
 
 int64_t transport_socket_create_tcp(uint64_t flags,
                                     uint32_t socket_receive_buffer_size,
@@ -399,13 +401,6 @@ int64_t transport_socket_create_unix_dgram(uint64_t flags,
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
   }
-  if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_BROADCAST)
-  {
-    if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &activate_option, sizeof(int)))
-    {
-      return -TRANSPORT_SOCKET_OPTION_SOCKET_BROADCAST;
-    }
-  }
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_RCVBUF)
   {
     if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &socket_receive_buffer_size, sizeof(socket_receive_buffer_size)))
@@ -438,11 +433,43 @@ int64_t transport_socket_create_unix_dgram(uint64_t flags,
   return (uint32_t)fd;
 }
 
-struct ip_mreqn *transport_socket_create_multicast_request(const char *multicast_group_address, const char *multicast_local_address, int interface_index)
+int transport_socket_multicast_add_membership(int fd, const char *group_address, const char *local_address, int interface_index)
 {
-  struct ip_mreqn *request = malloc(sizeof(struct ip_mreqn));
-  request->imr_multiaddr.s_addr = inet_addr(multicast_group_address);
-  request->imr_address.s_addr = inet_addr(multicast_local_address);
-  request->imr_ifindex = interface_index;
-  return request;
+  struct ip_mreqn request;
+  request.imr_multiaddr.s_addr = inet_addr(group_address);
+  request.imr_address.s_addr = inet_addr(local_address);
+  request.imr_ifindex = interface_index;
+  return setsockopt(fd, SOL_IP, IP_ADD_MEMBERSHIP, &request, sizeof(request));
+}
+
+int transport_socket_multicast_drop_membership(int fd, const char *group_address, const char *local_address, int interface_index)
+{
+  struct ip_mreqn request;
+  request.imr_multiaddr.s_addr = inet_addr(group_address);
+  request.imr_address.s_addr = inet_addr(local_address);
+  request.imr_ifindex = interface_index;
+  return setsockopt(fd, SOL_IP, IP_DROP_MEMBERSHIP, &request, sizeof(request));
+}
+
+int transport_socket_multicast_add_source_membership(int fd, const char *group_address, const char *local_address, const char *source_address)
+{
+  struct ip_mreq_source request;
+  request.imr_multiaddr.s_addr = inet_addr(group_address);
+  request.imr_interface.s_addr = inet_addr(local_address);
+  request.imr_sourceaddr.s_addr = inet_addr(source_address);
+  return setsockopt(fd, SOL_IP, IP_ADD_SOURCE_MEMBERSHIP, &request, sizeof(request));
+}
+
+int transport_socket_multicast_drop_source_membership(int fd, const char *group_address, const char *local_address, const char *source_address)
+{
+  struct ip_mreq_source request;
+  request.imr_multiaddr.s_addr = inet_addr(group_address);
+  request.imr_interface.s_addr = inet_addr(local_address);
+  request.imr_sourceaddr.s_addr = inet_addr(source_address);
+  return setsockopt(fd, SOL_IP, IP_DROP_SOURCE_MEMBERSHIP, &request, sizeof(request));
+}
+
+int transport_socket_get_interface_index(const char *interface)
+{
+  return if_nametoindex(interface);
 }

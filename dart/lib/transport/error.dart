@@ -142,17 +142,15 @@ class TransportErrorHandler {
 
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
-    _eventStates.resetConnect(fd);
+    final state = _eventStates.getConnect(fd);
+    state.retry.reset();
     if (!_ensureClientIsActive(client, null, fd)) {
-      _eventStates.notifyConnectCallbackError(fd, TransportClosedException.forClient());
+      state.callback.completeError(TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _clientRegistry.removeClient(fd);
-    _eventStates.notifyConnectCallbackError(
-      fd,
-      TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd),
-    );
+    state.callback.completeError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
     client!.onComplete();
   }
 

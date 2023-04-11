@@ -27,7 +27,6 @@ extern "C"
 #define mh_cmp(a, b, arg) ((a->key) != (b->key))
 #define mh_cmp_key(a, b, arg) ((a) != (b->key))
 #include "salad/mhash.h"
-#include "salad/fifo.h"
 
 #if defined(__cplusplus)
 }

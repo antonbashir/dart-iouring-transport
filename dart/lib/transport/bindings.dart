@@ -19488,7 +19488,7 @@ class TransportBindings {
 
   late final _transport_worker_get_bufferPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Int32 Function(
               ffi.Pointer<transport_worker_t>)>>('transport_worker_get_buffer');
   late final _transport_worker_get_buffer = _transport_worker_get_bufferPtr
       .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
@@ -19805,28 +19805,120 @@ class TransportBindings {
       _transport_socket_create_unix_dgramPtr
           .asFunction<int Function(int, int, int, int, int)>();
 
-  ffi.Pointer<ip_mreqn> transport_socket_create_multicast_request(
-    ffi.Pointer<ffi.Char> multicast_group_address,
-    ffi.Pointer<ffi.Char> multicast_local_address,
+  int transport_socket_multicast_add_membership(
+    int fd,
+    ffi.Pointer<ffi.Char> group_address,
+    ffi.Pointer<ffi.Char> local_address,
     int interface_index,
   ) {
-    return _transport_socket_create_multicast_request(
-      multicast_group_address,
-      multicast_local_address,
+    return _transport_socket_multicast_add_membership(
+      fd,
+      group_address,
+      local_address,
       interface_index,
     );
   }
 
-  late final _transport_socket_create_multicast_requestPtr = _lookup<
+  late final _transport_socket_multicast_add_membershipPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ip_mreqn> Function(
+          ffi.Int Function(
+              ffi.Int,
               ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int)>>('transport_socket_create_multicast_request');
-  late final _transport_socket_create_multicast_request =
-      _transport_socket_create_multicast_requestPtr.asFunction<
-          ffi.Pointer<ip_mreqn> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+              ffi.Int)>>('transport_socket_multicast_add_membership');
+  late final _transport_socket_multicast_add_membership =
+      _transport_socket_multicast_add_membershipPtr.asFunction<
+          int Function(
+              int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+
+  int transport_socket_multicast_drop_membership(
+    int fd,
+    ffi.Pointer<ffi.Char> group_address,
+    ffi.Pointer<ffi.Char> local_address,
+    int interface_index,
+  ) {
+    return _transport_socket_multicast_drop_membership(
+      fd,
+      group_address,
+      local_address,
+      interface_index,
+    );
+  }
+
+  late final _transport_socket_multicast_drop_membershipPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int)>>('transport_socket_multicast_drop_membership');
+  late final _transport_socket_multicast_drop_membership =
+      _transport_socket_multicast_drop_membershipPtr.asFunction<
+          int Function(
+              int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+
+  int transport_socket_multicast_add_source_membership(
+    int fd,
+    ffi.Pointer<ffi.Char> group_address,
+    ffi.Pointer<ffi.Char> local_address,
+    ffi.Pointer<ffi.Char> source_address,
+  ) {
+    return _transport_socket_multicast_add_source_membership(
+      fd,
+      group_address,
+      local_address,
+      source_address,
+    );
+  }
+
+  late final _transport_socket_multicast_add_source_membershipPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>(
+      'transport_socket_multicast_add_source_membership');
+  late final _transport_socket_multicast_add_source_membership =
+      _transport_socket_multicast_add_source_membershipPtr.asFunction<
+          int Function(int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>)>();
+
+  int transport_socket_multicast_drop_source_membership(
+    int fd,
+    ffi.Pointer<ffi.Char> group_address,
+    ffi.Pointer<ffi.Char> local_address,
+    ffi.Pointer<ffi.Char> source_address,
+  ) {
+    return _transport_socket_multicast_drop_source_membership(
+      fd,
+      group_address,
+      local_address,
+      source_address,
+    );
+  }
+
+  late final _transport_socket_multicast_drop_source_membershipPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>(
+      'transport_socket_multicast_drop_source_membership');
+  late final _transport_socket_multicast_drop_source_membership =
+      _transport_socket_multicast_drop_source_membershipPtr.asFunction<
+          int Function(int, ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>)>();
+
+  int transport_socket_get_interface_index(
+    ffi.Pointer<ffi.Char> interface1,
+  ) {
+    return _transport_socket_get_interface_index(
+      interface1,
+    );
+  }
+
+  late final _transport_socket_get_interface_indexPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
+          'transport_socket_get_interface_index');
+  late final _transport_socket_get_interface_index =
+      _transport_socket_get_interface_indexPtr
+          .asFunction<int Function(ffi.Pointer<ffi.Char>)>();
 
   late final addresses = _SymbolAddresses(this);
 }
@@ -23742,7 +23834,8 @@ class _SymbolAddresses {
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_cancel => _library._transport_worker_cancelPtr;
   ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_get_buffer =>
           _library._transport_worker_get_bufferPtr;
   ffi.Pointer<
@@ -23826,11 +23919,36 @@ class _SymbolAddresses {
       get transport_socket_create_unix_dgram =>
           _library._transport_socket_create_unix_dgramPtr;
   ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int)>> get transport_socket_multicast_add_membership =>
+      _library._transport_socket_multicast_add_membershipPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int)>> get transport_socket_multicast_drop_membership =>
+      _library._transport_socket_multicast_drop_membershipPtr;
+  ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Pointer<ip_mreqn> Function(
-                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>
-      get transport_socket_create_multicast_request =>
-          _library._transport_socket_create_multicast_requestPtr;
+              ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>
+      get transport_socket_multicast_add_source_membership =>
+          _library._transport_socket_multicast_add_source_membershipPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>
+      get transport_socket_multicast_drop_source_membership =>
+          _library._transport_socket_multicast_drop_source_membershipPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>
+      get transport_socket_get_interface_index =>
+          _library._transport_socket_get_interface_indexPtr;
 }
 
 class iovec extends ffi.Struct {
@@ -26954,20 +27072,6 @@ class mh_i32_t extends ffi.Struct {
 
 typedef mh_int_t = ffi.Uint32;
 
-/// A simple FIFO made using a ring buffer
-class fifo extends ffi.Struct {
-  external ffi.Pointer<ffi.Char> buf;
-
-  @ffi.Size()
-  external int bottom;
-
-  @ffi.Size()
-  external int top;
-
-  @ffi.Size()
-  external int size;
-}
-
 class transport_worker_configuration extends ffi.Struct {
   @ffi.Uint16()
   external int buffers_count;
@@ -26998,7 +27102,7 @@ class transport_worker extends ffi.Struct {
   @ffi.Uint16()
   external int buffers_count;
 
-  external fifo free_buffers;
+  external ffi.Pointer<ffi.Void> free_buffers;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 
