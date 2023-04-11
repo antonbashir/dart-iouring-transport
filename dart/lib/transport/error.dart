@@ -19,7 +19,6 @@ class TransportErrorHandler {
   final TransportBindings _bindings;
   final Pointer<transport_worker_t> _inboundWorkerPointer;
   final Pointer<transport_worker_t> _outboundWorkerPointer;
-  final Pointer<Int64> _inboundUsedBuffers;
   final Queue<Completer<int>> _inboundBufferFinalizers;
   final Queue<Completer<int>> _outboundBufferFinalizers;
   final TransportCallbacks _callbacks;
@@ -31,7 +30,6 @@ class TransportErrorHandler {
     this._bindings,
     this._inboundWorkerPointer,
     this._outboundWorkerPointer,
-    this._inboundUsedBuffers,
     this._inboundBufferFinalizers,
     this._outboundBufferFinalizers,
     this._callbacks,
@@ -40,11 +38,10 @@ class TransportErrorHandler {
 
   Future<int> _allocateInbound() async {
     var bufferId = _bindings.transport_worker_select_buffer(_inboundWorkerPointer);
-    while (bufferId == -1) {
+    while (bufferId == transportBufferUsed) {
       final completer = Completer<int>();
       _inboundBufferFinalizers.add(completer);
-      bufferId = await completer.future;
-      if (_inboundUsedBuffers[bufferId] == transportBufferAvailable) return bufferId;
+      await completer.future;
       bufferId = _bindings.transport_worker_select_buffer(_inboundWorkerPointer);
     }
     return bufferId;

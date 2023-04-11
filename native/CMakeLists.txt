@@ -37,6 +37,8 @@ file(GLOB sources
   *.h
   dart/*.h
   dart/*.c
+  salad/*.h
+  salad/*.c
 )
 
 include_directories(${PROJECT_BINARY_DIR})

@@ -15,7 +15,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
-  worker->used_buffers = malloc(sizeof(int64_t) * configuration->buffers_count);
+  fifo_create(&worker->used_buffers, configuration->buffers_count);
   worker->inet_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
   worker->unix_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
 
@@ -27,7 +27,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
       return NULL;
     }
     worker->buffers[index].iov_len = configuration->buffer_size;
-    worker->used_buffers[index] = TRANSPORT_BUFFER_AVAILABLE;
+    fifo_push(&worker->used_buffers, index);
 
     memset(&worker->inet_used_messages[index], 0, sizeof(struct msghdr));
     worker->inet_used_messages[index].msg_name = malloc(sizeof(struct sockaddr_in));
@@ -59,16 +59,11 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 
 int transport_worker_select_buffer(transport_worker_t *worker)
 {
-  int buffer_id = 0;
-  while (worker->used_buffers[buffer_id] != TRANSPORT_BUFFER_AVAILABLE)
+  int buffer_id;
+  if (unlikely(buffer_id = fifo_pop(&worker->used_buffers) == NULL))
   {
-    if (++buffer_id == worker->buffers_count)
-    {
-      return -1;
-    }
+    return TRANSPORT_BUFFER_USED;
   }
-
-  worker->used_buffers[buffer_id] = TRANSPORT_BUFFER_USED;
   return buffer_id;
 }
 
@@ -123,7 +118,6 @@ int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buf
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  worker->used_buffers[buffer_id] = offset;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   io_uring_prep_write_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
@@ -146,7 +140,6 @@ int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buff
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  worker->used_buffers[buffer_id] = offset;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   io_uring_prep_read_fixed(sqe, fd, worker->buffers[buffer_id].iov_base, worker->buffers[buffer_id].iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
@@ -176,7 +169,6 @@ int transport_worker_send_message(transport_worker_t *worker,
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct msghdr *message;
   if (socket_family == INET)
@@ -222,7 +214,6 @@ int transport_worker_respond_message(transport_worker_t *worker,
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct msghdr *message;
   if (socket_family == INET)
@@ -266,7 +257,6 @@ int transport_worker_receive_message(transport_worker_t *worker,
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  worker->used_buffers[buffer_id] = 0;
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct msghdr *message;
   if (socket_family == INET)
@@ -343,7 +333,7 @@ void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_i
   struct iovec buffer = worker->buffers[buffer_id];
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
-  worker->used_buffers[buffer_id] = 0;
+  fifo_push(&worker->used_buffers, buffer_id);
 }
 
 void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
@@ -351,7 +341,7 @@ void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer
   struct iovec buffer = worker->buffers[buffer_id];
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
-  worker->used_buffers[buffer_id] = TRANSPORT_BUFFER_AVAILABLE;
+  fifo_push(&worker->used_buffers, buffer_id);
 }
 
 int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
@@ -374,7 +364,7 @@ void transport_worker_destroy(transport_worker_t *worker)
     free(worker->unix_used_messages[index].msg_name);
   }
   free(worker->buffers);
-  free(worker->used_buffers);
+  fifo_destroy(&worker->used_buffers);
   free(worker->inet_used_messages);
   free(worker->unix_used_messages);
   free(worker->listeners);

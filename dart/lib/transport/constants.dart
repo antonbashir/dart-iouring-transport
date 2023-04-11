@@ -99,7 +99,6 @@ const transportLogLevels = [
   "FATAL",
 ];
 
-const transportBufferAvailable = -2;
 const transportBufferUsed = -1;
 
 const transportEventRead = (1 << 0);

@@ -30,7 +30,7 @@ extern "C"
     struct iovec *buffers;
     uint32_t buffer_size;
     uint16_t buffers_count;
-    int64_t *used_buffers;
+    struct fifo used_buffers;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
   } transport_worker_t;

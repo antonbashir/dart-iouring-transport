@@ -14,11 +14,9 @@ class TransportChannel {
   final TransportBindings _bindings;
 
   late final Queue<Completer<int>> _bufferFinalizers;
-  late final Pointer<Int64> _usedBuffers;
   late final Pointer<iovec> _buffers;
 
   TransportChannel(this._workerPointer, this._fd, this._bindings, this._bufferFinalizers) {
-    _usedBuffers = _workerPointer.ref.used_buffers;
     _buffers = _workerPointer.ref.buffers;
   }
 }
@@ -36,11 +34,10 @@ class TransportInboundChannel extends TransportChannel {
 
   Future<int> _allocate() async {
     var bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
-    while (bufferId == -1) {
+    while (bufferId == transportBufferUsed) {
       final completer = Completer<int>();
       _bufferFinalizers.add(completer);
-      bufferId = await completer.future;
-      if (_usedBuffers[bufferId] == transportBufferAvailable) return bufferId;
+      await completer.future;
       bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
     }
     return bufferId;
@@ -79,11 +76,10 @@ class TransportOutboundChannel extends TransportChannel {
 
   Future<int> allocate() async {
     var bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
-    while (bufferId == -1) {
+    while (bufferId == transportBufferUsed) {
       final completer = Completer<int>();
       _bufferFinalizers.add(completer);
-      bufferId = await completer.future;
-      if (_usedBuffers[bufferId] == transportBufferAvailable) return bufferId;
+      await completer.future;
       bufferId = _bindings.transport_worker_select_buffer(_workerPointer);
     }
     return bufferId;

@@ -32,8 +32,8 @@ class TransportWorker {
   late final Pointer<transport_worker_t> _outboundWorkerPointer;
   late final Pointer<io_uring> _inboundRing;
   late final Pointer<io_uring> _outboundRing;
-  late final Pointer<Int64> _inboundUsedBuffers;
-  late final Pointer<Int64> _outboundUsedBuffers;
+  late final fifo _inboundUsedBuffers;
+  late final fifo _outboundUsedBuffers;
   late final Pointer<iovec> _inboundBuffers;
   late final Pointer<iovec> _outboundBuffers;
   late final Pointer<Pointer<io_uring_cqe>> _inboundCqes;
@@ -133,7 +133,6 @@ class TransportWorker {
       _bindings,
       _inboundWorkerPointer,
       _outboundWorkerPointer,
-      _inboundUsedBuffers,
       _inboundBufferFinalizers,
       _outboundBufferFinalizers,
       _callbacks,
@@ -145,8 +144,8 @@ class TransportWorker {
       _bindings,
       _inboundWorkerPointer,
       _outboundWorkerPointer,
-      _inboundUsedBuffers,
-      _outboundUsedBuffers,
+      _inboundBuffers,
+      _outboundBuffers,
       _inboundBufferFinalizers,
       _outboundBufferFinalizers,
       _callbacks,
@@ -169,11 +168,10 @@ class TransportWorker {
 
   Future<int> _allocateInbound() async {
     var bufferId = _bindings.transport_worker_select_buffer(_inboundWorkerPointer);
-    while (bufferId == -1) {
+    while (bufferId == transportBufferUsed) {
       final completer = Completer<int>();
       _inboundBufferFinalizers.add(completer);
-      bufferId = await completer.future;
-      if (_inboundUsedBuffers[bufferId] == transportBufferAvailable) return bufferId;
+      await completer.future;
       bufferId = _bindings.transport_worker_select_buffer(_inboundWorkerPointer);
     }
     return bufferId;
