@@ -52,7 +52,6 @@ transport_server_t *transport_server_initialize_tcp(transport_server_configurati
     free(server);
     return NULL;
   }
-
   if (listen(server->fd, configuration->socket_max_connections) < 0)
   {
     free(server);

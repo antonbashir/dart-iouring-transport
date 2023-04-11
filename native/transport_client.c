@@ -88,7 +88,7 @@ transport_client_t *transport_client_initialize_udp(transport_client_configurati
     return NULL;
   }
   client->fd = socket_result;
-  if (client->fd < 0 || bind(client->fd, (struct sockaddr *)&client->inet_source_address, client->client_address_length) < 0)
+  if (bind(client->fd, (struct sockaddr *)&client->inet_source_address, client->client_address_length) < 0)
   {
     free(client);
     return NULL;
