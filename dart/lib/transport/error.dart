@@ -91,27 +91,20 @@ class TransportErrorHandler {
     _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
     _serverRegistry.removeClient(fd);
-    server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _eventStates.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
-    _eventStates.resetInboundRead(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
-    if (!server!.controller.hasListener) {
-      _releaseInboundBuffer(bufferId);
-      return;
-    }
-    _releaseInboundBuffer(bufferId);
-    server.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _eventStates.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
-    _eventStates.resetInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     _releaseInboundBuffer(bufferId);
-    server!.controller.addError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _eventStates.notifyInboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleAccept(int fd) {
@@ -122,43 +115,39 @@ class TransportErrorHandler {
 
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
-    final state = _eventStates.removeConnect(fd);
-    state.retry.reset();
     if (!_ensureClientIsActive(client, null, fd)) {
-      state.callback.completeError(TransportClosedException.forClient());
+      _eventStates.notifyConnectError(fd, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _clientRegistry.removeClient(fd);
-    state.callback.completeError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _eventStates.notifyConnectError(fd, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
     client!.onComplete();
   }
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
-    final state = _eventStates.getOutboundRead(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
-      state.callback.completeError(TransportClosedException.forClient());
+      _eventStates.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
     _clientRegistry.removeClient(fd);
-    state.callback.completeError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _eventStates.notifyOutboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
     client!.onComplete();
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
-    final state = _eventStates.getOutboundWrite(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
-      state.callback.completeError(TransportClosedException.forClient());
+      _eventStates.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
     _clientRegistry.removeClient(fd);
-    state.callback.completeError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _eventStates.notifyOutboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
     client!.onComplete();
   }
 

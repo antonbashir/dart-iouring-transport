@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ffi';
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:iouring_transport/transport/communicator.dart';
@@ -14,13 +16,16 @@ import 'defaults.dart';
 
 class TransportServer {
   final Pointer<transport_server_t> pointer;
-  final Pointer<transport_worker_t> workerPointer;
+  final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
   final int readTimeout;
   final int writeTimeout;
   final TransportEventStates eventStates;
+  final Queue<Completer<int>> _bufferFinalizers;
+  final TransportServerRegistry registry;
 
   late final int fd;
+  late final Pointer<iovec> _buffers;
 
   var _active = true;
   bool get active => _active;
@@ -28,13 +33,16 @@ class TransportServer {
 
   TransportServer(
     this.pointer,
-    this.workerPointer,
+    this._workerPointer,
     this._bindings,
     this.eventStates,
     this.readTimeout,
     this.writeTimeout,
+    this._bufferFinalizers,
+    this.registry,
   ) {
     fd = pointer.ref.fd;
+    _buffers = _workerPointer.ref.buffers;
   }
 
   Stream<TransportServerStreamCommunicator> accept(Pointer<transport_worker_t> workerPointer) {
@@ -52,10 +60,29 @@ class TransportServer {
     if (!_active) _closer.complete();
   }
 
+  @pragma(preferInlinePragma)
+  void releaseBuffer(int bufferId) {
+    _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
+    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  void reuseBuffer(int bufferId) {
+    _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
+    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  Uint8List readBuffer(int bufferId) {
+    final buffer = _buffers[bufferId];
+    final bufferBytes = buffer.iov_base.cast<Uint8>();
+    return bufferBytes.asTypedList(buffer.iov_len);
+  }
+
   Future<void> close() async {
     if (_active) {
       _active = false;
-      _bindings.transport_worker_cancel(workerPointer);
+      _bindings.transport_worker_cancel(_workerPointer);
       await _closer.future;
       _bindings.transport_close_descritor(pointer.ref.fd);
       _bindings.transport_server_destroy(pointer);
@@ -70,8 +97,9 @@ class TransportServerRegistry {
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
   final TransportEventStates _eventStates;
+  final Queue<Completer<int>> _bufferFinalizers;
 
-  TransportServerRegistry(this._bindings, this._workerPointer, this._eventStates);
+  TransportServerRegistry(this._bindings, this._workerPointer, this._eventStates, this._bufferFinalizers);
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
@@ -87,6 +115,8 @@ class TransportServerRegistry {
         _eventStates,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        _bufferFinalizers,
+        this,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -145,6 +175,8 @@ class TransportServerRegistry {
           _eventStates,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
+          _bufferFinalizers,
+          this,
         );
       },
     );
@@ -165,6 +197,8 @@ class TransportServerRegistry {
         _eventStates,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        _bufferFinalizers,
+        this,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -184,6 +218,8 @@ class TransportServerRegistry {
         _eventStates,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        _bufferFinalizers,
+        this,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;

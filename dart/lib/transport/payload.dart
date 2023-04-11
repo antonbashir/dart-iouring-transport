@@ -2,15 +2,6 @@ import 'dart:typed_data';
 
 import 'package:iouring_transport/transport/constants.dart';
 
-class TransportPayload {
-  final Uint8List bytes;
-  final int bufferId;
-  final void Function() releaser;
-  final void Function() reuser;
-
-  TransportPayload(this.bytes, this.bufferId, this.releaser, this.reuser);
-}
-
 class TransportOutboundPayload {
   final Uint8List bytes;
   final void Function() _releaser;

@@ -15,7 +15,6 @@ import 'factory.dart';
 import 'lookup.dart';
 import 'payload.dart';
 import 'error.dart';
-import 'retry.dart';
 import 'server.dart';
 import 'package:meta/meta.dart';
 
@@ -96,6 +95,8 @@ class TransportWorker {
     _serverRegistry = TransportServerRegistry(
       _bindings,
       _inboundWorkerPointer,
+      _eventStates,
+      _inboundBufferFinalizers,
     );
     _serversfactory = TransportServersFactory(
       _serverRegistry,
@@ -190,11 +191,11 @@ class TransportWorker {
           continue;
         }
         if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-          _handleReadReceiveMessage((data >> 16) & 0xffff, result, fd);
+          _handleReadReceiveMessageCallback((data >> 16) & 0xffff, result, fd);
           continue;
         }
         if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-          _handleWriteSendMessage((data >> 16) & 0xffff, result, fd);
+          _handleWriteSendMessageCallback((data >> 16) & 0xffff, result, fd);
           continue;
         }
         if (event & transportEventConnect != 0) {
@@ -273,115 +274,40 @@ class TransportWorker {
 
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
-    _eventStates.resetInboundRead(bufferId);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
-    _allocateInbound().then(
-      (newBufferId) => _bindings.transport_worker_read(
-        _inboundWorkerPointer,
-        fd,
-        newBufferId,
-        0,
-        server!.readTimeout,
-        transportEventRead,
-      ),
-    );
-    if (!server!.controller.hasListener) {
-      _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-      _bindings.transport_worker_read(_inboundWorkerPointer, fd, bufferId, 0, server.readTimeout, transportEventRead);
-      return;
-    }
-    final buffer = _inboundBuffers[bufferId];
-    final bufferBytes = buffer.iov_base.cast<Uint8>();
-    server.controller.add(TransportInboundPayload(
-      bufferBytes.asTypedList(result),
-      (answer) {
-        if (!_ensureServerIsActive(server, bufferId, fd)) return;
-        _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-        bufferBytes.asTypedList(answer.length).setAll(0, answer);
-        buffer.iov_len = answer.length;
-        _bindings.transport_worker_write(_inboundWorkerPointer, fd, bufferId, 0, server.writeTimeout, transportEventWrite);
-      },
-      () => _releaseInboundBuffer(bufferId),
-    ));
+    _eventStates.notifyInboundRead(bufferId);
   }
 
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
-    _eventStates.resetInboundRead(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
-    if (!server!.controller.hasListener) {
-      _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-      _bindings.transport_worker_receive_message(
-        _inboundWorkerPointer,
-        fd,
-        bufferId,
-        server.pointer.ref.family,
-        server.messageFlags!,
-        server.readTimeout,
-        transportEventReceiveMessage,
-      );
-      return;
-    }
-    _allocateInbound().then((newBufferId) {
-      _bindings.transport_worker_receive_message(
-        _inboundWorkerPointer,
-        fd,
-        newBufferId,
-        server.pointer.ref.family,
-        server.messageFlags!,
-        server.readTimeout,
-        transportEventReceiveMessage,
-      );
-    });
-    final buffer = _inboundBuffers[bufferId];
-    final bufferBytes = buffer.iov_base.cast<Uint8>();
-    server.controller.add(TransportInboundPayload(
-      bufferBytes.asTypedList(result),
-      (answer, flags) {
-        if (!_ensureServerIsActive(server, bufferId, null)) return;
-        _bindings.transport_worker_reuse_buffer(_inboundWorkerPointer, bufferId);
-        bufferBytes.asTypedList(answer.length).setAll(0, answer);
-        buffer.iov_len = answer.length;
-        _bindings.transport_worker_respond_message(
-          _inboundWorkerPointer,
-          fd,
-          bufferId,
-          server.pointer.ref.family,
-          MSG_TRUNC,
-          server.writeTimeout,
-          transportEventSendMessage,
-        );
-        return;
-      },
-      () => _releaseInboundBuffer(bufferId),
-    ));
+    _eventStates.notifyInboundRead(bufferId);
   }
 
   void _handleWrite(int bufferId, int fd) {
     final server = _serverRegistry.getByClient(fd);
-    _eventStates.resetInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
     _releaseInboundBuffer(bufferId);
+    _eventStates.notifyInboundWrite(bufferId);
   }
 
   void _handleSendMessage(int bufferId, int fd) {
     final server = _serverRegistry.getByServer(fd);
-    _eventStates.resetInboundWrite(bufferId);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     _releaseInboundBuffer(bufferId);
+    _eventStates.notifyInboundWrite(bufferId);
   }
 
-  void _handleReadReceiveMessage(int bufferId, int result, int fd) {
+  void _handleReadReceiveMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
-    final state = _eventStates.getOutboundRead(bufferId);
-    state.retry.reset();
     if (!_ensureClientIsActive(client, bufferId, fd)) {
-      state.callback.completeError(TransportClosedException.forClient());
+      _eventStates.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     client!.onComplete();
-    state.callback.complete(
+    _eventStates.notifyOutboundRead(
+      bufferId,
       TransportOutboundPayload(
         _outboundBuffers[bufferId].iov_base.cast<Uint8>().asTypedList(result),
         () => _releaseOutboundBuffer(bufferId),
@@ -389,18 +315,16 @@ class TransportWorker {
     );
   }
 
-  void _handleWriteSendMessage(int bufferId, int result, int fd) {
+  void _handleWriteSendMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
-    final state = _eventStates.getOutboundWrite(bufferId);
-    state.retry.reset();
     if (!_ensureClientIsActive(client, bufferId, fd)) {
-      state.callback.completeError(TransportClosedException.forClient());
+      _eventStates.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
     client!.onComplete();
-    state.callback.complete();
+    _eventStates.notifyOutboundWrite(bufferId);
   }
 
   void _handleConnect(int fd) {
