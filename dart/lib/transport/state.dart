@@ -171,7 +171,7 @@ class TransportEventStates {
   void resetOutboundWrite(int bufferId) => _outboundWrite[bufferId].retry.reset();
 
   @pragma(preferInlinePragma)
-  TransportEventState getConnect(int fd) => _connect[fd]!;
+  TransportEventState removeConnect(int fd) => _connect.remove(fd)!;
 
   @pragma(preferInlinePragma)
   TransportEventState getInboundRead(int bufferId) => _inboundRead[bufferId];

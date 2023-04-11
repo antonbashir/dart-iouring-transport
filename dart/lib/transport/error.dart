@@ -5,7 +5,6 @@ import 'dart:ffi';
 import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
-import 'callbacks.dart';
 import 'client.dart';
 import 'constants.dart';
 import 'exception.dart';
@@ -113,7 +112,7 @@ class TransportErrorHandler {
         fd,
         newBufferId,
         server!.pointer.ref.family,
-        MSG_TRUNC,
+        server.messageFlags!,
         server.readTimeout,
         transportEventReceiveMessage,
       );
@@ -142,7 +141,7 @@ class TransportErrorHandler {
 
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
-    final state = _eventStates.getConnect(fd);
+    final state = _eventStates.removeConnect(fd);
     state.retry.reset();
     if (!_ensureClientIsActive(client, null, fd)) {
       state.callback.completeError(TransportClosedException.forClient());
@@ -156,35 +155,29 @@ class TransportErrorHandler {
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
-    _eventStates.resetOutboundRead(bufferId);
+    final state = _eventStates.getOutboundRead(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
-      _callbacks.notifyReadError(bufferId, TransportClosedException.forClient());
+      state.callback.completeError(TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
     _clientRegistry.removeClient(fd);
-    _callbacks.notifyReadError(
-      bufferId,
-      TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId),
-    );
+    state.callback.completeError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
     client!.onComplete();
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
-    _eventStates.resetOutboundWrite(bufferId);
+    final state = _eventStates.getOutboundWrite(bufferId);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
-      _callbacks.notifyWriteError(bufferId, TransportClosedException.forClient());
+      state.callback.completeError(TransportClosedException.forClient());
       client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
     _clientRegistry.removeClient(fd);
-    _callbacks.notifyWriteError(
-      bufferId,
-      TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId),
-    );
+    state.callback.completeError(TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
     client!.onComplete();
   }
 
