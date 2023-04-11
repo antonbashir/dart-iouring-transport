@@ -2,15 +2,14 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi';
 
-import 'package:iouring_transport/transport/state.dart';
 
 import 'bindings.dart';
-import 'callbacks.dart';
 import 'client.dart';
 import 'configuration.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'server.dart';
+import 'state.dart';
 
 class TransportRetryState {
   late Duration delay;

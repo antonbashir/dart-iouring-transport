@@ -18,6 +18,7 @@ class TransportServer {
   final TransportRetryConfiguration retry;
   final int readTimeout;
   final int writeTimeout;
+  final int messageFlags;
 
   late final int fd;
   late final StreamController<TransportInboundPayload> controller;
@@ -35,6 +36,7 @@ class TransportServer {
     this._workerPointer,
     this.readTimeout,
     this.writeTimeout,
+    this.messageFlags,
   ) {
     controller = StreamController();
     stream = controller.stream;
@@ -89,6 +91,7 @@ class TransportServerRegistry {
         _workerPointer,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        0,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -147,6 +150,7 @@ class TransportServerRegistry {
           _workerPointer,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
+          configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
         );
       },
     );
@@ -167,6 +171,7 @@ class TransportServerRegistry {
         _workerPointer,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        0,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -186,6 +191,7 @@ class TransportServerRegistry {
         _workerPointer,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;

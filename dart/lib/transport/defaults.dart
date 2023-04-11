@@ -44,6 +44,7 @@ class TransportDefaults {
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
         retryConfiguration: retry(),
+        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
@@ -62,6 +63,7 @@ class TransportDefaults {
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
         retryConfiguration: retry(),
+        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
@@ -79,6 +81,7 @@ class TransportDefaults {
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         retryConfiguration: retry(),
+        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
   static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(
@@ -96,6 +99,7 @@ class TransportDefaults {
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         retryConfiguration: retry(),
+        messageFlags: {TransportDatagramMessageFlag.trunc},
       );
 
   static TransportRetryConfiguration retry() => TransportRetryConfiguration(

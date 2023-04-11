@@ -1,3 +1,5 @@
+import 'constants.dart';
+
 class TransportConfiguration {
   final int listenerIsolates;
   final int workerInsolates;
@@ -262,6 +264,7 @@ class TransportTcpServerConfiguration {
 class TransportUdpServerConfiguration {
   final Duration readTimeout;
   final Duration writeTimeout;
+  final Set<TransportDatagramMessageFlag> messageFlags;
   final TransportRetryConfiguration retryConfiguration;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
@@ -284,6 +287,7 @@ class TransportUdpServerConfiguration {
     required this.readTimeout,
     required this.writeTimeout,
     required this.retryConfiguration,
+    required this.messageFlags,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
@@ -322,6 +326,7 @@ class TransportUdpServerConfiguration {
     int? ipMulticastLoop,
     int? ipMulticastTtl,
     TransportUdpMulticastManager? multicastManager,
+    Set<TransportDatagramMessageFlag>? messageFlags,
   }) =>
       TransportUdpServerConfiguration(
         readTimeout: readTimeout ?? this.readTimeout,
@@ -343,6 +348,7 @@ class TransportUdpServerConfiguration {
         ipMulticastLoop: ipMulticastLoop ?? this.ipMulticastLoop,
         ipMulticastTtl: ipMulticastTtl ?? this.ipMulticastTtl,
         multicastManager: multicastManager ?? this.multicastManager,
+        messageFlags: messageFlags ?? this.messageFlags,
       );
 }
 
@@ -413,6 +419,7 @@ class TransportUnixDatagramServerConfiguration {
   final Duration readTimeout;
   final Duration writeTimeout;
   final TransportRetryConfiguration retryConfiguration;
+  final Set<TransportDatagramMessageFlag> messageFlags;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
@@ -426,6 +433,7 @@ class TransportUnixDatagramServerConfiguration {
     required this.readTimeout,
     required this.writeTimeout,
     required this.retryConfiguration,
+    required this.messageFlags,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
@@ -448,6 +456,7 @@ class TransportUnixDatagramServerConfiguration {
     bool? socketReusePort,
     int? socketReceiveLowAt,
     int? socketSendLowAt,
+    Set<TransportDatagramMessageFlag>? messageFlags,
   }) =>
       TransportUnixDatagramServerConfiguration(
         readTimeout: readTimeout ?? this.readTimeout,
@@ -461,6 +470,7 @@ class TransportUnixDatagramServerConfiguration {
         socketReusePort: socketReusePort ?? this.socketReusePort,
         socketReceiveLowAt: socketReceiveLowAt ?? this.socketReceiveLowAt,
         socketSendLowAt: socketSendLowAt ?? this.socketSendLowAt,
+        messageFlags: messageFlags ?? this.messageFlags,
       );
 }
 
@@ -579,6 +589,7 @@ class TransportUdpClientConfiguration {
   final Duration readTimeout;
   final Duration writeTimeout;
   final TransportRetryConfiguration retryConfiguration;
+  final Set<TransportDatagramMessageFlag> messageFlags;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
@@ -600,6 +611,7 @@ class TransportUdpClientConfiguration {
     required this.readTimeout,
     required this.writeTimeout,
     required this.retryConfiguration,
+    required this.messageFlags,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
@@ -638,6 +650,7 @@ class TransportUdpClientConfiguration {
     int? ipMulticastLoop,
     int? ipMulticastTtl,
     TransportUdpMulticastManager? multicastManager,
+    Set<TransportDatagramMessageFlag>? messageFlags,
   }) =>
       TransportUdpClientConfiguration(
         readTimeout: readTimeout ?? this.readTimeout,
@@ -659,6 +672,7 @@ class TransportUdpClientConfiguration {
         ipMulticastLoop: ipMulticastLoop ?? this.ipMulticastLoop,
         ipMulticastTtl: ipMulticastTtl ?? this.ipMulticastTtl,
         multicastManager: multicastManager ?? this.multicastManager,
+        messageFlags: messageFlags ?? this.messageFlags,
       );
 }
 
@@ -732,6 +746,7 @@ class TransportUnixDatagramClientConfiguration {
   final Duration readTimeout;
   final Duration writeTimeout;
   final TransportRetryConfiguration retryConfiguration;
+  final Set<TransportDatagramMessageFlag> messageFlags;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
@@ -745,6 +760,7 @@ class TransportUnixDatagramClientConfiguration {
     required this.readTimeout,
     required this.writeTimeout,
     required this.retryConfiguration,
+    required this.messageFlags,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
@@ -759,6 +775,7 @@ class TransportUnixDatagramClientConfiguration {
     Duration? readTimeout,
     Duration? writeTimeout,
     TransportRetryConfiguration? retryConfiguration,
+    Set<TransportDatagramMessageFlag>? messageFlags,
     int? socketReceiveBufferSize,
     int? socketSendBufferSize,
     bool? socketNonblock,
@@ -772,6 +789,7 @@ class TransportUnixDatagramClientConfiguration {
         readTimeout: readTimeout ?? this.readTimeout,
         writeTimeout: writeTimeout ?? this.writeTimeout,
         retryConfiguration: retryConfiguration ?? this.retryConfiguration,
+        messageFlags: messageFlags ?? this.messageFlags,
         socketReceiveBufferSize: socketReceiveBufferSize ?? this.socketReceiveBufferSize,
         socketSendBufferSize: socketSendBufferSize ?? this.socketSendBufferSize,
         socketNonblock: socketNonblock ?? this.socketNonblock,

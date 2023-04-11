@@ -42,6 +42,7 @@ class TransportClient {
   final int? connectTimeout;
   final int readTimeout;
   final int writeTimeout;
+  final int? messageFlags;
 
   var _active = true;
   bool get active => _active;
@@ -59,6 +60,7 @@ class TransportClient {
     this.connectTimeout,
     this.readTimeout,
     this.writeTimeout,
+    this.messageFlags,
   );
 
   factory TransportClient.withConnection(
@@ -82,6 +84,7 @@ class TransportClient {
         connectTimeout,
         readTimeout,
         writeTimeout,
+        null,
       );
 
   factory TransportClient.withoutConnection(
@@ -93,6 +96,7 @@ class TransportClient {
     TransportRetryConfiguration retry,
     int readTimeout,
     int writeTimeout,
+    int messageFlags,
   ) =>
       TransportClient._(
         _eventStates,
@@ -104,6 +108,7 @@ class TransportClient {
         null,
         readTimeout,
         writeTimeout,
+        messageFlags,
       );
 
   Future<TransportOutboundPayload> read() async {
@@ -131,7 +136,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<TransportOutboundPayload>();
     _eventStates.setOutboundReadCallback(bufferId, completer, TransportRetryState(retry, 0));
-    _channel.receiveMessage(bufferId, pointer, readTimeout);
+    _channel.receiveMessage(bufferId, this, readTimeout);
     _pending++;
     return completer.future;
   }
@@ -141,7 +146,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _eventStates.setOutboundWriteCallback(bufferId, completer, TransportRetryState(retry, 0));
-    _channel.sendMessage(bytes, bufferId, pointer, writeTimeout);
+    _channel.sendMessage(bytes, bufferId, this, writeTimeout);
     _pending++;
     return completer.future;
   }
@@ -319,6 +324,7 @@ class TransportClientRegistry {
       configuration.retryConfiguration,
       configuration.readTimeout.inSeconds,
       configuration.writeTimeout.inSeconds,
+      configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);
@@ -347,6 +353,7 @@ class TransportClientRegistry {
       configuration.retryConfiguration,
       configuration.readTimeout.inSeconds,
       configuration.writeTimeout.inSeconds,
+      configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
     );
     _clients[clientPointer.ref.fd] = client;
     return TransportCommunicator(client);

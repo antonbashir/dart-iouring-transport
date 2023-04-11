@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/client.dart';
+
 import 'bindings.dart';
 import 'constants.dart';
 import 'exception.dart';
@@ -49,7 +51,7 @@ class TransportInboundChannel extends TransportChannel {
     _bindings.transport_worker_read(_workerPointer, _fd, bufferId, 0, _server.readTimeout, transportEventRead);
   }
 
-  Future<void> receiveMessage({int flags = 0}) async {
+  Future<void> receiveMessage() async {
     final bufferId = await _allocate();
     if (!_server.active) throw TransportClosedException.forServer();
     _bindings.transport_worker_receive_message(
@@ -57,7 +59,7 @@ class TransportInboundChannel extends TransportChannel {
       _fd,
       bufferId,
       _server.pointer.ref.family,
-      flags | MSG_TRUNC,
+      _server.messageFlags,
       _server.readTimeout,
       transportEventReceiveMessage,
     );
@@ -99,20 +101,20 @@ class TransportOutboundChannel extends TransportChannel {
   }
 
   @pragma(preferInlinePragma)
-  void receiveMessage(int bufferId, Pointer<transport_client_t> client, int timeout, {int flags = 0}) {
+  void receiveMessage(int bufferId, TransportClient client, int timeout) {
     _bindings.transport_worker_receive_message(
       _workerPointer,
       _fd,
       bufferId,
-      client.ref.family,
-      flags | MSG_TRUNC,
+      client.pointer.ref.family,
+      client.messageFlags!,
       timeout,
       transportEventReceiveMessage | transportEventClient,
     );
   }
 
   @pragma(preferInlinePragma)
-  void sendMessage(Uint8List bytes, int bufferId, Pointer<transport_client_t> client, int timeout, {int flags = 0}) {
+  void sendMessage(Uint8List bytes, int bufferId, TransportClient client, int timeout) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
@@ -120,9 +122,9 @@ class TransportOutboundChannel extends TransportChannel {
       _workerPointer,
       _fd,
       bufferId,
-      _bindings.transport_client_get_destination_address(client).cast(),
-      client.ref.family,
-      flags | MSG_TRUNC,
+      _bindings.transport_client_get_destination_address(client.pointer).cast(),
+      client.pointer.ref.family,
+      client.messageFlags!,
       timeout,
       transportEventSendMessage | transportEventClient,
     );
