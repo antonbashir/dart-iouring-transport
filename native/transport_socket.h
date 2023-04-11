@@ -39,6 +39,8 @@ extern "C"
                                              uint32_t socket_receive_low_at,
                                              uint32_t socket_send_low_at);
 
+  struct ip_mreqn *transport_socket_multicast_create_request(const char *group_address, const char *local_address, int interface_index);
+
   int transport_socket_multicast_add_membership(int fd, const char *group_address, const char *local_address, int interface_index);
   int transport_socket_multicast_drop_membership(int fd, const char *group_address, const char *local_address, int interface_index);
 

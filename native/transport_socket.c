@@ -473,3 +473,12 @@ int transport_socket_get_interface_index(const char *interface)
 {
   return if_nametoindex(interface);
 }
+
+struct ip_mreqn *transport_socket_multicast_create_request(const char *group_address, const char *local_address, int interface_index)
+{
+  struct ip_mreqn* request = malloc(sizeof(struct ip_mreqn));
+  request->imr_multiaddr.s_addr = inet_addr(group_address);
+  request->imr_address.s_addr = inet_addr(local_address);
+  request->imr_ifindex = interface_index;
+  return request;
+}

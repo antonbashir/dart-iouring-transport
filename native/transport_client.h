@@ -16,8 +16,19 @@ extern "C"
 
   typedef struct transport_client_configuration
   {
-    uint32_t receive_buffer_size;
-    uint32_t send_buffer_size;
+    uint64_t socket_configuration_flags;
+    uint32_t socket_receive_buffer_size;
+    uint32_t socket_send_buffer_size;
+    uint32_t socket_receive_low_at;
+    uint32_t socket_send_low_at;
+    uint16_t ip_ttl;
+    uint32_t tcp_keep_alive_idle;
+    uint32_t tcp_keep_alive_max_count;
+    uint32_t tcp_keep_alive_individual_count;
+    uint32_t tcp_max_segment_size;
+    uint16_t tcp_syn_coun;
+    struct ip_mreqn *ip_multicast_interface;
+    uint32_t ip_multicast_ttl;
   } transport_client_configuration_t;
 
   typedef struct transport_client
