@@ -3,9 +3,8 @@ import 'dart:collection';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/client.dart';
-
 import 'bindings.dart';
+import 'client.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'server.dart';
@@ -59,7 +58,7 @@ class TransportInboundChannel extends TransportChannel {
       _fd,
       bufferId,
       _server.pointer.ref.family,
-      _server.messageFlags,
+      _server.messageFlags!,
       _server.readTimeout,
       transportEventReceiveMessage,
     );

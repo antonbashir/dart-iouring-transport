@@ -18,7 +18,7 @@ class TransportServer {
   final TransportRetryConfiguration retry;
   final int readTimeout;
   final int writeTimeout;
-  final int messageFlags;
+  final int? messageFlags;
 
   late final int fd;
   late final StreamController<TransportInboundPayload> controller;
@@ -29,7 +29,7 @@ class TransportServer {
   bool get active => _active;
   final _closer = Completer();
 
-  TransportServer(
+  TransportServer._(
     this.pointer,
     this._bindings,
     this.retry,
@@ -42,6 +42,36 @@ class TransportServer {
     stream = controller.stream;
     fd = pointer.ref.fd;
   }
+
+  factory TransportServer.withConnection(
+    Pointer<transport_server_t> pointer,
+    Pointer<transport_worker_t> _workerPointer,
+    TransportBindings _bindings,
+    TransportRetryConfiguration retry,
+    int readTimeout,
+    int writeTimeout,
+  ) =>
+      TransportServer._(
+        pointer,
+        _bindings,
+        retry,
+        _workerPointer,
+        readTimeout,
+        writeTimeout,
+        null,
+      );
+
+  factory TransportServer.withoutConnection(Pointer<transport_server_t> pointer, Pointer<transport_worker_t> _workerPointer, TransportBindings _bindings, TransportRetryConfiguration retry,
+          int readTimeout, int writeTimeout, int messageFlags) =>
+      TransportServer._(
+        pointer,
+        _bindings,
+        retry,
+        _workerPointer,
+        readTimeout,
+        writeTimeout,
+        messageFlags,
+      );
 
   void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportInboundChannel channel) acceptor) {
     this.acceptor = acceptor;
@@ -80,18 +110,17 @@ class TransportServerRegistry {
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
     final instance = using(
-      (Arena arena) => TransportServer(
+      (Arena arena) => TransportServer.withConnection(
         _bindings.transport_server_initialize_tcp(
           _tcpConfiguration(configuration!, arena),
           host.toNativeUtf8(allocator: arena).cast(),
           port,
         ),
+        _workerPointer,
         _bindings,
         configuration.retryConfiguration,
-        _workerPointer,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
-        0,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -143,11 +172,11 @@ class TransportServerRegistry {
             ),
           );
         }
-        return TransportServer(
+        return TransportServer.withoutConnection(
           pointer,
+          _workerPointer,
           _bindings,
           configuration.retryConfiguration,
-          _workerPointer,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
           configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
@@ -161,17 +190,16 @@ class TransportServerRegistry {
   TransportServer createUnixStream(String path, {TransportUnixStreamServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixStreamServer();
     final instance = using(
-      (Arena arena) => TransportServer(
+      (Arena arena) => TransportServer.withConnection(
         _bindings.transport_server_initialize_unix_stream(
           _unixStreamConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
         ),
+        _workerPointer,
         _bindings,
         configuration.retryConfiguration,
-        _workerPointer,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
-        0,
       ),
     );
     _servers[instance.pointer.ref.fd] = instance;
@@ -181,14 +209,14 @@ class TransportServerRegistry {
   TransportServer createUnixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramServer();
     final instance = using(
-      (Arena arena) => TransportServer(
+      (Arena arena) => TransportServer.withoutConnection(
         _bindings.transport_server_initialize_unix_dgram(
           _unixDatagramConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
         ),
+        _workerPointer,
         _bindings,
         configuration.retryConfiguration,
-        _workerPointer,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
         configuration.messageFlags.map((flag) => flag.flag).reduce((value, element) => value | element),
