@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -97,18 +98,57 @@ class TransportServerRegistry {
   TransportServer createUdp(String host, int port, {TransportUdpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpServer();
     final instance = using(
-      (Arena arena) => TransportServer(
-        _bindings.transport_server_initialize_udp(
+      (Arena arena) {
+        final pointer = _bindings.transport_server_initialize_udp(
           _udpConfiguration(configuration!, arena),
           host.toNativeUtf8(allocator: arena).cast(),
           port,
-        ),
-        _bindings,
-        configuration.retryConfiguration,
-        _workerPointer,
-        configuration.readTimeout.inSeconds,
-        configuration.writeTimeout.inSeconds,
-      ),
+        );
+        if (configuration.multicastManager != null) {
+          configuration.multicastManager!.subscribe(
+            onAddMembership: (configuration) => using(
+              (arena) => _bindings.transport_socket_multicast_add_membership(
+                pointer.ref.fd,
+                configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.getMemberShipIndex(_bindings),
+              ),
+            ),
+            onDropMembership: (configuration) => using(
+              (arena) => _bindings.transport_socket_multicast_drop_membership(
+                pointer.ref.fd,
+                configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.getMemberShipIndex(_bindings),
+              ),
+            ),
+            onAddSourceMembership: (configuration) => using(
+              (arena) => _bindings.transport_socket_multicast_add_source_membership(
+                pointer.ref.fd,
+                configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.sourceAddress.toNativeUtf8(allocator: arena).cast(),
+              ),
+            ),
+            onDropSourceMembership: (configuration) => using(
+              (arena) => _bindings.transport_socket_multicast_drop_source_membership(
+                pointer.ref.fd,
+                configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
+                configuration.sourceAddress.toNativeUtf8(allocator: arena).cast(),
+              ),
+            ),
+          );
+        }
+        return TransportServer(
+          pointer,
+          _bindings,
+          configuration.retryConfiguration,
+          _workerPointer,
+          configuration.readTimeout.inSeconds,
+          configuration.writeTimeout.inSeconds,
+        );
+      },
     );
     _servers[instance.pointer.ref.fd] = instance;
     return instance;
@@ -177,31 +217,167 @@ class TransportServerRegistry {
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
-    nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
-    nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    int flags = 0;
+    if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
+    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
+    if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
+    if (serverConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
+    if (serverConfiguration.ipFreebind == true) flags |= transportSocketOptionIpFreebind;
+    if (serverConfiguration.tcpQuickack == true) flags |= transportSocketOptionTcpQuickack;
+    if (serverConfiguration.tcpDeferAccept == true) flags |= transportSocketOptionTcpDeferAccept;
+    if (serverConfiguration.tcpFastopen == true) flags |= transportSocketOptionTcpFastopen;
+    if (serverConfiguration.tcpNodelay == true) flags |= transportSocketOptionTcpNodelay;
+    if (serverConfiguration.socketMaxConnections != null) {
+      nativeServerConfiguration.ref.socket_max_connections = serverConfiguration.socketMaxConnections!;
+    }
+    if (serverConfiguration.socketReceiveBufferSize != null) {
+      flags |= transportSocketOptionSocketRcvbuf;
+      nativeServerConfiguration.ref.socket_receive_buffer_size = serverConfiguration.socketReceiveBufferSize!;
+    }
+    if (serverConfiguration.socketSendBufferSize != null) {
+      flags |= transportSocketOptionSocketSndbuf;
+      nativeServerConfiguration.ref.socket_send_buffer_size = serverConfiguration.socketSendBufferSize!;
+    }
+    if (serverConfiguration.socketReceiveLowAt != null) {
+      flags |= transportSocketOptionSocketRcvlowat;
+      nativeServerConfiguration.ref.socket_receive_low_at = serverConfiguration.socketReceiveLowAt!;
+    }
+    if (serverConfiguration.socketSendLowAt != null) {
+      flags |= transportSocketOptionSocketSndlowat;
+      nativeServerConfiguration.ref.socket_send_low_at = serverConfiguration.socketSendLowAt!;
+    }
+    if (serverConfiguration.ipTtl != null) {
+      flags |= transportSocketOptionIpTtl;
+      nativeServerConfiguration.ref.ip_ttl = serverConfiguration.ipTtl!;
+    }
+    if (serverConfiguration.tcpKeepAliveIdle != null) {
+      flags |= transportSocketOptionTcpKeepidle;
+      nativeServerConfiguration.ref.tcp_keep_alive_idle = serverConfiguration.tcpKeepAliveIdle!;
+    }
+    if (serverConfiguration.tcpKeepAliveMaxCount != null) {
+      flags |= transportSocketOptionTcpKeepcnt;
+      nativeServerConfiguration.ref.tcp_keep_alive_max_count = serverConfiguration.tcpKeepAliveMaxCount!;
+    }
+    if (serverConfiguration.tcpKeepAliveIdle != null) {
+      flags |= transportSocketOptionTcpKeepintvl;
+      nativeServerConfiguration.ref.tcp_keep_alive_individual_count = serverConfiguration.tcpKeepAliveIdle!;
+    }
+    if (serverConfiguration.tcpMaxSegmentSize != null) {
+      flags |= transportSocketOptionTcpMaxseg;
+      nativeServerConfiguration.ref.tcp_max_segment_size = serverConfiguration.tcpMaxSegmentSize!;
+    }
+    if (serverConfiguration.tcpSynCount != null) {
+      flags |= transportSocketOptionTcpSyncnt;
+      nativeServerConfiguration.ref.tcp_syn_count = serverConfiguration.tcpSynCount!;
+    }
+    nativeServerConfiguration.ref.socket_configuration_flags = flags;
     return nativeServerConfiguration;
   }
 
   Pointer<transport_server_configuration_t> _udpConfiguration(TransportUdpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
-    nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    int flags = 0;
+    if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
+    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
+    if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
+    if (serverConfiguration.socketBroadcast == true) flags |= transportSocketOptionSocketBroadcast;
+    if (serverConfiguration.ipFreebind == true) flags |= transportSocketOptionIpFreebind;
+    if (serverConfiguration.ipMulticastAll == true) flags |= transportSocketOptionIpMulticastAll;
+    if (serverConfiguration.ipMulticastLoop == true) flags |= transportSocketOptionIpMulticastLoop;
+    if (serverConfiguration.socketReceiveBufferSize != null) {
+      flags |= transportSocketOptionSocketRcvbuf;
+      nativeServerConfiguration.ref.socket_receive_buffer_size = serverConfiguration.socketReceiveBufferSize!;
+    }
+    if (serverConfiguration.socketSendBufferSize != null) {
+      flags |= transportSocketOptionSocketSndbuf;
+      nativeServerConfiguration.ref.socket_send_buffer_size = serverConfiguration.socketSendBufferSize!;
+    }
+    if (serverConfiguration.socketReceiveLowAt != null) {
+      flags |= transportSocketOptionSocketRcvlowat;
+      nativeServerConfiguration.ref.socket_receive_low_at = serverConfiguration.socketReceiveLowAt!;
+    }
+    if (serverConfiguration.socketSendLowAt != null) {
+      flags |= transportSocketOptionSocketSndlowat;
+      nativeServerConfiguration.ref.socket_send_low_at = serverConfiguration.socketSendLowAt!;
+    }
+    if (serverConfiguration.ipTtl != null) {
+      flags |= transportSocketOptionIpTtl;
+      nativeServerConfiguration.ref.ip_ttl = serverConfiguration.ipTtl!;
+    }
+    if (serverConfiguration.ipMulticastTtl != null) {
+      flags |= transportSocketOptionIpMulticastTtl;
+      nativeServerConfiguration.ref.ip_multicast_ttl = serverConfiguration.ipMulticastTtl!;
+    }
+    if (serverConfiguration.ipMulticastInterface != null) {
+      flags |= transportSocketOptionIpMulticastIf;
+      final interface = serverConfiguration.ipMulticastInterface!;
+      nativeServerConfiguration.ref.ip_multicast_interface = _bindings.transport_socket_multicast_create_request(
+        interface.groupAddress.toNativeUtf8(allocator: allocator).cast(),
+        interface.localAddress.toNativeUtf8(allocator: allocator).cast(),
+        interface.getMemberShipIndex(_bindings),
+      );
+    }
+    nativeServerConfiguration.ref.socket_configuration_flags = flags;
     return nativeServerConfiguration;
   }
 
   Pointer<transport_server_configuration_t> _unixStreamConfiguration(TransportUnixStreamServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    nativeServerConfiguration.ref.max_connections = serverConfiguration.maxConnections;
-    nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
-    nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    int flags = 0;
+    if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
+    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
+    if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
+    if (serverConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
+    if (serverConfiguration.socketMaxConnections != null) {
+      nativeServerConfiguration.ref.socket_max_connections = serverConfiguration.socketMaxConnections!;
+    }
+    if (serverConfiguration.socketReceiveBufferSize != null) {
+      flags |= transportSocketOptionSocketRcvbuf;
+      nativeServerConfiguration.ref.socket_receive_buffer_size = serverConfiguration.socketReceiveBufferSize!;
+    }
+    if (serverConfiguration.socketSendBufferSize != null) {
+      flags |= transportSocketOptionSocketSndbuf;
+      nativeServerConfiguration.ref.socket_send_buffer_size = serverConfiguration.socketSendBufferSize!;
+    }
+    if (serverConfiguration.socketReceiveLowAt != null) {
+      flags |= transportSocketOptionSocketRcvlowat;
+      nativeServerConfiguration.ref.socket_receive_low_at = serverConfiguration.socketReceiveLowAt!;
+    }
+    if (serverConfiguration.socketSendLowAt != null) {
+      flags |= transportSocketOptionSocketSndlowat;
+      nativeServerConfiguration.ref.socket_send_low_at = serverConfiguration.socketSendLowAt!;
+    }
+    nativeServerConfiguration.ref.socket_configuration_flags = flags;
     return nativeServerConfiguration;
   }
 
   Pointer<transport_server_configuration_t> _unixDatagramConfiguration(TransportUnixDatagramServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    nativeServerConfiguration.ref.receive_buffer_size = serverConfiguration.receiveBufferSize;
-    nativeServerConfiguration.ref.send_buffer_size = serverConfiguration.sendBufferSize;
+    int flags = 0;
+    if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
+    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
+    if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
+    if (serverConfiguration.socketReceiveBufferSize != null) {
+      flags |= transportSocketOptionSocketRcvbuf;
+      nativeServerConfiguration.ref.socket_receive_buffer_size = serverConfiguration.socketReceiveBufferSize!;
+    }
+    if (serverConfiguration.socketSendBufferSize != null) {
+      flags |= transportSocketOptionSocketSndbuf;
+      nativeServerConfiguration.ref.socket_send_buffer_size = serverConfiguration.socketSendBufferSize!;
+    }
+    if (serverConfiguration.socketReceiveLowAt != null) {
+      flags |= transportSocketOptionSocketRcvlowat;
+      nativeServerConfiguration.ref.socket_receive_low_at = serverConfiguration.socketReceiveLowAt!;
+    }
+    if (serverConfiguration.socketSendLowAt != null) {
+      flags |= transportSocketOptionSocketSndlowat;
+      nativeServerConfiguration.ref.socket_send_low_at = serverConfiguration.socketSendLowAt!;
+    }
+    nativeServerConfiguration.ref.socket_configuration_flags = flags;
     return nativeServerConfiguration;
   }
 }

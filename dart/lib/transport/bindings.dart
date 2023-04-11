@@ -19805,6 +19805,29 @@ class TransportBindings {
       _transport_socket_create_unix_dgramPtr
           .asFunction<int Function(int, int, int, int, int)>();
 
+  ffi.Pointer<ip_mreqn> transport_socket_multicast_create_request(
+    ffi.Pointer<ffi.Char> group_address,
+    ffi.Pointer<ffi.Char> local_address,
+    int interface_index,
+  ) {
+    return _transport_socket_multicast_create_request(
+      group_address,
+      local_address,
+      interface_index,
+    );
+  }
+
+  late final _transport_socket_multicast_create_requestPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ip_mreqn> Function(
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int)>>('transport_socket_multicast_create_request');
+  late final _transport_socket_multicast_create_request =
+      _transport_socket_multicast_create_requestPtr.asFunction<
+          ffi.Pointer<ip_mreqn> Function(
+              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+
   int transport_socket_multicast_add_membership(
     int fd,
     ffi.Pointer<ffi.Char> group_address,
@@ -23919,6 +23942,12 @@ class _SymbolAddresses {
       get transport_socket_create_unix_dgram =>
           _library._transport_socket_create_unix_dgramPtr;
   ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<ip_mreqn> Function(
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>
+      get transport_socket_multicast_create_request =>
+          _library._transport_socket_multicast_create_requestPtr;
+  ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Int,
@@ -26939,13 +26968,45 @@ class sockaddr_un extends ffi.Struct {
 
 class transport_server_configuration extends ffi.Struct {
   @ffi.Int32()
-  external int max_connections;
+  external int socket_max_connections;
+
+  @ffi.Uint64()
+  external int socket_configuration_flags;
 
   @ffi.Uint32()
-  external int receive_buffer_size;
+  external int socket_receive_buffer_size;
 
   @ffi.Uint32()
-  external int send_buffer_size;
+  external int socket_send_buffer_size;
+
+  @ffi.Uint32()
+  external int socket_receive_low_at;
+
+  @ffi.Uint32()
+  external int socket_send_low_at;
+
+  @ffi.Uint16()
+  external int ip_ttl;
+
+  @ffi.Uint32()
+  external int tcp_keep_alive_idle;
+
+  @ffi.Uint32()
+  external int tcp_keep_alive_max_count;
+
+  @ffi.Uint32()
+  external int tcp_keep_alive_individual_count;
+
+  @ffi.Uint32()
+  external int tcp_max_segment_size;
+
+  @ffi.Uint16()
+  external int tcp_syn_count;
+
+  external ffi.Pointer<ip_mreqn> ip_multicast_interface;
+
+  @ffi.Uint32()
+  external int ip_multicast_ttl;
 }
 
 class transport_server extends ffi.Struct {
@@ -27001,11 +27062,43 @@ class transport_listener_pool extends ffi.Struct {
 typedef transport_listener_pool_t = transport_listener_pool;
 
 class transport_client_configuration extends ffi.Struct {
-  @ffi.Uint32()
-  external int receive_buffer_size;
+  @ffi.Uint64()
+  external int socket_configuration_flags;
 
   @ffi.Uint32()
-  external int send_buffer_size;
+  external int socket_receive_buffer_size;
+
+  @ffi.Uint32()
+  external int socket_send_buffer_size;
+
+  @ffi.Uint32()
+  external int socket_receive_low_at;
+
+  @ffi.Uint32()
+  external int socket_send_low_at;
+
+  @ffi.Uint16()
+  external int ip_ttl;
+
+  @ffi.Uint32()
+  external int tcp_keep_alive_idle;
+
+  @ffi.Uint32()
+  external int tcp_keep_alive_max_count;
+
+  @ffi.Uint32()
+  external int tcp_keep_alive_individual_count;
+
+  @ffi.Uint32()
+  external int tcp_max_segment_size;
+
+  @ffi.Uint16()
+  external int tcp_syn_count;
+
+  external ffi.Pointer<ip_mreqn> ip_multicast_interface;
+
+  @ffi.Uint32()
+  external int ip_multicast_ttl;
 }
 
 class transport_client extends ffi.Struct {

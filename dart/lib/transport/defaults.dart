@@ -29,8 +29,8 @@ class TransportDefaults {
       );
 
   static TransportTcpClientConfiguration tcpClient() => TransportTcpClientConfiguration(
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         pool: 1,
         connectTimeout: Duration(seconds: 10),
         readTimeout: Duration(seconds: 10),
@@ -39,16 +39,16 @@ class TransportDefaults {
       );
 
   static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
         retryConfiguration: retry(),
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         pool: 1,
         connectTimeout: Duration(seconds: 10),
         readTimeout: Duration(seconds: 10),
@@ -57,42 +57,42 @@ class TransportDefaults {
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(seconds: 10),
         writeTimeout: Duration(seconds: 10),
         retryConfiguration: retry(),
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
-        maxConnections: 4096,
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketMaxConnections: 4096,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         retryConfiguration: retry(),
       );
 
   static TransportUdpServerConfiguration udpServer() => TransportUdpServerConfiguration(
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         retryConfiguration: retry(),
       );
 
   static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(
-        maxConnections: 4096,
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketMaxConnections: 4096,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         retryConfiguration: retry(),
       );
 
   static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
-        receiveBufferSize: 4 * 1024 * 1024,
-        sendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 4 * 1024 * 1024,
+        socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         retryConfiguration: retry(),

@@ -40,7 +40,7 @@ transport_client_t *transport_client_initialize_tcp(transport_client_configurati
       configuration->tcp_keep_alive_max_count,
       configuration->tcp_keep_alive_individual_count,
       configuration->tcp_max_segment_size,
-      configuration->tcp_syn_coun);
+      configuration->tcp_syn_count);
   if (socket_result < 0)
   {
     free(client);

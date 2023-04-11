@@ -26,7 +26,7 @@ extern "C"
     uint32_t tcp_keep_alive_max_count;
     uint32_t tcp_keep_alive_individual_count;
     uint32_t tcp_max_segment_size;
-    uint16_t tcp_syn_coun;
+    uint16_t tcp_syn_count;
     struct ip_mreqn *ip_multicast_interface;
     uint32_t ip_multicast_ttl;
   } transport_client_configuration_t;
