@@ -70,7 +70,7 @@ class TransportEventStates {
   void setCustomCallback(int id, Completer<int> completer) => _custom[id] = TransportEventState.forCallback(completer);
 
   @pragma(preferInlinePragma)
-  void notifyConnectCallback(int fd, TransportClient client) => _connect.remove(fd)!.callback.complete(client);
+  void notifyConnectCallback(int fd, TransportClient client) => _connect[fd]!.callback.complete(client);
 
   @pragma(preferInlinePragma)
   void notifyOutboundReadCallback(int bufferId, TransportOutboundPayload payload) => _outboundRead[bufferId].callback.complete(payload);
@@ -82,7 +82,7 @@ class TransportEventStates {
   void notifyCustomCallback(int id, int data) => _custom[id]!.callback.complete(data);
 
   @pragma(preferInlinePragma)
-  void notifyConnectCallbackError(int fd, Exception error) => _connect.remove(fd)!.callback.completeError(error);
+  void notifyConnectCallbackError(int fd, Exception error) => _connect[fd]!.callback.completeError(error);
 
   @pragma(preferInlinePragma)
   void notifyOutboundReadCallbackError(int bufferId, Exception error) => _outboundRead[bufferId].callback.completeError(error);
@@ -90,68 +90,63 @@ class TransportEventStates {
   @pragma(preferInlinePragma)
   void notifyOutboundWriteCallbackError(int bufferId, Exception error) => _outboundWrite[bufferId].callback.completeError(error);
 
-  Future<bool> incrementConnect(int fd, TransportRetryConfiguration retry) async {
-    final current = _connect[fd]!.retry;
-    if (current.count == retry.maxRetries) {
-      current.reset();
+  Future<bool> incrementConnect(TransportRetryState state, TransportRetryConfiguration configuration) async {
+    if (state.count == configuration.maxRetries) {
+      state.reset();
       return false;
     }
     final newDelay = Duration(
-      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
     );
-    current.update(newDelay, current.count + 1);
+    state.update(newDelay, state.count + 1);
     return Future.delayed(newDelay).then((value) => true);
   }
 
-  Future<bool> incrementInboundRead(int bufferId, TransportRetryConfiguration retry) async {
-    final current = _inboundRead[bufferId].retry;
-    if (current.count == retry.maxRetries) {
-      current.reset();
+  Future<bool> incrementInboundRead(TransportRetryState state, TransportRetryConfiguration configuration) async {
+    if (state.count == configuration.maxRetries) {
+      state.reset();
       return false;
     }
     final newDelay = Duration(
-      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
     );
-    current.update(newDelay, current.count + 1);
+    state.update(newDelay, state.count + 1);
     return Future.delayed(newDelay).then((value) => true);
   }
 
-  Future<bool> incrementInboundWrite(int bufferId, TransportRetryConfiguration retry) async {
-    final current = _inboundWrite[bufferId].retry;
-    if (current.count == retry.maxRetries) {
-      current.reset();
+  Future<bool> incrementInboundWrite(TransportRetryState state, TransportRetryConfiguration configuration) async {
+    if (state.count == configuration.maxRetries) {
+      state.reset();
       return false;
     }
     final newDelay = Duration(
-      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
     );
-    current.update(newDelay, current.count + 1);
+    state.update(newDelay, state.count + 1);
     return Future.delayed(newDelay).then((value) => true);
   }
 
-  Future<bool> incrementOutboundRead(int bufferId, TransportRetryConfiguration retry) async {
-    final current = _outboundRead[bufferId].retry;
-    if (current.count == retry.maxRetries) {
-      current.reset();
+  Future<bool> incrementOutboundRead(TransportRetryState state, TransportRetryConfiguration configuration) async {
+    if (state.count == configuration.maxRetries) {
+      state.reset();
       return false;
     }
     final newDelay = Duration(
-      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
     );
-    current.update(newDelay, current.count + 1);
+    state.update(newDelay, state.count + 1);
     return Future.delayed(newDelay).then((value) => true);
   }
 
-  Future<bool> incrementOutboundWrite(int bufferId, TransportRetryConfiguration retry) async {
-    final current = _outboundWrite[bufferId].retry;
-    if (current.count == retry.maxRetries) {
-      current.reset();
+  Future<bool> incrementOutboundWrite(TransportRetryState state, TransportRetryConfiguration configuration) async {
+    if (state.count == configuration.maxRetries) {
+      state.reset();
       return false;
     }
     final newDelay = Duration(
-      microseconds: (current.delay.inMicroseconds * retry.backoffFactor).floor().clamp(retry.initialDelay.inMicroseconds, retry.maxDelay.inMicroseconds),
+      microseconds: (state.delay.inMicroseconds * configuration.backoffFactor).floor().clamp(configuration.initialDelay.inMicroseconds, configuration.maxDelay.inMicroseconds),
     );
-    current.update(newDelay, current.count + 1);
+    state.update(newDelay, state.count + 1);
     return Future.delayed(newDelay).then((value) => true);
   }
 
@@ -172,6 +167,9 @@ class TransportEventStates {
 
   @pragma(preferInlinePragma)
   TransportEventState removeConnect(int fd) => _connect.remove(fd)!;
+
+  @pragma(preferInlinePragma)
+  TransportEventState getConnect(int fd) => _connect[fd]!;
 
   @pragma(preferInlinePragma)
   TransportEventState getInboundRead(int bufferId) => _inboundRead[bufferId];

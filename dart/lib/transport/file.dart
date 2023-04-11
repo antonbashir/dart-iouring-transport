@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/configuration.dart';
-import 'package:iouring_transport/transport/retry.dart';
-import 'package:iouring_transport/transport/state.dart';
-
-import 'callbacks.dart';
 import 'channels.dart';
+import 'configuration.dart';
 import 'payload.dart';
+import 'retry.dart';
+import 'state.dart';
 
 class TransportFile {
   final TransportOutboundChannel _channel;
