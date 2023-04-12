@@ -141,7 +141,7 @@ class TransportWorker {
     });
   }
 
-  void register(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
+  void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
 
   @pragma(preferInlinePragma)
   void _releaseInboundBuffer(int bufferId) {
