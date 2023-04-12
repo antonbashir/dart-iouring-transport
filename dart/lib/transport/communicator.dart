@@ -110,10 +110,10 @@ class TransportServerDatagramCommunicator {
     final completer = Completer<void>();
     _server.eventStates.setInboundRead(bufferId, completer);
     _channel.receiveMessage(bufferId, _server.pointer.ref.family, _server.readTimeout, flags);
-    return completer.future.then((_) => TransportInboundDatagramEndpoint(_server, _channel, _server.getDatagramEndpointAddress(bufferId), _server.readBuffer(bufferId)));
+    return completer.future.then((_) => TransportInboundDatagramEndpoint(_server, _channel, _server.getDatagramEndpointAddress(bufferId), bufferId, _server.readBuffer(bufferId)));
   }
 
-  Stream<TransportInboundDatagramPayload> stream({int? flags}) async* {
+  Stream<TransportInboundDatagramPayload> receiveStream({int? flags}) async* {
     while (_server.active) {
       yield await receiveMessage(flags: flags);
     }
@@ -126,9 +126,10 @@ class TransportInboundDatagramEndpoint {
   final TransportServer _server;
   final TransportChannel _channel;
   final Pointer<sockaddr> _address;
+  final int _initialBufferId;
   final Uint8List initialBytes;
 
-  TransportInboundDatagramEndpoint(this._server, this._channel, this._address, this.initialBytes);
+  TransportInboundDatagramEndpoint(this._server, this._channel, this._address, this._initialBufferId, this.initialBytes);
 
   Future<void> send(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
@@ -141,4 +142,6 @@ class TransportInboundDatagramEndpoint {
   }
 
   Future<void> sendStream(Stream<Uint8List> stream, {int? flags}) async => Future.wait(await stream.map((event) => send(event, flags: flags)).toList());
+
+  void release() => _server.releaseBuffer(_initialBufferId);
 }
