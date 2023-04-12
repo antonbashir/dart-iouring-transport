@@ -16,9 +16,6 @@ const transportLibraryName = "libtransport.so";
 const transportPackageName = "iouring_transport";
 
 const int32Max = 4294967295;
-const batchInitiaSize = 512;
-const awaitStateDuration = Duration(seconds: 1);
-const awaitTransactionDuration = Duration(milliseconds: 1);
 
 const packageConfigJsonFile = "package_config.json";
 

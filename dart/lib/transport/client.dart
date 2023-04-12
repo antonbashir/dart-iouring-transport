@@ -91,7 +91,7 @@ class TransportClient {
   }
 
   Future<TransportOutboundPayload> read() async {
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundRead(bufferId, completer);
@@ -101,7 +101,7 @@ class TransportClient {
   }
 
   Future<void> write(Uint8List bytes) async {
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
@@ -112,7 +112,7 @@ class TransportClient {
 
   Future<TransportOutboundPayload> receiveMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundRead(bufferId, completer);
@@ -123,7 +123,7 @@ class TransportClient {
 
   Future<void> sendMessage(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);

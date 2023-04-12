@@ -18,6 +18,13 @@ class TransportChannel {
     _buffers = _workerPointer.ref.buffers;
   }
 
+  @pragma(preferInlinePragma)
+  int? getBuffer() {
+    final buffer = _bindings.transport_worker_get_buffer(_workerPointer);
+    if (buffer == transportBufferUsed) return null;
+    return buffer;
+  }
+
   Future<int> allocate() async {
     var bufferId = _bindings.transport_worker_get_buffer(_workerPointer);
     while (bufferId == transportBufferUsed) {

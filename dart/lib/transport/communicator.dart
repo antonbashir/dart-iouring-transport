@@ -15,8 +15,10 @@ class TransportClientStreamCommunicator {
 
   TransportClientStreamCommunicator(this._client);
 
+  @pragma(preferInlinePragma)
   Future<TransportOutboundPayload> read() => _client.read();
 
+  @pragma(preferInlinePragma)
   Future<void> write(Uint8List bytes) => _client.write(bytes);
 
   Future<void> close() => _client.close();
@@ -27,8 +29,10 @@ class TransportClientDatagramCommunicator {
 
   TransportClientDatagramCommunicator(this._client);
 
+  @pragma(preferInlinePragma)
   Future<TransportOutboundPayload> receiveMessage({int? flags}) => _client.receiveMessage(flags: flags);
 
+  @pragma(preferInlinePragma)
   Future<void> sendMessage(Uint8List bytes, {int? flags}) => _client.sendMessage(bytes, flags: flags);
 
   Future<void> close() => _client.close();
@@ -71,11 +75,9 @@ class TransportServerStreamCommunicator {
     return completer.future;
   }
 
-  Future<void> writeStream(Stream<Uint8List> stream) async => Future.wait(await stream.map((event) => write(event)).toList());
-
-  Stream<TransportInboundStreamPayload> readStream() async* {
+  void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (_server.active) {
-      yield await read();
+      await read().then(listener, onError: onError);
     }
   }
 
@@ -112,9 +114,9 @@ class TransportServerDatagramReceiver {
     );
   }
 
-  Stream<TransportInboundDatagramPayload> receiveStream({int? flags}) async* {
+  void listen(void Function(TransportInboundDatagramPayload payload) listener, {void Function(Exception error)? onError, int? flags}) async {
     while (_server.active) {
-      yield await receiveMessage(flags: flags);
+      await receiveMessage(flags: flags).then(listener, onError: onError);
     }
   }
 
@@ -140,8 +142,6 @@ class TransportInboundDatagramSender {
     return completer.future;
   }
 
-  Future<void> sendStream(Stream<TransportEndpointDatagramPayload> stream) async =>
-      Future.wait(await stream.map((event) => sendMessage(event.bytes, flags: event.flags ?? TransportDatagramMessageFlag.trunc.flag)).toList());
-
+  @pragma(preferInlinePragma)
   void release() => _server.releaseBuffer(_initialBufferId);
 }
