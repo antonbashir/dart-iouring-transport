@@ -8,7 +8,7 @@ import 'state.dart';
 
 class TransportFile {
   final TransportChannel _channel;
-  final TransportEventStates _states;
+  final Transportcallbacks _states;
 
   TransportFile(this._states, this._channel);
 

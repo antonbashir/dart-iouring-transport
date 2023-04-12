@@ -36,12 +36,12 @@ class TransportServersFactory {
     return server.accept(_workerPointer);
   }
 
-  TransportServerDatagramCommunicator udp(
+  TransportServerDatagramReceiver udp(
     String host,
     int port,
   ) {
     final server = _registry.createUdp(host, port);
-    return TransportServerDatagramCommunicator(
+    return TransportServerDatagramReceiver(
       server,
       TransportChannel(
         _workerPointer,
@@ -59,11 +59,11 @@ class TransportServersFactory {
     return server.accept(_workerPointer);
   }
 
-  TransportServerDatagramCommunicator unixDatagram(
+  TransportServerDatagramReceiver unixDatagram(
     String path,
   ) {
     final server = _registry.createUnixDatagram(path);
-    return TransportServerDatagramCommunicator(
+    return TransportServerDatagramReceiver(
       server,
       TransportChannel(
         _workerPointer,
@@ -82,9 +82,9 @@ class TransportClientsFactory {
     this._registry,
   );
 
-  Future<TransportClientCommunicators> tcp(String host, int port, {TransportTcpClientConfiguration? configuration}) => _registry.createTcp(host, port, configuration: configuration);
+  Future<TransportClientStreamCommunicators> tcp(String host, int port, {TransportTcpClientConfiguration? configuration}) => _registry.createTcp(host, port, configuration: configuration);
 
-  TransportClientCommunicator udp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) => _registry.createUdp(
+  TransportClientDatagramCommunicator udp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) => _registry.createUdp(
         sourceHost,
         sourcePort,
         destinationHost,
@@ -92,9 +92,9 @@ class TransportClientsFactory {
         configuration: configuration,
       );
 
-  Future<TransportClientCommunicators> unixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) => _registry.createUnixStream(path, configuration: configuration);
+  Future<TransportClientStreamCommunicators> unixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) => _registry.createUnixStream(path, configuration: configuration);
 
-  TransportClientCommunicator unixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) => _registry.createUnixDatagram(
+  TransportClientDatagramCommunicator unixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) => _registry.createUnixDatagram(
         sourcePath,
         destinationPath,
         configuration: configuration,
@@ -102,7 +102,7 @@ class TransportClientsFactory {
 }
 
 class TransportFilesFactory {
-  final TransportEventStates _eventStates;
+  final Transportcallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
   final TransportWorker _worker;
@@ -113,11 +113,11 @@ class TransportFilesFactory {
     this._bindings,
     this._worker,
     this._bufferFinalizers,
-    this._eventStates,
+    this._callbacks,
   );
 
   TransportFile open(String path) {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_eventStates, TransportChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
+    return TransportFile(_callbacks, TransportChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
   }
 }

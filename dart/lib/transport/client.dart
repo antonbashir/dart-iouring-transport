@@ -17,7 +17,7 @@ import 'payload.dart';
 import 'state.dart';
 
 class TransportClient {
-  final TransportEventStates _eventStates;
+  final Transportcallbacks _callbacks;
   final Pointer<transport_client_t> pointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportChannel _channel;
@@ -36,7 +36,7 @@ class TransportClient {
   var _pending = 0;
 
   TransportClient._(
-    this._eventStates,
+    this._callbacks,
     this._channel,
     this.pointer,
     this._workerPointer,
@@ -50,7 +50,7 @@ class TransportClient {
   }
 
   factory TransportClient.withConnection(
-    TransportEventStates _eventStates,
+    Transportcallbacks _callbacks,
     TransportChannel _channel,
     Pointer<transport_client_t> pointer,
     Pointer<transport_worker_t> _workerPointer,
@@ -60,20 +60,10 @@ class TransportClient {
     int writeTimeout,
     Queue<Completer<int>> _bufferFinalizers,
   ) =>
-      TransportClient._(
-        _eventStates,
-        _channel,
-        pointer,
-        _workerPointer,
-        _bindings,
-        connectTimeout,
-        readTimeout,
-        writeTimeout,
-        _bufferFinalizers
-      );
+      TransportClient._(_callbacks, _channel, pointer, _workerPointer, _bindings, connectTimeout, readTimeout, writeTimeout, _bufferFinalizers);
 
   factory TransportClient.withoutConnection(
-    TransportEventStates _eventStates,
+    Transportcallbacks _callbacks,
     TransportChannel _channel,
     Pointer<transport_client_t> pointer,
     Pointer<transport_worker_t> _workerPointer,
@@ -83,7 +73,7 @@ class TransportClient {
     Queue<Completer<int>> _bufferFinalizers,
   ) =>
       TransportClient._(
-        _eventStates,
+        _callbacks,
         _channel,
         pointer,
         _workerPointer,
@@ -104,7 +94,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _eventStates.setOutboundRead(bufferId, completer);
+    _callbacks.setOutboundRead(bufferId, completer);
     _channel.read(bufferId, readTimeout, offset: 0);
     _pending++;
     return completer.future.then((value) => TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(_buffers[bufferId].iov_len), () => _releaseBuffer(bufferId)));
@@ -114,7 +104,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _eventStates.setOutboundWrite(bufferId, completer);
+    _callbacks.setOutboundWrite(bufferId, completer);
     _channel.write(bytes, bufferId, writeTimeout);
     _pending++;
     return completer.future;
@@ -125,7 +115,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _eventStates.setOutboundRead(bufferId, completer);
+    _callbacks.setOutboundRead(bufferId, completer);
     _channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags);
     _pending++;
     return completer.future.then((value) => TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(_buffers[bufferId].iov_len), () => _releaseBuffer(bufferId)));
@@ -136,7 +126,7 @@ class TransportClient {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
-    _eventStates.setOutboundWrite(bufferId, completer);
+    _callbacks.setOutboundWrite(bufferId, completer);
     _channel.sendMessage(bytes, bufferId, pointer.ref.family, _bindings.transport_client_get_destination_address(pointer), writeTimeout, flags);
     _pending++;
     return completer.future;
@@ -144,7 +134,7 @@ class TransportClient {
 
   Future<TransportClient> connect(Pointer<transport_worker_t> workerPointer) {
     final completer = Completer<TransportClient>();
-    _eventStates.setConnect(pointer.ref.fd, completer);
+    _callbacks.setConnect(pointer.ref.fd, completer);
     _bindings.transport_worker_connect(workerPointer, pointer, connectTimeout!);
     _pending++;
     return completer.future;
@@ -167,34 +157,34 @@ class TransportClient {
   }
 }
 
-class TransportClientCommunicators {
-  final List<TransportClientCommunicator> _communicators;
+class TransportClientStreamCommunicators {
+  final List<TransportClientStreamCommunicator> _communicators;
   var _next = 0;
 
-  TransportClientCommunicators(this._communicators);
+  TransportClientStreamCommunicators(this._communicators);
 
-  TransportClientCommunicator select() {
+  TransportClientStreamCommunicator select() {
     final client = _communicators[_next];
     if (++_next == _communicators.length) _next = 0;
     return client;
   }
 
-  void forEach(FutureOr<void> Function(TransportClientCommunicator communicator) action) => _communicators.forEach(action);
+  void forEach(FutureOr<void> Function(TransportClientStreamCommunicator communicator) action) => _communicators.forEach(action);
 
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientCommunicator communicator) mapper) => _communicators.map(mapper);
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamCommunicator communicator) mapper) => _communicators.map(mapper);
 }
 
 class TransportClientRegistry {
   final TransportBindings _bindings;
-  final TransportEventStates _eventStates;
+  final Transportcallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final Queue<Completer<int>> _bufferFinalizers;
   final _clients = <int, TransportClient>{};
 
-  TransportClientRegistry(this._eventStates, this._workerPointer, this._bindings, this._bufferFinalizers);
+  TransportClientRegistry(this._callbacks, this._workerPointer, this._bindings, this._bufferFinalizers);
 
-  Future<TransportClientCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
-    final communicators = <Future<TransportClientCommunicator>>[];
+  Future<TransportClientStreamCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
+    final communicators = <Future<TransportClientStreamCommunicator>>[];
     configuration = configuration ?? TransportDefaults.tcpClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = using((arena) => _bindings.transport_client_initialize_tcp(
@@ -203,7 +193,7 @@ class TransportClientRegistry {
             port,
           ));
       final client = TransportClient.withConnection(
-        _eventStates,
+        _callbacks,
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -216,15 +206,16 @@ class TransportClientRegistry {
         configuration.connectTimeout.inSeconds,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        _bufferFinalizers,
       );
       _clients[clientPointer.ref.fd] = client;
-      communicators.add(client.connect(_workerPointer).then((client) => TransportClientCommunicator(client)));
+      communicators.add(client.connect(_workerPointer).then((client) => TransportClientStreamCommunicator(client)));
     }
-    return TransportClientCommunicators(await Future.wait(communicators));
+    return TransportClientStreamCommunicators(await Future.wait(communicators));
   }
 
-  Future<TransportClientCommunicators> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
-    final clients = <Future<TransportClientCommunicator>>[];
+  Future<TransportClientStreamCommunicators> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
+    final clients = <Future<TransportClientStreamCommunicator>>[];
     configuration = configuration ?? TransportDefaults.unixStreamClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = using((arena) => _bindings.transport_client_initialize_unix_stream(
@@ -232,7 +223,7 @@ class TransportClientRegistry {
             path.toNativeUtf8(allocator: arena).cast(),
           ));
       final clinet = TransportClient.withConnection(
-        _eventStates,
+        _callbacks,
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -245,14 +236,15 @@ class TransportClientRegistry {
         configuration.connectTimeout.inSeconds,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
+        _bufferFinalizers,
       );
       _clients[clientPointer.ref.fd] = clinet;
-      clients.add(clinet.connect(_workerPointer).then((client) => TransportClientCommunicator(client)));
+      clients.add(clinet.connect(_workerPointer).then((client) => TransportClientStreamCommunicator(client)));
     }
-    return TransportClientCommunicators(await Future.wait(clients));
+    return TransportClientStreamCommunicators(await Future.wait(clients));
   }
 
-  TransportClientCommunicator createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
+  TransportClientDatagramCommunicator createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpClient();
     final clientPointer = using((arena) {
       final pointer = _bindings.transport_client_initialize_udp(
@@ -301,7 +293,7 @@ class TransportClientRegistry {
       return pointer;
     });
     final client = TransportClient.withoutConnection(
-      _eventStates,
+      _callbacks,
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
@@ -313,12 +305,13 @@ class TransportClientRegistry {
       _bindings,
       configuration.readTimeout.inSeconds,
       configuration.writeTimeout.inSeconds,
+      _bufferFinalizers,
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportClientCommunicator(client);
+    return TransportClientDatagramCommunicator(client);
   }
 
-  TransportClientCommunicator createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
+  TransportClientDatagramCommunicator createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramClient();
     final clientPointer = using(
       (arena) => _bindings.transport_client_initialize_unix_dgram(
@@ -328,7 +321,7 @@ class TransportClientRegistry {
       ),
     );
     final client = TransportClient.withoutConnection(
-      _eventStates,
+      _callbacks,
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
@@ -340,9 +333,10 @@ class TransportClientRegistry {
       _bindings,
       configuration.readTimeout.inSeconds,
       configuration.writeTimeout.inSeconds,
+      _bufferFinalizers,
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportClientCommunicator(client);
+    return TransportClientDatagramCommunicator(client);
   }
 
   TransportClient? get(int fd) => _clients[fd];

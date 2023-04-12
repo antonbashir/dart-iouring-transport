@@ -4,15 +4,15 @@ import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/communicator.dart';
 import 'package:iouring_transport/transport/extensions.dart';
-import 'package:iouring_transport/transport/state.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
+import 'communicator.dart';
 import 'configuration.dart';
 import 'constants.dart';
 import 'defaults.dart';
+import 'state.dart';
 
 class TransportServer {
   final Pointer<transport_server_t> pointer;
@@ -20,7 +20,7 @@ class TransportServer {
   final TransportBindings _bindings;
   final int readTimeout;
   final int writeTimeout;
-  final TransportEventStates eventStates;
+  final Transportcallbacks callbacks;
   final Queue<Completer<int>> _bufferFinalizers;
   final TransportServerRegistry registry;
 
@@ -35,7 +35,7 @@ class TransportServer {
     this.pointer,
     this._workerPointer,
     this._bindings,
-    this.eventStates,
+    this.callbacks,
     this.readTimeout,
     this.writeTimeout,
     this._bufferFinalizers,
@@ -45,19 +45,15 @@ class TransportServer {
     _buffers = _workerPointer.ref.buffers;
   }
 
+  @pragma(preferInlinePragma)
   Stream<TransportServerStreamCommunicator> accept(Pointer<transport_worker_t> workerPointer) {
     final controller = StreamController<TransportChannel>();
-    eventStates.setAccept(fd, controller);
+    callbacks.setAccept(fd, controller);
     _bindings.transport_worker_accept(
       workerPointer,
       pointer,
     );
     return controller.stream.map((channel) => TransportServerStreamCommunicator(this, channel));
-  }
-
-  @pragma(preferInlinePragma)
-  void onRemove() {
-    if (!_active) _closer.complete();
   }
 
   @pragma(preferInlinePragma)
@@ -79,7 +75,13 @@ class TransportServer {
     return bufferBytes.asTypedList(buffer.iov_len);
   }
 
+  @pragma(preferInlinePragma)
   Pointer<sockaddr> getDatagramEndpointAddress(int bufferId) => _bindings.transport_worker_get_endpoint_address(_workerPointer, pointer.ref.family, bufferId);
+
+  @pragma(preferInlinePragma)
+  void onRemove() {
+    if (!_active) _closer.complete();
+  }
 
   Future<void> close() async {
     if (_active) {
@@ -98,10 +100,10 @@ class TransportServerRegistry {
 
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
-  final TransportEventStates _eventStates;
+  final Transportcallbacks _callbacks;
   final Queue<Completer<int>> _bufferFinalizers;
 
-  TransportServerRegistry(this._bindings, this._workerPointer, this._eventStates, this._bufferFinalizers);
+  TransportServerRegistry(this._bindings, this._workerPointer, this._callbacks, this._bufferFinalizers);
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
@@ -114,7 +116,7 @@ class TransportServerRegistry {
         ),
         _workerPointer,
         _bindings,
-        _eventStates,
+        _callbacks,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
         _bufferFinalizers,
@@ -174,7 +176,7 @@ class TransportServerRegistry {
           pointer,
           _workerPointer,
           _bindings,
-          _eventStates,
+          _callbacks,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
           _bufferFinalizers,
@@ -196,7 +198,7 @@ class TransportServerRegistry {
         ),
         _workerPointer,
         _bindings,
-        _eventStates,
+        _callbacks,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
         _bufferFinalizers,
@@ -217,7 +219,7 @@ class TransportServerRegistry {
         ),
         _workerPointer,
         _bindings,
-        _eventStates,
+        _callbacks,
         configuration.readTimeout.inSeconds,
         configuration.writeTimeout.inSeconds,
         _bufferFinalizers,

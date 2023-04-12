@@ -3,9 +3,8 @@ import 'dart:async';
 import 'channels.dart';
 import 'client.dart';
 import 'constants.dart';
-import 'payload.dart';
 
-class TransportEventStates {
+class Transportcallbacks {
   final _connect = <int, Completer<TransportClient>>{};
   final _accept = <int, StreamController<TransportChannel>>{};
   final _inboundRead = <Completer<void>>[];

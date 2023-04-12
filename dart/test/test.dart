@@ -94,19 +94,21 @@ void testTcp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.tcp(
-        configuration: TransportDefaults.tcpServer().copyWith(
-          readTimeout: serverTimeout,
-          writeTimeout: serverTimeout,
-        ),
-        "0.0.0.0",
-        12345,
-        (channel) => channel.read(),
-        (stream) => stream.listen(
-          onError: (error) => print(error),
-          (event) => Future.delayed(Duration(seconds: 5)).then((value) => event.respond(serverData)),
-        ),
-      );
+      worker.servers
+          .tcp(
+            configuration: TransportDefaults.tcpServer().copyWith(
+              readTimeout: serverTimeout,
+              writeTimeout: serverTimeout,
+            ),
+            "0.0.0.0",
+            12345,
+          )
+          .listen(
+            (communicator) => communicator.readStream().listen(
+                  onError: (error) => print(error),
+                  (event) => Future.delayed(Duration(seconds: 5)).then((value) => event.respond(serverData)),
+                ),
+          );
       final clients = await worker.clients.tcp(
         "127.0.0.1",
         12345,

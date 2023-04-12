@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/communicator.dart';
 import 'package:iouring_transport/transport/constants.dart';
 
 class TransportOutboundPayload {
@@ -39,8 +40,9 @@ class TransportInboundDatagramPayload {
   final Uint8List bytes;
   final void Function() _releaser;
   final Future<void> Function(Uint8List bytes, int flags) _responder;
+  final TransportInboundDatagramSender sender;
 
-  TransportInboundDatagramPayload(this.bytes, this._releaser, this._responder);
+  TransportInboundDatagramPayload(this.bytes, this.sender, this._releaser, this._responder);
 
   void release() => _releaser();
 
@@ -51,4 +53,11 @@ class TransportInboundDatagramPayload {
     if (release) _releaser();
     return result;
   }
+}
+
+class TransportEndpointDatagramPayload {
+  final Uint8List bytes;
+  final int? flags;
+
+  TransportEndpointDatagramPayload(this.bytes, {this.flags});
 }
