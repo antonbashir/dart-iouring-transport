@@ -256,18 +256,21 @@ class TransportWorker {
     return true;
   }
 
+  @pragma(preferInlinePragma)
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
     _callbacks.notifyInboundRead(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
     _callbacks.notifyInboundRead(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _handleWrite(int bufferId, int fd) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
@@ -275,6 +278,7 @@ class TransportWorker {
     _callbacks.notifyInboundWrite(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _handleSendMessage(int bufferId, int fd) {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
@@ -282,6 +286,7 @@ class TransportWorker {
     _callbacks.notifyInboundWrite(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _handleReadReceiveMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
@@ -293,6 +298,7 @@ class TransportWorker {
     _callbacks.notifyOutboundRead(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _handleWriteSendMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
@@ -305,6 +311,7 @@ class TransportWorker {
     _callbacks.notifyOutboundWrite(bufferId);
   }
 
+  @pragma(preferInlinePragma)
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
@@ -315,6 +322,7 @@ class TransportWorker {
     _callbacks.notifyConnect(fd, client);
   }
 
+  @pragma(preferInlinePragma)
   void _handleAccept(int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, null, result)) return;

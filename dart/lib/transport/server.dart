@@ -240,14 +240,10 @@ class TransportServerRegistry {
   void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
 
   @pragma(preferInlinePragma)
-  void removeClient(int fd) {
-    _serversByClients.remove(fd);
-  }
+  void removeClient(int fd) => _serversByClients.remove(fd);
 
   @pragma(preferInlinePragma)
-  void removeServer(int fd) {
-    _servers.remove(fd)?.onRemove();
-  }
+  void removeServer(int fd) => _servers.remove(fd)?.onRemove();
 
   Future<void> close() async {
     await Future.wait(_servers.values.map((server) => server.close()));
