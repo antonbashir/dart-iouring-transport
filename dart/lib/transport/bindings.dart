@@ -19528,6 +19528,27 @@ class TransportBindings {
       _transport_worker_release_bufferPtr
           .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
+  ffi.Pointer<sockaddr> transport_worker_get_endpoint_address(
+    ffi.Pointer<transport_worker_t> worker,
+    int socket_family,
+    int buffer_id,
+  ) {
+    return _transport_worker_get_endpoint_address(
+      worker,
+      socket_family,
+      buffer_id,
+    );
+  }
+
+  late final _transport_worker_get_endpoint_addressPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<sockaddr> Function(ffi.Pointer<transport_worker_t>,
+              ffi.Int32, ffi.Int)>>('transport_worker_get_endpoint_address');
+  late final _transport_worker_get_endpoint_address =
+      _transport_worker_get_endpoint_addressPtr.asFunction<
+          ffi.Pointer<sockaddr> Function(
+              ffi.Pointer<transport_worker_t>, int, int)>();
+
   int transport_worker_peek(
     int cqe_count,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
@@ -23871,6 +23892,12 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
       get transport_worker_release_buffer =>
           _library._transport_worker_release_bufferPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<sockaddr> Function(
+                  ffi.Pointer<transport_worker_t>, ffi.Int32, ffi.Int)>>
+      get transport_worker_get_endpoint_address =>
+          _library._transport_worker_get_endpoint_addressPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,

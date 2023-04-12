@@ -79,6 +79,8 @@ class TransportServer {
     return bufferBytes.asTypedList(buffer.iov_len);
   }
 
+  Pointer<sockaddr> getDatagramEndpointAddress(int bufferId) => _bindings.transport_worker_get_endpoint_address(_workerPointer, pointer.ref.family, bufferId);
+
   Future<void> close() async {
     if (_active) {
       _active = false;

@@ -25,6 +25,9 @@ class TransportClient {
   final int? connectTimeout;
   final int readTimeout;
   final int writeTimeout;
+  final Queue<Completer<int>> _bufferFinalizers;
+
+  late final Pointer<iovec> _buffers;
 
   var _active = true;
   bool get active => _active;
@@ -41,7 +44,10 @@ class TransportClient {
     this.connectTimeout,
     this.readTimeout,
     this.writeTimeout,
-  );
+    this._bufferFinalizers,
+  ) {
+    _buffers = _workerPointer.ref.buffers;
+  }
 
   factory TransportClient.withConnection(
     TransportEventStates _eventStates,
@@ -52,6 +58,7 @@ class TransportClient {
     int connectTimeout,
     int readTimeout,
     int writeTimeout,
+    Queue<Completer<int>> _bufferFinalizers,
   ) =>
       TransportClient._(
         _eventStates,
@@ -62,6 +69,7 @@ class TransportClient {
         connectTimeout,
         readTimeout,
         writeTimeout,
+        _bufferFinalizers
       );
 
   factory TransportClient.withoutConnection(
@@ -72,6 +80,7 @@ class TransportClient {
     TransportBindings _bindings,
     int readTimeout,
     int writeTimeout,
+    Queue<Completer<int>> _bufferFinalizers,
   ) =>
       TransportClient._(
         _eventStates,
@@ -82,16 +91,23 @@ class TransportClient {
         null,
         readTimeout,
         writeTimeout,
+        _bufferFinalizers,
       );
+
+  @pragma(preferInlinePragma)
+  void _releaseBuffer(int bufferId) {
+    _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
+    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+  }
 
   Future<TransportOutboundPayload> read() async {
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
-    final completer = Completer<TransportOutboundPayload>();
+    final completer = Completer<void>();
     _eventStates.setOutboundRead(bufferId, completer);
     _channel.read(bufferId, readTimeout, offset: 0);
     _pending++;
-    return completer.future;
+    return completer.future.then((value) => TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(_buffers[bufferId].iov_len), () => _releaseBuffer(bufferId)));
   }
 
   Future<void> write(Uint8List bytes) async {
@@ -108,11 +124,11 @@ class TransportClient {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = await _channel.allocate();
     if (!_active) throw TransportClosedException.forClient();
-    final completer = Completer<TransportOutboundPayload>();
+    final completer = Completer<void>();
     _eventStates.setOutboundRead(bufferId, completer);
     _channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags);
     _pending++;
-    return completer.future;
+    return completer.future.then((value) => TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(_buffers[bufferId].iov_len), () => _releaseBuffer(bufferId)));
   }
 
   Future<void> sendMessage(Uint8List bytes, {int? flags}) async {

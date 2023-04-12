@@ -23,7 +23,7 @@ Future<void> main(List<String> args) async {
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.tcp("0.0.0.0", 12345).listen((client) => client.stream().listen((payload) => payload.respond(fromServer)));
+      worker.servers.tcp("0.0.0.0", 12345).listen((client) => client.readStream().listen((payload) => payload.respond(fromServer)));
       final connector = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'bindings.dart';
 import 'channels.dart';
 import 'client.dart';
 import 'constants.dart';
@@ -53,7 +54,18 @@ class TransportServerStreamCommunicator {
     );
   }
 
-  Stream<TransportInboundStreamPayload> stream() async* {
+  Future<void> write(Uint8List bytes) async {
+    final bufferId = await _channel.allocate();
+    if (!_server.active) throw TransportClosedException.forServer();
+    final completer = Completer<void>();
+    _server.eventStates.setInboundWrite(bufferId, completer);
+    _channel.write(bytes, bufferId, _server.writeTimeout);
+    return completer.future;
+  }
+
+  Future<void> writeStream(Stream<Uint8List> stream) async => Future.wait(await stream.map((event) => write(event)).toList());
+
+  Stream<TransportInboundStreamPayload> readStream() async* {
     while (_server.active) {
       yield await read();
     }
@@ -68,7 +80,7 @@ class TransportServerDatagramCommunicator {
 
   TransportServerDatagramCommunicator(this._server, this._channel);
 
-  Future<TransportInboundDatagramPayload> receive({int? flags}) async {
+  Future<TransportInboundDatagramPayload> receiveMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = await _channel.allocate();
     if (!_server.active) throw TransportClosedException.forServer();
@@ -91,11 +103,42 @@ class TransportServerDatagramCommunicator {
     );
   }
 
+  Future<TransportInboundDatagramEndpoint> receiveEndpoint({int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    final bufferId = await _channel.allocate();
+    if (!_server.active) throw TransportClosedException.forServer();
+    final completer = Completer<void>();
+    _server.eventStates.setInboundRead(bufferId, completer);
+    _channel.receiveMessage(bufferId, _server.pointer.ref.family, _server.readTimeout, flags);
+    return completer.future.then((_) => TransportInboundDatagramEndpoint(_server, _channel, _server.getDatagramEndpointAddress(bufferId), _server.readBuffer(bufferId)));
+  }
+
   Stream<TransportInboundDatagramPayload> stream({int? flags}) async* {
     while (_server.active) {
-      yield await receive(flags: flags);
+      yield await receiveMessage(flags: flags);
     }
   }
 
   Future<void> close() => _server.close();
+}
+
+class TransportInboundDatagramEndpoint {
+  final TransportServer _server;
+  final TransportChannel _channel;
+  final Pointer<sockaddr> _address;
+  final Uint8List initialBytes;
+
+  TransportInboundDatagramEndpoint(this._server, this._channel, this._address, this.initialBytes);
+
+  Future<void> send(Uint8List bytes, {int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    if (!_server.active) throw TransportClosedException.forServer();
+    final bufferId = await _channel.allocate();
+    final completer = Completer<void>();
+    _server.eventStates.setInboundWrite(bufferId, completer);
+    _channel.sendMessage(bytes, bufferId, _server.pointer.ref.family, _address, _server.writeTimeout, flags);
+    return completer.future;
+  }
+
+  Future<void> sendStream(Stream<Uint8List> stream, {int? flags}) async => Future.wait(await stream.map((event) => send(event, flags: flags)).toList());
 }

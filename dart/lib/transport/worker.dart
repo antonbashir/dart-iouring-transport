@@ -13,7 +13,6 @@ import 'constants.dart';
 import 'exception.dart';
 import 'factory.dart';
 import 'lookup.dart';
-import 'payload.dart';
 import 'error.dart';
 import 'server.dart';
 import 'package:meta/meta.dart';
@@ -32,8 +31,6 @@ class TransportWorker {
   late final Pointer<transport_worker_t> _outboundWorkerPointer;
   late final Pointer<io_uring> _inboundRing;
   late final Pointer<io_uring> _outboundRing;
-  late final Pointer<iovec> _inboundBuffers;
-  late final Pointer<iovec> _outboundBuffers;
   late final Pointer<Pointer<io_uring_cqe>> _inboundCqes;
   late final Pointer<Pointer<io_uring_cqe>> _outboundCqes;
   late final RawReceivePort _listener;
@@ -119,8 +116,6 @@ class TransportWorker {
     _outboundRing = _outboundWorkerPointer.ref.ring;
     _inboundCqes = _bindings.transport_allocate_cqes(_transportPointer.ref.inbound_worker_configuration.ref.ring_size);
     _outboundCqes = _bindings.transport_allocate_cqes(_transportPointer.ref.outbound_worker_configuration.ref.ring_size);
-    _inboundBuffers = _inboundWorkerPointer.ref.buffers;
-    _outboundBuffers = _outboundWorkerPointer.ref.buffers;
     _inboundRingSize = _transportPointer.ref.inbound_worker_configuration.ref.ring_size;
     _outboundRingSize = _transportPointer.ref.outbound_worker_configuration.ref.ring_size;
     _errorHandler = TransportErrorHandler(
@@ -295,13 +290,7 @@ class TransportWorker {
       return;
     }
     client!.onComplete();
-    _eventStates.notifyOutboundRead(
-      bufferId,
-      TransportOutboundPayload(
-        _outboundBuffers[bufferId].iov_base.cast<Uint8>().asTypedList(result),
-        () => _releaseOutboundBuffer(bufferId),
-      ),
-    );
+    _eventStates.notifyOutboundRead(bufferId);
   }
 
   void _handleWriteSendMessageCallback(int bufferId, int result, int fd) {

@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:math';
-import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/channels.dart';
-
+import 'channels.dart';
 import 'client.dart';
 import 'constants.dart';
 import 'payload.dart';
@@ -13,7 +10,7 @@ class TransportEventStates {
   final _accept = <int, StreamController<TransportChannel>>{};
   final _inboundRead = <Completer<void>>[];
   final _inboundWrite = <Completer<void>>[];
-  final _outboundRead = <Completer<TransportOutboundPayload>>[];
+  final _outboundRead = <Completer<void>>[];
   final _outboundWrite = <Completer<void>>[];
   final _custom = <int, Completer<int>>{};
 
@@ -33,7 +30,7 @@ class TransportEventStates {
   void setAccept(int fd, StreamController<TransportChannel> controller) => _accept[fd] = controller;
 
   @pragma(preferInlinePragma)
-  void setOutboundRead(int bufferId, Completer<TransportOutboundPayload> completer) => _outboundRead[bufferId] = completer;
+  void setOutboundRead(int bufferId, Completer<void> completer) => _outboundRead[bufferId] = completer;
 
   @pragma(preferInlinePragma)
   void setOutboundWrite(int bufferId, Completer<void> completer) => _outboundWrite[bufferId] = completer;
@@ -66,7 +63,7 @@ class TransportEventStates {
   void notifyInboundWriteError(int bufferId, Exception error) => _inboundWrite[bufferId].completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundRead(int bufferId, TransportOutboundPayload payload) => _outboundRead[bufferId].complete(payload);
+  void notifyOutboundRead(int bufferId) => _outboundRead[bufferId].complete();
 
   @pragma(preferInlinePragma)
   void notifyOutboundWrite(int bufferId) => _outboundWrite[bufferId].complete();

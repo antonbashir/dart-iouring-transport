@@ -351,6 +351,11 @@ int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct
   return count;
 }
 
+struct sockaddr *transport_worker_get_endpoint_address(transport_worker_t* worker, transport_socket_family_t socket_family, int buffer_id)
+{
+  return socket_family == INET ? (struct sockaddr *)worker->inet_used_messages[buffer_id].msg_name : (struct sockaddr *)worker->unix_used_messages[buffer_id].msg_name;
+}
+
 void transport_worker_destroy(transport_worker_t *worker)
 {
   io_uring_queue_exit(worker->ring);
