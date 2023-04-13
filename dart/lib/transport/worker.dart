@@ -82,7 +82,7 @@ class TransportWorker {
     transmitter = configuration[4] as SendPort?;
     _fromTransport.close();
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
-    _callbacks = Transportcallbacks();
+    _callbacks = Transportcallbacks(_inboundWorkerPointer.ref.buffers_count, _outboundWorkerPointer.ref.buffers_count);
     _clientRegistry = TransportClientRegistry(
       _callbacks,
       _outboundWorkerPointer,

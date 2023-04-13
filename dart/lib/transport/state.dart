@@ -13,12 +13,15 @@ class Transportcallbacks {
   final _outboundWrite = <Completer<void>>[];
   final _custom = <int, Completer<int>>{};
 
-  void initliaze(int buffersCount) {
-    for (var index = 0; index < buffersCount; index++) {
-      _inboundRead[index] = Completer();
-      _inboundWrite[index] = Completer();
-      _outboundRead[index] = Completer();
-      _outboundWrite[index] = Completer();
+  Transportcallbacks(int inboundBuffersCount, int outboundBuffersCount) {
+    for (var index = 0; index < inboundBuffersCount; index++) {
+      _inboundRead.add(Completer());
+      _inboundWrite.add(Completer());
+    }
+
+    for (var index = 0; index < outboundBuffersCount; index++) {
+      _outboundRead.add(Completer());
+      _outboundWrite.add(Completer());
     }
   }
 

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/communicator.dart';
-import 'package:iouring_transport/transport/constants.dart';
+import 'communicator.dart';
+import 'constants.dart';
 
 class TransportOutboundPayload {
   final Uint8List bytes;
@@ -53,11 +53,4 @@ class TransportInboundDatagramPayload {
     if (release) _releaser();
     return result;
   }
-}
-
-class TransportEndpointDatagramPayload {
-  final Uint8List bytes;
-  final int? flags;
-
-  TransportEndpointDatagramPayload(this.bytes, {this.flags});
 }

@@ -18,6 +18,12 @@ class TransportClientStreamCommunicator {
   @pragma(preferInlinePragma)
   Future<TransportOutboundPayload> read() => _client.read();
 
+  void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
+    while (_client.active) {
+      await read().then(listener, onError: onError);
+    }
+  }
+
   @pragma(preferInlinePragma)
   Future<void> write(Uint8List bytes) => _client.write(bytes);
 
@@ -32,6 +38,12 @@ class TransportClientDatagramCommunicator {
   @pragma(preferInlinePragma)
   Future<TransportOutboundPayload> receiveMessage({int? flags}) => _client.receiveMessage(flags: flags);
 
+  void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
+    while (_client.active) {
+      await receiveMessage().then(listener, onError: onError);
+    }
+  }
+
   @pragma(preferInlinePragma)
   Future<void> sendMessage(Uint8List bytes, {int? flags}) => _client.sendMessage(bytes, flags: flags);
 
@@ -45,7 +57,7 @@ class TransportServerStreamCommunicator {
   TransportServerStreamCommunicator(this._server, this._channel);
 
   Future<TransportInboundStreamPayload> read() async {
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     if (!_server.active) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _server.callbacks.setInboundRead(bufferId, completer);
@@ -67,7 +79,7 @@ class TransportServerStreamCommunicator {
   }
 
   Future<void> write(Uint8List bytes) async {
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     if (!_server.active) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _server.callbacks.setInboundWrite(bufferId, completer);
@@ -75,7 +87,7 @@ class TransportServerStreamCommunicator {
     return completer.future;
   }
 
-  void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(Exception error)? onError}) async {
+  void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
     while (_server.active) {
       await read().then(listener, onError: onError);
     }
@@ -92,7 +104,7 @@ class TransportServerDatagramReceiver {
 
   Future<TransportInboundDatagramPayload> receiveMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     if (!_server.active) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _server.callbacks.setInboundRead(bufferId, completer);
@@ -135,7 +147,7 @@ class TransportInboundDatagramSender {
   Future<void> sendMessage(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     if (!_server.active) throw TransportClosedException.forServer();
-    final bufferId = await _channel.allocate();
+    final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     final completer = Completer<void>();
     _server.callbacks.setInboundWrite(bufferId, completer);
     _channel.sendMessage(bytes, bufferId, _server.pointer.ref.family, _address, _server.writeTimeout, flags);
