@@ -311,6 +311,8 @@ void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer
 void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
 {
   mh_int_t index;
+  mh_int_t to_delete[worker->events->size];
+  int to_delete_count = 0;
   mh_foreach(worker->events, index)
   {
     struct mh_events_node_t *node = mh_events_node(worker->events, index);
@@ -321,7 +323,12 @@ void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
       transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
       io_uring_prep_cancel(sqe, (void *)node->data, IORING_ASYNC_CANCEL_ALL);
       sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
+      to_delete[to_delete_count++] = index;
     }
+  }
+  for (int index = 0; index < to_delete_count; index++)
+  {
+    mh_events_del(worker->events, to_delete[index], 0);
   }
   io_uring_submit(worker->ring);
 }
@@ -344,6 +351,8 @@ struct sockaddr *transport_worker_get_endpoint_address(transport_worker_t *worke
 void transport_worker_check_event_timeouts(transport_worker_t *worker)
 {
   mh_int_t index;
+  mh_int_t to_delete[worker->events->size];
+  int to_delete_count = 0;
   mh_foreach(worker->events, index)
   {
     struct mh_events_node_t *node = mh_events_node(worker->events, index);
@@ -360,9 +369,14 @@ void transport_worker_check_event_timeouts(transport_worker_t *worker)
       struct io_uring *ring = worker->ring;
       struct io_uring_sqe *sqe = provide_sqe(ring);
       transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-      io_uring_prep_cancel(sqe, (void*)data, IORING_ASYNC_CANCEL_ALL);
+      io_uring_prep_cancel(sqe, (void *)data, IORING_ASYNC_CANCEL_ALL);
       sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
+      to_delete[to_delete_count++] = index;
     }
+  }
+  for (int index = 0; index < to_delete_count; index++)
+  {
+    mh_events_del(worker->events, to_delete[index], 0);
   }
   io_uring_submit(worker->ring);
 }
@@ -386,7 +400,7 @@ void transport_worker_destroy(transport_worker_t *worker)
     free(worker->unix_used_messages[index].msg_name);
   }
   transport_buffers_pool_destroy(&worker->free_buffers);
-  mh_events_clear(worker->events);
+  mh_events_delete(worker->events);
   free(worker->buffers);
   free(worker->inet_used_messages);
   free(worker->unix_used_messages);
