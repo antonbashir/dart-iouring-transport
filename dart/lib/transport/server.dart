@@ -47,7 +47,7 @@ class TransportServer {
 
   @pragma(preferInlinePragma)
   void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportServerStreamCommunicator communicator) onAccept) {
-    callbacks.setAccept(fd, (channel) => TransportServerStreamCommunicator(this, channel));
+    callbacks.setAccept(fd, (channel) => onAccept(TransportServerStreamCommunicator(this, channel)));
     _bindings.transport_worker_accept(
       workerPointer,
       pointer,
@@ -62,7 +62,7 @@ class TransportServer {
 
   @pragma(preferInlinePragma)
   void reuseBuffer(int bufferId) {
-    _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
+    _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
     if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
   }
 
@@ -84,9 +84,8 @@ class TransportServer {
   Future<void> close() async {
     if (_active) {
       _active = false;
-      _bindings.transport_worker_cancel(_workerPointer);
-      await _closer.future;
       _bindings.transport_close_descritor(pointer.ref.fd);
+      await _closer.future;
       _bindings.transport_server_destroy(pointer);
     }
   }

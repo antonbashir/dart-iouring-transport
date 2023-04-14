@@ -74,7 +74,7 @@ class TransportErrorHandler {
     return true;
   }
 
-  void _handleReadWrite(int bufferId, int fd, int event, int result) {
+  void _handleRead(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
     _releaseInboundBuffer(bufferId);
@@ -83,9 +83,19 @@ class TransportErrorHandler {
     _callbacks.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
+  void _handleWrite(int bufferId, int fd, int event, int result) {
+    final server = _serverRegistry.getByClient(fd);
+    if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    _releaseOutboundBuffer(bufferId);
+    _bindings.transport_close_descritor(fd);
+    _serverRegistry.removeClient(fd);
+    _callbacks.notifyInboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+  }
+
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
+    _releaseInboundBuffer(bufferId);
     _callbacks.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
@@ -150,7 +160,11 @@ class TransportErrorHandler {
       return;
     }
     if (event == transportEventRead || event == transportEventWrite) {
-      _handleReadWrite(((data >> 16) & 0xffff), fd, event, result);
+      _handleRead(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == transportEventWrite) {
+      _handleWrite(((data >> 16) & 0xffff), fd, event, result);
       return;
     }
     if (event == transportEventReceiveMessage) {

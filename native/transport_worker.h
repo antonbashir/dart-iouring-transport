@@ -8,7 +8,7 @@
 #include "transport_client.h"
 #include "transport_server.h"
 #include "transport_collections.h"
-#include "salad/fifo.h"
+#include "transport_buffers_pool.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -25,7 +25,7 @@ extern "C"
   typedef struct transport_worker
   {
     uint8_t id;
-    struct fifo* free_buffers;
+    struct transport_buffers_pool free_buffers;
     struct io_uring *ring;
     transport_listener_pool_t *listeners;
     struct iovec *buffers;

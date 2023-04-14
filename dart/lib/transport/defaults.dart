@@ -32,32 +32,32 @@ class TransportDefaults {
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
         pool: 1,
-        connectTimeout: Duration(seconds: 10),
-        readTimeout: Duration(seconds: 10),
-        writeTimeout: Duration(seconds: 10),
+        connectTimeout: Duration(seconds: 30),
+        readTimeout: Duration(seconds: 30),
+        writeTimeout: Duration(seconds: 30),
       );
 
   static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(seconds: 10),
-        writeTimeout: Duration(seconds: 10),
+        readTimeout: Duration(seconds: 30),
+        writeTimeout: Duration(seconds: 30),
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
         pool: 1,
-        connectTimeout: Duration(seconds: 10),
-        readTimeout: Duration(seconds: 10),
-        writeTimeout: Duration(seconds: 10),
+        connectTimeout: Duration(seconds: 30),
+        readTimeout: Duration(seconds: 30),
+        writeTimeout: Duration(seconds: 30),
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(seconds: 10),
-        writeTimeout: Duration(seconds: 10),
+        readTimeout: Duration(seconds: 30),
+        writeTimeout: Duration(seconds: 30),
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(

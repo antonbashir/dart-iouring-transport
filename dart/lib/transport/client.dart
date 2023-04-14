@@ -149,9 +149,8 @@ class TransportClient {
   Future<void> close() async {
     if (_active) {
       _active = false;
-      _bindings.transport_worker_cancel(_workerPointer);
-      if (_pending > 0) await _closer.future;
       _channel.close();
+      if (_pending > 0) await _closer.future;
       _bindings.transport_client_destroy(pointer);
     }
   }

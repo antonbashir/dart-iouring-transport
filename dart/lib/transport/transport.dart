@@ -103,7 +103,6 @@ class Transport {
         outboundWorkerPointer.address,
         transmitter,
       ];
-      print("send to worker: $workerInput");
       toWorker.send(workerInput);
       if (inboundWorkerAddresses.length == transportConfiguration.workerInsolates) {
         fromTransportToWorker.close();
@@ -129,7 +128,6 @@ class Transport {
         final outboundWorker = Pointer.fromAddress(outboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
         _bindings.transport_listener_pool_add(outboundWorker.ref.listeners, listenerPointer);
       }
-      print("send to listener");
       (port as SendPort).send([
         _libraryPath,
         listenerPointer.address,
@@ -161,7 +159,6 @@ class Transport {
     }
 
     await listenerCompleter.future;
-    print("send to worker activator");
     workerActivators.forEach((port) => port.send(null));
   }
 }

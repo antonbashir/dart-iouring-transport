@@ -159,7 +159,7 @@ class TransportWorker {
         continue;
       }
       final event = data & 0xffff;
-      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
@@ -190,7 +190,7 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_inboundRing, 1);
       final event = data & 0xffff;
-      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
@@ -252,6 +252,7 @@ class TransportWorker {
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
     if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    _inboundWorkerPointer.ref.buffers[bufferId].iov_len = result;
     _callbacks.notifyInboundRead(bufferId);
   }
 
@@ -259,6 +260,7 @@ class TransportWorker {
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId, null)) return;
+    _inboundWorkerPointer.ref.buffers[bufferId].iov_len = result;
     _callbacks.notifyInboundRead(bufferId);
   }
 
@@ -287,6 +289,7 @@ class TransportWorker {
       return;
     }
     client!.onComplete();
+    _outboundWorkerPointer.ref.buffers[bufferId].iov_len = result;
     _callbacks.notifyOutboundRead(bufferId);
   }
 

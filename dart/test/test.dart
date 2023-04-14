@@ -12,26 +12,23 @@ import 'package:test/test.dart';
 
 void main() {
   group("[initialization]", () {
+    testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  });
+  group("[tcp]", () {
     final testTestsCount = 5;
     for (var index = 0; index < testTestsCount; index++) {
-      testInitialization(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testInitialization(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testInitialization(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testInitialization(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testInitialization(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcp(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcp(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcp(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
-  // group("[tcp]", () {
-  //   final testTestsCount = 5;
-  //   for (var index = 0; index < testTestsCount; index++) {
-  //     testTcp(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testTcp(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testTcp(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
-  // group("[unix stream]", () {
+  //group("[unix stream]", () {
   //   final testTestsCount = 5;
   //   for (var index = 0; index < testTestsCount; index++) {
   //     testUnixStream(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -69,13 +66,12 @@ void main() {
 }
 
 void testInitialization({
-  required int index,
   required int listeners,
   required int workers,
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("[index = $index, listeners = $listeners, workers = $workers]", () async {
+  test("[listeners = $listeners, workers = $workers]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
@@ -90,7 +86,6 @@ void testInitialization({
     });
     await done.take(workers);
     done.close();
-    print("done");
     await transport.shutdown();
   });
 }
@@ -106,7 +101,7 @@ void testTcp({
   Duration? clientTimeout,
 }) {
   serverTimeout = serverTimeout ?? Duration(days: 1);
-  clientTimeout = clientTimeout ?? Duration(seconds: 1);
+  clientTimeout = clientTimeout ?? Duration(seconds: 90);
   test("[index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
