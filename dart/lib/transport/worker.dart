@@ -163,7 +163,7 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_inboundRing, 1);
       final event = data & 0xffff;
-      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
         final fd = (data >> 32) & 0xffffffff;
@@ -204,7 +204,7 @@ class TransportWorker {
         continue;
       }
       final event = data & 0xffff;
-      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
         final fd = (data >> 32) & 0xffffffff;
@@ -261,7 +261,7 @@ class TransportWorker {
     if (result == 0) {
       _releaseInboundBuffer(bufferId);
       _bindings.transport_close_descritor(fd);
-      _serverRegistry.removeClient(fd);
+      //_serverRegistry.removeClient(fd);
       _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
       return;
     }
@@ -296,7 +296,7 @@ class TransportWorker {
     if (result == 0) {
       _releaseInboundBuffer(bufferId);
       _bindings.transport_close_descritor(fd);
-      _serverRegistry.removeClient(fd);
+      //_serverRegistry.removeClient(fd);
       _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
       return;
     }
