@@ -45,30 +45,22 @@ class TransportErrorHandler {
   }
 
   @pragma(preferInlinePragma)
-  bool _ensureServerIsActive(TransportServer? server, int? bufferId, int? clientFd) {
-    if (server == null) {
-      if (bufferId != null) _releaseInboundBuffer(bufferId);
-      if (clientFd != null) _serverRegistry.removeClient(clientFd);
-      return false;
-    }
+  bool _ensureServerIsActive(TransportServer server, int? bufferId) {
+    server.onComplete();
     if (!server.active) {
       if (bufferId != null) _releaseInboundBuffer(bufferId);
-      if (clientFd != null) _serverRegistry.removeClient(clientFd);
-      _serverRegistry.removeServer(server.fd);
+      if (!server.hasPending()) _serverRegistry.removeServer(server.fd);
       return false;
     }
     return true;
   }
 
   @pragma(preferInlinePragma)
-  bool _ensureClientIsActive(TransportClient? client, int? bufferId, int fd) {
-    if (client == null) {
-      if (bufferId != null) _releaseOutboundBuffer(bufferId);
-      return false;
-    }
+  bool _ensureClientIsActive(TransportClient client, int? bufferId, int fd) {
+    client.onComplete();
     if (!client.active) {
       if (bufferId != null) _releaseOutboundBuffer(bufferId);
-      _clientRegistry.removeClient(fd);
+      if (!client.hasPending()) _clientRegistry.removeClient(fd);
       return false;
     }
     return true;
@@ -76,7 +68,11 @@ class TransportErrorHandler {
 
   void _handleRead(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByClient(fd);
-    if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    if (server == null) return;
+    if (!_ensureServerIsActive(server, bufferId)) {
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
+      return;
+    }
     _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
     _serverRegistry.removeClient(fd);
@@ -85,7 +81,11 @@ class TransportErrorHandler {
 
   void _handleWrite(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByClient(fd);
-    if (!_ensureServerIsActive(server, bufferId, fd)) return;
+    if (server == null) return;
+    if (!_ensureServerIsActive(server, bufferId)) {
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      return;
+    }
     _releaseOutboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
     _serverRegistry.removeClient(fd);
@@ -94,60 +94,58 @@ class TransportErrorHandler {
 
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, bufferId, null)) return;
+    if (!_ensureServerIsActive(server, bufferId)) {
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
+      return;
+    }
     _releaseInboundBuffer(bufferId);
     _callbacks.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, bufferId, null)) return;
+    if (!_ensureServerIsActive(server, bufferId)) {
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      return;
+    }
     _releaseInboundBuffer(bufferId);
     _callbacks.notifyInboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleAccept(int fd) {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, null, null)) return;
-    _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
+    if (!_ensureServerIsActive(server, null)) return;
+    server.reaccept();
   }
 
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, null, fd)) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
-      client?.onComplete();
       return;
     }
     _clientRegistry.removeClient(fd);
     _callbacks.notifyConnectError(fd, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
-    client!.onComplete();
   }
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
-      client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
-    _clientRegistry.removeClient(fd);
     _callbacks.notifyOutboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
-    client!.onComplete();
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
-      client?.onComplete();
       return;
     }
     _releaseOutboundBuffer(bufferId);
-    _clientRegistry.removeClient(fd);
     _callbacks.notifyOutboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
-    client!.onComplete();
   }
 
   void handle(int result, int data, int fd, int event) {

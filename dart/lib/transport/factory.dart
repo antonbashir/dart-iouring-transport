@@ -33,7 +33,7 @@ class TransportServersFactory {
     TransportTcpServerConfiguration? configuration,
   }) {
     final server = _registry.createTcp(host, port, configuration: configuration);
-    server.accept(_workerPointer, onAccept);
+    server.accept(onAccept);
   }
 
   TransportServerDatagramReceiver udp(
@@ -57,7 +57,7 @@ class TransportServersFactory {
     void Function(TransportServerStreamCommunicator communicator) onAccept,
   ) {
     final server = _registry.createUnixStream(path);
-    server.accept(_workerPointer, onAccept);
+    server.accept(onAccept);
   }
 
   TransportServerDatagramReceiver unixDatagram(

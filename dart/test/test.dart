@@ -123,6 +123,7 @@ void testTcp({
     });
     (await done.take(workers * clientsPool).toList()).forEach((response) => expect(response, serverData));
     done.close();
+    print("done");
     await transport.shutdown();
   });
 }

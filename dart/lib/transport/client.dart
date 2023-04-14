@@ -146,6 +146,9 @@ class TransportClient {
     if (!_active && _pending == 0) _closer.complete();
   }
 
+  @pragma(preferInlinePragma)
+  bool hasPending() => _pending > 0;
+
   Future<void> close() async {
     if (_active) {
       _active = false;
@@ -338,7 +341,7 @@ class TransportClientRegistry {
     return TransportClientDatagramCommunicator(client);
   }
 
-  TransportClient? get(int fd) => _clients[fd];
+  TransportClient get(int fd) => _clients[fd]!;
 
   Future<void> close() async {
     await Future.wait(_clients.values.map((client) => client.close()));

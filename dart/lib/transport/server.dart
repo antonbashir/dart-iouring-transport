@@ -13,6 +13,8 @@ import 'configuration.dart';
 import 'constants.dart';
 import 'defaults.dart';
 import 'callbacks.dart';
+import 'exception.dart';
+import 'payload.dart';
 
 class TransportServer {
   final Pointer<transport_server_t> pointer;
@@ -31,6 +33,8 @@ class TransportServer {
   bool get active => _active;
   final _closer = Completer();
 
+  var _pending = 0;
+
   TransportServer(
     this.pointer,
     this._workerPointer,
@@ -46,12 +50,106 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportServerStreamCommunicator communicator) onAccept) {
+  void accept(void Function(TransportServerStreamCommunicator communicator) onAccept) {
     callbacks.setAccept(fd, (channel) => onAccept(TransportServerStreamCommunicator(this, channel)));
     _bindings.transport_worker_accept(
-      workerPointer,
+      _workerPointer,
       pointer,
     );
+    _pending++;
+  }
+
+  @pragma(preferInlinePragma)
+  void reaccept() {
+    _bindings.transport_worker_accept(
+      _workerPointer,
+      pointer,
+    );
+    _pending++;
+  }
+
+  Future<TransportInboundStreamPayload> read(TransportChannel channel) async {
+    final bufferId = channel.getBuffer() ?? await channel.allocate();
+    if (!active) throw TransportClosedException.forServer();
+    final completer = Completer<void>();
+    callbacks.setInboundRead(bufferId, completer);
+    channel.read(bufferId, readTimeout, transportEventRead);
+    _pending++;
+    return completer.future.then(
+      (_) => TransportInboundStreamPayload(
+        readBuffer(bufferId),
+        () => releaseBuffer(bufferId),
+        (bytes) {
+          if (!active) throw TransportClosedException.forServer();
+          reuseBuffer(bufferId);
+          final completer = Completer<void>();
+          callbacks.setInboundWrite(bufferId, completer);
+          channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
+          _pending++;
+          return completer.future;
+        },
+      ),
+    );
+  }
+
+  Future<void> write(Uint8List bytes, TransportChannel channel) async {
+    final bufferId = channel.getBuffer() ?? await channel.allocate();
+    if (!active) throw TransportClosedException.forServer();
+    final completer = Completer<void>();
+    callbacks.setInboundWrite(bufferId, completer);
+    channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
+    _pending++;
+    return completer.future;
+  }
+
+  Future<TransportInboundDatagramPayload> receiveMessage(TransportChannel channel, {int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    final bufferId = channel.getBuffer() ?? await channel.allocate();
+    if (!active) throw TransportClosedException.forServer();
+    final completer = Completer<void>();
+    callbacks.setInboundRead(bufferId, completer);
+    channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags, transportEventReceiveMessage);
+    _pending++;
+    return completer.future.then(
+      (_) => TransportInboundDatagramPayload(
+        readBuffer(bufferId),
+        TransportInboundDatagramSender(
+          this,
+          channel,
+          bufferId,
+          readBuffer(bufferId),
+        ),
+        () => releaseBuffer(bufferId),
+        (bytes, flags) {
+          if (!active) throw TransportClosedException.forServer();
+          reuseBuffer(bufferId);
+          final completer = Completer<void>();
+          callbacks.setInboundWrite(bufferId, completer);
+          channel.respondMessage(bytes, bufferId, pointer.ref.family, writeTimeout, flags, transportEventSendMessage);
+          _pending++;
+          return completer.future;
+        },
+      ),
+    );
+  }
+
+  Future<void> sendMessage(Uint8List bytes, TransportChannel channel, {int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    if (!active) throw TransportClosedException.forServer();
+    final bufferId = channel.getBuffer() ?? await channel.allocate();
+    final completer = Completer<void>();
+    callbacks.setInboundWrite(bufferId, completer);
+    channel.sendMessage(
+      bytes,
+      bufferId,
+      pointer.ref.family,
+      _bindings.transport_worker_get_endpoint_address(_workerPointer, pointer.ref.family, bufferId),
+      writeTimeout,
+      flags,
+      transportEventSendMessage,
+    );
+    _pending++;
+    return completer.future;
   }
 
   @pragma(preferInlinePragma)
@@ -74,18 +172,19 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  Pointer<sockaddr> getDatagramEndpointAddress(int bufferId) => _bindings.transport_worker_get_endpoint_address(_workerPointer, pointer.ref.family, bufferId);
+  void onComplete() {
+    _pending--;
+    if (!_active && _pending == 0) _closer.complete();
+  }
 
   @pragma(preferInlinePragma)
-  void onRemove() {
-    if (!_active) _closer.complete();
-  }
+  bool hasPending() => _pending > 0;
 
   Future<void> close() async {
     if (_active) {
       _active = false;
       _bindings.transport_close_descritor(pointer.ref.fd);
-      await _closer.future;
+      if (_pending > 0) await _closer.future;
       _bindings.transport_server_destroy(pointer);
     }
   }
@@ -228,7 +327,7 @@ class TransportServerRegistry {
   }
 
   @pragma(preferInlinePragma)
-  TransportServer? getByServer(int fd) => _servers[fd];
+  TransportServer getByServer(int fd) => _servers[fd]!;
 
   @pragma(preferInlinePragma)
   TransportServer? getByClient(int fd) => _serversByClients[fd];
@@ -240,11 +339,12 @@ class TransportServerRegistry {
   void removeClient(int fd) => _serversByClients.remove(fd);
 
   @pragma(preferInlinePragma)
-  void removeServer(int fd) => _servers.remove(fd)?.onRemove();
-
-  Future<void> close() async {
-    await Future.wait(_servers.values.map((server) => server.close()));
+  void removeServer(int fd) {
+    _servers.remove(fd);
+    _serversByClients.removeWhere((key, value) => value.fd == fd);
   }
+
+  Future<void> close() => Future.wait(_servers.values.map((server) => server.close()));
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
