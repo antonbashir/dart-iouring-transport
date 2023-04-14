@@ -47,7 +47,7 @@ class Transportcallbacks {
   void setCustom(int id, Completer<int> completer) => _custom[id] = completer;
 
   @pragma(preferInlinePragma)
-  void notifyConnect(int fd, TransportClient client) => _connect[fd]!.complete(client);
+  void notifyConnect(int fd, TransportClient client) => _connect.remove(fd)!.complete(client);
 
   @pragma(preferInlinePragma)
   void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!(channel);
@@ -74,7 +74,7 @@ class Transportcallbacks {
   void notifyCustom(int id, int data) => _custom[id]!.complete(data);
 
   @pragma(preferInlinePragma)
-  void notifyConnectError(int fd, Exception error) => _connect[fd]!.completeError(error);
+  void notifyConnectError(int fd, Exception error) => _connect.remove(fd)!.completeError(error);
 
   @pragma(preferInlinePragma)
   void notifyOutboundReadError(int bufferId, Exception error) => _outboundRead[bufferId].completeError(error);
