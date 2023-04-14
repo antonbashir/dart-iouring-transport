@@ -1,7 +1,6 @@
 #include "transport_common.h"
 #include "transport_worker.h"
 #include "transport_constants.h"
-#include "salad/fifo.h"
 
 transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id)
 {
@@ -44,7 +43,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
     worker->unix_used_messages[index].msg_name = malloc(sizeof(struct sockaddr_un));
     worker->unix_used_messages[index].msg_namelen = sizeof(struct sockaddr_un);
 
-    fifo_push(worker->free_buffers, index);
+    fifo_push(worker->free_buffers, (void*)(intptr_t)index);
   }
   worker->ring = malloc(sizeof(struct io_uring));
   int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
@@ -68,7 +67,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
 
 int32_t transport_worker_get_buffer(transport_worker_t *worker)
 {
-  return fifo_pop(worker->free_buffers);
+  return (int32_t)(intptr_t)fifo_pop(worker->free_buffers);
 }
 
 static inline transport_listener_t *transport_listener_pool_next(transport_listener_pool_t *pool)
@@ -344,7 +343,7 @@ void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer
   struct iovec buffer = worker->buffers[buffer_id];
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
-  fifo_push(worker->free_buffers, buffer_id);
+  fifo_push(worker->free_buffers, (void*)(intptr_t)buffer_id);
 }
 
 int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
@@ -367,7 +366,7 @@ void transport_worker_destroy(transport_worker_t *worker)
   io_uring_queue_exit(worker->ring);
   for (size_t index = 0; index < worker->buffers_count; index++)
   {
-    free(worker->buffers[index].iov_base); 
+    free(worker->buffers[index].iov_base);
     free(worker->inet_used_messages[index].msg_name);
     free(worker->unix_used_messages[index].msg_name);
   }

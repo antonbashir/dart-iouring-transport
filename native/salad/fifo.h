@@ -33,80 +33,74 @@
 
 #include "../trivia/util.h"
 
-#define FIFO_WATERMARK (512 * sizeof(int32_t))
+#define FIFO_WATERMARK (512 * sizeof(void*))
 
 /** A simple FIFO made using a ring buffer */
 
-struct fifo
-{
-  int32_t *buf;
-  size_t bottom; /* advanced by batch free */
-  size_t top;
-  size_t size; /* total buffer size */
+struct fifo {
+	char *buf;
+	size_t bottom; /* advanced by batch free */
+	size_t top;
+	size_t size;   /* total buffer size */
 };
 
 static inline int
 fifo_create(struct fifo *q, size_t size)
 {
-  q->size = size;
-  q->bottom = 0;
-  q->top = 0;
-  q->buf = (int32_t *)malloc(size * sizeof(int32_t));
-  return (q->buf == NULL ? -1 : 0);
+	q->size = size;
+	q->bottom = 0;
+	q->top = 0;
+	q->buf = (char*)malloc(size);
+	return (q->buf == NULL ? -1 : 0);
 }
 
 static inline void
 fifo_destroy(struct fifo *q)
 {
-  if (q->buf)
-  {
-    free(q->buf);
-    q->buf = NULL;
-  }
+	if (q->buf) {
+		free(q->buf);
+		q->buf = NULL;
+	}
 }
 
 static inline int
 fifo_size(struct fifo *q)
 {
-  return (q->top - q->bottom) / sizeof(int32_t);
+	return (q->top - q->bottom) / sizeof(void*);
 }
 
 static inline int
-fifo_push(struct fifo *q, int32_t value)
+fifo_push(struct fifo *q, void *ptr)
 {
-  /* reduce memory allocation and memmove
-   * effect by reusing free pointers buffer space only after the
-   * watermark frees reached. */
-  if (unlikely(q->bottom >= FIFO_WATERMARK))
-  {
-    memmove(q->buf, q->buf + q->bottom, q->bottom);
-    q->top -= q->bottom;
-    q->bottom = 0;
-  }
-  if (unlikely((q->top + sizeof(int32_t)) > q->size))
-  {
-    size_t newsize = q->size * 2;
-    int32_t *ptr = (int32_t *)realloc(q->buf, newsize);
-    if (unlikely(ptr == NULL))
-      return -1;
-    q->buf = ptr;
-    q->size = newsize;
-  }
-  *(q->buf + q->top) = value;
-  q->top += sizeof(int32_t);
-  return 0;
+	/* reduce memory allocation and memmove
+	 * effect by reusing free pointers buffer space only after the
+	 * watermark frees reached. */
+	if (unlikely(q->bottom >= FIFO_WATERMARK)) {
+		memmove(q->buf, q->buf + q->bottom, q->bottom);
+		q->top -= q->bottom;
+		q->bottom = 0;
+	}
+	if (unlikely((q->top + sizeof(void*)) > q->size)) {
+		size_t newsize = q->size * 2;
+		char *ptr = (char*)realloc((void*)q->buf, newsize);
+		if (unlikely(ptr == NULL))
+			return -1;
+		q->buf = ptr;
+		q->size = newsize;
+	}
+	memcpy(q->buf + q->top, (char*)&ptr, sizeof(ptr));
+	q->top += sizeof(void*);
+	return 0;
 }
 
-static inline int32_t
-fifo_pop(struct fifo *q)
-{
-  if (unlikely(q->bottom == q->top))
-    return -1;
-  int32_t ret = *(q->buf + q->bottom);
-  q->bottom += sizeof(int32_t);
-  return ret;
+static inline void *
+fifo_pop(struct fifo *q) {
+	if (unlikely(q->bottom == q->top))
+		return NULL;
+	void *ret = *(void**)(q->buf + q->bottom);
+	q->bottom += sizeof(void*);
+	return ret;
 }
 
 #undef FIFO_WATERMARK
-
 #endif /* TARANTOOL_LIB_SALAD_FIFO_H_INCLUDED */
