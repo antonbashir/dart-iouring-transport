@@ -29,7 +29,7 @@ class TransportServersFactory {
   void tcp(
     String host,
     int port,
-    void Function(TransportServerStreamCommunicator communicator) onAccept, {
+    void Function(TransportServerConnection communicator) onAccept, {
     TransportTcpServerConfiguration? configuration,
   }) {
     final server = _registry.createTcp(host, port, configuration: configuration);
@@ -54,7 +54,7 @@ class TransportServersFactory {
 
   void unixStream(
     String path,
-    void Function(TransportServerStreamCommunicator communicator) onAccept,
+    void Function(TransportServerConnection communicator) onAccept,
   ) {
     final server = _registry.createUnixStream(path);
     server.accept(onAccept);

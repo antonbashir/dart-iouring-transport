@@ -261,7 +261,7 @@ class TransportWorker {
     if (result == 0) {
       _releaseInboundBuffer(bufferId);
       _bindings.transport_close_descritor(fd);
-      //_serverRegistry.removeClient(fd);
+      _serverRegistry.removeClient(fd);
       _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
       return;
     }
@@ -296,7 +296,7 @@ class TransportWorker {
     if (result == 0) {
       _releaseInboundBuffer(bufferId);
       _bindings.transport_close_descritor(fd);
-      //_serverRegistry.removeClient(fd);
+      _serverRegistry.removeClient(fd);
       _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
       return;
     }

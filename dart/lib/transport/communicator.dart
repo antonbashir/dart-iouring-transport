@@ -48,11 +48,11 @@ class TransportClientDatagramCommunicator {
   Future<void> close() => _client.close();
 }
 
-class TransportServerStreamCommunicator {
+class TransportServerConnection {
   final TransportServer _server;
   final TransportChannel _channel;
 
-  TransportServerStreamCommunicator(this._server, this._channel);
+  TransportServerConnection(this._server, this._channel);
 
   @pragma(preferInlinePragma)
   Future<TransportInboundStreamPayload> read() => _server.read(_channel);
@@ -61,7 +61,7 @@ class TransportServerStreamCommunicator {
   Future<void> write(Uint8List bytes) => _server.write(bytes, _channel);
 
   void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
-    while (_server.active) {
+    while (_server.active && _server.hasConnection(_channel.fd)) {
       await read().then((value) {
         if (_server.active) {
           listener(value);
@@ -75,7 +75,7 @@ class TransportServerStreamCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close() => _server.close();
+  void close() => _server.closeConnection(_channel);
 }
 
 class TransportServerDatagramReceiver {

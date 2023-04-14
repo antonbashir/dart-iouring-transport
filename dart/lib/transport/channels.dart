@@ -7,14 +7,14 @@ import 'bindings.dart';
 import 'constants.dart';
 
 class TransportChannel {
-  final int _fd;
+  final int fd;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
 
   late final Queue<Completer<int>> _bufferFinalizers;
   late final Pointer<iovec> _buffers;
 
-  TransportChannel(this._workerPointer, this._fd, this._bindings, this._bufferFinalizers) {
+  TransportChannel(this._workerPointer, this.fd, this._bindings, this._bufferFinalizers) {
     _buffers = _workerPointer.ref.buffers;
   }
 
@@ -38,7 +38,7 @@ class TransportChannel {
 
   @pragma(preferInlinePragma)
   void read(int bufferId, int timeout, int event, {int offset = 0}) {
-    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, offset, timeout, event);
+    _bindings.transport_worker_read(_workerPointer, fd, bufferId, offset, timeout, event);
   }
 
   @pragma(preferInlinePragma)
@@ -46,14 +46,14 @@ class TransportChannel {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_worker_write(_workerPointer, _fd, bufferId, offset, timeout, event);
+    _bindings.transport_worker_write(_workerPointer, fd, bufferId, offset, timeout, event);
   }
 
   @pragma(preferInlinePragma)
   void receiveMessage(int bufferId, int socketFamily, int timeout, int flags, int event) {
     _bindings.transport_worker_receive_message(
       _workerPointer,
-      _fd,
+      fd,
       bufferId,
       socketFamily,
       flags,
@@ -69,7 +69,7 @@ class TransportChannel {
     buffer.iov_len = bytes.length;
     _bindings.transport_worker_send_message(
       _workerPointer,
-      _fd,
+      fd,
       bufferId,
       destination,
       socketFamily,
@@ -86,7 +86,7 @@ class TransportChannel {
     buffer.iov_len = bytes.length;
     _bindings.transport_worker_respond_message(
       _workerPointer,
-      _fd,
+      fd,
       bufferId,
       socketFamily,
       flags,
@@ -96,5 +96,5 @@ class TransportChannel {
   }
 
   @pragma(preferInlinePragma)
-  void close() => _bindings.transport_close_descritor(_fd);
+  void close() => _bindings.transport_close_descritor(fd);
 }

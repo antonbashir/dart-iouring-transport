@@ -75,7 +75,7 @@ class TransportErrorHandler {
     }
     _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
-    //_serverRegistry.removeClient(fd);
+    _serverRegistry.removeClient(fd);
     if (result == -ECANCELED) {
       _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
       return;
@@ -92,7 +92,7 @@ class TransportErrorHandler {
     }
     _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
-    //_serverRegistry.removeClient(fd);
+    _serverRegistry.removeClient(fd);
     if (result == -ECANCELED) {
       _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
       return;

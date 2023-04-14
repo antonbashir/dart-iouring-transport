@@ -26,6 +26,7 @@ class TransportClosedException implements Exception {
   final String message;
   TransportClosedException(this.message);
   factory TransportClosedException.forServer() => TransportClosedException("Server closed\n: ${StackTrace.current.toString()}");
+  factory TransportClosedException.forConnection() => TransportClosedException("Connection closed\n: ${StackTrace.current.toString()}");
   factory TransportClosedException.forClient() => TransportClosedException("Client closed\n: ${StackTrace.current.toString()}");
   factory TransportClosedException.forFile() => TransportClosedException("File closed\n: ${StackTrace.current.toString()}");
 

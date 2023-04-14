@@ -50,8 +50,8 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  void accept(void Function(TransportServerStreamCommunicator communicator) onAccept) {
-    callbacks.setAccept(fd, (channel) => onAccept(TransportServerStreamCommunicator(this, channel)));
+  void accept(void Function(TransportServerConnection communicator) onAccept) {
+    callbacks.setAccept(fd, (channel) => onAccept(TransportServerConnection(this, channel)));
     _bindings.transport_worker_accept(_workerPointer, pointer);
     _pending++;
   }
@@ -65,6 +65,7 @@ class TransportServer {
   Future<TransportInboundStreamPayload> read(TransportChannel channel) async {
     final bufferId = channel.getBuffer() ?? await channel.allocate();
     if (!active) throw TransportClosedException.forServer();
+    if (!hasConnection(channel.fd)) throw TransportClosedException.forConnection();
     final completer = Completer<void>();
     callbacks.setInboundRead(bufferId, completer);
     channel.read(bufferId, readTimeout, transportEventRead);
@@ -89,6 +90,7 @@ class TransportServer {
   Future<void> write(Uint8List bytes, TransportChannel channel) async {
     final bufferId = channel.getBuffer() ?? await channel.allocate();
     if (!active) throw TransportClosedException.forServer();
+    if (!hasConnection(channel.fd)) throw TransportClosedException.forConnection();
     final completer = Completer<void>();
     callbacks.setInboundWrite(bufferId, completer);
     channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
@@ -176,6 +178,9 @@ class TransportServer {
   @pragma(preferInlinePragma)
   bool hasPending() => _pending > 0;
 
+  @pragma(preferInlinePragma)
+  bool hasConnection(int fd) => _registry._serversByClients.containsKey(fd);
+
   Future<void> close() async {
     if (_active) {
       _active = false;
@@ -187,6 +192,12 @@ class TransportServer {
       _bindings.transport_close_descritor(pointer.ref.fd);
       _bindings.transport_server_destroy(pointer);
     }
+  }
+
+  void closeConnection(TransportChannel channel) {
+    if (!_active) throw TransportClosedException.forServer();
+    if (!hasConnection(channel.fd)) return;
+    _bindings.transport_worker_cancel_by_fd(_workerPointer, channel.fd);
   }
 }
 
