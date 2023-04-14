@@ -19215,6 +19215,148 @@ class TransportBindings {
   late final _mh_i32_dump =
       _mh_i32_dumpPtr.asFunction<void Function(ffi.Pointer<mh_i32_t>)>();
 
+  ffi.Pointer<mh_events_t> mh_events_new() {
+    return _mh_events_new();
+  }
+
+  late final _mh_events_newPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<mh_events_t> Function()>>(
+          'mh_events_new');
+  late final _mh_events_new =
+      _mh_events_newPtr.asFunction<ffi.Pointer<mh_events_t> Function()>();
+
+  void mh_events_clear(
+    ffi.Pointer<mh_events_t> h,
+  ) {
+    return _mh_events_clear(
+      h,
+    );
+  }
+
+  late final _mh_events_clearPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_events_t>)>>(
+          'mh_events_clear');
+  late final _mh_events_clear =
+      _mh_events_clearPtr.asFunction<void Function(ffi.Pointer<mh_events_t>)>();
+
+  void mh_events_delete(
+    ffi.Pointer<mh_events_t> h,
+  ) {
+    return _mh_events_delete(
+      h,
+    );
+  }
+
+  late final _mh_events_deletePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_events_t>)>>(
+          'mh_events_delete');
+  late final _mh_events_delete = _mh_events_deletePtr
+      .asFunction<void Function(ffi.Pointer<mh_events_t>)>();
+
+  void mh_events_resize(
+    ffi.Pointer<mh_events_t> h,
+    int arg,
+  ) {
+    return _mh_events_resize(
+      h,
+      arg,
+    );
+  }
+
+  late final _mh_events_resizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<mh_events_t>, ffi.Uint64)>>('mh_events_resize');
+  late final _mh_events_resize = _mh_events_resizePtr
+      .asFunction<void Function(ffi.Pointer<mh_events_t>, int)>();
+
+  int mh_events_start_resize(
+    ffi.Pointer<mh_events_t> h,
+    int buckets,
+    int batch,
+    int arg,
+  ) {
+    return _mh_events_start_resize(
+      h,
+      buckets,
+      batch,
+      arg,
+    );
+  }
+
+  late final _mh_events_start_resizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<mh_events_t>, mh_int_t, mh_int_t,
+              ffi.Uint64)>>('mh_events_start_resize');
+  late final _mh_events_start_resize = _mh_events_start_resizePtr
+      .asFunction<int Function(ffi.Pointer<mh_events_t>, int, int, int)>();
+
+  int mh_events_reserve(
+    ffi.Pointer<mh_events_t> h,
+    int size,
+    int arg,
+  ) {
+    return _mh_events_reserve(
+      h,
+      size,
+      arg,
+    );
+  }
+
+  late final _mh_events_reservePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<mh_events_t>, mh_int_t,
+              ffi.Uint64)>>('mh_events_reserve');
+  late final _mh_events_reserve = _mh_events_reservePtr
+      .asFunction<int Function(ffi.Pointer<mh_events_t>, int, int)>();
+
+  void mh_events_del_resize(
+    ffi.Pointer<mh_events_t> h,
+    int x,
+    int arg,
+  ) {
+    return _mh_events_del_resize(
+      h,
+      x,
+      arg,
+    );
+  }
+
+  late final _mh_events_del_resizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<mh_events_t>, mh_int_t,
+              ffi.Uint64)>>('mh_events_del_resize');
+  late final _mh_events_del_resize = _mh_events_del_resizePtr
+      .asFunction<void Function(ffi.Pointer<mh_events_t>, int, int)>();
+
+  int mh_events_memsize(
+    ffi.Pointer<mh_events_t> h,
+  ) {
+    return _mh_events_memsize(
+      h,
+    );
+  }
+
+  late final _mh_events_memsizePtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<mh_events_t>)>>(
+          'mh_events_memsize');
+  late final _mh_events_memsize = _mh_events_memsizePtr
+      .asFunction<int Function(ffi.Pointer<mh_events_t>)>();
+
+  void mh_events_dump(
+    ffi.Pointer<mh_events_t> h,
+  ) {
+    return _mh_events_dump(
+      h,
+    );
+  }
+
+  late final _mh_events_dumpPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_events_t>)>>(
+          'mh_events_dump');
+  late final _mh_events_dump =
+      _mh_events_dumpPtr.asFunction<void Function(ffi.Pointer<mh_events_t>)>();
+
   ffi.Pointer<transport_worker_t> transport_worker_initialize(
     ffi.Pointer<transport_worker_configuration_t> configuration,
     int id,
@@ -19235,7 +19377,7 @@ class TransportBindings {
           ffi.Pointer<transport_worker_t> Function(
               ffi.Pointer<transport_worker_configuration_t>, int)>();
 
-  int transport_worker_custom(
+  void transport_worker_custom(
     ffi.Pointer<transport_worker_t> worker,
     int callbackId,
     int data,
@@ -19249,12 +19391,12 @@ class TransportBindings {
 
   late final _transport_worker_customPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>, ffi.Uint16,
+          ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16,
               ffi.Int64)>>('transport_worker_custom');
   late final _transport_worker_custom = _transport_worker_customPtr
-      .asFunction<int Function(ffi.Pointer<transport_worker_t>, int, int)>();
+      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int, int)>();
 
-  int transport_worker_write(
+  void transport_worker_write(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
@@ -19274,17 +19416,18 @@ class TransportBindings {
 
   late final _transport_worker_writePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Uint32,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>>('transport_worker_write');
   late final _transport_worker_write = _transport_worker_writePtr.asFunction<
-      int Function(ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+      void Function(
+          ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
 
-  int transport_worker_read(
+  void transport_worker_read(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
@@ -19304,17 +19447,18 @@ class TransportBindings {
 
   late final _transport_worker_readPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Uint32,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>>('transport_worker_read');
   late final _transport_worker_read = _transport_worker_readPtr.asFunction<
-      int Function(ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+      void Function(
+          ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
 
-  int transport_worker_connect(
+  void transport_worker_connect(
     ffi.Pointer<transport_worker_t> worker,
     ffi.Pointer<transport_client_t> client,
     int timeout,
@@ -19328,16 +19472,16 @@ class TransportBindings {
 
   late final _transport_worker_connectPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_client_t>,
-              ffi.Uint64)>>('transport_worker_connect');
+              ffi.Int64)>>('transport_worker_connect');
   late final _transport_worker_connect =
       _transport_worker_connectPtr.asFunction<
-          int Function(ffi.Pointer<transport_worker_t>,
+          void Function(ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_client_t>, int)>();
 
-  int transport_worker_accept(
+  void transport_worker_accept(
     ffi.Pointer<transport_worker_t> worker,
     ffi.Pointer<transport_server_t> server,
   ) {
@@ -19349,13 +19493,13 @@ class TransportBindings {
 
   late final _transport_worker_acceptPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>,
+          ffi.Void Function(ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_server_t>)>>('transport_worker_accept');
   late final _transport_worker_accept = _transport_worker_acceptPtr.asFunction<
-      int Function(
+      void Function(
           ffi.Pointer<transport_worker_t>, ffi.Pointer<transport_server_t>)>();
 
-  int transport_worker_send_message(
+  void transport_worker_send_message(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
@@ -19379,21 +19523,21 @@ class TransportBindings {
 
   late final _transport_worker_send_messagePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Pointer<sockaddr>,
               ffi.Int32,
               ffi.Int,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>>('transport_worker_send_message');
   late final _transport_worker_send_message =
       _transport_worker_send_messagePtr.asFunction<
-          int Function(ffi.Pointer<transport_worker_t>, int, int,
+          void Function(ffi.Pointer<transport_worker_t>, int, int,
               ffi.Pointer<sockaddr>, int, int, int, int)>();
 
-  int transport_worker_respond_message(
+  void transport_worker_respond_message(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
@@ -19415,20 +19559,20 @@ class TransportBindings {
 
   late final _transport_worker_respond_messagePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>>('transport_worker_respond_message');
   late final _transport_worker_respond_message =
       _transport_worker_respond_messagePtr.asFunction<
-          int Function(
+          void Function(
               ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
-  int transport_worker_receive_message(
+  void transport_worker_receive_message(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
     int buffer_id,
@@ -19450,33 +19594,68 @@ class TransportBindings {
 
   late final _transport_worker_receive_messagePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>>('transport_worker_receive_message');
   late final _transport_worker_receive_message =
       _transport_worker_receive_messagePtr.asFunction<
-          int Function(
+          void Function(
               ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
-  int transport_worker_cancel(
+  void transport_worker_cancel(
     ffi.Pointer<transport_worker_t> worker,
+    int data,
   ) {
     return _transport_worker_cancel(
       worker,
+      data,
     );
   }
 
   late final _transport_worker_cancelPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>)>>('transport_worker_cancel');
+          ffi.Void Function(ffi.Pointer<transport_worker_t>,
+              ffi.Uint64)>>('transport_worker_cancel');
   late final _transport_worker_cancel = _transport_worker_cancelPtr
-      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
+      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
+
+  void transport_worker_check_event_timeouts(
+    ffi.Pointer<transport_worker_t> worker,
+  ) {
+    return _transport_worker_check_event_timeouts(
+      worker,
+    );
+  }
+
+  late final _transport_worker_check_event_timeoutsPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>)>>(
+      'transport_worker_check_event_timeouts');
+  late final _transport_worker_check_event_timeouts =
+      _transport_worker_check_event_timeoutsPtr
+          .asFunction<void Function(ffi.Pointer<transport_worker_t>)>();
+
+  void transport_worker_remove_event(
+    ffi.Pointer<transport_worker_t> worker,
+    int data,
+  ) {
+    return _transport_worker_remove_event(
+      worker,
+      data,
+    );
+  }
+
+  late final _transport_worker_remove_eventPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_worker_t>,
+              ffi.Uint64)>>('transport_worker_remove_event');
+  late final _transport_worker_remove_event = _transport_worker_remove_eventPtr
+      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
   int transport_worker_get_buffer(
     ffi.Pointer<transport_worker_t> worker,
@@ -23797,6 +23976,34 @@ class _SymbolAddresses {
       get mh_i32_memsize => _library._mh_i32_memsizePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>
       get mh_i32_dump => _library._mh_i32_dumpPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Pointer<mh_events_t> Function()>>
+      get mh_events_new => _library._mh_events_newPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_events_t>)>>
+      get mh_events_clear => _library._mh_events_clearPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_events_t>)>>
+      get mh_events_delete => _library._mh_events_deletePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<mh_events_t>, ffi.Uint64)>>
+      get mh_events_resize => _library._mh_events_resizePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<mh_events_t>, mh_int_t, mh_int_t, ffi.Uint64)>>
+      get mh_events_start_resize => _library._mh_events_start_resizePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<mh_events_t>, mh_int_t, ffi.Uint64)>>
+      get mh_events_reserve => _library._mh_events_reservePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(
+                  ffi.Pointer<mh_events_t>, mh_int_t, ffi.Uint64)>>
+      get mh_events_del_resize => _library._mh_events_del_resizePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<mh_events_t>)>>
+      get mh_events_memsize => _library._mh_events_memsizePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_events_t>)>>
+      get mh_events_dump => _library._mh_events_dumpPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<transport_worker_t> Function(
@@ -23805,78 +24012,89 @@ class _SymbolAddresses {
           _library._transport_worker_initializePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Int Function(
+              ffi.Void Function(
                   ffi.Pointer<transport_worker_t>, ffi.Uint16, ffi.Int64)>>
       get transport_worker_custom => _library._transport_worker_customPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Uint32,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>> get transport_worker_write =>
       _library._transport_worker_writePtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Uint32,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>> get transport_worker_read =>
       _library._transport_worker_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_client_t>,
-              ffi.Uint64)>> get transport_worker_connect =>
+              ffi.Int64)>> get transport_worker_connect =>
       _library._transport_worker_connectPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<transport_worker_t>,
+          ffi.Void Function(ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_server_t>)>> get transport_worker_accept =>
       _library._transport_worker_acceptPtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Pointer<sockaddr>,
               ffi.Int32,
               ffi.Int,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>> get transport_worker_send_message =>
       _library._transport_worker_send_messagePtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>> get transport_worker_respond_message =>
       _library._transport_worker_respond_messagePtr;
   ffi.Pointer<
       ffi.NativeFunction<
-          ffi.Int Function(
+          ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
               ffi.Int32,
               ffi.Int,
-              ffi.Uint64,
+              ffi.Int64,
               ffi.Uint16)>> get transport_worker_receive_message =>
       _library._transport_worker_receive_messagePtr;
   ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint64)>>
       get transport_worker_cancel => _library._transport_worker_cancelPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_check_event_timeouts =>
+          _library._transport_worker_check_event_timeoutsPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint64)>>
+      get transport_worker_remove_event =>
+          _library._transport_worker_remove_eventPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>
@@ -27192,6 +27410,49 @@ class mh_i32_t extends ffi.Struct {
 
 typedef mh_int_t = ffi.Uint32;
 
+class mh_events_node_t extends ffi.Struct {
+  @ffi.Uint64()
+  external int data;
+
+  @ffi.Int64()
+  external int timeout;
+
+  @ffi.Uint64()
+  external int timestamp;
+}
+
+class mh_events_t extends ffi.Struct {
+  external ffi.Pointer<mh_events_node_t> p;
+
+  external ffi.Pointer<ffi.Uint32> b;
+
+  @mh_int_t()
+  external int n_buckets;
+
+  @mh_int_t()
+  external int n_dirty;
+
+  @mh_int_t()
+  external int size;
+
+  @mh_int_t()
+  external int upper_bound;
+
+  @mh_int_t()
+  external int prime;
+
+  @mh_int_t()
+  external int resize_cnt;
+
+  @mh_int_t()
+  external int resize_position;
+
+  @mh_int_t()
+  external int batch;
+
+  external ffi.Pointer<mh_events_t> shadow;
+}
+
 class transport_buffers_pool extends ffi.Struct {
   external ffi.Pointer<ffi.Int32> ids;
 
@@ -27237,6 +27498,8 @@ class transport_worker extends ffi.Struct {
   external ffi.Pointer<msghdr> inet_used_messages;
 
   external ffi.Pointer<msghdr> unix_used_messages;
+
+  external ffi.Pointer<mh_events_t> events;
 }
 
 typedef transport_worker_t = transport_worker;
@@ -31149,9 +31412,9 @@ const int TRANSPORT_EVENT_CUSTOM = 128;
 
 const int TRANSPORT_EVENT_FILE = 256;
 
-const int TRANSPORT_BUFFER_AVAILABLE = -2;
-
 const int TRANSPORT_BUFFER_USED = -1;
+
+const int TRANSPORT_TIMEOUT_INFINITY = -1;
 
 const int TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK = 2;
 

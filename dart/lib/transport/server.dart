@@ -52,19 +52,13 @@ class TransportServer {
   @pragma(preferInlinePragma)
   void accept(void Function(TransportServerStreamCommunicator communicator) onAccept) {
     callbacks.setAccept(fd, (channel) => onAccept(TransportServerStreamCommunicator(this, channel)));
-    _bindings.transport_worker_accept(
-      _workerPointer,
-      pointer,
-    );
+    _bindings.transport_worker_accept(_workerPointer, pointer);
     _pending++;
   }
 
   @pragma(preferInlinePragma)
   void reaccept() {
-    _bindings.transport_worker_accept(
-      _workerPointer,
-      pointer,
-    );
+    _bindings.transport_worker_accept(_workerPointer, pointer);
     _pending++;
   }
 
@@ -133,7 +127,7 @@ class TransportServer {
     );
   }
 
-  Future<void> sendMessage(Uint8List bytes, TransportChannel channel, {int? flags}) async {
+  Future<void> sendMessage(Uint8List bytes, int senderInitalBufferId, TransportChannel channel, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     if (!active) throw TransportClosedException.forServer();
     final bufferId = channel.getBuffer() ?? await channel.allocate();
@@ -143,7 +137,7 @@ class TransportServer {
       bytes,
       bufferId,
       pointer.ref.family,
-      _bindings.transport_worker_get_endpoint_address(_workerPointer, pointer.ref.family, bufferId),
+      _bindings.transport_worker_get_endpoint_address(_workerPointer, pointer.ref.family, senderInitalBufferId),
       writeTimeout,
       flags,
       transportEventSendMessage,
@@ -154,12 +148,14 @@ class TransportServer {
 
   @pragma(preferInlinePragma)
   void releaseBuffer(int bufferId) {
+    if (!active) throw TransportClosedException.forServer();
     _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
     if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void reuseBuffer(int bufferId) {
+    if (!active) throw TransportClosedException.forServer();
     _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
     if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
   }
@@ -203,7 +199,7 @@ class TransportServerRegistry {
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
-    final instance = using(
+    final server = using(
       (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_tcp(
           _tcpConfiguration(configuration!, arena),
@@ -219,13 +215,13 @@ class TransportServerRegistry {
         this,
       ),
     );
-    _servers[instance.pointer.ref.fd] = instance;
-    return instance;
+    _servers[server.pointer.ref.fd] = server;
+    return server;
   }
 
   TransportServer createUdp(String host, int port, {TransportUdpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpServer();
-    final instance = using(
+    final server = using(
       (Arena arena) {
         final pointer = _bindings.transport_server_initialize_udp(
           _udpConfiguration(configuration!, arena),
@@ -280,13 +276,13 @@ class TransportServerRegistry {
         );
       },
     );
-    _servers[instance.pointer.ref.fd] = instance;
-    return instance;
+    _servers[server.pointer.ref.fd] = server;
+    return server;
   }
 
   TransportServer createUnixStream(String path, {TransportUnixStreamServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixStreamServer();
-    final instance = using(
+    final server = using(
       (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_unix_stream(
           _unixStreamConfiguration(configuration!, arena),
@@ -301,13 +297,13 @@ class TransportServerRegistry {
         this,
       ),
     );
-    _servers[instance.pointer.ref.fd] = instance;
-    return instance;
+    _servers[server.pointer.ref.fd] = server;
+    return server;
   }
 
   TransportServer createUnixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramServer();
-    final instance = using(
+    final server = using(
       (Arena arena) => TransportServer(
         _bindings.transport_server_initialize_unix_dgram(
           _unixDatagramConfiguration(configuration!, arena),
@@ -322,8 +318,8 @@ class TransportServerRegistry {
         this,
       ),
     );
-    _servers[instance.pointer.ref.fd] = instance;
-    return instance;
+    _servers[server.pointer.ref.fd] = server;
+    return server;
   }
 
   @pragma(preferInlinePragma)

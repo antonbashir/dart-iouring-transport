@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/exception.dart';
-
 import 'channels.dart';
 import 'client.dart';
 import 'constants.dart';
@@ -65,10 +63,11 @@ class TransportServerStreamCommunicator {
   void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
     while (_server.active) {
       await read().then((value) {
-        if (!_server.active) return;
-        listener(value);
+        if (_server.active) {
+          listener(value);
+        }
       }, onError: (error, stackTrace) {
-        if (!_server.active) {
+        if (_server.active) {
           onError?.call(error, stackTrace);
         }
       });
@@ -91,10 +90,11 @@ class TransportServerDatagramReceiver {
   void listen(void Function(TransportInboundDatagramPayload payload) listener, {void Function(Exception error, StackTrace stackTrace)? onError, int? flags}) async {
     while (_server.active) {
       await receiveMessage(flags: flags).then((value) {
-        if (!_server.active) return;
-        listener(value);
+        if (_server.active) {
+          listener(value);
+        }
       }, onError: (error, stackTrace) {
-        if (!_server.active) {
+        if (_server.active) {
           onError?.call(error, stackTrace);
         }
       });
@@ -114,7 +114,7 @@ class TransportInboundDatagramSender {
   TransportInboundDatagramSender(this._server, this._channel, this._initialBufferId, this.initialPayload);
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags}) => _server.sendMessage(bytes, _channel, flags: flags);
+  Future<void> sendMessage(Uint8List bytes, {int? flags}) => _server.sendMessage(bytes, _initialBufferId, _channel, flags: flags);
 
   @pragma(preferInlinePragma)
   void release() => _server.releaseBuffer(_initialBufferId);

@@ -33,23 +33,29 @@ extern "C"
     uint16_t buffers_count;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
+    struct mh_events_t* events;
   } transport_worker_t;
 
   transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id);
 
-  int transport_worker_custom(transport_worker_t *worker, uint16_t callbackId, int64_t data);
-  int transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint64_t timeout, uint16_t event);
-  int transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, uint64_t timeout, uint16_t event);
-  int transport_worker_connect(transport_worker_t *worker, transport_client_t *client, uint64_t timeout);
-  int transport_worker_accept(transport_worker_t *worker, transport_server_t *server);
-  int transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, uint64_t timeout, uint16_t event);
-  int transport_worker_respond_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, uint64_t timeout, uint16_t event);
-  int transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, uint64_t timeout, uint16_t event);
-  int transport_worker_cancel(transport_worker_t *worker);
+  void transport_worker_custom(transport_worker_t *worker, uint16_t callbackId, int64_t data);
+  void transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
+  void transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
+  void transport_worker_connect(transport_worker_t *worker, transport_client_t *client, int64_t timeout);
+  void transport_worker_accept(transport_worker_t *worker, transport_server_t *server);
+  void transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_respond_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_cancel(transport_worker_t *worker, uint64_t data);
+  
+  void transport_worker_check_event_timeouts(transport_worker_t *worker);
+  void transport_worker_remove_event(transport_worker_t *worker, uint64_t data);
+
   int32_t transport_worker_get_buffer(transport_worker_t *worker);
   void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id);
   void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id);
-  struct sockaddr *transport_worker_get_endpoint_address(transport_worker_t* worker, transport_socket_family_t socket_family, int buffer_id);
+
+  struct sockaddr *transport_worker_get_endpoint_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id);
 
   int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 

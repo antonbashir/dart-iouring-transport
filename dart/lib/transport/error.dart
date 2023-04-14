@@ -86,7 +86,7 @@ class TransportErrorHandler {
       _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }
-    _releaseOutboundBuffer(bufferId);
+    _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
     _serverRegistry.removeClient(fd);
     _callbacks.notifyInboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));

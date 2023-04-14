@@ -60,7 +60,17 @@ class TransportClient {
     int writeTimeout,
     Queue<Completer<int>> _bufferFinalizers,
   ) =>
-      TransportClient._(_callbacks, _channel, pointer, _workerPointer, _bindings, connectTimeout, readTimeout, writeTimeout, _bufferFinalizers);
+      TransportClient._(
+        _callbacks,
+        _channel,
+        pointer,
+        _workerPointer,
+        _bindings,
+        connectTimeout,
+        readTimeout,
+        writeTimeout,
+        _bufferFinalizers,
+      );
 
   factory TransportClient.withoutConnection(
     Transportcallbacks _callbacks,
@@ -86,6 +96,7 @@ class TransportClient {
 
   @pragma(preferInlinePragma)
   void _releaseBuffer(int bufferId) {
+    if (!_active) throw TransportClosedException.forClient();
     _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
     if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
   }

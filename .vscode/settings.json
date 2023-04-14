@@ -105,6 +105,7 @@
     "io_uring.h": "c",
     "compat.h": "c",
     "barrier.h": "c",
-    "time_types.h": "c"
+    "time_types.h": "c",
+    "transport_buffers_pool.h": "c"
   },
 }

@@ -4,6 +4,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/extensions.dart';
 
 import 'bindings.dart';
 import 'channels.dart';
@@ -44,6 +45,7 @@ class TransportWorker {
   late final int _inboundRingSize;
   late final int _outboundRingSize;
   late final TransportErrorHandler _errorHandler;
+  late final Timer _timeoutChecker;
 
   late final SendPort? transmitter;
 
@@ -59,6 +61,7 @@ class TransportWorker {
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
+      _timeoutChecker.cancel();
       await _clientRegistry.close();
       await _serverRegistry.close();
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
@@ -130,6 +133,12 @@ class TransportWorker {
       _callbacks,
     );
     _activator.close();
+    _timeoutChecker = Timer.periodic(Duration(milliseconds: 500), (timer) {
+      if (timer.isActive) {
+        _bindings.transport_worker_check_event_timeouts(_inboundWorkerPointer);
+        _bindings.transport_worker_check_event_timeouts(_outboundWorkerPointer);
+      }
+    });
   }
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
@@ -146,41 +155,6 @@ class TransportWorker {
     if (_outboundBufferFinalizers.isNotEmpty) _outboundBufferFinalizers.removeLast().complete(bufferId);
   }
 
-  void _handleOutboundCqes() {
-    final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
-    for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-      final cqe = _outboundCqes[cqeIndex];
-      final data = cqe.ref.user_data;
-      final result = cqe.ref.res;
-      _bindings.transport_cqe_advance(_outboundRing, 1);
-      if ((result & 0xffff) == transportEventCustom) {
-        _callbacks.notifyCustom((result >> 16) & 0xffff, data);
-        continue;
-      }
-      final event = data & 0xffff;
-      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
-      if (event & transportEventAll != 0) {
-        final fd = (data >> 32) & 0xffffffff;
-        if (result < 0) {
-          _errorHandler.handle(result, data, fd, event);
-          continue;
-        }
-        if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-          _handleReadReceiveMessageCallback((data >> 16) & 0xffff, result, fd);
-          continue;
-        }
-        if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-          _handleWriteSendMessageCallback((data >> 16) & 0xffff, result, fd);
-          continue;
-        }
-        if (event & transportEventConnect != 0) {
-          _handleConnect(fd);
-          continue;
-        }
-      }
-    }
-  }
-
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
@@ -189,8 +163,9 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_inboundRing, 1);
       final event = data & 0xffff;
-      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
+        _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           _errorHandler.handle(result, data, fd, event);
@@ -212,6 +187,42 @@ class TransportWorker {
           case transportEventAccept:
             _handleAccept(fd, result);
             continue;
+        }
+      }
+    }
+  }
+
+  void _handleOutboundCqes() {
+    final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
+    for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
+      final cqe = _outboundCqes[cqeIndex];
+      final data = cqe.ref.user_data;
+      final result = cqe.ref.res;
+      _bindings.transport_cqe_advance(_outboundRing, 1);
+      if ((result & 0xffff) == transportEventCustom) {
+        _callbacks.notifyCustom((result >> 16) & 0xffff, data);
+        continue;
+      }
+      final event = data & 0xffff;
+      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      if (event & transportEventAll != 0) {
+        _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
+        final fd = (data >> 32) & 0xffffffff;
+        if (result < 0) {
+          _errorHandler.handle(result, data, fd, event);
+          continue;
+        }
+        if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
+          _handleReadReceiveMessageCallback((data >> 16) & 0xffff, result, fd);
+          continue;
+        }
+        if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
+          _handleWriteSendMessageCallback((data >> 16) & 0xffff, result, fd);
+          continue;
+        }
+        if (event & transportEventConnect != 0) {
+          _handleConnect(fd);
+          continue;
         }
       }
     }
