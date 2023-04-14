@@ -66,6 +66,7 @@ class TransportServerStreamCommunicator {
     while (_server.active) {
       await read().then((value) {
         if (!_server.active) return;
+        listener(value);
       }, onError: (error, stackTrace) {
         if (!_server.active) {
           onError?.call(error, stackTrace);
@@ -91,6 +92,7 @@ class TransportServerDatagramReceiver {
     while (_server.active) {
       await receiveMessage(flags: flags).then((value) {
         if (!_server.active) return;
+        listener(value);
       }, onError: (error, stackTrace) {
         if (!_server.active) {
           onError?.call(error, stackTrace);
