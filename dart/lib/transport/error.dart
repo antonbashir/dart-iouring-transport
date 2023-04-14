@@ -76,6 +76,10 @@ class TransportErrorHandler {
     _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
     _serverRegistry.removeClient(fd);
+    if (result == -ECANCELED) {
+      _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
+      return;
+    }
     _callbacks.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
@@ -89,6 +93,10 @@ class TransportErrorHandler {
     _releaseInboundBuffer(bufferId);
     _bindings.transport_close_descritor(fd);
     _serverRegistry.removeClient(fd);
+    if (result == -ECANCELED) {
+      _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
+      return;
+    }
     _callbacks.notifyInboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
@@ -96,6 +104,10 @@ class TransportErrorHandler {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId)) {
       _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
+      return;
+    }
+    if (result == -ECANCELED) {
+      _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
       return;
     }
     _releaseInboundBuffer(bufferId);
@@ -106,6 +118,10 @@ class TransportErrorHandler {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId)) {
       _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      return;
+    }
+    if (result == -ECANCELED) {
+      _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
       return;
     }
     _releaseInboundBuffer(bufferId);
@@ -125,6 +141,10 @@ class TransportErrorHandler {
       return;
     }
     _clientRegistry.removeClient(fd);
+    if (result == -ECANCELED) {
+      _callbacks.notifyConnectError(fd, TransportTimeoutException.forClient());
+      return;
+    }
     _callbacks.notifyConnectError(fd, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
@@ -135,6 +155,10 @@ class TransportErrorHandler {
       return;
     }
     _releaseOutboundBuffer(bufferId);
+    if (result == -ECANCELED) {
+      _callbacks.notifyOutboundReadError(bufferId, TransportTimeoutException.forClient());
+      return;
+    }
     _callbacks.notifyOutboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
   }
 
@@ -142,6 +166,10 @@ class TransportErrorHandler {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
+      return;
+    }
+    if (result == -ECANCELED) {
+      _callbacks.notifyOutboundWriteError(bufferId, TransportTimeoutException.forClient());
       return;
     }
     _releaseOutboundBuffer(bufferId);
