@@ -181,7 +181,7 @@ class TransportClientRegistry {
   final Queue<Completer<int>> _bufferFinalizers;
   final _clients = <int, TransportClient>{};
 
-  TransportClientRegistry(this._callbacks, this._workerPointer, this._bindings, this._bufferFinalizers);
+  TransportClientRegistry(this._bindings, this._callbacks, this._workerPointer, this._bufferFinalizers);
 
   Future<TransportClientStreamCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     final communicators = <Future<TransportClientStreamCommunicator>>[];

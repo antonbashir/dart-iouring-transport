@@ -12,18 +12,17 @@ import 'configuration.dart';
 import 'file.dart';
 import 'server.dart';
 import 'callbacks.dart';
-import 'worker.dart';
 
 class TransportServersFactory {
+  final TransportBindings _bindings;
   final TransportServerRegistry _registry;
   final Pointer<transport_worker_t> _workerPointer;
-  final TransportBindings _bindings;
   final Queue<Completer<int>> _bufferFinalizers;
 
   TransportServersFactory(
+    this._bindings,
     this._registry,
     this._workerPointer,
-    this._bindings,
     this._bufferFinalizers,
   );
 
@@ -80,13 +79,18 @@ class TransportServersFactory {
 class TransportClientsFactory {
   final TransportClientRegistry _registry;
 
-  TransportClientsFactory(
-    this._registry,
-  );
+  TransportClientsFactory(this._registry);
 
   Future<TransportClientStreamCommunicators> tcp(String host, int port, {TransportTcpClientConfiguration? configuration}) => _registry.createTcp(host, port, configuration: configuration);
 
-  TransportClientDatagramCommunicator udp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) => _registry.createUdp(
+  TransportClientDatagramCommunicator udp(
+    String sourceHost,
+    int sourcePort,
+    String destinationHost,
+    int destinationPort, {
+    TransportUdpClientConfiguration? configuration,
+  }) =>
+      _registry.createUdp(
         sourceHost,
         sourcePort,
         destinationHost,
@@ -96,7 +100,12 @@ class TransportClientsFactory {
 
   Future<TransportClientStreamCommunicators> unixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) => _registry.createUnixStream(path, configuration: configuration);
 
-  TransportClientDatagramCommunicator unixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) => _registry.createUnixDatagram(
+  TransportClientDatagramCommunicator unixDatagram(
+    String sourcePath,
+    String destinationPath, {
+    TransportUnixDatagramClientConfiguration? configuration,
+  }) =>
+      _registry.createUnixDatagram(
         sourcePath,
         destinationPath,
         configuration: configuration,
@@ -104,18 +113,16 @@ class TransportClientsFactory {
 }
 
 class TransportFilesFactory {
+  final TransportBindings _bindings;
   final Transportcallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
-  final TransportBindings _bindings;
-  final TransportWorker _worker;
   final Queue<Completer<int>> _bufferFinalizers;
 
   TransportFilesFactory(
-    this._workerPointer,
     this._bindings,
-    this._worker,
-    this._bufferFinalizers,
     this._callbacks,
+    this._workerPointer,
+    this._bufferFinalizers,
   );
 
   TransportFile open(String path) {

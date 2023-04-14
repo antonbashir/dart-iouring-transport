@@ -27192,6 +27192,20 @@ class mh_i32_t extends ffi.Struct {
 
 typedef mh_int_t = ffi.Uint32;
 
+/// A simple FIFO made using a ring buffer
+class fifo extends ffi.Struct {
+  external ffi.Pointer<ffi.Int32> buf;
+
+  @ffi.Size()
+  external int bottom;
+
+  @ffi.Size()
+  external int top;
+
+  @ffi.Size()
+  external int size;
+}
+
 class transport_worker_configuration extends ffi.Struct {
   @ffi.Uint16()
   external int buffers_count;
@@ -27210,6 +27224,8 @@ class transport_worker extends ffi.Struct {
   @ffi.Uint8()
   external int id;
 
+  external ffi.Pointer<fifo> free_buffers;
+
   external ffi.Pointer<io_uring> ring;
 
   external ffi.Pointer<transport_listener_pool_t> listeners;
@@ -27221,8 +27237,6 @@ class transport_worker extends ffi.Struct {
 
   @ffi.Uint16()
   external int buffers_count;
-
-  external ffi.Pointer<ffi.Void> free_buffers;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 

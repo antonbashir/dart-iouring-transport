@@ -33,7 +33,7 @@
 
 #include "../trivia/util.h"
 
-#define FIFO_WATERMARK (512 * sizeof(void *))
+#define FIFO_WATERMARK (512 * sizeof(int32_t))
 
 /** A simple FIFO made using a ring buffer */
 
@@ -51,7 +51,7 @@ fifo_create(struct fifo *q, size_t size)
   q->size = size;
   q->bottom = 0;
   q->top = 0;
-  q->buf = (int32_t *)malloc(size);
+  q->buf = (int32_t *)malloc(size * sizeof(int32_t));
   return (q->buf == NULL ? -1 : 0);
 }
 
@@ -68,7 +68,7 @@ fifo_destroy(struct fifo *q)
 static inline int
 fifo_size(struct fifo *q)
 {
-  return (q->top - q->bottom) / sizeof(void *);
+  return (q->top - q->bottom) / sizeof(int32_t);
 }
 
 static inline int
@@ -86,7 +86,7 @@ fifo_push(struct fifo *q, int32_t value)
   if (unlikely((q->top + sizeof(int32_t)) > q->size))
   {
     size_t newsize = q->size * 2;
-    int32_t *ptr = (int32_t *)realloc((void *)q->buf, newsize);
+    int32_t *ptr = (int32_t *)realloc(q->buf, newsize);
     if (unlikely(ptr == NULL))
       return -1;
     q->buf = ptr;

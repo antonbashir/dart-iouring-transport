@@ -1,5 +1,3 @@
-import 'constants.dart';
-
 class TransportConfiguration {
   final int listenerIsolates;
   final int workerInsolates;

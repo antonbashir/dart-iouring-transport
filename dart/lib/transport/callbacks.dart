@@ -7,11 +7,11 @@ import 'constants.dart';
 class Transportcallbacks {
   final _connect = <int, Completer<TransportClient>>{};
   final _accept = <int, void Function(TransportChannel channel)>{};
+  final _custom = <int, Completer<int>>{};
   final _inboundRead = <Completer<void>>[];
   final _inboundWrite = <Completer<void>>[];
   final _outboundRead = <Completer<void>>[];
   final _outboundWrite = <Completer<void>>[];
-  final _custom = <int, Completer<int>>{};
 
   Transportcallbacks(int inboundBuffersCount, int outboundBuffersCount) {
     for (var index = 0; index < inboundBuffersCount; index++) {

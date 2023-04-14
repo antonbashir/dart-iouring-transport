@@ -101,7 +101,7 @@ class TransportServerRegistry {
   final Transportcallbacks _callbacks;
   final Queue<Completer<int>> _bufferFinalizers;
 
-  TransportServerRegistry(this._bindings, this._workerPointer, this._callbacks, this._bufferFinalizers);
+  TransportServerRegistry(this._bindings, this._callbacks, this._workerPointer, this._bufferFinalizers);
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();

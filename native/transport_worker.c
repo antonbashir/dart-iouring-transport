@@ -17,7 +17,13 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->buffers_count = configuration->buffers_count;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   worker->free_buffers = malloc(sizeof(struct fifo));
-  fifo_create(worker->free_buffers, configuration->buffers_count);
+
+  if (fifo_create(worker->free_buffers, configuration->buffers_count))
+  {
+    free(worker);
+    return NULL;
+  }
+
   worker->inet_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
   worker->unix_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
 
@@ -29,7 +35,6 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
       return NULL;
     }
     worker->buffers[index].iov_len = configuration->buffer_size;
-    fifo_push(worker->free_buffers, index);
 
     memset(&worker->inet_used_messages[index], 0, sizeof(struct msghdr));
     worker->inet_used_messages[index].msg_name = malloc(sizeof(struct sockaddr_in));
@@ -38,6 +43,8 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
     memset(&worker->unix_used_messages[index], 0, sizeof(struct msghdr));
     worker->unix_used_messages[index].msg_name = malloc(sizeof(struct sockaddr_un));
     worker->unix_used_messages[index].msg_namelen = sizeof(struct sockaddr_un);
+
+    fifo_push(worker->free_buffers, index);
   }
   worker->ring = malloc(sizeof(struct io_uring));
   int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
@@ -330,7 +337,6 @@ void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_i
   struct iovec buffer = worker->buffers[buffer_id];
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
-  fifo_push(worker->free_buffers, buffer_id);
 }
 
 void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
@@ -351,7 +357,7 @@ int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct
   return count;
 }
 
-struct sockaddr *transport_worker_get_endpoint_address(transport_worker_t* worker, transport_socket_family_t socket_family, int buffer_id)
+struct sockaddr *transport_worker_get_endpoint_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id)
 {
   return socket_family == INET ? (struct sockaddr *)worker->inet_used_messages[buffer_id].msg_name : (struct sockaddr *)worker->unix_used_messages[buffer_id].msg_name;
 }
@@ -361,7 +367,7 @@ void transport_worker_destroy(transport_worker_t *worker)
   io_uring_queue_exit(worker->ring);
   for (size_t index = 0; index < worker->buffers_count; index++)
   {
-    free(worker->buffers[index].iov_base);
+    free(worker->buffers[index].iov_base); 
     free(worker->inet_used_messages[index].msg_name);
     free(worker->unix_used_messages[index].msg_name);
   }

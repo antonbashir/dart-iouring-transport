@@ -81,37 +81,39 @@ class TransportWorker {
     _outboundWorkerPointer = Pointer.fromAddress(configuration[3] as int).cast<transport_worker_t>();
     transmitter = configuration[4] as SendPort?;
     _fromTransport.close();
+    await _initializer.future;
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
-    _callbacks = Transportcallbacks(_inboundWorkerPointer.ref.buffers_count, _outboundWorkerPointer.ref.buffers_count);
+    _callbacks = Transportcallbacks(
+      _inboundWorkerPointer.ref.buffers_count,
+      _outboundWorkerPointer.ref.buffers_count,
+    );
     _clientRegistry = TransportClientRegistry(
+      _bindings,
       _callbacks,
       _outboundWorkerPointer,
-      _bindings,
       _outboundBufferFinalizers,
     );
     _serverRegistry = TransportServerRegistry(
       _bindings,
-      _inboundWorkerPointer,
       _callbacks,
+      _inboundWorkerPointer,
       _inboundBufferFinalizers,
     );
     _serversfactory = TransportServersFactory(
+      _bindings,
       _serverRegistry,
       _inboundWorkerPointer,
-      _bindings,
       _inboundBufferFinalizers,
     );
     _clientsfactory = TransportClientsFactory(
       _clientRegistry,
     );
     _filesfactory = TransportFilesFactory(
-      _outboundWorkerPointer,
       _bindings,
-      this,
-      _outboundBufferFinalizers,
       _callbacks,
+      _outboundWorkerPointer,
+      _outboundBufferFinalizers,
     );
-    await _initializer.future;
     _inboundRing = _inboundWorkerPointer.ref.ring;
     _outboundRing = _outboundWorkerPointer.ref.ring;
     _inboundCqes = _bindings.transport_allocate_cqes(_transportPointer.ref.inbound_worker_configuration.ref.ring_size);
@@ -129,16 +131,6 @@ class TransportWorker {
       _callbacks,
     );
     _activator.close();
-    Timer.periodic(Duration(seconds: 1), (timer) {
-      final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
-      for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-        print(_inboundCqes[cqeIndex].ref.res);
-      }
-      final ocqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
-      for (var cqeIndex = 0; cqeIndex < ocqeCount; cqeIndex++) {
-        print(_outboundCqes[cqeIndex].ref.res);
-      }
-    });
   }
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
@@ -328,15 +320,7 @@ class TransportWorker {
     if (!_ensureServerIsActive(server, null, result)) return;
     _serverRegistry.addClient(fd, result);
     _bindings.transport_worker_accept(_inboundWorkerPointer, server!.pointer);
-    _callbacks.notifyAccept(
-      fd,
-      TransportChannel(
-        _inboundWorkerPointer,
-        result,
-        _bindings,
-        _inboundBufferFinalizers,
-      ),
-    );
+    _callbacks.notifyAccept(fd, TransportChannel(_inboundWorkerPointer, result, _bindings, _inboundBufferFinalizers));
   }
 
   @visibleForTesting
