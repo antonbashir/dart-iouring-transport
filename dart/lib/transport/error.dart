@@ -9,7 +9,7 @@ import 'client.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'server.dart';
-import 'state.dart';
+import 'callbacks.dart';
 
 class TransportErrorHandler {
   final TransportServerRegistry _serverRegistry;

@@ -6,7 +6,7 @@ import 'constants.dart';
 
 class Transportcallbacks {
   final _connect = <int, Completer<TransportClient>>{};
-  final _accept = <int, StreamController<TransportChannel>>{};
+  final _accept = <int, void Function(TransportChannel channel)>{};
   final _inboundRead = <Completer<void>>[];
   final _inboundWrite = <Completer<void>>[];
   final _outboundRead = <Completer<void>>[];
@@ -29,7 +29,7 @@ class Transportcallbacks {
   void setConnect(int fd, Completer<TransportClient> completer) => _connect[fd] = completer;
 
   @pragma(preferInlinePragma)
-  void setAccept(int fd, StreamController<TransportChannel> controller) => _accept[fd] = controller;
+  void setAccept(int fd, void Function(TransportChannel channel) onAccept) => _accept[fd] = onAccept;
 
   @pragma(preferInlinePragma)
   void setOutboundRead(int bufferId, Completer<void> completer) => _outboundRead[bufferId] = completer;
@@ -50,7 +50,7 @@ class Transportcallbacks {
   void notifyConnect(int fd, TransportClient client) => _connect[fd]!.complete(client);
 
   @pragma(preferInlinePragma)
-  void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!.add(channel);
+  void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!(channel);
 
   @pragma(preferInlinePragma)
   void notifyInboundRead(int bufferId) => _inboundRead[bufferId].complete();

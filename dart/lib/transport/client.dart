@@ -14,7 +14,7 @@ import 'constants.dart';
 import 'defaults.dart';
 import 'exception.dart';
 import 'payload.dart';
-import 'state.dart';
+import 'callbacks.dart';
 
 class TransportClient {
   final Transportcallbacks _callbacks;
@@ -95,7 +95,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundRead(bufferId, completer);
-    _channel.read(bufferId, readTimeout, offset: 0);
+    _channel.read(bufferId, readTimeout, transportEventRead | transportEventClient);
     _pending++;
     return completer.future.then((value) => TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(_buffers[bufferId].iov_len), () => _releaseBuffer(bufferId)));
   }
@@ -105,7 +105,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, writeTimeout);
+    _channel.write(bytes, bufferId, writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     return completer.future;
   }
@@ -116,7 +116,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundRead(bufferId, completer);
-    _channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags);
+    _channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
     return completer.future.then((value) => TransportOutboundPayload(_buffers[bufferId].iov_base.cast<Uint8>().asTypedList(_buffers[bufferId].iov_len), () => _releaseBuffer(bufferId)));
   }
@@ -127,7 +127,7 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
-    _channel.sendMessage(bytes, bufferId, pointer.ref.family, _bindings.transport_client_get_destination_address(pointer), writeTimeout, flags);
+    _channel.sendMessage(bytes, bufferId, pointer.ref.family, _bindings.transport_client_get_destination_address(pointer), writeTimeout, flags, transportEventSendMessage | transportEventClient);
     _pending++;
     return completer.future;
   }

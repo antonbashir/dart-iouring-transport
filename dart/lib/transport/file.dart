@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'channels.dart';
 import 'constants.dart';
 import 'payload.dart';
-import 'state.dart';
+import 'callbacks.dart';
 
 class TransportFile {
   final TransportChannel _channel;
@@ -16,7 +16,7 @@ class TransportFile {
     final completer = Completer<TransportOutboundPayload>();
     final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     _states.setOutboundRead(bufferId, completer);
-    _channel.read(bufferId, int32Max, offset: offset);
+    _channel.read(bufferId, int32Max, transportEventRead | transportEventFile, offset: offset);
     return completer.future;
   }
 
@@ -24,7 +24,7 @@ class TransportFile {
     final completer = Completer<void>();
     final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     _states.setOutboundWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, int32Max, offset: offset);
+    _channel.write(bytes, bufferId, int32Max, transportEventWrite | transportEventFile, offset: offset);
     return completer.future;
   }
 

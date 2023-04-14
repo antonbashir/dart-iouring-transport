@@ -17,7 +17,7 @@ import 'error.dart';
 import 'server.dart';
 import 'package:meta/meta.dart';
 
-import 'state.dart';
+import 'callbacks.dart';
 
 class TransportWorker {
   final _initializer = Completer();

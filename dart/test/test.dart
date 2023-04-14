@@ -84,7 +84,7 @@ void testTcp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.tcp("0.0.0.0", 12345).listen((communicator) => communicator.listen(onError: (error, _) => print(error), (event) => event.respond(serverData)));
+      worker.servers.tcp("0.0.0.0", 12345, (communicator) => communicator.listen(onError: (error, _) => print(error), (event) => event.respond(serverData)));
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
@@ -156,7 +156,7 @@ void testUnixStream({
       await worker.initialize();
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       if (serverSocket.existsSync()) serverSocket.deleteSync();
-      worker.servers.unixStream(serverSocket.path).listen((client) => client.listen(onError: (error, _) => print(error), (event) => event.respond(serverData)));
+      worker.servers.unixStream(serverSocket.path, (client) => client.listen(onError: (error, _) => print(error), (event) => event.respond(serverData)));
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));

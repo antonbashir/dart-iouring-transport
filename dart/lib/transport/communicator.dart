@@ -61,7 +61,7 @@ class TransportServerStreamCommunicator {
     if (!_server.active) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _server.callbacks.setInboundRead(bufferId, completer);
-    _channel.read(bufferId, _server.readTimeout, offset: 0);
+    _channel.read(bufferId, _server.readTimeout, transportEventRead);
     return completer.future.then(
       (_) => TransportInboundStreamPayload(
         _server.readBuffer(bufferId),
@@ -71,7 +71,7 @@ class TransportServerStreamCommunicator {
           _server.reuseBuffer(bufferId);
           final completer = Completer<void>();
           _server.callbacks.setInboundWrite(bufferId, completer);
-          _channel.write(bytes, bufferId, _server.writeTimeout);
+          _channel.write(bytes, bufferId, _server.writeTimeout, transportEventWrite);
           return completer.future;
         },
       ),
@@ -83,7 +83,7 @@ class TransportServerStreamCommunicator {
     if (!_server.active) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _server.callbacks.setInboundWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, _server.writeTimeout);
+    _channel.write(bytes, bufferId, _server.writeTimeout, transportEventWrite);
     return completer.future;
   }
 
@@ -108,7 +108,7 @@ class TransportServerDatagramReceiver {
     if (!_server.active) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _server.callbacks.setInboundRead(bufferId, completer);
-    _channel.receiveMessage(bufferId, _server.pointer.ref.family, _server.readTimeout, flags);
+    _channel.receiveMessage(bufferId, _server.pointer.ref.family, _server.readTimeout, flags, transportEventReceiveMessage);
     return completer.future.then(
       (_) => TransportInboundDatagramPayload(
         _server.readBuffer(bufferId),
@@ -119,7 +119,7 @@ class TransportServerDatagramReceiver {
           _server.reuseBuffer(bufferId);
           final completer = Completer<void>();
           _server.callbacks.setInboundWrite(bufferId, completer);
-          _channel.respondMessage(bytes, bufferId, _server.pointer.ref.family, _server.writeTimeout, flags);
+          _channel.respondMessage(bytes, bufferId, _server.pointer.ref.family, _server.writeTimeout, flags, transportEventSendMessage);
           return completer.future;
         },
       ),
@@ -150,7 +150,7 @@ class TransportInboundDatagramSender {
     final bufferId = _channel.getBuffer() ?? await _channel.allocate();
     final completer = Completer<void>();
     _server.callbacks.setInboundWrite(bufferId, completer);
-    _channel.sendMessage(bytes, bufferId, _server.pointer.ref.family, _address, _server.writeTimeout, flags);
+    _channel.sendMessage(bytes, bufferId, _server.pointer.ref.family, _address, _server.writeTimeout, flags, transportEventSendMessage);
     return completer.future;
   }
 

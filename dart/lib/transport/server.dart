@@ -12,7 +12,7 @@ import 'communicator.dart';
 import 'configuration.dart';
 import 'constants.dart';
 import 'defaults.dart';
-import 'state.dart';
+import 'callbacks.dart';
 
 class TransportServer {
   final Pointer<transport_server_t> pointer;
@@ -46,14 +46,12 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  Stream<TransportServerStreamCommunicator> accept(Pointer<transport_worker_t> workerPointer) {
-    final controller = StreamController<TransportChannel>();
-    callbacks.setAccept(fd, controller);
+  void accept(Pointer<transport_worker_t> workerPointer, void Function(TransportServerStreamCommunicator communicator) onAccept) {
+    callbacks.setAccept(fd, (channel) => TransportServerStreamCommunicator(this, channel));
     _bindings.transport_worker_accept(
       workerPointer,
       pointer,
     );
-    return controller.stream.map((channel) => TransportServerStreamCommunicator(this, channel));
   }
 
   @pragma(preferInlinePragma)

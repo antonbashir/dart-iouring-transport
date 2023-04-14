@@ -11,7 +11,7 @@ import 'communicator.dart';
 import 'configuration.dart';
 import 'file.dart';
 import 'server.dart';
-import 'state.dart';
+import 'callbacks.dart';
 import 'worker.dart';
 
 class TransportServersFactory {
@@ -27,13 +27,14 @@ class TransportServersFactory {
     this._bufferFinalizers,
   );
 
-  Stream<TransportServerStreamCommunicator> tcp(
+  void tcp(
     String host,
-    int port, {
+    int port,
+    void Function(TransportServerStreamCommunicator communicator) onAccept, {
     TransportTcpServerConfiguration? configuration,
   }) {
     final server = _registry.createTcp(host, port, configuration: configuration);
-    return server.accept(_workerPointer);
+    server.accept(_workerPointer, onAccept);
   }
 
   TransportServerDatagramReceiver udp(
@@ -52,11 +53,12 @@ class TransportServersFactory {
     );
   }
 
-  Stream<TransportServerStreamCommunicator> unixStream(
+  void unixStream(
     String path,
+    void Function(TransportServerStreamCommunicator communicator) onAccept,
   ) {
     final server = _registry.createUnixStream(path);
-    return server.accept(_workerPointer);
+    server.accept(_workerPointer, onAccept);
   }
 
   TransportServerDatagramReceiver unixDatagram(

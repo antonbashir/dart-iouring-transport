@@ -37,20 +37,20 @@ class TransportChannel {
   }
 
   @pragma(preferInlinePragma)
-  void read(int bufferId, int timeout, {int offset = 0}) {
-    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, offset, timeout, transportEventRead | transportEventClient);
+  void read(int bufferId, int timeout, int event, {int offset = 0}) {
+    _bindings.transport_worker_read(_workerPointer, _fd, bufferId, offset, timeout, event);
   }
 
   @pragma(preferInlinePragma)
-  void write(Uint8List bytes, int bufferId, int timeout, {int offset = 0}) {
+  void write(Uint8List bytes, int bufferId, int timeout, int event, {int offset = 0}) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
-    _bindings.transport_worker_write(_workerPointer, _fd, bufferId, offset, timeout, transportEventWrite | transportEventClient);
+    _bindings.transport_worker_write(_workerPointer, _fd, bufferId, offset, timeout, event);
   }
 
   @pragma(preferInlinePragma)
-  void receiveMessage(int bufferId, int socketFamily, int timeout, int flags) {
+  void receiveMessage(int bufferId, int socketFamily, int timeout, int flags, int event) {
     _bindings.transport_worker_receive_message(
       _workerPointer,
       _fd,
@@ -58,12 +58,12 @@ class TransportChannel {
       socketFamily,
       flags,
       timeout,
-      transportEventReceiveMessage | transportEventClient,
+      event,
     );
   }
 
   @pragma(preferInlinePragma)
-  void sendMessage(Uint8List bytes, int bufferId, int socketFamily, Pointer<sockaddr> destination, int timeout, int flags) {
+  void sendMessage(Uint8List bytes, int bufferId, int socketFamily, Pointer<sockaddr> destination, int timeout, int flags, int event) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
@@ -75,12 +75,12 @@ class TransportChannel {
       socketFamily,
       flags,
       timeout,
-      transportEventSendMessage | transportEventClient,
+      event,
     );
   }
 
   @pragma(preferInlinePragma)
-  void respondMessage(Uint8List bytes, int bufferId, int socketFamily, int timeout, int flags) {
+  void respondMessage(Uint8List bytes, int bufferId, int socketFamily, int timeout, int flags, int event) {
     final buffer = _buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
@@ -91,7 +91,7 @@ class TransportChannel {
       socketFamily,
       flags,
       timeout,
-      transportEventSendMessage | transportEventClient,
+      event,
     );
   }
 
