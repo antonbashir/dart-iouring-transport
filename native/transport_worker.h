@@ -33,7 +33,7 @@ extern "C"
     uint16_t buffers_count;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
-    struct mh_events_t* events;
+    struct mh_events_t *events;
   } transport_worker_t;
 
   transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id);
@@ -46,8 +46,9 @@ extern "C"
   void transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
   void transport_worker_respond_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
   void transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
-  void transport_worker_cancel(transport_worker_t *worker, uint64_t data);
-  
+
+  void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd);
+
   void transport_worker_check_event_timeouts(transport_worker_t *worker);
   void transport_worker_remove_event(transport_worker_t *worker, uint64_t data);
 

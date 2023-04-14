@@ -258,6 +258,11 @@ class TransportWorker {
       _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
+    if (result == 0) {
+      _releaseInboundBuffer(bufferId);
+      _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
+      return;
+    }
     _inboundWorkerPointer.ref.buffers[bufferId].iov_len = result;
     _callbacks.notifyInboundRead(bufferId);
   }
@@ -267,6 +272,11 @@ class TransportWorker {
     final server = _serverRegistry.getByServer(fd);
     if (!_ensureServerIsActive(server, bufferId)) {
       _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
+      return;
+    }
+    if (result == 0) {
+      _releaseInboundBuffer(bufferId);
+      _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
       return;
     }
     _inboundWorkerPointer.ref.buffers[bufferId].iov_len = result;
@@ -301,6 +311,11 @@ class TransportWorker {
     final client = _clientRegistry.get(fd);
     if (!_ensureClientIsActive(client, bufferId, fd)) {
       _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
+      return;
+    }
+    if (result == 0) {
+      _releaseOutboundBuffer(bufferId);
+      _callbacks.notifyOutboundReadError(bufferId, TransportTimeoutException.forClient());
       return;
     }
     _outboundWorkerPointer.ref.buffers[bufferId].iov_len = result;

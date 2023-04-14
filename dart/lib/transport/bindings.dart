@@ -19607,21 +19607,21 @@ class TransportBindings {
           void Function(
               ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
-  void transport_worker_cancel(
+  void transport_worker_cancel_by_fd(
     ffi.Pointer<transport_worker_t> worker,
-    int data,
+    int fd,
   ) {
-    return _transport_worker_cancel(
+    return _transport_worker_cancel_by_fd(
       worker,
-      data,
+      fd,
     );
   }
 
-  late final _transport_worker_cancelPtr = _lookup<
+  late final _transport_worker_cancel_by_fdPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<transport_worker_t>,
-              ffi.Uint64)>>('transport_worker_cancel');
-  late final _transport_worker_cancel = _transport_worker_cancelPtr
+              ffi.Int)>>('transport_worker_cancel_by_fd');
+  late final _transport_worker_cancel_by_fd = _transport_worker_cancel_by_fdPtr
       .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
   void transport_worker_check_event_timeouts(
@@ -24083,8 +24083,9 @@ class _SymbolAddresses {
       _library._transport_worker_receive_messagePtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint64)>>
-      get transport_worker_cancel => _library._transport_worker_cancelPtr;
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Int)>>
+      get transport_worker_cancel_by_fd =>
+          _library._transport_worker_cancel_by_fdPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
@@ -27419,6 +27420,9 @@ class mh_events_node_t extends ffi.Struct {
 
   @ffi.Uint64()
   external int timestamp;
+
+  @ffi.Int()
+  external int fd;
 }
 
 class mh_events_t extends ffi.Struct {

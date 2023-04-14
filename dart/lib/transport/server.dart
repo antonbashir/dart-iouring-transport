@@ -24,7 +24,7 @@ class TransportServer {
   final int writeTimeout;
   final Transportcallbacks callbacks;
   final Queue<Completer<int>> _bufferFinalizers;
-  final TransportServerRegistry registry;
+  final TransportServerRegistry _registry;
 
   late final int fd;
   late final Pointer<iovec> _buffers;
@@ -43,7 +43,7 @@ class TransportServer {
     this.readTimeout,
     this.writeTimeout,
     this._bufferFinalizers,
-    this.registry,
+    this._registry,
   ) {
     fd = pointer.ref.fd;
     _buffers = _workerPointer.ref.buffers;
@@ -179,8 +179,12 @@ class TransportServer {
   Future<void> close() async {
     if (_active) {
       _active = false;
-      _bindings.transport_close_descritor(pointer.ref.fd);
+      _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
+      _registry._serversByClients.forEach((key, value) {
+        if (value.fd == fd) _bindings.transport_worker_cancel_by_fd(_workerPointer, key);
+      });
       if (_pending > 0) await _closer.future;
+      _bindings.transport_close_descritor(pointer.ref.fd);
       _bindings.transport_server_destroy(pointer);
     }
   }

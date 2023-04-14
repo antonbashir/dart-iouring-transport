@@ -41,14 +41,15 @@ extern "C"
     mh_key_t data;
     int64_t timeout;
     uint64_t timestamp;
+    int fd;
   };
 
 #define mh_node_t struct mh_events_node_t
 #define mh_arg_t uint64_t
-#define mh_hash(a, arg) (a->key)
+#define mh_hash(a, arg) (a->data)
 #define mh_hash_key(a, arg) (a)
-#define mh_cmp(a, b, arg) ((a->key) != (b->key))
-#define mh_cmp_key(a, b, arg) ((a) != (b->key))
+#define mh_cmp(a, b, arg) ((a->data) != (b->data))
+#define mh_cmp_key(a, b, arg) ((a) != (b->data))
 #include "salad/mhash.h"
 #undef mh_node_t
 #undef mh_arg_t
