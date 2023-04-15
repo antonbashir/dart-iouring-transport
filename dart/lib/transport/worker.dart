@@ -232,6 +232,7 @@ class TransportWorker {
   bool _ensureServerIsActive(TransportServer server, int? bufferId, int? connectionFd) {
     if (!server.active) {
       if (connectionFd != null) {
+        _bindings.transport_close_descritor(connectionFd);
         server.onDisconect(connectionFd);
         _serverRegistry.removeClient(connectionFd);
       }
@@ -247,7 +248,10 @@ class TransportWorker {
     client.onComplete();
     if (!client.active) {
       if (bufferId != null) _releaseOutboundBuffer(bufferId);
-      if (!client.hasPending()) _clientRegistry.removeClient(fd);
+      if (!client.hasPending()) {
+        _clientRegistry.removeClient(fd);
+        _bindings.transport_close_descritor(fd);
+      }
       return false;
     }
     return true;
