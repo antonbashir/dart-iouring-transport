@@ -14,6 +14,7 @@ transport_worker_t *transport_worker_initialize(transport_worker_configuration_t
   worker->listeners = transport_listener_pool_initialize();
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
+  worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   worker->events = mh_events_new();
 

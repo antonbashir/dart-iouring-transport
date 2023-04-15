@@ -42,12 +42,14 @@ class Transport {
     nativeInboundWorkerConfiguration.ref.ring_size = inboundWorkerConfiguration.ringSize;
     nativeInboundWorkerConfiguration.ref.buffer_size = inboundWorkerConfiguration.bufferSize;
     nativeInboundWorkerConfiguration.ref.buffers_count = inboundWorkerConfiguration.buffersCount;
+    nativeInboundWorkerConfiguration.ref.timeout_checker_period_millis = inboundWorkerConfiguration.timeoutCheckerPeriod.inMilliseconds;
 
     final nativeoOutboundWorkerConfiguration = calloc<transport_worker_configuration_t>();
     nativeoOutboundWorkerConfiguration.ref.ring_flags = outboundWrkerConfiguration.ringFlags;
     nativeoOutboundWorkerConfiguration.ref.ring_size = outboundWrkerConfiguration.ringSize;
     nativeoOutboundWorkerConfiguration.ref.buffer_size = outboundWrkerConfiguration.bufferSize;
     nativeoOutboundWorkerConfiguration.ref.buffers_count = outboundWrkerConfiguration.buffersCount;
+    nativeoOutboundWorkerConfiguration.ref.timeout_checker_period_millis = outboundWrkerConfiguration.timeoutCheckerPeriod.inMilliseconds;
 
     _transportPointer = _bindings.transport_initialize(
       nativeListenerConfiguration,
