@@ -303,8 +303,6 @@ class TransportClientRegistry {
     int flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
-    if (clientConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
-    if (clientConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (clientConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
     if (clientConfiguration.socketReceiveBufferSize != null) {
       flags |= transportSocketOptionSocketRcvbuf;
@@ -331,8 +329,6 @@ class TransportClientRegistry {
     int flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
-    if (clientConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
-    if (clientConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (clientConfiguration.socketReceiveBufferSize != null) {
       flags |= transportSocketOptionSocketRcvbuf;
       nativeClientConfiguration.ref.socket_receive_buffer_size = clientConfiguration.socketReceiveBufferSize!;

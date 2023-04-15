@@ -56,8 +56,8 @@ class TransportDefaults {
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
-        socketReceiveBufferSize: 4 * 1024 * 1024,
-        socketSendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 64 * 1024 * 1024,
+        socketSendBufferSize: 64 * 1024 * 1024,
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
       );
@@ -88,8 +88,8 @@ class TransportDefaults {
       );
 
   static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
-        socketReceiveBufferSize: 4 * 1024 * 1024,
-        socketSendBufferSize: 4 * 1024 * 1024,
+        socketReceiveBufferSize: 64 * 1024 * 1024,
+        socketSendBufferSize: 64 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
       );

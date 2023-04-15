@@ -608,8 +608,6 @@ class TransportUnixStreamClientConfiguration {
   final int? socketSendBufferSize;
   final bool? socketNonblock;
   final bool? socketClockexec;
-  final bool? socketReuseAddress;
-  final bool? socketReusePort;
   final bool? socketKeepalive;
   final int? socketReceiveLowAt;
   final int? socketSendLowAt;
@@ -623,8 +621,6 @@ class TransportUnixStreamClientConfiguration {
     this.socketSendBufferSize,
     this.socketNonblock,
     this.socketClockexec,
-    this.socketReuseAddress,
-    this.socketReusePort,
     this.socketKeepalive,
     this.socketReceiveLowAt,
     this.socketSendLowAt,
@@ -639,8 +635,6 @@ class TransportUnixStreamClientConfiguration {
     int? socketSendBufferSize,
     bool? socketNonblock,
     bool? socketClockexec,
-    bool? socketReuseAddress,
-    bool? socketReusePort,
     int? socketReceiveLowAt,
     int? socketSendLowAt,
   }) =>
@@ -653,8 +647,6 @@ class TransportUnixStreamClientConfiguration {
         socketSendBufferSize: socketSendBufferSize ?? this.socketSendBufferSize,
         socketNonblock: socketNonblock ?? this.socketNonblock,
         socketClockexec: socketClockexec ?? this.socketClockexec,
-        socketReuseAddress: socketReuseAddress ?? this.socketReuseAddress,
-        socketReusePort: socketReusePort ?? this.socketReusePort,
         socketKeepalive: socketKeepalive ?? this.socketKeepalive,
         socketReceiveLowAt: socketReceiveLowAt ?? this.socketReceiveLowAt,
         socketSendLowAt: socketSendLowAt ?? this.socketSendLowAt,
@@ -668,8 +660,6 @@ class TransportUnixDatagramClientConfiguration {
   final int? socketSendBufferSize;
   final bool? socketNonblock;
   final bool? socketClockexec;
-  final bool? socketReuseAddress;
-  final bool? socketReusePort;
   final int? socketReceiveLowAt;
   final int? socketSendLowAt;
 
@@ -680,8 +670,6 @@ class TransportUnixDatagramClientConfiguration {
     this.socketSendBufferSize,
     this.socketNonblock,
     this.socketClockexec,
-    this.socketReuseAddress,
-    this.socketReusePort,
     this.socketReceiveLowAt,
     this.socketSendLowAt,
   });
@@ -693,8 +681,6 @@ class TransportUnixDatagramClientConfiguration {
     int? socketSendBufferSize,
     bool? socketNonblock,
     bool? socketClockexec,
-    bool? socketReuseAddress,
-    bool? socketReusePort,
     int? socketReceiveLowAt,
     int? socketSendLowAt,
   }) =>
@@ -705,8 +691,6 @@ class TransportUnixDatagramClientConfiguration {
         socketSendBufferSize: socketSendBufferSize ?? this.socketSendBufferSize,
         socketNonblock: socketNonblock ?? this.socketNonblock,
         socketClockexec: socketClockexec ?? this.socketClockexec,
-        socketReuseAddress: socketReuseAddress ?? this.socketReuseAddress,
-        socketReusePort: socketReusePort ?? this.socketReusePort,
         socketReceiveLowAt: socketReceiveLowAt ?? this.socketReceiveLowAt,
         socketSendLowAt: socketSendLowAt ?? this.socketSendLowAt,
       );

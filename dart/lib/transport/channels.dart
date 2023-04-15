@@ -40,6 +40,7 @@ class TransportChannel {
   @pragma(preferInlinePragma)
   void sendMessage(Uint8List bytes, int bufferId, int socketFamily, Pointer<sockaddr> destination, int timeout, int flags, int event) {
     _buffers.write(bufferId, bytes);
+    print("send ${bytes.length}");
     _bindings.transport_worker_send_message(
       _workerPointer,
       fd,
