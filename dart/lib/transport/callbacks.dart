@@ -8,9 +8,9 @@ class Transportcallbacks {
   final _connect = <int, Completer<TransportClient>>{};
   final _accept = <int, void Function(TransportChannel channel)>{};
   final _custom = <int, Completer<int>>{};
-  final _inboundRead = <Completer<void>>[];
+  final _inboundRead = <Completer<int>>[];
   final _inboundWrite = <Completer<void>>[];
-  final _outboundRead = <Completer<void>>[];
+  final _outboundRead = <Completer<int>>[];
   final _outboundWrite = <Completer<void>>[];
 
   Transportcallbacks(int inboundBuffersCount, int outboundBuffersCount) {
@@ -32,13 +32,13 @@ class Transportcallbacks {
   void setAccept(int fd, void Function(TransportChannel channel) onAccept) => _accept[fd] = onAccept;
 
   @pragma(preferInlinePragma)
-  void setOutboundRead(int bufferId, Completer<void> completer) => _outboundRead[bufferId] = completer;
+  void setOutboundRead(int bufferId, Completer<int> completer) => _outboundRead[bufferId] = completer;
 
   @pragma(preferInlinePragma)
   void setOutboundWrite(int bufferId, Completer<void> completer) => _outboundWrite[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void setInboundRead(int bufferId, Completer<void> completer) => _inboundRead[bufferId] = completer;
+  void setInboundRead(int bufferId, Completer<int> completer) => _inboundRead[bufferId] = completer;
 
   @pragma(preferInlinePragma)
   void setInboundWrite(int bufferId, Completer<void> completer) => _inboundWrite[bufferId] = completer;
@@ -53,7 +53,7 @@ class Transportcallbacks {
   void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!(channel);
 
   @pragma(preferInlinePragma)
-  void notifyInboundRead(int bufferId) => _inboundRead[bufferId].complete();
+  void notifyInboundRead(int bufferId, int length) => _inboundRead[bufferId].complete(length);
 
   @pragma(preferInlinePragma)
   void notifyInboundReadError(int bufferId, Exception error) => _inboundRead[bufferId].completeError(error);
@@ -65,7 +65,7 @@ class Transportcallbacks {
   void notifyInboundWriteError(int bufferId, Exception error) => _inboundWrite[bufferId].completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundRead(int bufferId) => _outboundRead[bufferId].complete();
+  void notifyOutboundRead(int bufferId, int length) => _outboundRead[bufferId].complete(length);
 
   @pragma(preferInlinePragma)
   void notifyOutboundWrite(int bufferId) => _outboundWrite[bufferId].complete();

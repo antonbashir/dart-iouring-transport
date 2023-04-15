@@ -163,6 +163,8 @@ const transportSocketOptionTcpMaxseg = 1 << 27;
 const transportSocketOptionTcpNodelay = 1 << 28;
 const transportSocketOptionTcpSyncnt = 1 << 29;
 
+const transportTimeoutInfinity = -1;
+
 enum TransportDatagramMessageFlag {
   oob(0x01),
   peek(0x02),

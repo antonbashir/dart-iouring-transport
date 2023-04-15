@@ -1,40 +1,17 @@
-import 'dart:async';
-import 'dart:collection';
 import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'bindings.dart';
+import 'buffers.dart';
 import 'constants.dart';
 
 class TransportChannel {
   final int fd;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
+  final TransportBuffers _buffers;
 
-  late final Queue<Completer<int>> _bufferFinalizers;
-  late final Pointer<iovec> _buffers;
-
-  TransportChannel(this._workerPointer, this.fd, this._bindings, this._bufferFinalizers) {
-    _buffers = _workerPointer.ref.buffers;
-  }
-
-  @pragma(preferInlinePragma)
-  int? getBuffer() {
-    final buffer = _bindings.transport_worker_get_buffer(_workerPointer);
-    if (buffer == transportBufferUsed) return null;
-    return buffer;
-  }
-
-  Future<int> allocate() async {
-    var bufferId = _bindings.transport_worker_get_buffer(_workerPointer);
-    while (bufferId == transportBufferUsed) {
-      final completer = Completer<int>();
-      _bufferFinalizers.add(completer);
-      await completer.future;
-      bufferId = _bindings.transport_worker_get_buffer(_workerPointer);
-    }
-    return bufferId;
-  }
+  TransportChannel(this._workerPointer, this.fd, this._bindings, this._buffers);
 
   @pragma(preferInlinePragma)
   void read(int bufferId, int timeout, int event, {int offset = 0}) {
@@ -43,9 +20,7 @@ class TransportChannel {
 
   @pragma(preferInlinePragma)
   void write(Uint8List bytes, int bufferId, int timeout, int event, {int offset = 0}) {
-    final buffer = _buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
+    _buffers.write(bufferId, bytes);
     _bindings.transport_worker_write(_workerPointer, fd, bufferId, offset, timeout, event);
   }
 
@@ -64,9 +39,7 @@ class TransportChannel {
 
   @pragma(preferInlinePragma)
   void sendMessage(Uint8List bytes, int bufferId, int socketFamily, Pointer<sockaddr> destination, int timeout, int flags, int event) {
-    final buffer = _buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
+    _buffers.write(bufferId, bytes);
     _bindings.transport_worker_send_message(
       _workerPointer,
       fd,
@@ -81,9 +54,7 @@ class TransportChannel {
 
   @pragma(preferInlinePragma)
   void respondMessage(Uint8List bytes, int bufferId, int socketFamily, int timeout, int flags, int event) {
-    final buffer = _buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
+    _buffers.write(bufferId, bytes);
     _bindings.transport_worker_respond_message(
       _workerPointer,
       fd,

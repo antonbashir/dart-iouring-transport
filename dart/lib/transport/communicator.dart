@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'buffers.dart';
 import 'channels.dart';
 import 'client.dart';
 import 'constants.dart';
@@ -75,7 +76,7 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close() => _server.closeConnection(_channel);
+  Future<void> close() => _server.closeConnection(_channel.fd);
 }
 
 class TransportServerDatagramReceiver {
@@ -108,14 +109,15 @@ class TransportServerDatagramReceiver {
 class TransportInboundDatagramSender {
   final TransportServer _server;
   final TransportChannel _channel;
+  final TransportBuffers _buffers;
   final int _initialBufferId;
   final Uint8List initialPayload;
 
-  TransportInboundDatagramSender(this._server, this._channel, this._initialBufferId, this.initialPayload);
+  TransportInboundDatagramSender(this._server, this._channel, this._buffers, this._initialBufferId, this.initialPayload);
 
   @pragma(preferInlinePragma)
   Future<void> sendMessage(Uint8List bytes, {int? flags}) => _server.sendMessage(bytes, _initialBufferId, _channel, flags: flags);
 
   @pragma(preferInlinePragma)
-  void release() => _server.releaseBuffer(_initialBufferId);
+  void release() => _buffers.release(_initialBufferId);
 }

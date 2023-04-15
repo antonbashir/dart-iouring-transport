@@ -25,7 +25,7 @@ extension IntExtension on int {
 }
 
 extension TransportUdpMulticastConfigurationExtension on TransportUdpMulticastConfiguration {
-  int getMemberShipIndex(TransportBindings bindings) => using(
+  int getMembershipIndex(TransportBindings bindings) => using(
         (arena) => calculateInterfaceIndex ? bindings.transport_socket_get_interface_index(localInterface!.toNativeUtf8(allocator: arena).cast()) : interfaceIndex!,
       );
 }

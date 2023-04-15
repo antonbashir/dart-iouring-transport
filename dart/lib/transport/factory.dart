@@ -1,29 +1,25 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:ffi';
 
-import 'package:ffi/ffi.dart';
-
 import 'bindings.dart';
+import 'buffers.dart';
 import 'channels.dart';
 import 'client.dart';
 import 'communicator.dart';
 import 'configuration.dart';
-import 'file.dart';
-import 'server.dart';
-import 'callbacks.dart';
+import 'registry.dart';
 
 class TransportServersFactory {
   final TransportBindings _bindings;
   final TransportServerRegistry _registry;
   final Pointer<transport_worker_t> _workerPointer;
-  final Queue<Completer<int>> _bufferFinalizers;
+  final TransportBuffers _buffers;
 
   TransportServersFactory(
     this._bindings,
     this._registry,
     this._workerPointer,
-    this._bufferFinalizers,
+    this._buffers,
   );
 
   void tcp(
@@ -47,7 +43,7 @@ class TransportServersFactory {
         _workerPointer,
         server.pointer.ref.fd,
         _bindings,
-        _bufferFinalizers,
+        _buffers,
       ),
     );
   }
@@ -70,7 +66,7 @@ class TransportServersFactory {
         _workerPointer,
         server.pointer.ref.fd,
         _bindings,
-        _bufferFinalizers,
+        _buffers,
       ),
     );
   }
@@ -110,23 +106,4 @@ class TransportClientsFactory {
         destinationPath,
         configuration: configuration,
       );
-}
-
-class TransportFilesFactory {
-  final TransportBindings _bindings;
-  final Transportcallbacks _callbacks;
-  final Pointer<transport_worker_t> _workerPointer;
-  final Queue<Completer<int>> _bufferFinalizers;
-
-  TransportFilesFactory(
-    this._bindings,
-    this._callbacks,
-    this._workerPointer,
-    this._bufferFinalizers,
-  );
-
-  TransportFile open(String path) {
-    final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_callbacks, TransportChannel(_workerPointer, fd, _bindings, _bufferFinalizers));
-  }
 }
