@@ -79,13 +79,15 @@ class Transport {
     final inboundWorkerAddresses = <int>[];
     final outboundWorkerAddresses = <int>[];
     final workerMeessagePorts = <SendPort>[];
+    final workerCustomPorts = <SendPort>[];
     final workerActivators = <SendPort>[];
 
     fromTransportToWorker.listen((ports) {
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
-      workerActivators.add(ports[2]);
-      _workerClosers.add(ports[3]);
+      workerCustomPorts.add(ports[2]);
+      workerActivators.add(ports[3]);
+      _workerClosers.add(ports[4]);
       final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.inbound_worker_configuration, inboundWorkerAddresses.length);
       if (inboundWorkerPointer == nullptr) {
         listenerCompleter.completeError(TransportException("[worker] is null"));
@@ -135,6 +137,7 @@ class Transport {
         listenerPointer.address,
         listenerConfiguration.ringSize,
         workerMeessagePorts,
+        workerCustomPorts,
       ]);
       if (++listeners == transportConfiguration.listenerIsolates) {
         fromTransportToListener.close();

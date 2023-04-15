@@ -3,7 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/extensions.dart';
+import 'extensions.dart';
 
 import 'bindings.dart';
 import 'buffers.dart';
@@ -159,7 +159,7 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_inboundRing, 1);
       final event = data & 0xffff;
-      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
         final fd = (data >> 32) & 0xffffffff;
@@ -195,12 +195,8 @@ class TransportWorker {
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_outboundRing, 1);
-      if ((result & 0xffff) == transportEventCustom) {
-        _callbacks.notifyCustom((result >> 16) & 0xffff, data);
-        continue;
-      }
       final event = data & 0xffff;
-      //print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
         final fd = (data >> 32) & 0xffffffff;
@@ -240,21 +236,6 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleReceiveMessage(int bufferId, int fd, int result) {
-    final server = _serverRegistry.getByServer(fd);
-    if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
-      return;
-    }
-    if (result == 0) {
-      _inboundBuffers.release(bufferId);
-      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
-      return;
-    }
-    _callbacks.notifyInboundRead(bufferId, result);
-  }
-
-  @pragma(preferInlinePragma)
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
@@ -268,6 +249,21 @@ class TransportWorker {
     }
     _inboundBuffers.release(bufferId);
     _callbacks.notifyInboundWrite(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleReceiveMessage(int bufferId, int fd, int result) {
+    final server = _serverRegistry.getByServer(fd);
+    if (!server.notifyData(bufferId)) {
+      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
+      return;
+    }
+    if (result == 0) {
+      _inboundBuffers.release(bufferId);
+      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
+      return;
+    }
+    _callbacks.notifyInboundRead(bufferId, result);
   }
 
   @pragma(preferInlinePragma)
@@ -333,7 +329,4 @@ class TransportWorker {
     server.reaccept();
     _callbacks.notifyAccept(fd, TransportChannel(_inboundWorkerPointer, result, _bindings, _inboundBuffers));
   }
-
-  @visibleForTesting
-  void notifyCustom(int callback, int data) => _bindings.transport_worker_custom(_outboundWorkerPointer, callback, data);
 }

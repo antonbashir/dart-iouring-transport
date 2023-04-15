@@ -22,20 +22,11 @@ class TransportServersFactory {
     this._buffers,
   );
 
-  void tcp(
-    String host,
-    int port,
-    void Function(TransportServerConnection communicator) onAccept, {
-    TransportTcpServerConfiguration? configuration,
-  }) {
-    final server = _registry.createTcp(host, port, configuration: configuration);
-    server.accept(onAccept);
+  void tcp(String host, int port, void Function(TransportServerConnection communicator) onAccept, {TransportTcpServerConfiguration? configuration}) {
+    _registry.createTcp(host, port, configuration: configuration).accept(onAccept);
   }
 
-  TransportServerDatagramReceiver udp(
-    String host,
-    int port,
-  ) {
+  TransportServerDatagramReceiver udp(String host, int port) {
     final server = _registry.createUdp(host, port);
     return TransportServerDatagramReceiver(
       server,
@@ -48,17 +39,11 @@ class TransportServersFactory {
     );
   }
 
-  void unixStream(
-    String path,
-    void Function(TransportServerConnection communicator) onAccept,
-  ) {
-    final server = _registry.createUnixStream(path);
-    server.accept(onAccept);
+  void unixStream(String path, void Function(TransportServerConnection communicator) onAccept) {
+    _registry.createUnixStream(path).accept(onAccept);
   }
 
-  TransportServerDatagramReceiver unixDatagram(
-    String path,
-  ) {
+  TransportServerDatagramReceiver unixDatagram(String path) {
     final server = _registry.createUnixDatagram(path);
     return TransportServerDatagramReceiver(
       server,
@@ -77,7 +62,12 @@ class TransportClientsFactory {
 
   TransportClientsFactory(this._registry);
 
-  Future<TransportClientStreamCommunicators> tcp(String host, int port, {TransportTcpClientConfiguration? configuration}) => _registry.createTcp(host, port, configuration: configuration);
+  Future<TransportClientStreamCommunicators> tcp(
+    String host,
+    int port, {
+    TransportTcpClientConfiguration? configuration,
+  }) =>
+      _registry.createTcp(host, port, configuration: configuration);
 
   TransportClientDatagramCommunicator udp(
     String sourceHost,
@@ -94,7 +84,11 @@ class TransportClientsFactory {
         configuration: configuration,
       );
 
-  Future<TransportClientStreamCommunicators> unixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) => _registry.createUnixStream(path, configuration: configuration);
+  Future<TransportClientStreamCommunicators> unixStream(
+    String path, {
+    TransportUnixStreamClientConfiguration? configuration,
+  }) =>
+      _registry.createUnixStream(path, configuration: configuration);
 
   TransportClientDatagramCommunicator unixDatagram(
     String sourcePath,

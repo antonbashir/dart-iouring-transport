@@ -105,8 +105,7 @@ const transportEventSendMessage = 1 << 3;
 const transportEventAccept = 1 << 4;
 const transportEventConnect = 1 << 5;
 const transportEventClient = 1 << 6;
-const transportEventCustom = 1 << 7;
-const transportEventFile = 1 << 8;
+const transportEventFile = 1 << 7;
 
 const transportEventAll = transportEventRead |
     transportEventWrite |
@@ -115,7 +114,6 @@ const transportEventAll = transportEventRead |
     transportEventReceiveMessage |
     transportEventSendMessage |
     transportEventClient |
-    transportEventCustom |
     transportEventFile;
 
 const ringSetupIopoll = 1 << 0;

@@ -19377,25 +19377,6 @@ class TransportBindings {
           ffi.Pointer<transport_worker_t> Function(
               ffi.Pointer<transport_worker_configuration_t>, int)>();
 
-  void transport_worker_custom(
-    ffi.Pointer<transport_worker_t> worker,
-    int callbackId,
-    int data,
-  ) {
-    return _transport_worker_custom(
-      worker,
-      callbackId,
-      data,
-    );
-  }
-
-  late final _transport_worker_customPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16,
-              ffi.Int64)>>('transport_worker_custom');
-  late final _transport_worker_custom = _transport_worker_customPtr
-      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int, int)>();
-
   void transport_worker_write(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
@@ -24010,11 +23991,6 @@ class _SymbolAddresses {
                   ffi.Pointer<transport_worker_configuration_t>, ffi.Uint8)>>
       get transport_worker_initialize =>
           _library._transport_worker_initializePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_worker_t>, ffi.Uint16, ffi.Int64)>>
-      get transport_worker_custom => _library._transport_worker_customPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Void Function(
@@ -31418,9 +31394,7 @@ const int TRANSPORT_EVENT_CONNECT = 32;
 
 const int TRANSPORT_EVENT_CLIENT = 64;
 
-const int TRANSPORT_EVENT_CUSTOM = 128;
-
-const int TRANSPORT_EVENT_FILE = 256;
+const int TRANSPORT_EVENT_FILE = 128;
 
 const int TRANSPORT_BUFFER_USED = -1;
 
@@ -31492,7 +31466,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 

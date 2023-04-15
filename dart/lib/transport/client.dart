@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/registry.dart';
+import 'registry.dart';
 
 import 'bindings.dart';
 import 'buffers.dart';
@@ -81,7 +81,15 @@ class TransportClient {
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
-    _channel.sendMessage(bytes, bufferId, _pointer.ref.family, _bindings.transport_client_get_destination_address(_pointer), _writeTimeout, flags, transportEventSendMessage | transportEventClient);
+    _channel.sendMessage(
+      bytes,
+      bufferId,
+      _pointer.ref.family,
+      _bindings.transport_client_get_destination_address(_pointer),
+      _writeTimeout,
+      flags,
+      transportEventSendMessage | transportEventClient,
+    );
     _pending++;
     return completer.future;
   }

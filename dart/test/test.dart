@@ -58,11 +58,6 @@ void main() {
   //     testUdp(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   //   }
   // });
-  // group("[custom]", () {
-  //   for (var index = 0; index < 10; index++) {
-  //     testCustomCallback();
-  //   }
-  // });
 }
 
 void testInitialization({
@@ -245,30 +240,6 @@ void testUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
     });
     (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
-    done.close();
-    await transport.shutdown();
-  });
-}
-
-void testCustomCallback() {
-  test("callback", () async {
-    final transport = Transport(
-      TransportDefaults.transport().copyWith(workerInsolates: 2),
-      TransportDefaults.listener(),
-      TransportDefaults.inbound(),
-      TransportDefaults.outbound(),
-    );
-    final done = ReceivePort();
-    final data = Random().nextInt(100);
-    await transport.run(transmitter: done.sendPort, (input) async {
-      final completer = Completer<int>();
-      final worker = TransportWorker(input);
-      await worker.initialize();
-      worker.registerCallback(1, completer);
-      worker.notifyCustom(1, data);
-      worker.transmitter!.send(await completer.future);
-    });
-    expect(await done.take(2).toList(), [data, data]);
     done.close();
     await transport.shutdown();
   });
