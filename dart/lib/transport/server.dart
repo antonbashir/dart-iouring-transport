@@ -16,6 +16,11 @@ import 'callbacks.dart';
 import 'exception.dart';
 import 'payload.dart';
 
+class _TransportConnectionState {
+  var active = true;
+  Completer<void> closer = Completer();
+}
+
 class TransportServer {
   final Pointer<transport_server_t> pointer;
   final Pointer<transport_worker_t> _workerPointer;
@@ -31,7 +36,9 @@ class TransportServer {
 
   var _active = true;
   bool get active => _active;
+
   final _closer = Completer();
+  final _connections = <int, _TransportConnectionState>{};
 
   var _pending = 0;
 
@@ -50,8 +57,32 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
+  void releaseBuffer(int bufferId) {
+    if (!active) throw TransportClosedException.forServer();
+    _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
+    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  void reuseBuffer(int bufferId) {
+    if (!active) throw TransportClosedException.forServer();
+    _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
+    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  Uint8List readBuffer(int bufferId) {
+    final buffer = _buffers[bufferId];
+    final bufferBytes = buffer.iov_base.cast<Uint8>();
+    return bufferBytes.asTypedList(buffer.iov_len);
+  }
+
+  @pragma(preferInlinePragma)
   void accept(void Function(TransportServerConnection communicator) onAccept) {
-    callbacks.setAccept(fd, (channel) => onAccept(TransportServerConnection(this, channel)));
+    callbacks.setAccept(fd, (channel) {
+      _connections[channel.fd] = _TransportConnectionState();
+      onAccept(TransportServerConnection(this, channel));
+    });
     _bindings.transport_worker_accept(_workerPointer, pointer);
     _pending++;
   }
@@ -69,7 +100,6 @@ class TransportServer {
     final completer = Completer<void>();
     callbacks.setInboundRead(bufferId, completer);
     channel.read(bufferId, readTimeout, transportEventRead);
-    _pending++;
     return completer.future.then(
       (_) => TransportInboundStreamPayload(
         readBuffer(bufferId),
@@ -80,7 +110,6 @@ class TransportServer {
           final completer = Completer<void>();
           callbacks.setInboundWrite(bufferId, completer);
           channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
-          _pending++;
           return completer.future;
         },
       ),
@@ -94,7 +123,6 @@ class TransportServer {
     final completer = Completer<void>();
     callbacks.setInboundWrite(bufferId, completer);
     channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
-    _pending++;
     return completer.future;
   }
 
@@ -149,61 +177,48 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  void releaseBuffer(int bufferId) {
-    if (!active) throw TransportClosedException.forServer();
-    _bindings.transport_worker_release_buffer(_workerPointer, bufferId);
-    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-  }
-
-  @pragma(preferInlinePragma)
-  void reuseBuffer(int bufferId) {
-    if (!active) throw TransportClosedException.forServer();
-    _bindings.transport_worker_reuse_buffer(_workerPointer, bufferId);
-    if (_bufferFinalizers.isNotEmpty) _bufferFinalizers.removeLast().complete(bufferId);
-  }
-
-  @pragma(preferInlinePragma)
-  Uint8List readBuffer(int bufferId) {
-    final buffer = _buffers[bufferId];
-    final bufferBytes = buffer.iov_base.cast<Uint8>();
-    return bufferBytes.asTypedList(buffer.iov_len);
-  }
-
-  @pragma(preferInlinePragma)
   void onComplete() {
     _pending--;
-    if (!_active && _pending == 0) _closer.complete();
+    if (!_active && _pending == 0 && _connections.isEmpty) _closer.complete();
   }
 
   @pragma(preferInlinePragma)
-  bool hasPending() => _pending > 0;
+  void onDisconect(int fd) {
+    final connection = _connections.remove(fd)!;
+    if (!connection.active) connection.closer.complete();
+    if (!_active && _pending == 0 && _connections.isEmpty) _closer.complete();
+  }
 
   @pragma(preferInlinePragma)
-  bool hasConnection(int fd) => _registry._serversByClients.containsKey(fd);
+  bool hasPending() => _pending > 0 || _connections.isNotEmpty;
+
+  @pragma(preferInlinePragma)
+  bool hasConnection(int fd) => _connections.containsKey(fd);
 
   Future<void> close() async {
     if (_active) {
       _active = false;
       _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
-      _registry._serversByClients.forEach((key, value) {
-        if (value.fd == fd) _bindings.transport_worker_cancel_by_fd(_workerPointer, key);
-      });
-      if (_pending > 0) await _closer.future;
+      _connections.keys.forEach((fd) => _bindings.transport_worker_cancel_by_fd(_workerPointer, fd));
+      if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
       _bindings.transport_close_descritor(pointer.ref.fd);
       _bindings.transport_server_destroy(pointer);
     }
   }
 
-  void closeConnection(TransportChannel channel) {
+  Future<void> closeConnection(TransportChannel channel) async {
     if (!_active) throw TransportClosedException.forServer();
-    if (!hasConnection(channel.fd)) return;
+    final connection = _connections[channel.fd];
+    if (connection == null || !connection.active) return;
+    connection.active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, channel.fd);
+    await connection.closer;
   }
 }
 
 class TransportServerRegistry {
   final _servers = <int, TransportServer>{};
-  final _serversByClients = <int, TransportServer>{};
+  final _serverByConnections = <int, TransportServer>{};
 
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
@@ -341,18 +356,18 @@ class TransportServerRegistry {
   TransportServer getByServer(int fd) => _servers[fd]!;
 
   @pragma(preferInlinePragma)
-  TransportServer? getByClient(int fd) => _serversByClients[fd];
+  TransportServer? getByClient(int fd) => _serverByConnections[fd];
 
   @pragma(preferInlinePragma)
-  void addClient(int serverFd, int clientFd) => _serversByClients[clientFd] = _servers[serverFd]!;
+  void addClient(int serverFd, int clientFd) => _serverByConnections[clientFd] = _servers[serverFd]!;
 
   @pragma(preferInlinePragma)
-  void removeClient(int fd) => _serversByClients.remove(fd);
+  void removeClient(int fd) => _serverByConnections.remove(fd);
 
   @pragma(preferInlinePragma)
   void removeServer(int fd) {
     _servers.remove(fd);
-    _serversByClients.removeWhere((key, value) => value.fd == fd);
+    _serverByConnections.removeWhere((key, value) => value.fd == fd);
   }
 
   Future<void> close() => Future.wait(_servers.values.map((server) => server.close()));

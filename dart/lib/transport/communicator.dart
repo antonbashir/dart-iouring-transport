@@ -75,7 +75,7 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  void close() => _server.closeConnection(_channel);
+  Future<void> close() => _server.closeConnection(_channel);
 }
 
 class TransportServerDatagramReceiver {

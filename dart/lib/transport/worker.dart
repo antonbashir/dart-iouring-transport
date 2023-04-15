@@ -229,9 +229,12 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  bool _ensureServerIsActive(TransportServer server, int? bufferId) {
-    server.onComplete();
+  bool _ensureServerIsActive(TransportServer server, int? bufferId, int? connectionFd) {
     if (!server.active) {
+      if (connectionFd != null) {
+        server.onDisconect(connectionFd);
+        _serverRegistry.removeClient(connectionFd);
+      }
       if (bufferId != null) _releaseInboundBuffer(bufferId);
       if (!server.hasPending()) _serverRegistry.removeServer(server.fd);
       return false;
@@ -254,7 +257,7 @@ class TransportWorker {
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
     if (server == null) return;
-    if (!_ensureServerIsActive(server, bufferId)) {
+    if (!_ensureServerIsActive(server, bufferId, fd)) {
       _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -262,6 +265,7 @@ class TransportWorker {
       _releaseInboundBuffer(bufferId);
       _bindings.transport_close_descritor(fd);
       _serverRegistry.removeClient(fd);
+      server.onDisconect(fd);
       _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
       return;
     }
@@ -272,7 +276,8 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, bufferId)) {
+    server.onComplete();
+    if (!_ensureServerIsActive(server, bufferId, null)) {
       _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -289,7 +294,7 @@ class TransportWorker {
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByClient(fd);
     if (server == null) return;
-    if (!_ensureServerIsActive(server, bufferId)) {
+    if (!_ensureServerIsActive(server, bufferId, fd)) {
       _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -297,6 +302,7 @@ class TransportWorker {
       _releaseInboundBuffer(bufferId);
       _bindings.transport_close_descritor(fd);
       _serverRegistry.removeClient(fd);
+      server.onDisconect(fd);
       _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
       return;
     }
@@ -307,7 +313,8 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleSendMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, bufferId)) {
+    server.onComplete();
+    if (!_ensureServerIsActive(server, bufferId, null)) {
       _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -365,7 +372,8 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleAccept(int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
-    if (!_ensureServerIsActive(server, null)) return;
+    server.onComplete();
+    if (!_ensureServerIsActive(server, null, null)) return;
     if (result == 0) return;
     _serverRegistry.addClient(fd, result);
     server.reaccept();
