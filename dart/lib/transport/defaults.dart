@@ -19,6 +19,7 @@ class TransportDefaults {
         bufferSize: 4096,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,
+        timeoutCheckerPeriod: Duration(milliseconds: 500),
       );
 
   static TransportWorkerConfiguration outbound() => TransportWorkerConfiguration(
@@ -26,6 +27,7 @@ class TransportDefaults {
         bufferSize: 4096,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,
+        timeoutCheckerPeriod: Duration(milliseconds: 500),
       );
 
   static TransportTcpClientConfiguration tcpClient() => TransportTcpClientConfiguration(

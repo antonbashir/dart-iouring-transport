@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -9,17 +8,16 @@ import 'package:iouring_transport/transport/extensions.dart';
 import 'bindings.dart';
 import 'buffers.dart';
 import 'channels.dart';
-import 'client.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'factory.dart';
 import 'lookup.dart';
 import 'error.dart';
 import 'registry.dart';
-import 'server.dart';
 import 'package:meta/meta.dart';
 
 import 'callbacks.dart';
+import 'timeout.dart';
 
 class TransportWorker {
   final _initializer = Completer();
@@ -45,9 +43,10 @@ class TransportWorker {
   late final int _inboundRingSize;
   late final int _outboundRingSize;
   late final TransportErrorHandler _errorHandler;
-  late final Timer _timeoutChecker;
   late final TransportBuffers _inboundBuffers;
   late final TransportBuffers _outboundBuffers;
+  late final TransportTimeoutChecker _inboundTimeoutChecker;
+  late final TransportTimeoutChecker _outboundTimeoutChecker;
 
   late final SendPort? transmitter;
 
@@ -63,7 +62,8 @@ class TransportWorker {
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
-      _timeoutChecker.cancel();
+      _inboundTimeoutChecker.start();
+      _outboundTimeoutChecker.start();
       await _clientRegistry.close();
       await _serverRegistry.close();
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
@@ -142,13 +142,11 @@ class TransportWorker {
       _outboundBuffers,
       _callbacks,
     );
+    _inboundTimeoutChecker = TransportTimeoutChecker(_bindings, _inboundWorkerPointer, Duration(milliseconds: _inboundWorkerPointer.ref.timeout_checker_period_millis));
+    _outboundTimeoutChecker = TransportTimeoutChecker(_bindings, _outboundWorkerPointer, Duration(milliseconds: _outboundWorkerPointer.ref.timeout_checker_period_millis));
+    _inboundTimeoutChecker.start();
+    _outboundTimeoutChecker.start();
     _activator.close();
-    _timeoutChecker = Timer.periodic(Duration(milliseconds: 500), (timer) {
-      if (timer.isActive) {
-        _bindings.transport_worker_check_event_timeouts(_inboundWorkerPointer);
-        _bindings.transport_worker_check_event_timeouts(_outboundWorkerPointer);
-      }
-    });
   }
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
@@ -230,12 +228,12 @@ class TransportWorker {
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
     }
     if (result == 0) {
       unawaited(server.closeConnection(fd));
-      _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
+      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
     }
     _callbacks.notifyInboundRead(bufferId, result);
@@ -245,12 +243,12 @@ class TransportWorker {
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
     }
     if (result == 0) {
       _inboundBuffers.release(bufferId);
-      _callbacks.notifyInboundReadError(bufferId, TransportTimeoutException.forServer());
+      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
     }
     _callbacks.notifyInboundRead(bufferId, result);
@@ -260,12 +258,12 @@ class TransportWorker {
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
     if (result == 0) {
       unawaited(server.closeConnection(fd));
-      _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
+      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -276,12 +274,12 @@ class TransportWorker {
   void _handleSendMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
     _inboundBuffers.release(bufferId);
     if (result == 0) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportTimeoutException.forServer());
+      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
     _callbacks.notifyInboundWrite(bufferId);
@@ -291,12 +289,12 @@ class TransportWorker {
   void _handleReadReceiveMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
+      _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException());
       return;
     }
     if (result == 0) {
       _outboundBuffers.release(bufferId);
-      _callbacks.notifyOutboundReadError(bufferId, TransportTimeoutException.forClient());
+      _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException());
       return;
     }
     _callbacks.notifyOutboundRead(bufferId, result);
@@ -306,12 +304,12 @@ class TransportWorker {
   void _handleWriteSendMessageCallback(int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
+      _callbacks.notifyOutboundWriteError(bufferId, TransportCancelledException());
       return;
     }
     _outboundBuffers.release(bufferId);
     if (result == 0) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportTimeoutException.forClient());
+      _callbacks.notifyOutboundWriteError(bufferId, TransportCancelledException());
       return;
     }
     _callbacks.notifyOutboundWrite(bufferId);
@@ -321,7 +319,7 @@ class TransportWorker {
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyConnect()) {
-      _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
+      _callbacks.notifyConnectError(fd, TransportCancelledException());
       return;
     }
     _callbacks.notifyConnect(fd, client);

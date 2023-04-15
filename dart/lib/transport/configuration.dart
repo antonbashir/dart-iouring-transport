@@ -41,12 +41,14 @@ class TransportWorkerConfiguration {
   final int bufferSize;
   final int ringSize;
   final int ringFlags;
+  final Duration timeoutCheckerPeriod;
 
   TransportWorkerConfiguration({
     required this.buffersCount,
     required this.bufferSize,
     required this.ringSize,
     required this.ringFlags,
+    required this.timeoutCheckerPeriod,
   });
 
   TransportWorkerConfiguration copyWith({
@@ -54,12 +56,14 @@ class TransportWorkerConfiguration {
     int? bufferSize,
     int? ringSize,
     int? ringFlags,
+    Duration? timeoutCheckerPeriod,
   }) =>
       TransportWorkerConfiguration(
         buffersCount: buffersCount ?? this.buffersCount,
         bufferSize: bufferSize ?? this.bufferSize,
         ringSize: ringSize ?? this.ringSize,
         ringFlags: ringFlags ?? this.ringFlags,
+        timeoutCheckerPeriod: timeoutCheckerPeriod ?? this.timeoutCheckerPeriod,
       );
 }
 

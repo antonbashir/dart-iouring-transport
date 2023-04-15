@@ -20,6 +20,7 @@ extern "C"
     uint32_t buffer_size;
     size_t ring_size;
     int ring_flags;
+    uint64_t timeout_checker_period_millis;
   } transport_worker_configuration_t;
 
   typedef struct transport_worker
@@ -31,6 +32,7 @@ extern "C"
     struct iovec *buffers;
     uint32_t buffer_size;
     uint16_t buffers_count;
+    uint64_t timeout_checker_period_millis;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
     struct mh_events_t *events;

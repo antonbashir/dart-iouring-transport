@@ -67,8 +67,8 @@ class TransportServer {
 
   Future<TransportInboundStreamPayload> read(TransportChannel channel) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!active) throw TransportClosedException.forServer();
-    if (!hasConnection(channel.fd)) throw TransportClosedException.forConnection();
+    if (!active) throw TransportCancelledException();
+    if (!hasConnection(channel.fd)) throw TransportCancelledException();
     final completer = Completer<int>();
     callbacks.setInboundRead(bufferId, completer);
     channel.read(bufferId, readTimeout, transportEventRead);
@@ -77,7 +77,7 @@ class TransportServer {
         _buffers.read(bufferId, length),
         () => _buffers.release(bufferId),
         (bytes) {
-          if (!active) throw TransportClosedException.forServer();
+          if (!active) throw TransportCancelledException();
           _buffers.reuse(bufferId);
           final completer = Completer<void>();
           callbacks.setInboundWrite(bufferId, completer);
@@ -90,8 +90,8 @@ class TransportServer {
 
   Future<void> write(Uint8List bytes, TransportChannel channel) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!active) throw TransportClosedException.forServer();
-    if (!hasConnection(channel.fd)) throw TransportClosedException.forConnection();
+    if (!active) throw TransportCancelledException();
+    if (!hasConnection(channel.fd)) throw TransportCancelledException();
     final completer = Completer<void>();
     callbacks.setInboundWrite(bufferId, completer);
     channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
@@ -101,7 +101,7 @@ class TransportServer {
   Future<TransportInboundDatagramPayload> receiveMessage(TransportChannel channel, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!active) throw TransportClosedException.forServer();
+    if (!active) throw TransportCancelledException();
     final completer = Completer<int>();
     callbacks.setInboundRead(bufferId, completer);
     channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags, transportEventReceiveMessage);
@@ -120,7 +120,7 @@ class TransportServer {
         sender,
         () => _buffers.release(bufferId),
         (bytes, flags) {
-          if (!active) throw TransportClosedException.forServer();
+          if (!active) throw TransportCancelledException();
           _buffers.reuse(bufferId);
           final completer = Completer<void>();
           callbacks.setInboundWrite(bufferId, completer);
@@ -134,7 +134,7 @@ class TransportServer {
 
   Future<void> sendMessage(Uint8List bytes, int senderInitalBufferId, TransportChannel channel, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    if (!active) throw TransportClosedException.forServer();
+    if (!active) throw TransportCancelledException();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     final completer = Completer<void>();
     callbacks.setInboundWrite(bufferId, completer);
@@ -197,7 +197,7 @@ class TransportServer {
   }
 
   Future<void> closeConnection(int fd) async {
-    if (!_active) throw TransportClosedException.forServer();
+    if (!_active) throw TransportCancelledException();
     final connection = _connections[fd];
     if (connection == null || !connection.active) return;
     connection.active = false;

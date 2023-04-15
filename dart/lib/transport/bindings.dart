@@ -27479,6 +27479,9 @@ class transport_worker_configuration extends ffi.Struct {
 
   @ffi.Int()
   external int ring_flags;
+
+  @ffi.Uint64()
+  external int timeout_checker_period_millis;
 }
 
 class transport_worker extends ffi.Struct {
@@ -27498,6 +27501,9 @@ class transport_worker extends ffi.Struct {
 
   @ffi.Uint16()
   external int buffers_count;
+
+  @ffi.Uint64()
+  external int timeout_checker_period_millis;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 
@@ -31486,11 +31492,11 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'Debug';
+const String BUILD_TYPE = 'RelWithDebInfo';
 
 const String BUILD_INFO = '';
 
