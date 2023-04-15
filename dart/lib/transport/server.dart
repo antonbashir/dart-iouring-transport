@@ -187,30 +187,26 @@ class TransportServer {
   bool hasPending() => _pending > 0 || _connections.isNotEmpty;
 
   @pragma(preferInlinePragma)
-  bool hasConnection(int fd) => _connections.containsKey(fd);
+  bool connectionIsActive(int fd) => _connections[fd]?.active == true;
 
   Future<void> close() async {
-    if (_active) {
-      _active = false;
-      _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
-      _connections.forEach((fd, connection) {
-        connection.active = false;
-        _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
-      });
-      if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
-      _bindings.transport_close_descritor(pointer.ref.fd);
-      _bindings.transport_server_destroy(pointer);
-      _registry.removeServer(pointer.ref.fd);
-    }
+    if (!_active) return;
+    _active = false;
+    _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
+    await Future.wait(_connections.keys.map(closeConnection));
+    if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
+    _bindings.transport_close_descritor(pointer.ref.fd);
+    _bindings.transport_server_destroy(pointer);
+    _registry.removeServer(pointer.ref.fd);
   }
 
   Future<void> closeConnection(int fd) async {
-    if (!_active) return;
     final connection = _connections[fd];
     if (connection == null || !connection.active) return;
     connection.active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
-    await connection.closer;
+    if (connection.pending > 0) await connection.closer.future;
     _registry.removeConnection(fd);
+    _connections.remove(fd);
   }
 }

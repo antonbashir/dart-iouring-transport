@@ -62,7 +62,7 @@ class TransportServerConnection {
   Future<void> write(Uint8List bytes) => _server.write(bytes, _channel);
 
   void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
-    while (_server.active && _server.hasConnection(_channel.fd)) {
+    while (_server.active && _server.connectionIsActive(_channel.fd)) {
       await read().then((value) {
         if (_server.active) {
           listener(value);

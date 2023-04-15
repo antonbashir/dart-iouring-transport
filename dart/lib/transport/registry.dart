@@ -503,13 +503,7 @@ class TransportServerRegistry {
   void removeConnection(int fd) => _serverConnections.remove(fd);
 
   @pragma(preferInlinePragma)
-  void removeClient(int fd) => _serverConnections.remove(fd);
-
-  @pragma(preferInlinePragma)
-  void removeServer(int fd) {
-    _servers.remove(fd);
-    _serverConnections.removeWhere((key, value) => value.pointer.ref.fd == fd);
-  }
+  void removeServer(int fd) => _servers.remove(fd);
 
   Future<void> close() => Future.wait(_servers.values.map((server) => server.close()));
 

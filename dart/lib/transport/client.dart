@@ -123,14 +123,13 @@ class TransportClient {
   bool hasPending() => _pending > 0;
 
   Future<void> close() async {
-    if (_active) {
-      _active = false;
-      _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
-      if (_pending > 0) await _closer.future;
-      _channel.close();
-      _bindings.transport_client_destroy(_pointer);
-      _registry.removeClient(_pointer.ref.fd);
-    }
+    if (!_active) return;
+    _active = false;
+    _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
+    if (_pending > 0) await _closer.future;
+    _channel.close();
+    _bindings.transport_client_destroy(_pointer);
+    _registry.removeClient(_pointer.ref.fd);
   }
 }
 
