@@ -64,13 +64,9 @@ class TransportServerConnection {
   void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
     while (_server.active && _server.connectionIsActive(_channel.fd)) {
       await read().then((value) {
-        if (_server.active) {
-          listener(value);
-        }
+        listener(value);
       }, onError: (error, stackTrace) {
-        if (_server.active) {
-          onError?.call(error, stackTrace);
-        }
+        onError?.call(error, stackTrace);
       });
     }
   }
@@ -91,13 +87,9 @@ class TransportServerDatagramReceiver {
   void listen(void Function(TransportInboundDatagramPayload payload) listener, {void Function(Exception error, StackTrace stackTrace)? onError, int? flags}) async {
     while (_server.active) {
       await receiveMessage(flags: flags).then((value) {
-        if (_server.active) {
-          listener(value);
-        }
+        listener(value);
       }, onError: (error, stackTrace) {
-        if (_server.active) {
-          onError?.call(error, stackTrace);
-        }
+        onError?.call(error, stackTrace);
       });
     }
   }

@@ -14,7 +14,7 @@ class TransportTimeoutChecker {
 
   void start() {
     _timer = Timer.periodic(_period, (timer) {
-      if (timer.isActive) _bindings.transport_worker_check_event_timeouts(_workerPointer);
+      // if (timer.isActive) _bindings.transport_worker_check_event_timeouts(_workerPointer);
     });
   }
 

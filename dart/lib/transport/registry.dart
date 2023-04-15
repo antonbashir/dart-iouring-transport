@@ -620,8 +620,6 @@ class TransportServerRegistry {
     int flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
-    if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
-    if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (serverConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
     if (serverConfiguration.socketMaxConnections != null) {
       nativeServerConfiguration.ref.socket_max_connections = serverConfiguration.socketMaxConnections!;
@@ -651,8 +649,6 @@ class TransportServerRegistry {
     int flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
-    if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
-    if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (serverConfiguration.socketReceiveBufferSize != null) {
       flags |= transportSocketOptionSocketRcvbuf;
       nativeServerConfiguration.ref.socket_receive_buffer_size = serverConfiguration.socketReceiveBufferSize!;

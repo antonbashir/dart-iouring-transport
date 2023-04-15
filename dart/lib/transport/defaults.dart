@@ -85,7 +85,6 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
-        socketReusePort: true,
       );
 
   static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
@@ -93,6 +92,5 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
-        socketReusePort: true,
       );
 }

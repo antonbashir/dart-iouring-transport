@@ -14,9 +14,11 @@ class TransportException implements Exception {
 }
 
 class TransportCancelledException implements Exception {
-  final String message;
+  late final String message;
 
-  TransportCancelledException({this.message = "Event canceled"});
+  TransportCancelledException() {
+    message = "Event canceled\n${StackTrace.current.toString()}";
+  }
 
   @override
   String toString() => message;

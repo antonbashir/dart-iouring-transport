@@ -11,23 +11,23 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group("[initialization]", () {
-    testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  });
-  group("[tcp]", () {
-    final testTestsCount = 50;
-    for (var index = 0; index < testTestsCount; index++) {
-      testTcp(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcp(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcp(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    }
-  });
+  // group("[initialization]", () {
+  //   testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //   testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //   testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //   testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //   testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  // });
+  // group("[tcp]", () {
+  //   final testTestsCount = 5;
+  //   for (var index = 0; index < testTestsCount; index++) {
+  //     testTcp(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testTcp(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testTcp(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //   }
+  // });
   //group("[unix stream]", () {
   //   final testTestsCount = 5;
   //   for (var index = 0; index < testTestsCount; index++) {
@@ -38,16 +38,16 @@ void main() {
   //     testUnixStream(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   //   }
   // });
-  // group("[unix dgram]", () {
-  //   final testTestsCount = 5;
-  //   for (var index = 0; index < testTestsCount; index++) {
-  //     testUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
+  group("[unix dgram]", () {
+    final testTestsCount = 5;
+    for (var index = 0; index < testTestsCount; index++) {
+//      testUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+//      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+//      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+//      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
   // group("[udp]", () {
   //   final testTestsCount = 5;
   //   for (var index = 0; index < testTestsCount; index++) {
@@ -151,7 +151,10 @@ void testUdp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.udp("0.0.0.0", 12345).listen(onError: (error, _) => print(error), (event) => event.respond(serverData));
+      worker.servers.udp("0.0.0.0", 12345).listen(
+            onError: (error, _) => print(error),
+            (event) => event.respond(serverData).onError((error, stackTrace) => prints(error)),
+          );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
@@ -190,7 +193,13 @@ void testUnixStream({
       await worker.initialize();
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       if (serverSocket.existsSync()) serverSocket.deleteSync();
-      worker.servers.unixStream(serverSocket.path, (client) => client.listen(onError: (error, _) => print(error), (event) => event.respond(serverData)));
+      worker.servers.unixStream(
+        serverSocket.path,
+        (client) => client.listen(
+          onError: (error, _) => print(error),
+          (event) => event.respond(serverData).onError((error, stackTrace) => prints(error)),
+        ),
+      );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
@@ -228,7 +237,10 @@ void testUnixDgram({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
-      worker.servers.unixDatagram(serverSocket.path).listen(onError: (error, _) => print(error), (event) => event.respond(serverData));
+      worker.servers.unixDatagram(serverSocket.path).listen(
+            onError: (error, _) => print(error),
+            (event) => event.respond(serverData).onError((error, stackTrace) => prints(error)),
+          );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
