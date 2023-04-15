@@ -67,21 +67,25 @@ class TransportServer {
 
   Future<TransportInboundStreamPayload> read(TransportChannel channel) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!active) throw TransportCancelledException();
-    if (!hasConnection(channel.fd)) throw TransportCancelledException();
+    if (!active) throw TransportClosedException.forServer();
+    final connection = _connections[channel.fd];
+    if (connection == null || !connection.active) throw TransportClosedException.forConnection();
     final completer = Completer<int>();
     callbacks.setInboundRead(bufferId, completer);
     channel.read(bufferId, readTimeout, transportEventRead);
+    connection.pending++;
     return completer.future.then(
       (length) => TransportInboundStreamPayload(
         _buffers.read(bufferId, length),
         () => _buffers.release(bufferId),
         (bytes) {
-          if (!active) throw TransportCancelledException();
+          if (!active) throw TransportClosedException.forServer();
+          if (!connection.active) throw TransportClosedException.forConnection();
           _buffers.reuse(bufferId);
           final completer = Completer<void>();
           callbacks.setInboundWrite(bufferId, completer);
           channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
+          connection.pending++;
           return completer.future;
         },
       ),
@@ -90,18 +94,20 @@ class TransportServer {
 
   Future<void> write(Uint8List bytes, TransportChannel channel) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!active) throw TransportCancelledException();
-    if (!hasConnection(channel.fd)) throw TransportCancelledException();
+    if (!active) throw TransportClosedException.forServer();
+    final connection = _connections[channel.fd];
+    if (connection == null || !connection.active) throw TransportClosedException.forConnection();
     final completer = Completer<void>();
     callbacks.setInboundWrite(bufferId, completer);
     channel.write(bytes, bufferId, writeTimeout, transportEventWrite);
+    connection.pending++;
     return completer.future;
   }
 
   Future<TransportInboundDatagramPayload> receiveMessage(TransportChannel channel, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!active) throw TransportCancelledException();
+    if (!active) throw TransportClosedException.forServer();
     final completer = Completer<int>();
     callbacks.setInboundRead(bufferId, completer);
     channel.receiveMessage(bufferId, pointer.ref.family, readTimeout, flags, transportEventReceiveMessage);
@@ -120,7 +126,7 @@ class TransportServer {
         sender,
         () => _buffers.release(bufferId),
         (bytes, flags) {
-          if (!active) throw TransportCancelledException();
+          if (!active) throw TransportClosedException.forServer();
           _buffers.reuse(bufferId);
           final completer = Completer<void>();
           callbacks.setInboundWrite(bufferId, completer);
@@ -134,7 +140,7 @@ class TransportServer {
 
   Future<void> sendMessage(Uint8List bytes, int senderInitalBufferId, TransportChannel channel, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    if (!active) throw TransportCancelledException();
+    if (!active) throw TransportClosedException.forServer();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     final completer = Completer<void>();
     callbacks.setInboundWrite(bufferId, completer);
@@ -188,16 +194,19 @@ class TransportServer {
     if (_active) {
       _active = false;
       _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
-      _connections.keys.forEach((fd) => _bindings.transport_worker_cancel_by_fd(_workerPointer, fd));
+      _connections.forEach((fd, connection) {
+        connection.active = false;
+        _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
+      });
       if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
-      _bindings.transport_close_descritor(pointer.ref.fd);
+      _bindings.transport_close_descritor(fd);
       _bindings.transport_server_destroy(pointer);
       _registry.removeServer(fd);
     }
   }
 
   Future<void> closeConnection(int fd) async {
-    if (!_active) throw TransportCancelledException();
+    if (!_active) return;
     final connection = _connections[fd];
     if (connection == null || !connection.active) return;
     connection.active = false;

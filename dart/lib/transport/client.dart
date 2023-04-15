@@ -46,7 +46,7 @@ class TransportClient {
 
   Future<TransportOutboundPayload> read() async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportCancelledException();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
@@ -56,7 +56,7 @@ class TransportClient {
 
   Future<void> write(Uint8List bytes) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportCancelledException();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
@@ -67,7 +67,7 @@ class TransportClient {
   Future<TransportOutboundPayload> receiveMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportCancelledException();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
     _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
@@ -78,7 +78,7 @@ class TransportClient {
   Future<void> sendMessage(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportCancelledException();
+    if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
     _channel.sendMessage(bytes, bufferId, _pointer.ref.family, _bindings.transport_client_get_destination_address(_pointer), _writeTimeout, flags, transportEventSendMessage | transportEventClient);

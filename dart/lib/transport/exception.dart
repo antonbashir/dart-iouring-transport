@@ -21,3 +21,16 @@ class TransportCancelledException implements Exception {
   @override
   String toString() => message;
 }
+
+class TransportClosedException implements Exception {
+  final String message;
+
+  TransportClosedException._(this.message);
+
+  factory TransportClosedException.forServer() => TransportClosedException._("Server closed");
+  factory TransportClosedException.forConnection() => TransportClosedException._("Server connection closed");
+  factory TransportClosedException.forClient() => TransportClosedException._("Client closed");
+
+  @override
+  String toString() => message;
+}
