@@ -28,8 +28,6 @@ class TransportServer {
   final TransportBuffers _buffers;
   final TransportServerRegistry _registry;
 
-  late final int fd;
-
   var _active = true;
   bool get active => _active;
 
@@ -51,7 +49,7 @@ class TransportServer {
 
   @pragma(preferInlinePragma)
   void accept(void Function(TransportServerConnection communicator) onAccept) {
-    callbacks.setAccept(fd, (channel) {
+    callbacks.setAccept(pointer.ref.fd, (channel) {
       _connections[channel.fd] = _TransportConnectionState();
       onAccept(TransportServerConnection(this, channel));
     });
@@ -179,7 +177,8 @@ class TransportServer {
     final connection = _connections[fd]!;
     connection.pending--;
     if (_active && connection.active) return true;
-    if (!connection.active) connection.closer.complete();
+    _buffers.release(bufferId);
+    if (!connection.active && connection.pending == 0) connection.closer.complete();
     if (!_active && _pending == 0 && _connections.isEmpty) _closer.complete();
     return false;
   }
@@ -193,15 +192,15 @@ class TransportServer {
   Future<void> close() async {
     if (_active) {
       _active = false;
-      _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
+      _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
       _connections.forEach((fd, connection) {
         connection.active = false;
         _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
       });
       if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
-      _bindings.transport_close_descritor(fd);
+      _bindings.transport_close_descritor(pointer.ref.fd);
       _bindings.transport_server_destroy(pointer);
-      _registry.removeServer(fd);
+      _registry.removeServer(pointer.ref.fd);
     }
   }
 

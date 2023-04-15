@@ -14,7 +14,6 @@ import 'factory.dart';
 import 'lookup.dart';
 import 'error.dart';
 import 'registry.dart';
-import 'package:meta/meta.dart';
 
 import 'callbacks.dart';
 import 'timeout.dart';
@@ -62,8 +61,8 @@ class TransportWorker {
     });
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((_) async {
-      _inboundTimeoutChecker.start();
-      _outboundTimeoutChecker.start();
+      _inboundTimeoutChecker.stop();
+      _outboundTimeoutChecker.stop();
       await _clientRegistry.close();
       await _serverRegistry.close();
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
@@ -228,6 +227,7 @@ class TransportWorker {
       return;
     }
     if (result == 0) {
+      _inboundBuffers.release(bufferId);
       unawaited(server.closeConnection(fd));
       _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
@@ -242,12 +242,12 @@ class TransportWorker {
       _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
+    _inboundBuffers.release(bufferId);
     if (result == 0) {
       unawaited(server.closeConnection(fd));
       _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
-    _inboundBuffers.release(bufferId);
     _callbacks.notifyInboundWrite(bufferId);
   }
 
