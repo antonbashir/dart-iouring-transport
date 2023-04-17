@@ -29,9 +29,9 @@ class TransportClosedException implements Exception {
 
   TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer() => TransportClosedException._("Server closed");
-  factory TransportClosedException.forConnection() => TransportClosedException._("Server connection closed");
-  factory TransportClosedException.forClient() => TransportClosedException._("Client closed");
+  factory TransportClosedException.forServer() => TransportClosedException._("Server closed\n${StackTrace.current}");
+  factory TransportClosedException.forConnection() => TransportClosedException._("Server connection closed\n${StackTrace.current}");
+  factory TransportClosedException.forClient() => TransportClosedException._("Client closed\n${StackTrace.current}");
 
   @override
   String toString() => message;
@@ -42,7 +42,7 @@ class TransportZeroDataException implements Exception {
 
   TransportZeroDataException._(this.message);
 
-  factory TransportZeroDataException() => TransportZeroDataException._("Event completed with zero result (no data)");
+  factory TransportZeroDataException() => TransportZeroDataException._("Event completed with zero result (no data)\n${StackTrace.current}");
 
   @override
   String toString() => message;

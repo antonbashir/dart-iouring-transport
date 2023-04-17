@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:retry/retry.dart';
+
 import 'exception.dart';
 import 'buffers.dart';
 import 'channels.dart';
@@ -44,9 +46,7 @@ class TransportClientDatagramCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags}) {
-    return _client.sendMessage(bytes, flags: flags).then((value) => value, onError: (_) => Future.delayed(Duration(milliseconds: 100)).then((_) => sendMessage(bytes, flags: flags)));
-  }
+  Future<void> sendMessage(Uint8List bytes, {int? flags}) => retry(() => _client.sendMessage(bytes, flags: flags), retryIf: (exception) => !(exception is TransportClosedException));
 
   @pragma(preferInlinePragma)
   Future<void> close() => _client.close();

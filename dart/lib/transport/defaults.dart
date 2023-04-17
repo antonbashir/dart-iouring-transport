@@ -37,6 +37,12 @@ class TransportDefaults {
         connectTimeout: Duration(seconds: 60),
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
+        socketNonblock: true,
+        socketClockexec: true,
+        tcpFastopen: true,
+        tcpNodelay: true,
+        tcpQuickack: true,
+        tcpDeferAccept: true,
       );
 
   static TransportUdpClientConfiguration udpClient() => TransportUdpClientConfiguration(
@@ -44,6 +50,8 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
+        socketNonblock: true,
+        socketClockexec: true,
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
@@ -73,6 +81,12 @@ class TransportDefaults {
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         socketReusePort: true,
+        socketNonblock: true,
+        socketClockexec: true,
+        tcpFastopen: true,
+        tcpNodelay: true,
+        tcpQuickack: true,
+        tcpDeferAccept: true,
       );
 
   static TransportUdpServerConfiguration udpServer() => TransportUdpServerConfiguration(
@@ -81,6 +95,8 @@ class TransportDefaults {
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
         socketReusePort: true,
+        socketNonblock: true,
+        socketClockexec: true,
       );
 
   static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(

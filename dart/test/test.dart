@@ -193,7 +193,7 @@ void testUnixStream({
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.servers.unixStream(
         serverSocket.path,
-        (client) => client.listen(
+        (connection) => connection.listen(
           onError: (error, _) => print(error),
           (event) => event.respond(serverData).onError((error, stackTrace) => print(error)),
         ),
