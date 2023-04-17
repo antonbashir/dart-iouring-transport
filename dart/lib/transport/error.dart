@@ -28,7 +28,7 @@ class TransportErrorHandler {
   void _handleRead(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forConnection());
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -37,13 +37,13 @@ class TransportErrorHandler {
       _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundReadError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleWrite(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forConnection());
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -52,13 +52,13 @@ class TransportErrorHandler {
       _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyInboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundWriteError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -66,13 +66,13 @@ class TransportErrorHandler {
       _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyInboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundReadError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -80,7 +80,7 @@ class TransportErrorHandler {
       _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyInboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundWriteError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleAccept(int fd) {
@@ -92,7 +92,7 @@ class TransportErrorHandler {
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyConnect()) {
-      _callbacks.notifyConnectError(fd, TransportCancelledException());
+      _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       return;
     }
     unawaited(client.close());
@@ -100,13 +100,13 @@ class TransportErrorHandler {
       _callbacks.notifyConnectError(fd, TransportCancelledException());
       return;
     }
-    _callbacks.notifyConnectError(fd, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyConnectError(fd, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException());
+      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
       return;
     }
     _outboundBuffers.release(bufferId);
@@ -114,13 +114,13 @@ class TransportErrorHandler {
       _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyOutboundReadError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _callbacks.notifyOutboundReadError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportCancelledException());
+      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
       return;
     }
     _outboundBuffers.release(bufferId);
@@ -128,7 +128,7 @@ class TransportErrorHandler {
       _callbacks.notifyOutboundWriteError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyOutboundWriteError(bufferId, TransportException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _callbacks.notifyOutboundWriteError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
   }
 
   void handle(int result, int data, int fd, int event) {

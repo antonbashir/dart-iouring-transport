@@ -88,13 +88,13 @@ class Transport {
       _workerClosers.add(ports[3]);
       final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.inbound_worker_configuration, inboundWorkerAddresses.length);
       if (inboundWorkerPointer == nullptr) {
-        listenerCompleter.completeError(TransportException("[worker] is null"));
+        listenerCompleter.completeError(TransportEventException("[worker] is null"));
         return;
       }
       inboundWorkerAddresses.add(inboundWorkerPointer.address);
       final outboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.outbound_worker_configuration, outboundWorkerAddresses.length);
       if (outboundWorkerPointer == nullptr) {
-        listenerCompleter.completeError(TransportException("[worker] is null"));
+        listenerCompleter.completeError(TransportEventException("[worker] is null"));
         return;
       }
       outboundWorkerAddresses.add(outboundWorkerPointer.address);
@@ -119,7 +119,7 @@ class Transport {
       });
       final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration, listeners);
       if (listenerPointer == nullptr) {
-        listenerCompleter.completeError(TransportException("[listener] is null"));
+        listenerCompleter.completeError(TransportEventException("[listener] is null"));
         fromTransportToListener.close();
         return;
       }

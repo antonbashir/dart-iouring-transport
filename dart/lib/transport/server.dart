@@ -103,7 +103,7 @@ class TransportServer {
   }
 
   Future<TransportInboundDatagramPayload> receiveMessage(TransportChannel channel, {int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag;
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (!active) throw TransportClosedException.forServer();
     final completer = Completer<int>();
@@ -128,8 +128,7 @@ class TransportServer {
           _buffers.reuse(bufferId);
           final completer = Completer<void>();
           callbacks.setInboundWrite(bufferId, completer);
-          channel.respondMessage(
-              bytes, bufferId, pointer.ref.family, writeTimeout, flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag, transportEventSendMessage);
+          channel.respondMessage(bytes, bufferId, pointer.ref.family, writeTimeout, flags ?? TransportDatagramMessageFlag.trunc.flag, transportEventSendMessage);
           _pending++;
           return completer.future;
         },
@@ -138,7 +137,7 @@ class TransportServer {
   }
 
   Future<void> sendMessage(Uint8List bytes, int senderInitalBufferId, TransportChannel channel, {int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag;
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     if (!active) throw TransportClosedException.forServer();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     final completer = Completer<void>();

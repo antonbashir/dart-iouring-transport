@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'exception.dart';
 import 'buffers.dart';
 import 'channels.dart';
 import 'client.dart';
@@ -43,7 +44,9 @@ class TransportClientDatagramCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags}) => _client.sendMessage(bytes, flags: flags);
+  Future<void> sendMessage(Uint8List bytes, {int? flags}) {
+    return _client.sendMessage(bytes, flags: flags).then((value) => value, onError: (_) => Future.delayed(Duration(milliseconds: 100)).then((_) => sendMessage(bytes, flags: flags)));
+  }
 
   @pragma(preferInlinePragma)
   Future<void> close() => _client.close();
@@ -66,6 +69,8 @@ class TransportServerConnection {
       await read().then((value) {
         listener(value);
       }, onError: (error, stackTrace) {
+        if (error is TransportClosedException) return;
+        if (error is TransportZeroDataException) return;
         onError?.call(error, stackTrace);
       });
     }
@@ -89,6 +94,8 @@ class TransportServerDatagramReceiver {
       await receiveMessage(flags: flags).then((value) {
         listener(value);
       }, onError: (error, stackTrace) {
+        if (error is TransportClosedException) return;
+        if (error is TransportZeroDataException) return;
         onError?.call(error, stackTrace);
       });
     }

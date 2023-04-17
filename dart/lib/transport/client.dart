@@ -65,7 +65,7 @@ class TransportClient {
   }
 
   Future<TransportOutboundPayload> receiveMessage({int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag;
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<int>();
@@ -76,7 +76,7 @@ class TransportClient {
   }
 
   Future<void> sendMessage(Uint8List bytes, {int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag;
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (!_active) throw TransportClosedException.forClient();
     final completer = Completer<void>();
