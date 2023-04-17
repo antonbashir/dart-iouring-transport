@@ -115,13 +115,13 @@ void testTcp({
           12345,
           (communicator) => communicator.listen(
                 onError: (error, _) => print(error),
-                (event) => event.respond(serverData).onError((error, stackTrace) => print(error)),
+                (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
               ));
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
     });
-    (await done.take(workers * clientsPool).toList()).forEach((response) => expect(response, serverData));
+    (await done.take(workers * clientsPool * 2).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -151,7 +151,7 @@ void testUdp({
       await worker.initialize();
       worker.servers.udp("0.0.0.0", 12345).listen(
             onError: (error, _) => print(error),
-            (event) => event.respond(serverData).onError((error, stackTrace) => print(error)),
+            (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
@@ -161,7 +161,7 @@ void testUdp({
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
+    (await done.take(workers * clients * 2).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -195,7 +195,7 @@ void testUnixStream({
         serverSocket.path,
         (connection) => connection.listen(
           onError: (error, _) => print(error),
-          (event) => event.respond(serverData).onError((error, stackTrace) => print(error)),
+          (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
@@ -203,7 +203,7 @@ void testUnixStream({
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
     });
-    (await done.take(workers * clientsPool).toList()).forEach((response) => expect(response, serverData));
+    (await done.take(workers * clientsPool * 2).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
@@ -235,40 +235,21 @@ void testUnixDgram({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
-      var serverReceived = 0;
-      var clientReceived = 0;
-      var errorReceived = 0;
-      var clientSent = 0;
       worker.servers.unixDatagram(serverSocket.path).listen(
-        onError: (error, _) => print(error),
-        (event) {
-          serverReceived++;
-          event.respond(serverData);
-        },
-      );
+            onError: (error, _) => print(error),
+            (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+          );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-        responseFutures.add(client.sendMessage(clientData).then(onError: (_) => errorReceived++, (value) {
-          clientSent++;
-          return client.receiveMessage();
-        }).then((value) {
-          clientReceived++;
-          return value.extract();
-        }));
+        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
       }
-      Timer.periodic(Duration(seconds: 1), (timer) {
-        print("serverReceived: $serverReceived");
-        print("clientReceived: $clientReceived");
-        print("clientSent: $clientSent");
-        print("errorReceived: $errorReceived");
-      });
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
     });
-    (await done.take(workers * clients).toList()).forEach((response) => expect(response, serverData));
+    (await done.take(workers * clients * 2).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
