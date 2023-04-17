@@ -46,7 +46,7 @@ class TransportClientDatagramCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags}) => retry(() => _client.sendMessage(bytes, flags: flags), retryIf: (exception) => !(exception is TransportClosedException));
+  Future<void> sendMessage(Uint8List bytes, {int? flags}) => retry(() => _client.sendMessage(bytes, flags: flags), retryIf: (exception) => exception is TransportZeroDataException);
 
   @pragma(preferInlinePragma)
   Future<void> close() => _client.close();
