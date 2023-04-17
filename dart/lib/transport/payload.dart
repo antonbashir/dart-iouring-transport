@@ -39,14 +39,14 @@ class TransportInboundStreamPayload {
 class TransportInboundDatagramPayload {
   final Uint8List bytes;
   final void Function() _releaser;
-  final Future<void> Function(Uint8List bytes, int flags) _responder;
+  final Future<void> Function(Uint8List bytes, {int? flags}) _responder;
   final TransportInboundDatagramSender sender;
 
   TransportInboundDatagramPayload(this.bytes, this.sender, this._releaser, this._responder);
 
   void release() => _releaser();
 
-  Future<void> respond(Uint8List bytes, {int? flags}) => _responder(bytes, flags ?? TransportDatagramMessageFlag.trunc.flag);
+  Future<void> respond(Uint8List bytes, {int? flags}) => _responder(bytes);
 
   List<int> extract({bool release = true}) {
     final result = bytes.toList();

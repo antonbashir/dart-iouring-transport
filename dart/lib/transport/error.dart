@@ -14,7 +14,7 @@ class TransportErrorHandler {
   final TransportBindings _bindings;
   final TransportBuffers _inboundBuffers;
   final TransportBuffers _outboundBuffers;
-  final Transportcallbacks _callbacks;
+  final TransportCallbacks _callbacks;
 
   TransportErrorHandler(
     this._serverRegistry,

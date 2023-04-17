@@ -4,7 +4,7 @@ import 'channels.dart';
 import 'client.dart';
 import 'constants.dart';
 
-class Transportcallbacks {
+class TransportCallbacks {
   final _connect = <int, Completer<TransportClient>>{};
   final _accept = <int, void Function(TransportChannel channel)>{};
   final _custom = <int, Completer<int>>{};
@@ -13,7 +13,7 @@ class Transportcallbacks {
   final _outboundRead = <Completer<int>>[];
   final _outboundWrite = <Completer<void>>[];
 
-  Transportcallbacks(int inboundBuffersCount, int outboundBuffersCount) {
+  TransportCallbacks(int inboundBuffersCount, int outboundBuffersCount) {
     for (var index = 0; index < inboundBuffersCount; index++) {
       _inboundRead.add(Completer());
       _inboundWrite.add(Completer());

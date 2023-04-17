@@ -8,15 +8,14 @@ import 'constants.dart';
 
 class TransportBuffers {
   final TransportBindings _bindings;
-  final Pointer<iovec> _buffers;
+  final Pointer<iovec> buffers;
   final Queue<Completer<void>> _finalizers = Queue();
   final Pointer<transport_worker_t> _worker;
 
-  TransportBuffers(this._bindings, this._buffers, this._worker);
+  TransportBuffers(this._bindings, this.buffers, this._worker);
 
   @pragma(preferInlinePragma)
   void release(int bufferId) {
-    print("release $bufferId");
     _bindings.transport_worker_release_buffer(_worker, bufferId);
     if (_finalizers.isNotEmpty) _finalizers.removeLast().complete();
   }
@@ -28,14 +27,14 @@ class TransportBuffers {
 
   @pragma(preferInlinePragma)
   Uint8List read(int bufferId, int length) {
-    final buffer = _buffers[bufferId];
+    final buffer = buffers[bufferId];
     final bufferBytes = buffer.iov_base.cast<Uint8>();
     return bufferBytes.asTypedList(length);
   }
 
   @pragma(preferInlinePragma)
   void write(int bufferId, Uint8List bytes) {
-    final buffer = _buffers[bufferId];
+    final buffer = buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
     buffer.iov_len = bytes.length;
   }
@@ -52,6 +51,7 @@ class TransportBuffers {
     while (bufferId == transportBufferUsed) {
       final completer = Completer();
       _finalizers.add(completer);
+      print("wait buffer");
       await completer.future;
       bufferId = _bindings.transport_worker_get_buffer(_worker);
     }

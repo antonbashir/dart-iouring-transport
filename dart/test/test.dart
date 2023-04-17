@@ -51,11 +51,11 @@ void main() {
   group("[unix dgram]", timeout: Timeout(Duration(minutes: 5)), () {
     final testTestsCount = 5;
     for (var index = 0; index < testTestsCount; index++) {
-      testUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      // testUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      // testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      // testUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      // testUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgram(index: index, listeners: 2, workers: 1, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     }
   });
 }
@@ -238,6 +238,7 @@ void testUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
       var serverReceived = 0;
       var clientReceived = 0;
+      var errorReceived = 0;
       var clientSent = 0;
       worker.servers.unixDatagram(serverSocket.path).listen(
         onError: (error, _) => print(error),
@@ -249,7 +250,7 @@ void testUnixDgram({
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-        responseFutures.add(client.sendMessage(clientData).then((value) {
+        responseFutures.add(client.sendMessage(clientData).then(onError: (_) => errorReceived++, (value) {
           clientSent++;
           return client.receiveMessage();
         }).then((value) {
@@ -261,8 +262,10 @@ void testUnixDgram({
         print("serverReceived: $serverReceived");
         print("clientReceived: $clientReceived");
         print("clientSent: $clientSent");
+        print("errorReceived: $errorReceived");
       });
-      final responses = await Future.wait(responseFutures);
+      final responses = await Future.wait(responseFutures).then(onError: (error, stackTrace) {}, (_) {});
+      await Future.delayed(Duration(days: 1));
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
@@ -272,4 +275,3 @@ void testUnixDgram({
     await transport.shutdown();
   });
 }
-

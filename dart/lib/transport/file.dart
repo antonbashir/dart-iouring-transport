@@ -9,7 +9,7 @@ import 'callbacks.dart';
 
 class TransportFile {
   final TransportChannel _channel;
-  final Transportcallbacks _states;
+  final TransportCallbacks _states;
   final TransportBuffers _buffers;
 
   TransportFile(this._states, this._channel, this._buffers);

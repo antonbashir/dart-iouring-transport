@@ -35,10 +35,10 @@ class TransportWorker {
   late final RawReceivePort _closer;
   late final TransportClientRegistry _clientRegistry;
   late final TransportServerRegistry _serverRegistry;
-  late final TransportClientsFactory _clientsfactory;
-  late final TransportServersFactory _serversfactory;
-  late final TransportFilesFactory _filesfactory;
-  late final Transportcallbacks _callbacks;
+  late final TransportClientsFactory _clientsFactory;
+  late final TransportServersFactory _serversFactory;
+  late final TransportFilesFactory _filesFactory;
+  late final TransportCallbacks _callbacks;
   late final int _inboundRingSize;
   late final int _outboundRingSize;
   late final TransportErrorHandler _errorHandler;
@@ -50,9 +50,9 @@ class TransportWorker {
   late final SendPort? transmitter;
 
   int get id => _inboundWorkerPointer.ref.id;
-  TransportServersFactory get servers => _serversfactory;
-  TransportClientsFactory get clients => _clientsfactory;
-  TransportFilesFactory get files => _filesfactory;
+  TransportServersFactory get servers => _serversFactory;
+  TransportClientsFactory get clients => _clientsFactory;
+  TransportFilesFactory get files => _filesFactory;
 
   TransportWorker(SendPort toTransport) {
     _listener = RawReceivePort((_) {
@@ -96,7 +96,7 @@ class TransportWorker {
       _outboundWorkerPointer.ref.buffers,
       _outboundWorkerPointer,
     );
-    _callbacks = Transportcallbacks(
+    _callbacks = TransportCallbacks(
       _inboundWorkerPointer.ref.buffers_count,
       _outboundWorkerPointer.ref.buffers_count,
     );
@@ -112,16 +112,16 @@ class TransportWorker {
       _inboundWorkerPointer,
       _inboundBuffers,
     );
-    _serversfactory = TransportServersFactory(
+    _serversFactory = TransportServersFactory(
       _bindings,
       _serverRegistry,
       _inboundWorkerPointer,
       _inboundBuffers,
     );
-    _clientsfactory = TransportClientsFactory(
+    _clientsFactory = TransportClientsFactory(
       _clientRegistry,
     );
-    _filesfactory = TransportFilesFactory(
+    _filesFactory = TransportFilesFactory(
       _bindings,
       _callbacks,
       _outboundWorkerPointer,
@@ -195,7 +195,11 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_outboundRing, 1);
       final event = data & 0xffff;
-      if (result == 0) print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      if (result == 0) {
+        print("${event.transportEventToString()} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = ${(data >> 32) & 0xffffffff}");
+        print(_outboundBuffers.buffers[((data >> 16) & 0xffff)].iov_base.cast<Utf8>().toDartString());
+        print(_outboundBuffers.buffers[((data >> 16) & 0xffff)].iov_len);
+      }
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
         final fd = (data >> 32) & 0xffffffff;

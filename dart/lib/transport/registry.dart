@@ -16,7 +16,7 @@ import 'server.dart';
 
 class TransportClientRegistry {
   final TransportBindings _bindings;
-  final Transportcallbacks _callbacks;
+  final TransportCallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
 
@@ -356,7 +356,7 @@ class TransportServerRegistry {
 
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
-  final Transportcallbacks _callbacks;
+  final TransportCallbacks _callbacks;
   final TransportBuffers _buffers;
 
   TransportServerRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers);
@@ -668,7 +668,7 @@ class TransportServerRegistry {
 
 class TransportFilesFactory {
   final TransportBindings _bindings;
-  final Transportcallbacks _callbacks;
+  final TransportCallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
 

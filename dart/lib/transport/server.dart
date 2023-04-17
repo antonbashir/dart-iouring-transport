@@ -24,7 +24,7 @@ class TransportServer {
   final TransportBindings _bindings;
   final int readTimeout;
   final int writeTimeout;
-  final Transportcallbacks callbacks;
+  final TransportCallbacks callbacks;
   final TransportBuffers _buffers;
   final TransportServerRegistry _registry;
 
@@ -103,7 +103,7 @@ class TransportServer {
   }
 
   Future<TransportInboundDatagramPayload> receiveMessage(TransportChannel channel, {int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (!active) throw TransportClosedException.forServer();
     final completer = Completer<int>();
@@ -123,12 +123,13 @@ class TransportServer {
         bytes,
         sender,
         () => _buffers.release(bufferId),
-        (bytes, flags) {
+        (bytes, {int? flags}) {
           if (!active) throw TransportClosedException.forServer();
           _buffers.reuse(bufferId);
           final completer = Completer<void>();
           callbacks.setInboundWrite(bufferId, completer);
-          channel.respondMessage(bytes, bufferId, pointer.ref.family, writeTimeout, flags, transportEventSendMessage);
+          channel.respondMessage(
+              bytes, bufferId, pointer.ref.family, writeTimeout, flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag, transportEventSendMessage);
           _pending++;
           return completer.future;
         },
@@ -137,7 +138,7 @@ class TransportServer {
   }
 
   Future<void> sendMessage(Uint8List bytes, int senderInitalBufferId, TransportChannel channel, {int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag | TransportDatagramMessageFlag.waitall.flag;
     if (!active) throw TransportClosedException.forServer();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     final completer = Completer<void>();
