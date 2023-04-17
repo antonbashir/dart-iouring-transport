@@ -16,6 +16,7 @@ class TransportBuffers {
 
   @pragma(preferInlinePragma)
   void release(int bufferId) {
+    print("release $bufferId");
     _bindings.transport_worker_release_buffer(_worker, bufferId);
     if (_finalizers.isNotEmpty) _finalizers.removeLast().complete();
   }

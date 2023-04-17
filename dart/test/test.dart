@@ -38,16 +38,6 @@ void main() {
   //     testUnixStream(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   //   }
   // });
-  group("[unix dgram]", () {
-    final testTestsCount = 5;
-    for (var index = 0; index < testTestsCount; index++) {
-      testUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    }
-  });
   // group("[udp]", () {
   //   final testTestsCount = 5;
   //   for (var index = 0; index < testTestsCount; index++) {
@@ -58,6 +48,16 @@ void main() {
   //     testUdp(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   //   }
   // });
+  group("[unix dgram]", timeout: Timeout(Duration(minutes: 5)), () {
+    final testTestsCount = 5;
+    for (var index = 0; index < testTestsCount; index++) {
+      testUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
 }
 
 void testInitialization({
@@ -124,7 +124,6 @@ void testTcp({
     });
     (await done.take(workers * clientsPool).toList()).forEach((response) => expect(response, serverData));
     done.close();
-    print("done");
     await transport.shutdown();
   });
 }
@@ -237,15 +236,32 @@ void testUnixDgram({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
+      var serverReceived = 0;
+      var clientReceived = 0;
+      var clientSent = 0;
       worker.servers.unixDatagram(serverSocket.path).listen(
-            onError: (error, _) => print(error),
-            (event) => event.respond(serverData).onError((error, stackTrace) => prints(error)),
-          );
+        onError: (error, _) => print(error),
+        (event) {
+          serverReceived++;
+          event.respond(serverData).onError((error, stackTrace) => prints(error));
+        },
+      );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
+        responseFutures.add(client.sendMessage(clientData).then((value) {
+          clientSent++;
+          return client.receiveMessage();
+        }).then((value) {
+          clientReceived++;
+          return value.extract();
+        }));
       }
+      Timer.periodic(Duration(seconds: 1), (timer) {
+        print("serverReceived: $serverReceived");
+        print("clientReceived: $clientReceived");
+        print("clientSent: $clientSent");
+      });
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
@@ -256,3 +272,4 @@ void testUnixDgram({
     await transport.shutdown();
   });
 }
+

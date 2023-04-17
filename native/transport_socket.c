@@ -35,14 +35,24 @@ int64_t transport_socket_create_tcp(uint64_t flags,
 
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_NONBLOCK, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
   }
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_CLOEXEC, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
@@ -198,19 +208,28 @@ int64_t transport_socket_create_udp(uint64_t flags,
 
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_NONBLOCK, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
   }
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_CLOEXEC, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
   }
-  if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_REUSEADDR)
   {
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &activate_option, sizeof(int)))
     {
@@ -322,14 +341,24 @@ int64_t transport_socket_create_unix_stream(uint64_t flags,
 
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_NONBLOCK, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
   }
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_CLOEXEC, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
@@ -389,14 +418,24 @@ int64_t transport_socket_create_unix_dgram(uint64_t flags,
 
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_NONBLOCK, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
   }
   if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC)
   {
-    if (setsockopt(fd, SOL_SOCKET, O_CLOEXEC, &activate_option, sizeof(int)))
+    int fcntl_flags = fcntl(fd, F_GETFL);
+    if (fcntl_flags < 0)
+    {
+      return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
@@ -476,7 +515,7 @@ int transport_socket_get_interface_index(const char *interface)
 
 struct ip_mreqn *transport_socket_multicast_create_request(const char *group_address, const char *local_address, int interface_index)
 {
-  struct ip_mreqn* request = malloc(sizeof(struct ip_mreqn));
+  struct ip_mreqn *request = malloc(sizeof(struct ip_mreqn));
   request->imr_multiaddr.s_addr = inet_addr(group_address);
   request->imr_address.s_addr = inet_addr(local_address);
   request->imr_ifindex = interface_index;

@@ -53,6 +53,8 @@ class TransportDefaults {
         connectTimeout: Duration(seconds: 60),
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
+        socketNonblock: true,
+        socketClockexec: true,
       );
 
   static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
@@ -60,6 +62,8 @@ class TransportDefaults {
         socketSendBufferSize: 64 * 1024 * 1024,
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
+        socketNonblock: true,
+        socketClockexec: true,
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
@@ -85,6 +89,8 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
+        socketNonblock: true,
+        socketClockexec: true,
       );
 
   static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
@@ -92,5 +98,7 @@ class TransportDefaults {
         socketSendBufferSize: 64 * 1024 * 1024,
         readTimeout: Duration(days: 1),
         writeTimeout: Duration(days: 1),
+        socketNonblock: true,
+        socketClockexec: true,
       );
 }

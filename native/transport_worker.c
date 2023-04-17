@@ -155,6 +155,7 @@ void transport_worker_send_message(transport_worker_t *worker,
   {
     message = &worker->unix_used_messages[buffer_id];
     message->msg_namelen = SUN_LEN((struct sockaddr_un *)address);
+    memset(message->msg_name, 0, sizeof(struct sockaddr_un));
     memcpy(message->msg_name, address, message->msg_namelen);
   }
   message->msg_control = NULL;
