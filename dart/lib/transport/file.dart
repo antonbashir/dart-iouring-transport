@@ -19,7 +19,7 @@ class TransportFile {
     final completer = Completer<int>();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     _states.setOutboundRead(bufferId, completer);
-    _channel.read(bufferId, int32Max, transportEventRead | transportEventFile, offset: offset);
+    _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
   }
 
@@ -27,7 +27,7 @@ class TransportFile {
     final completer = Completer<void>();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     _states.setOutboundWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, int32Max, transportEventWrite | transportEventFile, offset: offset);
+    _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     return completer.future;
   }
 
@@ -35,7 +35,7 @@ class TransportFile {
     BytesBuilder builder = BytesBuilder();
     var offset = 0;
     var payload = await readBuffer(offset: offset);
-    if (payload.bytes.isEmpty) {
+    if (payload.bytes.isEmpty || payload.bytes.first == 0) {
       payload.release();
       return Uint8List.fromList([]);
     }
@@ -43,7 +43,7 @@ class TransportFile {
     offset += payload.bytes.length;
     while (true) {
       payload = await readBuffer(offset: offset);
-      if (payload.bytes.isEmpty) break;
+      if (payload.bytes.isEmpty || payload.bytes.first == 0) break;
       builder.add(payload.extract());
       offset += payload.bytes.length;
     }
@@ -53,7 +53,7 @@ class TransportFile {
   Future<void> transfer(TransportFile to) async {
     var offset = 0;
     var payload = await readBuffer(offset: offset);
-    if (payload.bytes.isEmpty) {
+    if (payload.bytes.isEmpty || payload.bytes.first == 0) {
       payload.release();
       return;
     }
@@ -61,9 +61,9 @@ class TransportFile {
     offset += payload.bytes.length;
     while (true) {
       payload = await readBuffer(offset: offset);
-      if (payload.bytes.isEmpty) break;
-      payload.release();
+      if (payload.bytes.isEmpty || payload.bytes.first == 0) break;
       await to.write(payload.bytes, offset: offset);
+      payload.release();
       offset += payload.bytes.length;
     }
   }

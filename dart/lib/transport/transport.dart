@@ -21,11 +21,15 @@ class Transport {
   final _workerExit = ReceivePort();
   final _workerClosers = <SendPort>[];
   final _listenerPointers = <Pointer<transport_listener_t>>[];
+  final _jobs = <String, int>{};
+  final _jobRunners = <SendPort>[];
 
   late final String? _libraryPath;
   late final TransportBindings _bindings;
   late final TransportLibrary _library;
   late final Pointer<transport_t> _transportPointer;
+  late final RawReceivePort _jobListener;
+  late final RawReceivePort _jobCompletionListener;
 
   Transport(this.transportConfiguration, this.listenerConfiguration, this.inboundWorkerConfiguration, this.outboundWrkerConfiguration, {String? libraryPath}) {
     this._libraryPath = libraryPath;
@@ -68,6 +72,8 @@ class Transport {
     _workerClosers.forEach((worker) => worker.send(null));
     await _workerExit.take(transportConfiguration.workerInsolates).toList();
     _workerExit.close();
+    _jobListener.close();
+    _jobCompletionListener.close();
 
     _listenerPointers.forEach((listener) => _bindings.transport_listener_close(listener));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();
@@ -77,6 +83,18 @@ class Transport {
   }
 
   Future<void> run(void Function(SendPort input) worker, {SendPort? transmitter}) async {
+    _jobListener = RawReceivePort((input) {
+      final job = input[0];
+      final index = input[1];
+      final current = _jobs[job];
+      if (current == null) {
+        _jobs[job] = index;
+        _jobRunners[index].send([job, true]);
+        return;
+      }
+      _jobRunners[index].send([job, current == index]);
+    });
+    _jobCompletionListener = RawReceivePort((job) => _jobs.remove(job));
     final fromTransportToListener = ReceivePort();
     final fromTransportToWorker = ReceivePort();
     var listeners = 0;
@@ -92,6 +110,7 @@ class Transport {
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
       _workerClosers.add(ports[3]);
+      _jobRunners.add(ports[4]);
       final inboundWorkerPointer = calloc<transport_worker_t>();
       if (inboundWorkerPointer == nullptr) {
         workersCompleter.completeError(TransportInitializationException("[worker] out of memory"));
@@ -135,6 +154,8 @@ class Transport {
         inboundWorkerPointer.address,
         outboundWorkerPointer.address,
         transmitter,
+        _jobListener.sendPort,
+        _jobCompletionListener.sendPort,
       ];
       toWorker.send(workerInput);
       if (inboundWorkerAddresses.length == transportConfiguration.workerInsolates) {

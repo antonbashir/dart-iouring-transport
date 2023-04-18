@@ -31,6 +31,8 @@ const dlCloseFunction = 'dlclose';
 const pubspecYamlFile = 'pubspec.yaml';
 const pubspecYmlFile = 'pubspec.yml';
 
+const defaultJobName = "job";
+
 class Directories {
   const Directories._();
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -20,6 +21,7 @@ import 'timeout.dart';
 class TransportWorker {
   final _initializer = Completer();
   final _fromTransport = ReceivePort();
+  final _jobs = <String, Queue<Completer<bool>>>{};
 
   late final TransportBindings _bindings;
   late final Pointer<transport_t> _transportPointer;
@@ -32,6 +34,7 @@ class TransportWorker {
   late final RawReceivePort _listener;
   late final RawReceivePort _activator;
   late final RawReceivePort _closer;
+  late final RawReceivePort _jobRunner;
   late final TransportClientRegistry _clientRegistry;
   late final TransportServerRegistry _serverRegistry;
   late final TransportClientsFactory _clientsFactory;
@@ -45,6 +48,8 @@ class TransportWorker {
   late final TransportBuffers _outboundBuffers;
   late final TransportTimeoutChecker _inboundTimeoutChecker;
   late final TransportTimeoutChecker _outboundTimeoutChecker;
+  late final SendPort _jobsListener;
+  late final SendPort _jobCompletionsListener;
 
   late final SendPort? transmitter;
 
@@ -54,6 +59,10 @@ class TransportWorker {
   TransportFilesFactory get files => _filesFactory;
 
   TransportWorker(SendPort toTransport) {
+    _jobRunner = RawReceivePort((input) {
+      final queue = _jobs[input[0]];
+      if (queue?.isNotEmpty == true) queue!.removeFirst().complete(input[1]);
+    });
     _listener = RawReceivePort((_) {
       _handleInboundCqes();
       _handleOutboundCqes();
@@ -70,9 +79,10 @@ class TransportWorker {
       malloc.free(_inboundCqes);
       _listener.close();
       _closer.close();
+      _jobRunner.close();
       Isolate.exit();
     });
-    toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort]);
+    toTransport.send([_fromTransport.sendPort, _listener.sendPort, _activator.sendPort, _closer.sendPort, _jobRunner.sendPort]);
   }
 
   Future<void> initialize() async {
@@ -82,6 +92,8 @@ class TransportWorker {
     _inboundWorkerPointer = Pointer.fromAddress(configuration[2] as int).cast<transport_worker_t>();
     _outboundWorkerPointer = Pointer.fromAddress(configuration[3] as int).cast<transport_worker_t>();
     transmitter = configuration[4] as SendPort?;
+    _jobsListener = configuration[5] as SendPort;
+    _jobCompletionsListener = configuration[6] as SendPort;
     _fromTransport.close();
     await _initializer.future;
     _bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
@@ -157,6 +169,20 @@ class TransportWorker {
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
 
+  Future<void> job(FutureOr<void> Function() action, {String? name}) async {
+    name = name ?? defaultJobName;
+    final completer = Completer<bool>();
+    var current = _jobs[name];
+    if (current == null) _jobs[name] = current = Queue();
+    current.add(completer);
+    _jobsListener.send([name, id]);
+    if (await completer.future) {
+      await action();
+      _jobCompletionsListener.send(name);
+    }
+    _jobs.remove(name);
+  }
+
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
@@ -209,11 +235,19 @@ class TransportWorker {
           continue;
         }
         if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-          _handleReadReceiveMessageCallback(event, (data >> 16) & 0xffff, result, fd);
+          _handleReadReceiveClientCallback(event, (data >> 16) & 0xffff, result, fd);
+          continue;
+        }
+        if (event == transportEventRead | transportEventFile || event == transportEventReceiveMessage | transportEventFile) {
+          _handleReadReceiveFileCallback(event, (data >> 16) & 0xffff, result, fd);
           continue;
         }
         if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-          _handleWriteSendMessageCallback(event, (data >> 16) & 0xffff, result, fd);
+          _handleWriteSendClientCallback(event, (data >> 16) & 0xffff, result, fd);
+          continue;
+        }
+        if (event == transportEventWrite | transportEventFile || event == transportEventSendMessage | transportEventFile) {
+          _handleWriteSendFileCallback(event, (data >> 16) & 0xffff, result, fd);
           continue;
         }
         if (event & transportEventConnect != 0) {
@@ -315,7 +349,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleReadReceiveMessageCallback(int event, int bufferId, int result, int fd) {
+  void _handleReadReceiveClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
       _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
@@ -336,7 +370,12 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleWriteSendMessageCallback(int event, int bufferId, int result, int fd) {
+  void _handleReadReceiveFileCallback(int event, int bufferId, int result, int fd) {
+    _callbacks.notifyOutboundRead(bufferId, result);
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleWriteSendClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
       _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
@@ -353,6 +392,12 @@ class TransportWorker {
           ));
       return;
     }
+    _callbacks.notifyOutboundWrite(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleWriteSendFileCallback(int event, int bufferId, int result, int fd) {
+    _outboundBuffers.release(bufferId);
     _callbacks.notifyOutboundWrite(bufferId);
   }
 
