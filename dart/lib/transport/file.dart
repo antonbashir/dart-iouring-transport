@@ -8,11 +8,12 @@ import 'payload.dart';
 import 'callbacks.dart';
 
 class TransportFile {
+  final String path;
   final TransportChannel _channel;
   final TransportCallbacks _states;
   final TransportBuffers _buffers;
 
-  TransportFile(this._states, this._channel, this._buffers);
+  TransportFile(this.path, this._states, this._channel, this._buffers);
 
   Future<TransportOutboundPayload> readBuffer({int offset = 0}) async {
     final completer = Completer<int>();

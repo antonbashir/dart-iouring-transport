@@ -799,6 +799,6 @@ class TransportFilesFactory {
 
   TransportFile open(String path) {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
-    return TransportFile(_callbacks, TransportChannel(_workerPointer, fd, _bindings, _buffers), _buffers);
+    return TransportFile(path, _callbacks, TransportChannel(_workerPointer, fd, _bindings, _buffers), _buffers);
   }
 }
