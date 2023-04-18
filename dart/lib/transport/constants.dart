@@ -3,6 +3,7 @@ import 'bindings.dart';
 const preferInlinePragma = "vm:prefer-inline";
 
 const empty = "";
+const unknown = "unknown";
 const newLine = "\n";
 const slash = "/";
 const dot = ".";
@@ -218,6 +219,9 @@ enum TransportEvent {
     if (event == transportEventReceiveMessage) return TransportEvent.serverReceive;
     return TransportEvent.unknown;
   }
+
+  @override
+  String toString() => name;
 }
 
 const transportRetryableErrorCodes = {EINTR, EAGAIN, ECANCELED};

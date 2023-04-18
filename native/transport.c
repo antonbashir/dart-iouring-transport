@@ -53,7 +53,16 @@ void transport_close_descritor(int fd)
 
 char *transport_address_to_string(struct sockaddr *address, transport_socket_family_t family)
 {
-  return family == INET ? inet_ntoa(((struct sockaddr_in *)address)->sin_addr) : ((struct sockaddr_un *)address)->sun_path;
+  if (family == INET)
+  {
+    char name[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &((struct sockaddr_in *)address)->sin_addr, name, INET_ADDRSTRLEN) == NULL)
+    {
+      return NULL;
+    }
+    return strdup(name);
+  }
+  return strdup(((struct sockaddr_un *)address)->sun_path);
 }
 
 char *transport_socket_fd_to_address(int fd, transport_socket_family_t family)
@@ -62,23 +71,27 @@ char *transport_socket_fd_to_address(int fd, transport_socket_family_t family)
   if (family == INET)
   {
     struct sockaddr_in address;
-    if (getpeername(fd, &address, length))
+    if (getpeername(fd, (struct sockaddr *)&address, &length))
     {
       return NULL;
     }
-    char *name = inet_ntoa(address.sin_addr);
+    char name[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &address.sin_addr, name, INET_ADDRSTRLEN) == NULL)
+    {
+      return NULL;
+    }
     char *name_copy = malloc(strlen(name));
-    strcpy(name, name_copy);
+    strcpy(name_copy, name);
     return name_copy;
   }
   struct sockaddr_un address;
-  if (getpeername(fd, &address, length))
+  if (getpeername(fd, (struct sockaddr *)&address, &length))
   {
     return NULL;
   }
   char *name = address.sun_path;
   char *name_copy = malloc(strlen(name));
-  strcpy(name, name_copy);
+  strcpy(name_copy, name);
   return name_copy;
 }
 
@@ -86,6 +99,6 @@ int transport_socket_fd_to_port(int fd)
 {
   socklen_t length;
   struct sockaddr_in address;
-  getpeername(fd, &address, length);
+  getpeername(fd, &address, &length);
   return address.sin_port;
 }

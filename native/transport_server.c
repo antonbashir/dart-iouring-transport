@@ -102,8 +102,7 @@ int transport_server_initialize_unix_stream(transport_server_t *server, transpor
       configuration->socket_send_low_at);
   if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
   server->fd = result;
   result = bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length);
@@ -146,9 +145,18 @@ int transport_server_initialize_unix_dgram(transport_server_t *server, transport
   return 0;
 }
 
-char* transport_server_address_to_string(transport_server_t *server)
+char *transport_server_address_to_string(transport_server_t *server)
 {
-  return server->family == INET ? inet_ntoa(server->inet_server_address.sin_addr) : server->unix_server_address.sun_path;
+  if (server->family == INET)
+  {
+    char name[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &server->inet_server_address.sin_addr, name, INET_ADDRSTRLEN) == NULL)
+    {
+      return NULL;
+    }
+    return strdup(name);
+  }
+  return strdup(server->unix_server_address.sun_path);
 }
 
 void transport_server_destroy(transport_server_t *server)

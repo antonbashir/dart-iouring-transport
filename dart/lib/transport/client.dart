@@ -48,7 +48,7 @@ class TransportClient {
     this._registry, {
     this.connectTimeout,
   }) {
-    sourceAddress = _computeChannelAddress(_pointer.ref.fd);
+    sourceAddress = _computeSourceAddress(_pointer.ref.fd);
     destinationAddress = _computeDestinationAddress();
   }
 
@@ -141,25 +141,23 @@ class TransportClient {
   }
 
   @pragma(preferInlinePragma)
-  String _computeChannelAddress(int fd) {
+  String _computeSourceAddress(int fd) {
+    if (_pointer.ref.family == transport_socket_family.UNIX) return unknown;
     final address = _bindings.transport_socket_fd_to_address(fd, _pointer.ref.family);
-    if (address == nullptr) return empty;
+    if (address == nullptr) return unknown;
     final addressString = address.cast<Utf8>().toDartString();
     malloc.free(address);
-    if (_pointer.ref.family == transport_socket_family.UNIX) {
-      return addressString;
-    }
     return "$addressString:${_bindings.transport_socket_fd_to_port(fd)}";
   }
 
   @pragma(preferInlinePragma)
   String _computeDestinationAddress() {
-    final address = _bindings.transport_client_get_destination_address(_pointer);
-    final addressString = _bindings.transport_address_to_string(address, _pointer.ref.family).cast<Utf8>().toDartString();
-    if (_pointer.ref.family == transport_socket_family.UNIX) {
-      return addressString;
-    }
-    return "$addressString:${address.cast<sockaddr_in>().ref.sin_port}";
+    final destination = _bindings.transport_client_get_destination_address(_pointer);
+    final address = _bindings.transport_address_to_string(destination, _pointer.ref.family);
+    final addressString = address.cast<Utf8>().toDartString();
+    malloc.free(address);
+    if (_pointer.ref.family == transport_socket_family.UNIX) {return addressString;}
+    return "$addressString:${destination.cast<sockaddr_in>().ref.sin_port}";
   }
 }
 

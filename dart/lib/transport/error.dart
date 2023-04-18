@@ -28,7 +28,7 @@ class TransportErrorHandler {
   void _handleRead(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeStreamAddress(fd)));
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -39,7 +39,7 @@ class TransportErrorHandler {
         TransportCancelledException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeStreamAddress(fd),
         ),
       );
       return;
@@ -49,7 +49,7 @@ class TransportErrorHandler {
         TransportInternalException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeStreamAddress(fd),
           code: result,
           message: result.kernelErrorToString(_bindings),
         ));
@@ -58,7 +58,7 @@ class TransportErrorHandler {
   void _handleWrite(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeStreamAddress(fd)));
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -69,7 +69,7 @@ class TransportErrorHandler {
         TransportCancelledException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeStreamAddress(fd),
         ),
       );
       return;
@@ -79,7 +79,7 @@ class TransportErrorHandler {
         TransportInternalException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeStreamAddress(fd),
           code: result,
           message: result.kernelErrorToString(_bindings),
         ));
@@ -88,7 +88,7 @@ class TransportErrorHandler {
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeDatagramAddress(bufferId)));
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -98,7 +98,7 @@ class TransportErrorHandler {
         TransportCancelledException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeDatagramAddress(bufferId),
         ),
       );
       return;
@@ -108,7 +108,7 @@ class TransportErrorHandler {
         TransportInternalException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeDatagramAddress(bufferId),
           code: result,
           message: result.kernelErrorToString(_bindings),
         ));
@@ -117,7 +117,7 @@ class TransportErrorHandler {
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeDatagramAddress(bufferId)));
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -127,7 +127,7 @@ class TransportErrorHandler {
         TransportCancelledException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeDatagramAddress(bufferId),
         ),
       );
       return;
@@ -137,7 +137,7 @@ class TransportErrorHandler {
         TransportInternalException(
           event: TransportEvent.ofEvent(event),
           source: server.address,
-          target: server.computeChannelAddress(fd),
+          target: server.computeDatagramAddress(bufferId),
           code: result,
           message: result.kernelErrorToString(_bindings),
         ));
