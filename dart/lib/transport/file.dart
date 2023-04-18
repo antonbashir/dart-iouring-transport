@@ -31,26 +31,19 @@ class TransportFile {
     return completer.future;
   }
 
-  Future<TransportOutboundPayload> read() async {
+  Future<Uint8List> read() async {
     BytesBuilder builder = BytesBuilder();
     var offset = 0;
     var payload = await readBuffer(offset: offset);
-    final payloads = <TransportOutboundPayload>[];
-    payloads.add(payload);
-    builder.add(payload.bytes);
+    builder.add(payload.extract());
     offset += payload.bytes.length;
-    payload.release();
     while (true) {
       payload = await readBuffer(offset: offset);
-      if (payload.bytes.isEmpty) {
-        break;
-      }
-      payloads.add(payload);
-      builder.add(payload.bytes);
+      if (payload.bytes.isEmpty) break;
+      builder.add(payload.extract());
       offset += payload.bytes.length;
-      payload.release();
     }
-    return TransportOutboundPayload(builder.takeBytes(), () => payloads.forEach((payload) => payload.release()));
+    return builder.takeBytes();
   }
 
   void close() => _channel.close();
