@@ -2,68 +2,86 @@
 #include "transport_worker.h"
 #include "transport_constants.h"
 
-transport_worker_t *transport_worker_initialize(transport_worker_configuration_t *configuration, uint8_t id)
+int transport_worker_initialize(transport_worker_t *worker, transport_worker_configuration_t *configuration, uint8_t id)
 {
-  transport_worker_t *worker = malloc(sizeof(transport_worker_t));
-  if (!worker)
-  {
-    return NULL;
-  }
-
   worker->id = id;
   worker->listeners = transport_listener_pool_initialize();
+  if (!worker->listeners)
+  {
+    return -ENOMEM;
+  }
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
-  worker->events = mh_events_new();
-
-  if (transport_buffers_pool_create(&worker->free_buffers, configuration->buffers_count))
+  if (!worker->buffers)
   {
-    free(worker);
-    return NULL;
+    return -ENOMEM;
+  }
+  worker->events = mh_events_new();
+  if (!worker->events)
+  {
+    return -ENOMEM;
+  }
+
+  int result = transport_buffers_pool_create(&worker->free_buffers, configuration->buffers_count);
+  if (result == -1)
+  {
+    return -ENOMEM;
   }
 
   worker->inet_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
   worker->unix_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
 
+  if (!worker->inet_used_messages || !worker->unix_used_messages)
+  {
+    return -ENOMEM;
+  }
+
   for (size_t index = 0; index < configuration->buffers_count; index++)
   {
     if (posix_memalign(&worker->buffers[index].iov_base, getpagesize(), configuration->buffer_size))
     {
-      free(worker);
-      return NULL;
+      return -ENOMEM;
     }
     worker->buffers[index].iov_len = configuration->buffer_size;
 
     memset(&worker->inet_used_messages[index], 0, sizeof(struct msghdr));
     worker->inet_used_messages[index].msg_name = malloc(sizeof(struct sockaddr_in));
+    if (!worker->inet_used_messages[index].msg_name)
+    {
+      return -ENOMEM;
+    }
     worker->inet_used_messages[index].msg_namelen = sizeof(struct sockaddr_in);
 
     memset(&worker->unix_used_messages[index], 0, sizeof(struct msghdr));
     worker->unix_used_messages[index].msg_name = malloc(sizeof(struct sockaddr_un));
+    if (!worker->unix_used_messages[index].msg_name)
+    {
+      return -ENOMEM;
+    }
     worker->unix_used_messages[index].msg_namelen = sizeof(struct sockaddr_un);
 
     transport_buffers_pool_push(&worker->free_buffers, index);
   }
   worker->ring = malloc(sizeof(struct io_uring));
-  int32_t status = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
-  if (status)
+  if (!worker->ring)
   {
-    free(worker->ring);
-    free(worker);
-    return NULL;
+    return -ENOMEM;
+  }
+  result = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
+  if (result)
+  {
+    return result;
   }
 
-  status = io_uring_register_buffers(worker->ring, worker->buffers, worker->buffers_count);
-  if (status)
+  result = io_uring_register_buffers(worker->ring, worker->buffers, worker->buffers_count);
+  if (result)
   {
-    free(worker->ring);
-    free(worker);
-    return NULL;
+    return result;
   }
 
-  return worker;
+  return 0;
 }
 
 int32_t transport_worker_get_buffer(transport_worker_t *worker)

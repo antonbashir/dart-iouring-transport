@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/exception.dart';
 import 'extensions.dart';
 import 'bindings.dart';
 import 'buffers.dart';
@@ -28,11 +29,26 @@ class TransportClientRegistry {
     final communicators = <Future<TransportClientStreamCommunicator>>[];
     configuration = configuration ?? TransportDefaults.tcpClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
-      final clientPointer = using((arena) => _bindings.transport_client_initialize_tcp(
-            _tcpConfiguration(configuration!, arena),
-            host.toNativeUtf8(allocator: arena).cast(),
-            port,
-          ));
+      final clientPointer = calloc<transport_client_t>();
+      if (clientPointer == nullptr) {
+        throw TransportInitializationException("[client] out of memory");
+      }
+      final result = using(
+        (arena) => _bindings.transport_client_initialize_tcp(
+          clientPointer,
+          _tcpConfiguration(configuration!, arena),
+          host.toNativeUtf8(allocator: arena).cast(),
+          port,
+        ),
+      );
+      if (result < 0) {
+        if (clientPointer.ref.fd > 0) {
+          _bindings.transport_close_descritor(clientPointer.ref.fd);
+          calloc.free(clientPointer);
+          throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+        }
+        throw TransportInitializationException("[client] unable to set socket option: ${-result}");
+      }
       final client = TransportClient(
         _callbacks,
         TransportChannel(
@@ -60,11 +76,26 @@ class TransportClientRegistry {
     final clients = <Future<TransportClientStreamCommunicator>>[];
     configuration = configuration ?? TransportDefaults.unixStreamClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
-      final clientPointer = using((arena) => _bindings.transport_client_initialize_unix_stream(
-            _unixStreamConfiguration(configuration!, arena),
-            path.toNativeUtf8(allocator: arena).cast(),
-          ));
-      final clinet = TransportClient(
+      final clientPointer = calloc<transport_client_t>();
+      if (clientPointer == nullptr) {
+        throw TransportInitializationException("[client] out of memory");
+      }
+      final result = using(
+        (arena) => _bindings.transport_client_initialize_unix_stream(
+          clientPointer,
+          _unixStreamConfiguration(configuration!, arena),
+          path.toNativeUtf8(allocator: arena).cast(),
+        ),
+      );
+      if (result < 0) {
+        if (clientPointer.ref.fd > 0) {
+          _bindings.transport_close_descritor(clientPointer.ref.fd);
+          calloc.free(clientPointer);
+          throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+        }
+        throw TransportInitializationException("[client] unable to set socket option: ${-result}");
+      }
+      final client = TransportClient(
         _callbacks,
         TransportChannel(
           _workerPointer,
@@ -81,8 +112,8 @@ class TransportClientRegistry {
         this,
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
-      _clients[clientPointer.ref.fd] = clinet;
-      clients.add(clinet.connect().then((client) => TransportClientStreamCommunicator(client)));
+      _clients[clientPointer.ref.fd] = client;
+      clients.add(client.connect().then((client) => TransportClientStreamCommunicator(client)));
     }
     return TransportClientStreamCommunicators(await Future.wait(clients));
   }
@@ -90,13 +121,26 @@ class TransportClientRegistry {
   TransportClientDatagramCommunicator createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpClient();
     final clientPointer = using((arena) {
-      final pointer = _bindings.transport_client_initialize_udp(
+      final pointer = calloc<transport_client_t>();
+      if (pointer == nullptr) {
+        throw TransportInitializationException("[client] out of memory");
+      }
+      final result = _bindings.transport_client_initialize_udp(
+        pointer,
         _udpConfiguration(configuration!, arena),
         destinationHost.toNativeUtf8(allocator: arena).cast(),
         destinationPort,
         sourceHost.toNativeUtf8(allocator: arena).cast(),
         sourcePort,
       );
+      if (result < 0) {
+        if (pointer.ref.fd > 0) {
+          _bindings.transport_close_descritor(pointer.ref.fd);
+          calloc.free(pointer);
+          throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+        }
+        throw TransportInitializationException("[client] unable to set socket option: ${-result}");
+      }
       if (configuration.multicastManager != null) {
         configuration.multicastManager!.subscribe(
           onAddMembership: (configuration) => using(
@@ -157,13 +201,26 @@ class TransportClientRegistry {
 
   TransportClientDatagramCommunicator createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramClient();
-    final clientPointer = using(
+    final clientPointer = calloc<transport_client_t>();
+    if (clientPointer == nullptr) {
+      throw TransportInitializationException("[client] out of memory");
+    }
+    final result = using(
       (arena) => _bindings.transport_client_initialize_unix_dgram(
+        clientPointer,
         _unixDatagramConfiguration(configuration!, arena),
         destinationPath.toNativeUtf8(allocator: arena).cast(),
         sourcePath.toNativeUtf8(allocator: arena).cast(),
       ),
     );
+    if (result < 0) {
+      if (clientPointer.ref.fd > 0) {
+        _bindings.transport_close_descritor(clientPointer.ref.fd);
+        calloc.free(clientPointer);
+        throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+      }
+      throw TransportInitializationException("[client] unable to set socket option: ${-result}");
+    }
     final client = TransportClient(
       _callbacks,
       TransportChannel(
@@ -364,20 +421,36 @@ class TransportServerRegistry {
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
     final server = using(
-      (Arena arena) => TransportServer(
-        _bindings.transport_server_initialize_tcp(
+      (Arena arena) {
+        final pointer = calloc<transport_server_t>();
+        if (pointer == nullptr) {
+          throw TransportInitializationException("[server] out of memory");
+        }
+        final result = _bindings.transport_server_initialize_tcp(
+          pointer,
           _tcpConfiguration(configuration!, arena),
           host.toNativeUtf8(allocator: arena).cast(),
           port,
-        ),
-        _workerPointer,
-        _bindings,
-        _callbacks,
-        configuration.readTimeout.inSeconds,
-        configuration.writeTimeout.inSeconds,
-        _buffers,
-        this,
-      ),
+        );
+        if (result < 0) {
+          if (pointer.ref.fd > 0) {
+            _bindings.transport_close_descritor(pointer.ref.fd);
+            calloc.free(pointer);
+            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+          }
+          throw TransportInitializationException("[server] unable to set socket option: ${-result}");
+        }
+        return TransportServer(
+          pointer,
+          _workerPointer,
+          _bindings,
+          _callbacks,
+          configuration.readTimeout.inSeconds,
+          configuration.writeTimeout.inSeconds,
+          _buffers,
+          this,
+        );
+      },
     );
     _servers[server.pointer.ref.fd] = server;
     return server;
@@ -387,11 +460,24 @@ class TransportServerRegistry {
     configuration = configuration ?? TransportDefaults.udpServer();
     final server = using(
       (Arena arena) {
-        final pointer = _bindings.transport_server_initialize_udp(
+        final pointer = calloc<transport_server_t>();
+        if (pointer == nullptr) {
+          throw TransportInitializationException("[server] out of memory");
+        }
+        final result = _bindings.transport_server_initialize_udp(
+          pointer,
           _udpConfiguration(configuration!, arena),
           host.toNativeUtf8(allocator: arena).cast(),
           port,
         );
+        if (result < 0) {
+          if (pointer.ref.fd > 0) {
+            _bindings.transport_close_descritor(pointer.ref.fd);
+            calloc.free(pointer);
+            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+          }
+          throw TransportInitializationException("[server] unable to set socket option: ${-result}");
+        }
         if (configuration.multicastManager != null) {
           configuration.multicastManager!.subscribe(
             onAddMembership: (configuration) => using(
@@ -447,19 +533,35 @@ class TransportServerRegistry {
   TransportServer createUnixStream(String path, {TransportUnixStreamServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixStreamServer();
     final server = using(
-      (Arena arena) => TransportServer(
-        _bindings.transport_server_initialize_unix_stream(
+      (Arena arena) {
+        final pointer = calloc<transport_server_t>();
+        if (pointer == nullptr) {
+          throw TransportInitializationException("[server] out of memory");
+        }
+        final result = _bindings.transport_server_initialize_unix_stream(
+          pointer,
           _unixStreamConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
-        ),
-        _workerPointer,
-        _bindings,
-        _callbacks,
-        configuration.readTimeout.inSeconds,
-        configuration.writeTimeout.inSeconds,
-        _buffers,
-        this,
-      ),
+        );
+        if (result < 0) {
+          if (pointer.ref.fd > 0) {
+            _bindings.transport_close_descritor(pointer.ref.fd);
+            calloc.free(pointer);
+            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+          }
+          throw TransportInitializationException("[server] unable to set socket option: ${-result}");
+        }
+        return TransportServer(
+          pointer,
+          _workerPointer,
+          _bindings,
+          _callbacks,
+          configuration.readTimeout.inSeconds,
+          configuration.writeTimeout.inSeconds,
+          _buffers,
+          this,
+        );
+      },
     );
     _servers[server.pointer.ref.fd] = server;
     return server;
@@ -468,19 +570,35 @@ class TransportServerRegistry {
   TransportServer createUnixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramServer();
     final server = using(
-      (Arena arena) => TransportServer(
-        _bindings.transport_server_initialize_unix_dgram(
+      (Arena arena) {
+        final pointer = calloc<transport_server_t>();
+        if (pointer == nullptr) {
+          throw TransportInitializationException("[server] out of memory");
+        }
+        final result = _bindings.transport_server_initialize_unix_dgram(
+          pointer,
           _unixDatagramConfiguration(configuration!, arena),
           path.toNativeUtf8(allocator: arena).cast(),
-        ),
-        _workerPointer,
-        _bindings,
-        _callbacks,
-        configuration.readTimeout.inSeconds,
-        configuration.writeTimeout.inSeconds,
-        _buffers,
-        this,
-      ),
+        );
+        if (result < 0) {
+          if (pointer.ref.fd > 0) {
+            _bindings.transport_close_descritor(pointer.ref.fd);
+            calloc.free(pointer);
+            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+          }
+          throw TransportInitializationException("[server] unable to set socket option: ${-result}");
+        }
+        return TransportServer(
+          pointer,
+          _workerPointer,
+          _bindings,
+          _callbacks,
+          configuration.readTimeout.inSeconds,
+          configuration.writeTimeout.inSeconds,
+          _buffers,
+          this,
+        );
+      },
     );
     _servers[server.pointer.ref.fd] = server;
     return server;

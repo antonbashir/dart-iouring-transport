@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:retry/retry.dart';
-
+import 'configuration.dart';
 import 'exception.dart';
 import 'buffers.dart';
 import 'channels.dart';
@@ -26,7 +25,13 @@ class TransportClientStreamCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> write(Uint8List bytes, {RetryOptions? retry}) => retry == null ? _client.write(bytes) : retry.retry(() => write(bytes));
+  Future<void> write(Uint8List bytes, {TransportRetryConfiguration? retry}) => retry == null
+      ? _client.write(bytes)
+      : retry.options.retry(
+          () => _client.write(bytes),
+          retryIf: retry.predicate,
+          onRetry: retry.onRetry,
+        );
 
   Future<void> close() => _client.close();
 }
@@ -46,11 +51,12 @@ class TransportClientDatagramCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags, RetryOptions? retry}) => retry == null
+  Future<void> sendMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry}) => retry == null
       ? _client.sendMessage(bytes, flags: flags)
-      : retry.retry(
+      : retry.options.retry(
           () => _client.sendMessage(bytes, flags: flags),
-          retryIf: (exception) => !(exception is TransportClosedException),
+          retryIf: retry.predicate,
+          onRetry: retry.onRetry,
         );
 
   @pragma(preferInlinePragma)
@@ -92,7 +98,11 @@ class TransportServerDatagramReceiver {
   @pragma(preferInlinePragma)
   Future<TransportInboundDatagramPayload> receiveMessage({int? flags}) => _server.receiveMessage(_channel, flags: flags);
 
-  void listen(void Function(TransportInboundDatagramPayload payload) listener, {void Function(Exception error, StackTrace stackTrace)? onError, int? flags}) async {
+  void listen(
+    void Function(TransportInboundDatagramPayload payload) listener, {
+    void Function(Exception error, StackTrace stackTrace)? onError,
+    int? flags,
+  }) async {
     while (_server.active) {
       await receiveMessage(flags: flags).then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;

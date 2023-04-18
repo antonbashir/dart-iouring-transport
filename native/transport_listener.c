@@ -16,30 +16,31 @@
 #include "transport_client.h"
 #include "transport.h"
 
-transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration, uint8_t id)
+int transport_listener_initialize(transport_listener_t *listener, transport_listener_configuration_t *configuration, uint8_t id)
 {
-  transport_listener_t *listener = malloc(sizeof(transport_listener_t));
-  if (!listener)
-  {
-    return NULL;
-  }
-
   listener->id = id;
   listener->ready_workers = malloc(sizeof(int) * configuration->workers_count);
+  if (!listener->ready_workers)
+  {
+    return -ENOMEM;
+  }
+
   for (size_t workerIndex = 0; workerIndex < configuration->workers_count; workerIndex++)
   {
     listener->ready_workers[workerIndex] = 0;
   }
 
   listener->ring = malloc(sizeof(struct io_uring));
+  if (!listener->ring)
+  {
+    return -ENOMEM;
+  }
   int32_t status = io_uring_queue_init(configuration->ring_size, listener->ring, configuration->ring_flags);
   if (status)
   {
-    free(listener->ring);
-    free(listener);
-    return NULL;
+    return status;
   }
-  return listener;
+  return 0;
 }
 
 static inline int transport_listener_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)

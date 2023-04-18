@@ -33,7 +33,7 @@ extern "C"
     uint16_t workers_count;
   } transport_listener_t;
 
-  transport_listener_t *transport_listener_initialize(transport_listener_configuration_t *configuration, uint8_t id);
+  int transport_listener_initialize(transport_listener_t * listener, transport_listener_configuration_t *configuration, uint8_t id);
   void transport_listener_close(transport_listener_t *listener);
   bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes);
   void transport_listener_destroy(transport_listener_t *listener);

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:html';
 
 import 'bindings.dart';
 import 'buffers.dart';
@@ -34,10 +35,16 @@ class TransportErrorHandler {
     _inboundBuffers.release(bufferId);
     unawaited(server.closeConnection(fd));
     if (result == -ECANCELED) {
-      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundReadError(
+          bufferId,
+          TransportCancelledException(
+            event: TransportEvent.ofEvent(event),
+            source: server.address,
+            target: server.
+          ));
       return;
     }
-    _callbacks.notifyInboundReadError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundReadError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleWrite(int bufferId, int fd, int event, int result) {
@@ -52,7 +59,7 @@ class TransportErrorHandler {
       _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyInboundWriteError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundWriteError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
@@ -66,7 +73,7 @@ class TransportErrorHandler {
       _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyInboundReadError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundReadError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
@@ -80,7 +87,7 @@ class TransportErrorHandler {
       _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyInboundWriteError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundWriteError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleAccept(int fd) {
@@ -100,7 +107,7 @@ class TransportErrorHandler {
       _callbacks.notifyConnectError(fd, TransportCancelledException());
       return;
     }
-    _callbacks.notifyConnectError(fd, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyConnectError(fd, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
   }
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
@@ -114,7 +121,7 @@ class TransportErrorHandler {
       _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyOutboundReadError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _callbacks.notifyOutboundReadError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
@@ -128,7 +135,7 @@ class TransportErrorHandler {
       _callbacks.notifyOutboundWriteError(bufferId, TransportCancelledException());
       return;
     }
-    _callbacks.notifyOutboundWriteError(bufferId, TransportEventException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _callbacks.notifyOutboundWriteError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
   }
 
   void handle(int result, int data, int fd, int event) {

@@ -24,9 +24,10 @@ extern "C"
     transport_worker_configuration_t *outbound_worker_configuration;
   } transport_t;
 
-  transport_t *transport_initialize(transport_listener_configuration_t *listener_configuration,
-                                    transport_worker_configuration_t *inbound_worker_configuration,
-                                    transport_worker_configuration_t *outbound_worker_configuration);
+  void transport_initialize(transport_t *transport,
+                            transport_listener_configuration_t *listener_configuration,
+                            transport_worker_configuration_t *inbound_worker_configuration,
+                            transport_worker_configuration_t *outbound_worker_configuration);
 
   struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count);
 
@@ -34,9 +35,14 @@ extern "C"
 
   void transport_destroy(transport_t *transport);
 
-  int transport_close_descritor(int fd);
+  void transport_close_descritor(int fd);
 
-  int transport_get_kernel_error();
+  char* transport_address_to_string(struct sockaddr* address, transport_socket_family_t family);
+  
+  char* transport_socket_fd_to_address(int fd, transport_socket_family_t family);
+  
+  int transport_socket_fd_to_port(int fd);
+
 #if defined(__cplusplus)
 }
 #endif

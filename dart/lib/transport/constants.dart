@@ -1,3 +1,5 @@
+import 'bindings.dart';
+
 const preferInlinePragma = "vm:prefer-inline";
 
 const empty = "";
@@ -107,14 +109,8 @@ const transportEventConnect = 1 << 5;
 const transportEventClient = 1 << 6;
 const transportEventFile = 1 << 7;
 
-const transportEventAll = transportEventRead |
-    transportEventWrite |
-    transportEventAccept |
-    transportEventConnect |
-    transportEventReceiveMessage |
-    transportEventSendMessage |
-    transportEventClient |
-    transportEventFile;
+const transportEventAll =
+    transportEventRead | transportEventWrite | transportEventAccept | transportEventConnect | transportEventReceiveMessage | transportEventSendMessage | transportEventClient | transportEventFile;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;
@@ -191,3 +187,37 @@ enum TransportDatagramMessageFlag {
 
   const TransportDatagramMessageFlag(this.flag);
 }
+
+enum TransportEvent {
+  accept,
+  connect,
+  serverRead,
+  serverWrite,
+  clientRead,
+  clientWrite,
+  serverReceive,
+  serverSend,
+  clientReceive,
+  clientSend,
+  fileRead,
+  fileWrite,
+  unknown;
+
+  static TransportEvent ofEvent(int event) {
+    if (event == (transportEventRead | transportEventClient)) return TransportEvent.clientRead;
+    if (event == (transportEventWrite | transportEventClient)) return TransportEvent.clientWrite;
+    if (event == (transportEventRead | transportEventFile)) return TransportEvent.fileRead;
+    if (event == (transportEventWrite | transportEventFile)) return TransportEvent.fileWrite;
+    if (event == transportEventRead) return TransportEvent.serverRead;
+    if (event == transportEventWrite) return TransportEvent.serverWrite;
+    if (event == transportEventAccept) return TransportEvent.accept;
+    if (event == transportEventConnect) return TransportEvent.connect;
+    if (event == (transportEventSendMessage | transportEventClient)) return TransportEvent.clientSend;
+    if (event == (transportEventReceiveMessage | transportEventClient)) return TransportEvent.clientReceive;
+    if (event == transportEventSendMessage) return TransportEvent.serverSend;
+    if (event == transportEventReceiveMessage) return TransportEvent.serverReceive;
+    return TransportEvent.unknown;
+  }
+}
+
+const transportRetryableErrorCodes = {EINTR, EAGAIN, ECANCELED};

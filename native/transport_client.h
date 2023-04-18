@@ -42,25 +42,29 @@ extern "C"
     transport_socket_family_t family;
   } transport_client_t;
 
-  transport_client_t *transport_client_initialize_tcp(transport_client_configuration_t *configuration,
-                                                      const char *ip,
-                                                      int32_t port);
+  int transport_client_initialize_tcp(transport_client_t *client,
+                                      transport_client_configuration_t *configuration,
+                                      const char *ip,
+                                      int32_t port);
 
-  transport_client_t *transport_client_initialize_udp(transport_client_configuration_t *configuration,
-                                                      const char *destination_ip,
-                                                      int32_t destination_port,
-                                                      const char *source_ip,
-                                                      int32_t source_port);
+  int transport_client_initialize_udp(transport_client_t *client,
+                                      transport_client_configuration_t *configuration,
+                                      const char *destination_ip,
+                                      int32_t destination_port,
+                                      const char *source_ip,
+                                      int32_t source_port);
 
-  transport_client_t *transport_client_initialize_unix_stream(transport_client_configuration_t *configuration,
-                                                              const char *path);
+  int transport_client_initialize_unix_stream(transport_client_t *client,
+                                              transport_client_configuration_t *configuration,
+                                              const char *path);
 
-  transport_client_t *transport_client_initialize_unix_dgram(transport_client_configuration_t *configuration,
-                                                             const char *destination_path,
-                                                             const char *source_path);
+  int transport_client_initialize_unix_dgram(transport_client_t *client,
+                                             transport_client_configuration_t *configuration,
+                                             const char *destination_path,
+                                             const char *source_path);
 
   struct sockaddr *transport_client_get_destination_address(transport_client_t *client);
-
+  
   void transport_client_destroy(transport_client_t *client);
 #if defined(__cplusplus)
 }

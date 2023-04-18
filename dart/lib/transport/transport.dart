@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'extensions.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
@@ -51,7 +52,12 @@ class Transport {
     nativeoOutboundWorkerConfiguration.ref.buffers_count = outboundWrkerConfiguration.buffersCount;
     nativeoOutboundWorkerConfiguration.ref.timeout_checker_period_millis = outboundWrkerConfiguration.timeoutCheckerPeriod.inMilliseconds;
 
-    _transportPointer = _bindings.transport_initialize(
+    _transportPointer = calloc<transport_t>();
+    if (_transportPointer == nullptr) {
+      throw TransportInitializationException("[transport] out of memory");
+    }
+    _bindings.transport_initialize(
+      _transportPointer,
       nativeListenerConfiguration,
       nativeInboundWorkerConfiguration,
       nativeoOutboundWorkerConfiguration,
@@ -86,15 +92,40 @@ class Transport {
       workerMeessagePorts.add(ports[1]);
       workerActivators.add(ports[2]);
       _workerClosers.add(ports[3]);
-      final inboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.inbound_worker_configuration, inboundWorkerAddresses.length);
+      final inboundWorkerPointer = calloc<transport_worker_t>();
       if (inboundWorkerPointer == nullptr) {
-        listenerCompleter.completeError(TransportEventException("[worker] is null"));
+        workersCompleter.completeError(TransportInitializationException("[worker] out of memory"));
+        fromTransportToWorker.close();
+        return;
+      }
+      var result = _bindings.transport_worker_initialize(
+        inboundWorkerPointer,
+        _transportPointer.ref.inbound_worker_configuration,
+        inboundWorkerAddresses.length,
+      );
+      if (result < 0) {
+        calloc.free(inboundWorkerPointer);
+        workersCompleter.completeError(TransportInitializationException("[worker] code = $result, message = ${result.kernelErrorToString(_bindings)}"));
+        fromTransportToWorker.close();
         return;
       }
       inboundWorkerAddresses.add(inboundWorkerPointer.address);
-      final outboundWorkerPointer = _bindings.transport_worker_initialize(_transportPointer.ref.outbound_worker_configuration, outboundWorkerAddresses.length);
+      final outboundWorkerPointer = calloc<transport_worker_t>();
       if (outboundWorkerPointer == nullptr) {
-        listenerCompleter.completeError(TransportEventException("[worker] is null"));
+        workersCompleter.completeError(TransportInitializationException("[worker] out of memory"));
+        fromTransportToWorker.close();
+        return;
+      }
+      result = _bindings.transport_worker_initialize(
+        outboundWorkerPointer,
+        _transportPointer.ref.outbound_worker_configuration,
+        outboundWorkerAddresses.length,
+      );
+      if (result < 0) {
+        _bindings.transport_worker_destroy(inboundWorkerPointer);
+        calloc.free(outboundWorkerPointer);
+        workersCompleter.completeError(TransportInitializationException("[worker] code = $result, message = ${result.kernelErrorToString(_bindings)}"));
+        fromTransportToWorker.close();
         return;
       }
       outboundWorkerAddresses.add(outboundWorkerPointer.address);
@@ -115,13 +146,26 @@ class Transport {
     fromTransportToListener.listen((port) async {
       await workersCompleter.future.onError((error, stackTrace) {
         listenerCompleter.completeError(error!, stackTrace);
+        fromTransportToListener.close();
         throw error;
       });
-      final listenerPointer = _bindings.transport_listener_initialize(_transportPointer.ref.listener_configuration, listeners);
+      final listenerPointer = calloc<transport_listener_t>();
       if (listenerPointer == nullptr) {
-        listenerCompleter.completeError(TransportEventException("[listener] is null"));
+        listenerCompleter.completeError(TransportInitializationException("[listener] out of memory"));
         fromTransportToListener.close();
         return;
+      }
+      var result = _bindings.transport_listener_initialize(listenerPointer, _transportPointer.ref.listener_configuration, listeners);
+      if (result < 0) {
+        calloc.free(listenerPointer);
+        for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
+          final inboundWorker = Pointer.fromAddress(inboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
+          final outboundWorker = Pointer.fromAddress(outboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
+          _bindings.transport_worker_destroy(inboundWorker);
+          _bindings.transport_worker_destroy(outboundWorker);
+        }
+        listenerCompleter.completeError(TransportInitializationException("[listener] code = $result, message = ${result.kernelErrorToString(_bindings)}"));
+        fromTransportToListener.close();
       }
       _listenerPointers.add(listenerPointer);
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
@@ -160,7 +204,12 @@ class Transport {
       );
     }
 
-    await listenerCompleter.future;
+    try {
+      await listenerCompleter.future;
+    } catch (_) {
+      _bindings.transport_destroy(_transportPointer);
+      rethrow;
+    }
     workerActivators.forEach((port) => port.send(null));
   }
 }

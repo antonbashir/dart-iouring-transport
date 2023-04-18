@@ -140,8 +140,16 @@ class TransportWorker {
       _outboundBuffers,
       _callbacks,
     );
-    _inboundTimeoutChecker = TransportTimeoutChecker(_bindings, _inboundWorkerPointer, Duration(milliseconds: _inboundWorkerPointer.ref.timeout_checker_period_millis));
-    _outboundTimeoutChecker = TransportTimeoutChecker(_bindings, _outboundWorkerPointer, Duration(milliseconds: _outboundWorkerPointer.ref.timeout_checker_period_millis));
+    _inboundTimeoutChecker = TransportTimeoutChecker(
+      _bindings,
+      _inboundWorkerPointer,
+      Duration(milliseconds: _inboundWorkerPointer.ref.timeout_checker_period_millis),
+    );
+    _outboundTimeoutChecker = TransportTimeoutChecker(
+      _bindings,
+      _outboundWorkerPointer,
+      Duration(milliseconds: _outboundWorkerPointer.ref.timeout_checker_period_millis),
+    );
     _inboundTimeoutChecker.start();
     _outboundTimeoutChecker.start();
     _activator.close();

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:ffi/ffi.dart';
+
 import 'registry.dart';
 
 import 'bindings.dart';
@@ -15,7 +17,7 @@ import 'callbacks.dart';
 
 class TransportClient {
   final TransportCallbacks _callbacks;
-  final Pointer<transport_client_t> pointer;
+  final Pointer<transport_client_t> _pointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportChannel _channel;
   final TransportBindings _bindings;
@@ -24,6 +26,9 @@ class TransportClient {
   final int _writeTimeout;
   final TransportBuffers _buffers;
   final TransportClientRegistry _registry;
+
+  late final String sourceAddress;
+  late final String destinationAddress;
 
   var _active = true;
   bool get active => _active;
@@ -34,7 +39,7 @@ class TransportClient {
   TransportClient(
     this._callbacks,
     this._channel,
-    this.pointer,
+    this._pointer,
     this._workerPointer,
     this._bindings,
     this._readTimeout,
@@ -42,11 +47,14 @@ class TransportClient {
     this._buffers,
     this._registry, {
     this.connectTimeout,
-  });
+  }) {
+    sourceAddress = _computeSourceAddress();
+    destinationAddress = _computeDestinationAddress();
+  }
 
   Future<TransportOutboundPayload> read() async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
@@ -56,7 +64,7 @@ class TransportClient {
 
   Future<void> write(Uint8List bytes) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
@@ -67,10 +75,10 @@ class TransportClient {
   Future<TransportOutboundPayload> receiveMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
-    _channel.receiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
+    _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
     return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
   }
@@ -78,14 +86,14 @@ class TransportClient {
   Future<void> sendMessage(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (!_active) throw TransportClosedException.forClient();
+    if (!_active) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
     _channel.sendMessage(
       bytes,
       bufferId,
-      pointer.ref.family,
-      _bindings.transport_client_get_destination_address(pointer),
+      _pointer.ref.family,
+      _bindings.transport_client_get_destination_address(_pointer),
       _writeTimeout,
       flags,
       transportEventSendMessage | transportEventClient,
@@ -96,8 +104,8 @@ class TransportClient {
 
   Future<TransportClient> connect() {
     final completer = Completer<TransportClient>();
-    _callbacks.setConnect(pointer.ref.fd, completer);
-    _bindings.transport_worker_connect(_workerPointer, pointer, connectTimeout!);
+    _callbacks.setConnect(_pointer.ref.fd, completer);
+    _bindings.transport_worker_connect(_workerPointer, _pointer, connectTimeout!);
     _pending++;
     return completer.future;
   }
@@ -125,11 +133,32 @@ class TransportClient {
   Future<void> close() async {
     if (!_active) return;
     _active = false;
-    _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
+    _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
     if (_pending > 0) await _closer.future;
     _channel.close();
-    _bindings.transport_client_destroy(pointer);
-    _registry.removeClient(pointer.ref.fd);
+    _bindings.transport_client_destroy(_pointer);
+    _registry.removeClient(_pointer.ref.fd);
+  }
+
+  @pragma(preferInlinePragma)
+  String _computeSourceAddress() {
+    final address = _bindings.transport_socket_fd_to_address(_pointer.ref.fd, _pointer.ref.family);
+    final addressString = address.cast<Utf8>().toDartString();
+    malloc.free(address);
+    if (_pointer.ref.family == transport_socket_family.UNIX) {
+      return addressString;
+    }
+    return "$addressString:${_bindings.transport_socket_fd_to_port(_pointer.ref.fd)}";
+  }
+
+  @pragma(preferInlinePragma)
+  String _computeDestinationAddress() {
+    final address = _bindings.transport_client_get_destination_address(_pointer);
+    final addressString = _bindings.transport_address_to_string(address, _pointer.ref.family).cast<Utf8>().toDartString();
+    if (_pointer.ref.family == transport_socket_family.UNIX) {
+      return addressString;
+    }
+    return "$addressString:${address.cast<sockaddr_in>().ref.sin_port}";
   }
 }
 

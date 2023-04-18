@@ -1,3 +1,5 @@
+import 'package:retry/retry.dart';
+
 class TransportConfiguration {
   final int listenerIsolates;
   final int workerInsolates;
@@ -693,5 +695,49 @@ class TransportUnixDatagramClientConfiguration {
         socketClockexec: socketClockexec ?? this.socketClockexec,
         socketReceiveLowAt: socketReceiveLowAt ?? this.socketReceiveLowAt,
         socketSendLowAt: socketSendLowAt ?? this.socketSendLowAt,
+      );
+}
+
+class TransportRetryConfiguration {
+  final Duration delayFactor;
+  final double randomizationFactor;
+  final Duration maxDelay;
+  final int maxAttempts;
+  final bool Function(Exception exception) predicate;
+  final void Function(Exception exception)? onRetry;
+
+  late final RetryOptions options;
+
+  TransportRetryConfiguration({
+    required this.delayFactor,
+    required this.randomizationFactor,
+    required this.maxDelay,
+    required this.maxAttempts,
+    required this.predicate,
+    this.onRetry,
+  }) {
+    options = RetryOptions(
+      delayFactor: delayFactor,
+      randomizationFactor: randomizationFactor,
+      maxDelay: maxDelay,
+      maxAttempts: maxAttempts,
+    );
+  }
+
+  TransportRetryConfiguration copyWith({
+    Duration? delayFactor,
+    double? randomizationFactor,
+    Duration? maxDelay,
+    int? maxAttempts,
+    bool Function(Exception exception)? predicate,
+    void Function(Exception exception)? onRetry,
+  }) =>
+      TransportRetryConfiguration(
+        delayFactor: delayFactor ?? this.delayFactor,
+        randomizationFactor: randomizationFactor ?? this.randomizationFactor,
+        maxDelay: maxDelay ?? this.maxDelay,
+        maxAttempts: maxAttempts ?? this.maxAttempts,
+        predicate: predicate ?? this.predicate,
+        onRetry: onRetry ?? this.onRetry,
       );
 }

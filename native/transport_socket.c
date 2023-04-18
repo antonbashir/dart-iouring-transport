@@ -25,9 +25,9 @@ int64_t transport_socket_create_tcp(uint64_t flags,
                                     uint32_t tcp_max_segment_size,
                                     uint16_t tcp_syn_count)
 {
-  int32_t activate_option = 1;
+  int activate_option = 1;
 
-  int32_t fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1)
   {
     return -1;
@@ -186,7 +186,7 @@ int64_t transport_socket_create_tcp(uint64_t flags,
     }
   }
 
-  return (uint32_t)fd;
+  return fd;
 }
 
 int64_t transport_socket_create_udp(uint64_t flags,
@@ -198,9 +198,9 @@ int64_t transport_socket_create_udp(uint64_t flags,
                                     struct ip_mreqn *ip_multicast_interface,
                                     uint32_t ip_multicast_ttl)
 {
-  int32_t activate_option = 1;
+  int activate_option = 1;
 
-  int32_t fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (fd == -1)
   {
     return -1;
@@ -322,7 +322,7 @@ int64_t transport_socket_create_udp(uint64_t flags,
     }
   }
 
-  return (uint32_t)fd;
+  return fd;
 }
 
 int64_t transport_socket_create_unix_stream(uint64_t flags,
@@ -331,9 +331,9 @@ int64_t transport_socket_create_unix_stream(uint64_t flags,
                                             uint32_t socket_receive_low_at,
                                             uint32_t socket_send_low_at)
 {
-  int32_t activate_option = 1;
+  int activate_option = 1;
 
-  int32_t fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  int fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (fd == -1)
   {
     return -1;
@@ -399,7 +399,7 @@ int64_t transport_socket_create_unix_stream(uint64_t flags,
     }
   }
 
-  return (uint32_t)fd;
+  return fd;
 }
 
 int64_t transport_socket_create_unix_dgram(uint64_t flags,
@@ -408,9 +408,9 @@ int64_t transport_socket_create_unix_dgram(uint64_t flags,
                                            uint32_t socket_receive_low_at,
                                            uint32_t socket_send_low_at)
 {
-  int32_t activate_option = 1;
+  int activate_option = 1;
 
-  int32_t fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+  int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (fd == -1)
   {
     return -1;
@@ -469,7 +469,7 @@ int64_t transport_socket_create_unix_dgram(uint64_t flags,
     }
   }
 
-  return (uint32_t)fd;
+  return fd;
 }
 
 int transport_socket_multicast_add_membership(int fd, const char *group_address, const char *local_address, int interface_index)
@@ -516,6 +516,10 @@ int transport_socket_get_interface_index(const char *interface)
 struct ip_mreqn *transport_socket_multicast_create_request(const char *group_address, const char *local_address, int interface_index)
 {
   struct ip_mreqn *request = malloc(sizeof(struct ip_mreqn));
+  if (!request)
+  {
+    return NULL;
+  }
   request->imr_multiaddr.s_addr = inet_addr(group_address);
   request->imr_address.s_addr = inet_addr(local_address);
   request->imr_ifindex = interface_index;

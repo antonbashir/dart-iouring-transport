@@ -1,13 +1,31 @@
-import 'extensions.dart';
+import 'constants.dart';
 
-class TransportEventException implements Exception {
+class TransportInitializationException implements Exception {
   final String message;
 
-  TransportEventException(this.message);
+  TransportInitializationException(this.message);
 
-  factory TransportEventException.forEvent(int event, int code, String message, int fd, {int? bufferId}) => TransportEventException(
-        "${event.transportEventToString()} code = $code, message = $message, fd = $fd" + (bufferId == null ? "" : ", bufferId = $bufferId"),
-      );
+  @override
+  String toString() => message;
+}
+
+class TransportInternalException implements Exception {
+  final TransportEvent event;
+  final int code;
+  final String source;
+  final String target;
+
+  late final String message;
+
+  TransportInternalException({
+    required this.event,
+    required this.code,
+    required String message,
+    required this.source,
+    required this.target,
+  }) {
+    this.message = "[$event] code = $code, message = $message, source = '$source', target = '$target'";
+  }
 
   @override
   String toString() => message;
@@ -15,9 +33,12 @@ class TransportEventException implements Exception {
 
 class TransportCancelledException implements Exception {
   late final String message;
+  final TransportEvent event;
+  final String source;
+  final String target;
 
-  TransportCancelledException() {
-    message = "Event canceled\n${StackTrace.current.toString()}";
+  TransportCancelledException({required this.event, required this.source, required this.target}) {
+    this.message = "[$event] cancelled, source = '$source', target = '$target'";
   }
 
   @override
@@ -29,20 +50,30 @@ class TransportClosedException implements Exception {
 
   TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer() => TransportClosedException._("Server closed\n${StackTrace.current}");
-  factory TransportClosedException.forConnection() => TransportClosedException._("Server connection closed\n${StackTrace.current}");
-  factory TransportClosedException.forClient() => TransportClosedException._("Client closed\n${StackTrace.current}");
+  factory TransportClosedException.forServer(String server) => TransportClosedException._("Server closed: $server");
+
+  factory TransportClosedException.forConnection(String server, String connection) => TransportClosedException._("Server connection closed: server = $server, connection = $connection");
+
+  factory TransportClosedException.forClient(String client, String server) => TransportClosedException._("Client closed: client = $client, server = $server");
 
   @override
   String toString() => message;
 }
 
 class TransportZeroDataException implements Exception {
-  final String message;
+  final TransportEvent event;
+  final String source;
+  final String target;
 
-  TransportZeroDataException._(this.message);
+  late final String message;
 
-  factory TransportZeroDataException() => TransportZeroDataException._("Event completed with zero result (no data)\n${StackTrace.current}");
+  TransportZeroDataException({
+    required this.event,
+    required this.source,
+    required this.target,
+  }) {
+    message = "[$event] completed with zero result (no data), source = $source, target = $target";
+  }
 
   @override
   String toString() => message;

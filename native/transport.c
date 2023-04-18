@@ -17,21 +17,14 @@
 #include "transport_server.h"
 #include "small/include/small/rlist.h"
 
-transport_t *transport_initialize(transport_listener_configuration_t *listener_configuration,
-                                  transport_worker_configuration_t *inbound_worker_configuration,
-                                  transport_worker_configuration_t *outbound_worker_configuration)
+void transport_initialize(transport_t *transport,
+                          transport_listener_configuration_t *listener_configuration,
+                          transport_worker_configuration_t *inbound_worker_configuration,
+                          transport_worker_configuration_t *outbound_worker_configuration)
 {
-  transport_t *transport = malloc(sizeof(transport_t));
-  if (!transport)
-  {
-    return NULL;
-  }
-
   transport->listener_configuration = listener_configuration;
   transport->inbound_worker_configuration = inbound_worker_configuration;
   transport->outbound_worker_configuration = outbound_worker_configuration;
-
-  return transport;
 }
 
 void transport_destroy(transport_t *transport)
@@ -52,13 +45,41 @@ struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count)
   return malloc(sizeof(struct io_uring_cqe) * cqe_count);
 }
 
-int transport_get_kernel_error()
-{
-  return errno;
-}
-
-int transport_close_descritor(int fd)
+void transport_close_descritor(int fd)
 {
   shutdown(fd, SHUT_RDWR);
-  return close(fd);
+  close(fd);
+}
+
+char *transport_address_to_string(struct sockaddr *address, transport_socket_family_t family)
+{
+  return family == INET ? inet_ntoa(((struct sockaddr_in *)address)->sin_addr) : ((struct sockaddr_un *)address)->sun_path;
+}
+
+char *transport_socket_fd_to_address(int fd, transport_socket_family_t family)
+{
+  socklen_t length;
+  if (family == INET)
+  {
+    struct sockaddr_in address;
+    getpeername(fd, &address, length);
+    char *name = inet_ntoa(address.sin_addr);
+    char *name_copy = malloc(strlen(name));
+    strcpy(name, name_copy);
+    return name_copy;
+  }
+  struct sockaddr_un address;
+  getpeername(fd, &address, length);
+  char *name = address.sun_path;
+  char *name_copy = malloc(strlen(name));
+  strcpy(name, name_copy);
+  return name_copy;
+}
+
+int transport_socket_fd_to_port(int fd)
+{
+  socklen_t length;
+  struct sockaddr_in address;
+  getpeername(fd, &address, length);
+  return address.sin_port;
 }

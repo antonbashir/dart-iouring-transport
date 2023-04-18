@@ -40,17 +40,22 @@ extern "C"
     socklen_t server_address_length;
   } transport_server_t;
 
-  transport_server_t *transport_server_initialize_tcp(transport_server_configuration_t *configuration,
-                                                      const char *ip,
-                                                      int32_t port);
-  transport_server_t *transport_server_initialize_udp(transport_server_configuration_t *configuration,
-                                                      const char *ip,
-                                                      int32_t port);
-  transport_server_t *transport_server_initialize_unix_stream(transport_server_configuration_t *configuration,
-                                                              const char *path);
-  transport_server_t *transport_server_initialize_unix_dgram(transport_server_configuration_t *configuration,
-                                                             const char *path);
+  int transport_server_initialize_tcp(transport_server_t *server,
+                                      transport_server_configuration_t *configuration,
+                                      const char *ip,
+                                      int32_t port);
+  int transport_server_initialize_udp(transport_server_t *server, transport_server_configuration_t *configuration,
+                                      const char *ip,
+                                      int32_t port);
+  int transport_server_initialize_unix_stream(transport_server_t *server,
+                                              transport_server_configuration_t *configuration,
+                                              const char *path);
+  int transport_server_initialize_unix_dgram(transport_server_t *server,
+                                             transport_server_configuration_t *configuration,
+                                             const char *path);
   void transport_server_destroy(transport_server_t *server);
+  
+  char* transport_server_address_to_string(transport_server_t *server);
 
 #if defined(__cplusplus)
 }

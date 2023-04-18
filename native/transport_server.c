@@ -14,22 +14,17 @@
 #include "transport_constants.h"
 #include "transport_socket.h"
 
-transport_server_t *transport_server_initialize_tcp(transport_server_configuration_t *configuration,
-                                                    const char *ip,
-                                                    int32_t port)
+int transport_server_initialize_tcp(transport_server_t *server, transport_server_configuration_t *configuration,
+                                    const char *ip,
+                                    int32_t port)
 {
-  transport_server_t *server = malloc(sizeof(transport_server_t));
-  if (!server)
-  {
-    return NULL;
-  }
   server->family = INET;
   memset(&server->inet_server_address, 0, sizeof(server->inet_server_address));
   server->inet_server_address.sin_addr.s_addr = inet_addr(ip);
   server->inet_server_address.sin_port = htons(port);
   server->inet_server_address.sin_family = AF_INET;
   server->server_address_length = sizeof(server->inet_server_address);
-  int64_t socket_result = transport_socket_create_tcp(
+  int64_t result = transport_socket_create_tcp(
       configuration->socket_configuration_flags,
       configuration->socket_receive_buffer_size,
       configuration->socket_send_buffer_size,
@@ -41,41 +36,35 @@ transport_server_t *transport_server_initialize_tcp(transport_server_configurati
       configuration->tcp_keep_alive_individual_count,
       configuration->tcp_max_segment_size,
       configuration->tcp_syn_count);
-  if (socket_result < 0)
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  server->fd = socket_result;
-  if (bind(server->fd, (struct sockaddr *)&server->inet_server_address, server->server_address_length) < 0)
+  server->fd = result;
+  result = bind(server->fd, (struct sockaddr *)&server->inet_server_address, server->server_address_length);
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  if (listen(server->fd, configuration->socket_max_connections) < 0)
+  result = listen(server->fd, configuration->socket_max_connections);
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  return server;
+  return 0;
 }
 
-transport_server_t *transport_server_initialize_udp(transport_server_configuration_t *configuration,
-                                                    const char *ip,
-                                                    int32_t port)
+int transport_server_initialize_udp(transport_server_t *server, transport_server_configuration_t *configuration,
+                                    const char *ip,
+                                    int32_t port)
 {
-  transport_server_t *server = malloc(sizeof(transport_server_t));
-  if (!server)
-  {
-    return NULL;
-  }
   server->family = INET;
   memset(&server->inet_server_address, 0, sizeof(server->inet_server_address));
   server->inet_server_address.sin_addr.s_addr = inet_addr(ip);
   server->inet_server_address.sin_port = htons(port);
   server->inet_server_address.sin_family = AF_INET;
   server->server_address_length = sizeof(server->inet_server_address);
-  int64_t socket_result = transport_socket_create_udp(
+  int64_t result = transport_socket_create_udp(
       configuration->socket_configuration_flags,
       configuration->socket_receive_buffer_size,
       configuration->socket_send_buffer_size,
@@ -84,28 +73,22 @@ transport_server_t *transport_server_initialize_udp(transport_server_configurati
       configuration->ip_ttl,
       configuration->ip_multicast_interface,
       configuration->ip_multicast_ttl);
-  if (socket_result < 0)
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  server->fd = socket_result;
-  if (bind(server->fd, (struct sockaddr *)&server->inet_server_address, server->server_address_length) < 0)
+  server->fd = result;
+  result = bind(server->fd, (struct sockaddr *)&server->inet_server_address, server->server_address_length);
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  return server;
+  return 0;
 }
 
-transport_server_t *transport_server_initialize_unix_stream(transport_server_configuration_t *configuration,
-                                                            const char *path)
+int transport_server_initialize_unix_stream(transport_server_t *server, transport_server_configuration_t *configuration,
+                                            const char *path)
 {
-  transport_server_t *server = malloc(sizeof(transport_server_t));
-  if (!server)
-  {
-    return NULL;
-  }
   server->family = UNIX;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
   server->unix_server_address.sun_family = AF_UNIX;
@@ -123,27 +106,22 @@ transport_server_t *transport_server_initialize_unix_stream(transport_server_con
     return NULL;
   }
   server->fd = result;
-  if ((result = bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length)) < 0)
+  result = bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length);
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  if ((result = listen(server->fd, configuration->socket_max_connections)) < 0)
+  result = listen(server->fd, configuration->socket_max_connections);
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  return server;
+  return 0;
 }
 
-transport_server_t *transport_server_initialize_unix_dgram(transport_server_configuration_t *configuration,
-                                                           const char *path)
+int transport_server_initialize_unix_dgram(transport_server_t *server, transport_server_configuration_t *configuration,
+                                           const char *path)
 {
-  transport_server_t *server = malloc(sizeof(transport_server_t));
-  if (!server)
-  {
-    return NULL;
-  }
   server->family = UNIX;
   memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
   server->unix_server_address.sun_family = AF_UNIX;
@@ -157,16 +135,20 @@ transport_server_t *transport_server_initialize_unix_dgram(transport_server_conf
       configuration->socket_send_low_at);
   if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
   server->fd = result;
-  if (bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length) < 0)
+  result = bind(server->fd, (struct sockaddr *)&server->unix_server_address, server->server_address_length);
+  if (result < 0)
   {
-    free(server);
-    return NULL;
+    return result;
   }
-  return server;
+  return 0;
+}
+
+char* transport_server_address_to_string(transport_server_t *server)
+{
+  return server->family == INET ? inet_ntoa(server->inet_server_address.sin_addr) : server->unix_server_address.sun_path;
 }
 
 void transport_server_destroy(transport_server_t *server)
