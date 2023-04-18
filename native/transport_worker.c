@@ -118,6 +118,21 @@ static inline void transport_worker_add_event(transport_worker_t *worker, int fd
   mh_events_put(worker->events, &node, NULL, 0);
 }
 
+void transport_worker_custom(transport_worker_t *worker, uint32_t id, uint32_t custom_data)
+{
+  struct io_uring *ring = worker->ring;
+  struct io_uring_sqe *sqe = provide_sqe(ring);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
+  uint64_t data = ((uint64_t)(custom_data) << 16) | ((uint64_t)TRANSPORT_EVENT_CUSTOM);
+  io_uring_prep_msg_ring(sqe, ring->ring_fd, id, custom_data, 0);
+  sqe->flags |= IOSQE_IO_HARDLINK;
+  io_uring_sqe_set_data64(sqe, data);
+  sqe = provide_sqe(ring);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
+  io_uring_submit(ring);
+}
+
 void transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event)
 {
   struct io_uring *ring = worker->ring;

@@ -71,7 +71,7 @@ class TransportCallbacks {
   void notifyOutboundWrite(int bufferId) => _outboundWrite[bufferId].complete();
 
   @pragma(preferInlinePragma)
-  void notifyCustom(int id, int data) => _custom[id]!.complete(data);
+  void notifyCustom(int id, int data) => _custom.remove(id)?.complete(data);
 
   @pragma(preferInlinePragma)
   void notifyConnectError(int fd, Exception error) => _connect.remove(fd)!.completeError(error);
@@ -81,4 +81,7 @@ class TransportCallbacks {
 
   @pragma(preferInlinePragma)
   void notifyOutboundWriteError(int bufferId, Exception error) => _outboundWrite[bufferId].completeError(error);
+
+  @pragma(preferInlinePragma)
+  void removeCustom(int id) => _custom.remove(id);
 }

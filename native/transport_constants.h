@@ -16,6 +16,7 @@ extern "C"
 #define TRANSPORT_EVENT_CONNECT ((uint16_t)1 << 5)
 #define TRANSPORT_EVENT_CLIENT ((uint16_t)1 << 6)
 #define TRANSPORT_EVENT_FILE ((uint16_t)1 << 7)
+#define TRANSPORT_EVENT_CUSTOM ((uint16_t)1 << 8)
 
 #define TRANSPORT_BUFFER_USED -1
 #define TRANSPORT_TIMEOUT_INFINITY -1

@@ -40,6 +40,7 @@ extern "C"
 
   int transport_worker_initialize(transport_worker_t *worker, transport_worker_configuration_t *configuration, uint8_t id);
 
+  void transport_worker_custom(transport_worker_t *worker, uint32_t id, uint32_t custom_data);
   void transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
   void transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
   void transport_worker_connect(transport_worker_t *worker, transport_client_t *client, int64_t timeout);

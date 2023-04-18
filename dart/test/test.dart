@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
-import 'package:retry/retry.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -19,8 +19,8 @@ void main() {
     testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   });
   group("[tcp]", () {
-    final testTestsCount = 5;
-    for (var index = 0; index < testTestsCount; index++) {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
       testTcp(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testTcp(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testTcp(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -29,8 +29,8 @@ void main() {
     }
   });
   group("[unix stream]", () {
-    final testTestsCount = 5;
-    for (var index = 0; index < testTestsCount; index++) {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
       testUnixStream(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixStream(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixStream(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -39,8 +39,8 @@ void main() {
     }
   });
   group("[udp]", () {
-    final testTestsCount = 5;
-    for (var index = 0; index < testTestsCount; index++) {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
       testUdp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUdp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUdp(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -49,13 +49,21 @@ void main() {
     }
   });
   group("[unix dgram]", timeout: Timeout(Duration(minutes: 5)), () {
-    final testTestsCount = 5;
-    for (var index = 0; index < testTestsCount; index++) {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
       testUnixDgram(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixDgram(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixDgram(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixDgram(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    }
+  });
+  group("[custom]", () {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
+      testCustom(1);
+      testCustom(2);
+      testCustom(4);
     }
   });
 }
@@ -251,6 +259,33 @@ void testUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
     });
     (await done.take(workers * clients * 2).toList()).forEach((response) => expect(response, serverData));
+    done.close();
+    await transport.shutdown();
+  });
+}
+
+void testCustom(int workers) {
+  test("callback", () async {
+    final transport = Transport(
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
+      TransportDefaults.listener(),
+      TransportDefaults.inbound(),
+      TransportDefaults.outbound(),
+    );
+    final done = ReceivePort();
+    await transport.run(transmitter: done.sendPort, (input) async {
+      final worker = TransportWorker(input);
+      final completer = Completer<int>();
+      await worker.initialize();
+      final id = 1;
+      final data = Random().nextInt(100) - 50;
+      worker.registerCallback(id, completer);
+      worker.notifyCustom(id, data);
+      final result = await completer.future;
+      expect(result, data);
+      worker.transmitter!.send(result);
+    });
+    await done.take(workers);
     done.close();
     await transport.shutdown();
   });

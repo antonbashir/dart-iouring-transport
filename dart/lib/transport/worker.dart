@@ -4,6 +4,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:meta/meta.dart';
 
 import 'bindings.dart';
 import 'buffers.dart';
@@ -169,6 +170,8 @@ class TransportWorker {
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
 
+  void removeCallback(int id) => _callbacks.removeCustom(id);
+
   Future<void> job(FutureOr<void> Function() action, {String name = defaultJobName}) async {
     final completer = Completer<bool>();
     var current = _jobs[name];
@@ -228,6 +231,10 @@ class TransportWorker {
       final event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
+        if (event == transportEventCustom) {
+          _callbacks.notifyCustom(result, data);
+          continue;
+        }
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           _errorHandler.handle(result, data, fd, event);
@@ -417,5 +424,10 @@ class TransportWorker {
     _serverRegistry.addConnection(fd, result);
     server.reaccept();
     _callbacks.notifyAccept(fd, TransportChannel(_inboundWorkerPointer, result, _bindings, _inboundBuffers));
+  }
+
+  @visibleForTesting
+  void notifyCustom(int id, int data) {
+    _bindings.transport_worker_custom(_outboundWorkerPointer, id, data);
   }
 }
