@@ -26,7 +26,7 @@ class TransportClientStreamCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> write(Uint8List bytes) => _client.write(bytes);
+  Future<void> write(Uint8List bytes, {RetryOptions? retry}) => retry == null ? _client.write(bytes) : retry.retry(() => write(bytes));
 
   Future<void> close() => _client.close();
 }
@@ -46,7 +46,12 @@ class TransportClientDatagramCommunicator {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags}) => retry(() => _client.sendMessage(bytes, flags: flags), retryIf: (exception) => exception is TransportZeroDataException);
+  Future<void> sendMessage(Uint8List bytes, {int? flags, RetryOptions? retry}) => retry == null
+      ? _client.sendMessage(bytes, flags: flags)
+      : retry.retry(
+          () => _client.sendMessage(bytes, flags: flags),
+          retryIf: (exception) => exception is TransportZeroDataException,
+        );
 
   @pragma(preferInlinePragma)
   Future<void> close() => _client.close();
@@ -105,14 +110,14 @@ class TransportServerDatagramReceiver {
   Future<void> close() => _server.close();
 }
 
-class TransportInboundDatagramSender {
+class TransportServerDatagramSender {
   final TransportServer _server;
   final TransportChannel _channel;
   final TransportBuffers _buffers;
   final int _initialBufferId;
   final Uint8List initialPayload;
 
-  TransportInboundDatagramSender(this._server, this._channel, this._buffers, this._initialBufferId, this.initialPayload);
+  TransportServerDatagramSender(this._server, this._channel, this._buffers, this._initialBufferId, this.initialPayload);
 
   @pragma(preferInlinePragma)
   Future<void> sendMessage(Uint8List bytes, {int? flags}) => _server.sendMessage(bytes, _initialBufferId, _channel, flags: flags);

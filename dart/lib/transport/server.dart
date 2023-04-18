@@ -112,7 +112,7 @@ class TransportServer {
     _pending++;
     return completer.future.then((length) {
       final bytes = _buffers.read(bufferId, length);
-      final sender = TransportInboundDatagramSender(
+      final sender = TransportServerDatagramSender(
         this,
         channel,
         _buffers,

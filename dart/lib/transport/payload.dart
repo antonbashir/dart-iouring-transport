@@ -40,7 +40,7 @@ class TransportInboundDatagramPayload {
   final Uint8List bytes;
   final void Function() _releaser;
   final Future<void> Function(Uint8List bytes, {int? flags}) _responder;
-  final TransportInboundDatagramSender sender;
+  final TransportServerDatagramSender sender;
 
   TransportInboundDatagramPayload(this.bytes, this.sender, this._releaser, this._responder);
 

@@ -7,6 +7,7 @@ import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
+import 'package:retry/retry.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -156,7 +157,7 @@ void testUdp({
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
-        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
+        responseFutures.add(client.sendMessage(clientData, retry: RetryOptions()).then((value) => client.receiveMessage()).then((value) => value.extract()));
       }
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));
@@ -242,7 +243,7 @@ void testUnixDgram({
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-        responseFutures.add(client.sendMessage(clientData).then((value) => client.receiveMessage()).then((value) => value.extract()));
+        responseFutures.add(client.sendMessage(clientData, retry: RetryOptions()).then((value) => client.receiveMessage()).then((value) => value.extract()));
       }
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));
