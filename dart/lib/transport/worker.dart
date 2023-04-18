@@ -169,8 +169,7 @@ class TransportWorker {
 
   void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
 
-  Future<void> job(FutureOr<void> Function() action, {String? name}) async {
-    name = name ?? defaultJobName;
+  Future<void> job(FutureOr<void> Function() action, {String name = defaultJobName}) async {
     final completer = Completer<bool>();
     var current = _jobs[name];
     if (current == null) _jobs[name] = current = Queue();
