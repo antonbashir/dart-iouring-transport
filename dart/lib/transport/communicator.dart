@@ -50,7 +50,7 @@ class TransportClientDatagramCommunicator {
       ? _client.sendMessage(bytes, flags: flags)
       : retry.retry(
           () => _client.sendMessage(bytes, flags: flags),
-          retryIf: (exception) => exception is TransportZeroDataException,
+          retryIf: (exception) => !(exception is TransportClosedException),
         );
 
   @pragma(preferInlinePragma)

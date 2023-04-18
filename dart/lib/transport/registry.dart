@@ -51,7 +51,7 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      communicators.add(client.connect(_workerPointer).then((client) => TransportClientStreamCommunicator(client)));
+      communicators.add(client.connect().then((client) => TransportClientStreamCommunicator(client)));
     }
     return TransportClientStreamCommunicators(await Future.wait(communicators));
   }
@@ -82,7 +82,7 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = clinet;
-      clients.add(clinet.connect(_workerPointer).then((client) => TransportClientStreamCommunicator(client)));
+      clients.add(clinet.connect().then((client) => TransportClientStreamCommunicator(client)));
     }
     return TransportClientStreamCommunicators(await Future.wait(clients));
   }

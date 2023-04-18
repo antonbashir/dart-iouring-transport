@@ -94,10 +94,10 @@ class TransportClient {
     return completer.future;
   }
 
-  Future<TransportClient> connect(Pointer<transport_worker_t> workerPointer) {
+  Future<TransportClient> connect() {
     final completer = Completer<TransportClient>();
     _callbacks.setConnect(pointer.ref.fd, completer);
-    _bindings.transport_worker_connect(workerPointer, pointer, connectTimeout!);
+    _bindings.transport_worker_connect(_workerPointer, pointer, connectTimeout!);
     _pending++;
     return completer.future;
   }
