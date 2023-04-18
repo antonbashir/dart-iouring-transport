@@ -35,6 +35,10 @@ class TransportFile {
     BytesBuilder builder = BytesBuilder();
     var offset = 0;
     var payload = await readBuffer(offset: offset);
+    if (payload.bytes.isEmpty) {
+      payload.release();
+      return Uint8List.fromList([]);
+    }
     builder.add(payload.extract());
     offset += payload.bytes.length;
     while (true) {
@@ -44,6 +48,24 @@ class TransportFile {
       offset += payload.bytes.length;
     }
     return builder.takeBytes();
+  }
+
+  Future<void> transfer(TransportFile to) async {
+    var offset = 0;
+    var payload = await readBuffer(offset: offset);
+    if (payload.bytes.isEmpty) {
+      payload.release();
+      return;
+    }
+    await to.write(payload.bytes);
+    offset += payload.bytes.length;
+    while (true) {
+      payload = await readBuffer(offset: offset);
+      if (payload.bytes.isEmpty) break;
+      payload.release();
+      await to.write(payload.bytes, offset: offset);
+      offset += payload.bytes.length;
+    }
   }
 
   void close() => _channel.close();
