@@ -48,7 +48,7 @@ class TransportClient {
     this._registry, {
     this.connectTimeout,
   }) {
-    sourceAddress = _computeSourceAddress();
+    sourceAddress = _computeChannelAddress(_pointer.ref.fd);
     destinationAddress = _computeDestinationAddress();
   }
 
@@ -141,14 +141,15 @@ class TransportClient {
   }
 
   @pragma(preferInlinePragma)
-  String _computeSourceAddress() {
-    final address = _bindings.transport_socket_fd_to_address(_pointer.ref.fd, _pointer.ref.family);
+  String _computeChannelAddress(int fd) {
+    final address = _bindings.transport_socket_fd_to_address(fd, _pointer.ref.family);
+    if (address == nullptr) return empty;
     final addressString = address.cast<Utf8>().toDartString();
     malloc.free(address);
     if (_pointer.ref.family == transport_socket_family.UNIX) {
       return addressString;
     }
-    return "$addressString:${_bindings.transport_socket_fd_to_port(_pointer.ref.fd)}";
+    return "$addressString:${_bindings.transport_socket_fd_to_port(fd)}";
   }
 
   @pragma(preferInlinePragma)

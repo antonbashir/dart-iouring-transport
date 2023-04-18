@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:html';
 
 import 'bindings.dart';
 import 'buffers.dart';
@@ -29,65 +28,119 @@ class TransportErrorHandler {
   void _handleRead(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forConnection());
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
       return;
     }
     _inboundBuffers.release(bufferId);
     unawaited(server.closeConnection(fd));
     if (result == -ECANCELED) {
       _callbacks.notifyInboundReadError(
-          bufferId,
-          TransportCancelledException(
-            event: TransportEvent.ofEvent(event),
-            source: server.address,
-            target: server.
-          ));
+        bufferId,
+        TransportCancelledException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+        ),
+      );
       return;
     }
-    _callbacks.notifyInboundReadError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundReadError(
+        bufferId,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
   }
 
   void _handleWrite(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forConnection());
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
       return;
     }
     _inboundBuffers.release(bufferId);
     unawaited(server.closeConnection(fd));
     if (result == -ECANCELED) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundWriteError(
+        bufferId,
+        TransportCancelledException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+        ),
+      );
       return;
     }
-    _callbacks.notifyInboundWriteError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundWriteError(
+        bufferId,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
   }
 
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
       return;
     }
     _inboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
-      _callbacks.notifyInboundReadError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundReadError(
+        bufferId,
+        TransportCancelledException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+        ),
+      );
       return;
     }
-    _callbacks.notifyInboundReadError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundReadError(
+        bufferId,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
   }
 
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeChannelAddress(fd)));
       return;
     }
     _inboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportCancelledException());
+      _callbacks.notifyInboundWriteError(
+        bufferId,
+        TransportCancelledException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+        ),
+      );
       return;
     }
-    _callbacks.notifyInboundWriteError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyInboundWriteError(
+        bufferId,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          source: server.address,
+          target: server.computeChannelAddress(fd),
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
   }
 
   void _handleAccept(int fd) {
@@ -99,43 +152,88 @@ class TransportErrorHandler {
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyConnect()) {
-      _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
+      _callbacks.notifyConnectError(fd, TransportClosedException.forClient(client.destinationAddress, client.sourceAddress));
       return;
     }
     unawaited(client.close());
     if (result == -ECANCELED) {
-      _callbacks.notifyConnectError(fd, TransportCancelledException());
+      _callbacks.notifyConnectError(
+        fd,
+        TransportCancelledException(
+          event: TransportEvent.ofEvent(event),
+          source: client.sourceAddress,
+          target: client.destinationAddress,
+        ),
+      );
       return;
     }
-    _callbacks.notifyConnectError(fd, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd));
+    _callbacks.notifyConnectError(
+        fd,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          source: client.sourceAddress,
+          target: client.destinationAddress,
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
   }
 
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
+      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
       return;
     }
     _outboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
-      _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException());
+      _callbacks.notifyOutboundReadError(
+        bufferId,
+        TransportCancelledException(
+          event: TransportEvent.ofEvent(event),
+          source: client.sourceAddress,
+          target: client.destinationAddress,
+        ),
+      );
       return;
     }
-    _callbacks.notifyOutboundReadError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _callbacks.notifyOutboundReadError(
+        bufferId,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          source: client.sourceAddress,
+          target: client.destinationAddress,
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
+      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
       return;
     }
     _outboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportCancelledException());
+      _callbacks.notifyOutboundWriteError(
+        bufferId,
+        TransportCancelledException(
+          event: TransportEvent.ofEvent(event),
+          source: client.sourceAddress,
+          target: client.destinationAddress,
+        ),
+      );
       return;
     }
-    _callbacks.notifyOutboundWriteError(bufferId, TransportInternalException.forEvent(event, result, result.kernelErrorToString(_bindings), fd, bufferId: bufferId));
+    _callbacks.notifyOutboundWriteError(
+        bufferId,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          source: client.sourceAddress,
+          target: client.destinationAddress,
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
   }
 
   void handle(int result, int data, int fd, int event) {

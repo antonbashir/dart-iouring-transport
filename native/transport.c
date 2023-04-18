@@ -62,14 +62,20 @@ char *transport_socket_fd_to_address(int fd, transport_socket_family_t family)
   if (family == INET)
   {
     struct sockaddr_in address;
-    getpeername(fd, &address, length);
+    if (getpeername(fd, &address, length))
+    {
+      return NULL;
+    }
     char *name = inet_ntoa(address.sin_addr);
     char *name_copy = malloc(strlen(name));
     strcpy(name, name_copy);
     return name_copy;
   }
   struct sockaddr_un address;
-  getpeername(fd, &address, length);
+  if (getpeername(fd, &address, length))
+  {
+    return NULL;
+  }
   char *name = address.sun_path;
   char *name_copy = malloc(strlen(name));
   strcpy(name, name_copy);

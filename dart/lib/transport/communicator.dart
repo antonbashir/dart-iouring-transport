@@ -80,6 +80,7 @@ class TransportServerConnection {
       await read().then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
+        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
         onError?.call(error, stackTrace);
       });
     }
@@ -107,6 +108,7 @@ class TransportServerDatagramReceiver {
       await receiveMessage(flags: flags).then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
+        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
         onError?.call(error, stackTrace);
       });
     }

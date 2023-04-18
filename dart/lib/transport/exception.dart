@@ -50,11 +50,9 @@ class TransportClosedException implements Exception {
 
   TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer(String server) => TransportClosedException._("Server closed: $server");
+  factory TransportClosedException.forServer(String source, String target) => TransportClosedException._("Server closed: source = $source, target = $target");
 
-  factory TransportClosedException.forConnection(String server, String connection) => TransportClosedException._("Server connection closed: server = $server, connection = $connection");
-
-  factory TransportClosedException.forClient(String client, String server) => TransportClosedException._("Client closed: client = $client, server = $server");
+  factory TransportClosedException.forClient(String source, String destination) => TransportClosedException._("Client closed: source = $source, target = $destination");
 
   @override
   String toString() => message;
