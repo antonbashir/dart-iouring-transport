@@ -1,14 +1,12 @@
 import 'dart:async';
-import 'dart:collection';
-import 'dart:math';
 import 'dart:typed_data';
 
-import 'configuration.dart';
-import 'exception.dart';
 import 'buffers.dart';
 import 'channels.dart';
 import 'client.dart';
+import 'configuration.dart';
 import 'constants.dart';
+import 'exception.dart';
 import 'payload.dart';
 import 'server.dart';
 
@@ -21,7 +19,7 @@ class TransportClientStreamCommunicator {
   Future<TransportOutboundPayload> read() => _client.readFlush();
 
   @pragma(preferInlinePragma)
-  Future<List<TransportOutboundPayload>> readChunks({int count = 1}) => _client.readChunks(count);
+  Future<List<TransportOutboundPayload>> readChunks(int count) => _client.readChunks(count);
 
   void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
@@ -29,9 +27,9 @@ class TransportClientStreamCommunicator {
     }
   }
 
-  void listenChunked(void Function(TransportOutboundPayload paylad) listener, {int count = 1, void Function(Exception error)? onError}) async {
+  void listenChunked(int count, void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
-      await readChunks(count: count).then((chunks) => chunks.forEach(listener), onError: onError);
+      await readChunks(count).then((chunks) => chunks.forEach(listener), onError: onError);
     }
   }
 
@@ -55,17 +53,26 @@ class TransportClientDatagramCommunicator {
   @pragma(preferInlinePragma)
   Future<TransportOutboundPayload> receiveMessage({int? flags}) => _client.receiveMessageFlush(flags: flags);
 
+  @pragma(preferInlinePragma)
+  Future<List<TransportOutboundPayload>> receiveMessageChunks(int count, {int? flags}) => _client.receiveMessageChunks(count, flags: flags);
+
   void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
       await receiveMessage().then(listener, onError: onError);
     }
   }
 
+  void listenChunked(int count, void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
+    while (!_client.closing) {
+      await receiveMessageChunks(count).then((chunks) => chunks.forEach(listener), onError: onError);
+    }
+  }
+
   @pragma(preferInlinePragma)
   Future<void> sendMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry}) => retry == null
-      ? _client.sendMessageFlush(bytes, flags: flags)
+      ? _client.sendMessage(bytes, flags: flags)
       : retry.options.retry(
-          () => _client.sendMessageFlush(bytes, flags: flags),
+          () => _client.sendMessage(bytes, flags: flags),
           retryIf: retry.predicate,
           onRetry: retry.onRetry,
         );
