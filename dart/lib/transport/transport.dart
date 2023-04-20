@@ -187,6 +187,7 @@ class Transport {
         }
         listenerCompleter.completeError(TransportInitializationException("[listener] code = $result, message = ${result.kernelErrorToString(_bindings)}"));
         fromTransportToListener.close();
+        return;
       }
       _listenerPointers.add(listenerPointer);
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
