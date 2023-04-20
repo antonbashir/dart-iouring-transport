@@ -48,6 +48,7 @@ extern "C"
   void transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
   void transport_worker_respond_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
   void transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_flush(transport_worker_t *worker);
 
   void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd);
 
@@ -57,6 +58,7 @@ extern "C"
   int32_t transport_worker_get_buffer(transport_worker_t *worker);
   void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id);
   void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id);
+  bool transport_worker_has_free_buffer(transport_worker_t *worker);
 
   struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id);
 

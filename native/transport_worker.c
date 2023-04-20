@@ -146,7 +146,7 @@ void transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t bu
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
   io_uring_submit(ring);
-  transport_worker_add_event(worker, fd, data, TRANSPORT_TIMEOUT_INFINITY);
+  transport_worker_add_event(worker, fd, data, timeout);
 }
 
 void transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event)
@@ -314,6 +314,17 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
   transport_worker_add_event(worker, server->fd, data, TRANSPORT_TIMEOUT_INFINITY);
 }
 
+void transport_worker_flush(transport_worker_t *worker)
+{
+  struct io_uring *ring = worker->ring;
+  struct io_uring_sqe *sqe = provide_sqe(ring);
+  transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
+  sqe = provide_sqe(ring);
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
+  io_uring_submit(ring);
+}
+
 void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id)
 {
   struct iovec buffer = worker->buffers[buffer_id];
@@ -327,6 +338,11 @@ void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer
   memset(buffer.iov_base, 0, worker->buffer_size);
   buffer.iov_len = worker->buffer_size;
   transport_buffers_pool_push(&worker->free_buffers, buffer_id);
+}
+
+bool transport_worker_has_free_buffer(transport_worker_t *worker)
+{
+  return worker->free_buffers.count != 0;
 }
 
 void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)

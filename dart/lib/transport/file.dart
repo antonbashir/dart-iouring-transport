@@ -57,13 +57,12 @@ class TransportFile {
       payload.release();
       return;
     }
-    await to.write(payload.bytes);
+    await to.write(Uint8List.fromList(payload.extract()));
     offset += payload.bytes.length;
     while (true) {
       payload = await readBuffer(offset: offset);
       if (payload.bytes.isEmpty || payload.bytes.first == 0) break;
-      await to.write(payload.bytes, offset: offset);
-      payload.release();
+      await to.write(Uint8List.fromList(payload.extract()), offset: offset);
       offset += payload.bytes.length;
     }
   }

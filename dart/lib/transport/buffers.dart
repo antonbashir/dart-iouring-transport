@@ -15,6 +15,9 @@ class TransportBuffers {
   TransportBuffers(this._bindings, this.buffers, this._worker);
 
   @pragma(preferInlinePragma)
+  bool available() => _bindings.transport_worker_has_free_buffer(_worker);
+
+  @pragma(preferInlinePragma)
   void release(int bufferId) {
     _bindings.transport_worker_release_buffer(_worker, bufferId);
     if (_finalizers.isNotEmpty) _finalizers.removeLast().complete();
