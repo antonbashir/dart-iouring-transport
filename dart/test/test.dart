@@ -59,7 +59,7 @@ void main() {
     }
   });
   group("[custom]", () {
-    final testsCount = 5;
+    final testsCount = 20;
     for (var index = 0; index < testsCount; index++) {
       testCustom(1);
       testCustom(2);
