@@ -20,26 +20,8 @@ class TransportClientStreamCommunicator {
   @pragma(preferInlinePragma)
   Future<TransportOutboundPayload> read() => _client.readFlush();
 
-  Stream<TransportOutboundPayload> readFragments({int count = 1}) async* {
-    final controller = StreamController<TransportOutboundPayload>();
-    yield* controller.stream;
-    for (var i = 0; i < count - 1; i++) {
-      if (_client.buffers.available()) {
-        _client.read().then(controller.add, onError: controller.addError);
-        continue;
-      }
-      try {
-        yield await _client.readFlush();
-      } finally {
-        controller.close();
-      }
-    }
-    try {
-      yield await _client.readFlush();
-    } finally {
-      controller.close();
-    }
-  }
+  @pragma(preferInlinePragma)
+  Future<List<TransportOutboundPayload>> readChunks({int count = 1}) => _client.readChunks(count);
 
   void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
@@ -47,35 +29,20 @@ class TransportClientStreamCommunicator {
     }
   }
 
+  void listenChunked(void Function(TransportOutboundPayload paylad) listener, {int count = 1, void Function(Exception error)? onError}) async {
+    while (!_client.closing) {
+      await readChunks(count: count).then((chunks) => chunks.forEach(listener), onError: onError);
+    }
+  }
+
   @pragma(preferInlinePragma)
   Future<void> write(Uint8List bytes, {TransportRetryConfiguration? retry}) => retry == null
-      ? _client.writeFlush(bytes)
+      ? _client.write(bytes)
       : retry.options.retry(
-          () => _client.writeFlush(bytes),
+          () => _client.write(bytes),
           retryIf: retry.predicate,
           onRetry: retry.onRetry,
         );
-
-  Future<void> writeFragments(Iterable<Uint8List> fragments, {TransportRetryConfiguration? retry}) => retry == null
-      ? _client.writeFragments(fragments)
-      : retry.options.retry(
-          () => _client.writeFragments(fragments),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
-
-  Future<void> writeStream(Stream<Uint8List> stream, {int fragmentation = 1024, TransportRetryConfiguration? retry}) {
-    final fragments = <Uint8List>[];
-    return stream.listen((bytes) async {
-      fragments.add(bytes);
-      if (fragments.length >= fragmentation) {
-        await writeFragments(fragments, retry: retry);
-        fragments.clear();
-      }
-    }, onDone: () async {
-      if (fragments.isNotEmpty) await writeFragments(fragments, retry: retry);
-    }).asFuture();
-  }
 
   Future<void> close() => _client.close();
 }
