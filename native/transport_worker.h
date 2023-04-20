@@ -42,13 +42,17 @@ extern "C"
 
   void transport_worker_custom(transport_worker_t *worker, uint32_t id, uint32_t custom_data);
   void transport_worker_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
+  void transport_worker_write_flush(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
   void transport_worker_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
+  void transport_worker_read_flush(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event);
+  void transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_send_message_flush(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_respond_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_respond_message_flush(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
+  void transport_worker_receive_message_flush(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
   void transport_worker_connect(transport_worker_t *worker, transport_client_t *client, int64_t timeout);
   void transport_worker_accept(transport_worker_t *worker, transport_server_t *server);
-  void transport_worker_send_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, struct sockaddr *address, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
-  void transport_worker_respond_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
-  void transport_worker_receive_message(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, transport_socket_family_t socket_family, int message_flags, int64_t timeout, uint16_t event);
-  void transport_worker_flush(transport_worker_t *worker);
 
   void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd);
 

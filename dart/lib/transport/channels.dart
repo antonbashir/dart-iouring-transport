@@ -15,18 +15,18 @@ class TransportChannel {
 
   @pragma(preferInlinePragma)
   void read(int bufferId, int timeout, int event, {int offset = 0}) {
-    _bindings.transport_worker_read(_workerPointer, fd, bufferId, offset, timeout, event);
+    _bindings.transport_worker_read_flush(_workerPointer, fd, bufferId, offset, timeout, event);
   }
 
   @pragma(preferInlinePragma)
   void write(Uint8List bytes, int bufferId, int timeout, int event, {int offset = 0}) {
     _buffers.write(bufferId, bytes);
-    _bindings.transport_worker_write(_workerPointer, fd, bufferId, offset, timeout, event);
+    _bindings.transport_worker_write_flush(_workerPointer, fd, bufferId, offset, timeout, event);
   }
 
   @pragma(preferInlinePragma)
   void receiveMessage(int bufferId, int socketFamily, int timeout, int flags, int event) {
-    _bindings.transport_worker_receive_message(
+    _bindings.transport_worker_receive_message_flush(
       _workerPointer,
       fd,
       bufferId,
@@ -40,7 +40,7 @@ class TransportChannel {
   @pragma(preferInlinePragma)
   void sendMessage(Uint8List bytes, int bufferId, int socketFamily, Pointer<sockaddr> destination, int timeout, int flags, int event) {
     _buffers.write(bufferId, bytes);
-    _bindings.transport_worker_send_message(
+    _bindings.transport_worker_send_message_flush(
       _workerPointer,
       fd,
       bufferId,
@@ -55,7 +55,7 @@ class TransportChannel {
   @pragma(preferInlinePragma)
   void respondMessage(Uint8List bytes, int bufferId, int socketFamily, int timeout, int flags, int event) {
     _buffers.write(bufferId, bytes);
-    _bindings.transport_worker_respond_message(
+    _bindings.transport_worker_respond_message_flush(
       _workerPointer,
       fd,
       bufferId,
