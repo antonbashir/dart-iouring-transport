@@ -1,7 +1,7 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/exception.dart';
+import 'exception.dart';
 import 'extensions.dart';
 import 'bindings.dart';
 import 'buffers.dart';
