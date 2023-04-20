@@ -19,7 +19,7 @@ class TransportFile {
     final completer = Completer<int>();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     _states.setOutboundRead(bufferId, completer);
-    _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
+    _channel.readFlush(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
   }
 
@@ -27,7 +27,7 @@ class TransportFile {
     final completer = Completer<void>();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     _states.setOutboundWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
+    _channel.writeFlush(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     return completer.future;
   }
 

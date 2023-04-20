@@ -21,10 +21,10 @@ class TransportClient {
   final Pointer<transport_worker_t> _workerPointer;
   final TransportChannel _channel;
   final TransportBindings _bindings;
-  final int? connectTimeout;
+  final int? _connectTimeout;
   final int _readTimeout;
   final int _writeTimeout;
-  final TransportBuffers _buffers;
+  final TransportBuffers buffers;
   final TransportClientRegistry _registry;
 
   late final String sourceAddress;
@@ -46,26 +46,26 @@ class TransportClient {
     this._bindings,
     this._readTimeout,
     this._writeTimeout,
-    this._buffers,
+    this.buffers,
     this._registry, {
-    this.connectTimeout,
-  }) {
+    int? connectTimeout,
+  }) : _connectTimeout = connectTimeout {
     sourceAddress = _computeSourceAddress(_pointer.ref.fd);
     destinationAddress = _computeDestinationAddress();
   }
 
   Future<TransportOutboundPayload> read() async {
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
-    return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
+    return completer.future.then((length) => TransportOutboundPayload(buffers.read(bufferId, length), () => buffers.release(bufferId)));
   }
 
   Future<void> write(Uint8List bytes) async {
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
@@ -76,18 +76,18 @@ class TransportClient {
 
   Future<TransportOutboundPayload> receiveMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
     _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
-    return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
+    return completer.future.then((length) => TransportOutboundPayload(buffers.read(bufferId, length), () => buffers.release(bufferId)));
   }
 
   Future<void> sendMessage(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
@@ -104,11 +104,61 @@ class TransportClient {
     return completer.future;
   }
 
+  Future<TransportOutboundPayload> readFlush() async {
+    final bufferId = buffers.get() ?? await buffers.allocate();
+    if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
+    final completer = Completer<int>();
+    _callbacks.setOutboundRead(bufferId, completer);
+    _channel.readFlush(bufferId, _readTimeout, transportEventRead | transportEventClient);
+    _pending++;
+    return completer.future.then((length) => TransportOutboundPayload(buffers.read(bufferId, length), () => buffers.release(bufferId)));
+  }
+
+  Future<void> writeFlush(Uint8List bytes) async {
+    final bufferId = buffers.get() ?? await buffers.allocate();
+    if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
+    final completer = Completer<void>();
+    _callbacks.setOutboundWrite(bufferId, completer);
+    _channel.writeFlush(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+    _pending++;
+    return completer.future;
+  }
+
+  Future<TransportOutboundPayload> receiveMessageFlush({int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    final bufferId = buffers.get() ?? await buffers.allocate();
+    if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
+    final completer = Completer<int>();
+    _callbacks.setOutboundRead(bufferId, completer);
+    _channel.receiveMessageFlush(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
+    _pending++;
+    return completer.future.then((length) => TransportOutboundPayload(buffers.read(bufferId, length), () => buffers.release(bufferId)));
+  }
+
+  Future<void> sendMessageFlush(Uint8List bytes, {int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    final bufferId = buffers.get() ?? await buffers.allocate();
+    if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
+    final completer = Completer<void>();
+    _callbacks.setOutboundWrite(bufferId, completer);
+    _channel.sendMessageFlush(
+      bytes,
+      bufferId,
+      _pointer.ref.family,
+      _bindings.transport_client_get_destination_address(_pointer),
+      _writeTimeout,
+      flags,
+      transportEventSendMessage | transportEventClient,
+    );
+    _pending++;
+    return completer.future;
+  }
+
   Future<TransportClient> connect() {
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<TransportClient>();
     _callbacks.setConnect(_pointer.ref.fd, completer);
-    _bindings.transport_worker_connect(_workerPointer, _pointer, connectTimeout!);
+    _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
     _pending++;
     return completer.future;
   }
@@ -125,7 +175,7 @@ class TransportClient {
   bool notifyData(int bufferId) {
     _pending--;
     if (_active) return true;
-    _buffers.release(bufferId);
+    buffers.release(bufferId);
     if (_pending == 0) _closer.complete();
     return false;
   }

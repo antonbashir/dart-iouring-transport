@@ -12,7 +12,11 @@ class TransportBuffers {
   final Queue<Completer<void>> _finalizers = Queue();
   final Pointer<transport_worker_t> _worker;
 
-  TransportBuffers(this._bindings, this.buffers, this._worker);
+  late final int bufferSize;
+
+  TransportBuffers(this._bindings, this.buffers, this._worker) {
+    bufferSize = _worker.ref.buffer_size;
+  }
 
   @pragma(preferInlinePragma)
   bool available() => _bindings.transport_worker_has_free_buffer(_worker);

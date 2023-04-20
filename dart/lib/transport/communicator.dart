@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:collection';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'configuration.dart';
@@ -16,7 +18,28 @@ class TransportClientStreamCommunicator {
   TransportClientStreamCommunicator(this._client);
 
   @pragma(preferInlinePragma)
-  Future<TransportOutboundPayload> read() => _client.read();
+  Future<TransportOutboundPayload> read() => _client.readFlush();
+
+  Stream<TransportOutboundPayload> readFragments({int count = 1}) async* {
+    final controller = StreamController<TransportOutboundPayload>();
+    yield* controller.stream;
+    for (var i = 0; i < count - 1; i++) {
+      if (_client.buffers.available()) {
+        _client.read().then(controller.add, onError: controller.addError);
+        continue;
+      }
+      try {
+        yield await _client.readFlush();
+      } finally {
+        controller.close();
+      }
+    }
+    try {
+      yield await _client.readFlush();
+    } finally {
+      controller.close();
+    }
+  }
 
   void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
@@ -26,12 +49,48 @@ class TransportClientStreamCommunicator {
 
   @pragma(preferInlinePragma)
   Future<void> write(Uint8List bytes, {TransportRetryConfiguration? retry}) => retry == null
-      ? _client.write(bytes)
+      ? _client.writeFlush(bytes)
       : retry.options.retry(
-          () => _client.write(bytes),
+          () => _client.writeFlush(bytes),
           retryIf: retry.predicate,
           onRetry: retry.onRetry,
         );
+
+  Future<void> writeFragments(Iterable<Uint8List> bytes, {TransportRetryConfiguration? retry}) async {
+    final iterator = HasNextIterator(bytes.iterator);
+    while (true) {
+      if (iterator.hasNext) {
+        final next = iterator.next();
+        if (iterator.hasNext) {
+          await _writeFragment(next);
+          continue;
+        }
+        await _client.writeFlush(next);
+        break;
+      }
+    }
+  }
+
+  @pragma(preferInlinePragma)
+  Future<void> _writeFragment(Uint8List bytes) async {
+    if (bytes.length <= _client.buffers.bufferSize) {
+      if (!_client.buffers.available()) {
+        return await _client.writeFlush(bytes);
+      }
+      _client.write(bytes);
+      return;
+    }
+    do {
+      var offset = 0;
+      var limit = min(bytes.length, _client.buffers.bufferSize);
+      bytes = bytes.sublist(offset, limit);
+      if (!_client.buffers.available()) {
+        await _client.writeFlush(bytes);
+      }
+      _client.write(bytes);
+      offset += limit;
+    } while (bytes.isNotEmpty);
+  }
 
   Future<void> close() => _client.close();
 }
@@ -42,7 +101,7 @@ class TransportClientDatagramCommunicator {
   TransportClientDatagramCommunicator(this._client);
 
   @pragma(preferInlinePragma)
-  Future<TransportOutboundPayload> receiveMessage({int? flags}) => _client.receiveMessage(flags: flags);
+  Future<TransportOutboundPayload> receiveMessage({int? flags}) => _client.receiveMessageFlush(flags: flags);
 
   void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
@@ -52,9 +111,9 @@ class TransportClientDatagramCommunicator {
 
   @pragma(preferInlinePragma)
   Future<void> sendMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry}) => retry == null
-      ? _client.sendMessage(bytes, flags: flags)
+      ? _client.sendMessageFlush(bytes, flags: flags)
       : retry.options.retry(
-          () => _client.sendMessage(bytes, flags: flags),
+          () => _client.sendMessageFlush(bytes, flags: flags),
           retryIf: retry.predicate,
           onRetry: retry.onRetry,
         );
@@ -70,10 +129,10 @@ class TransportServerConnection {
   TransportServerConnection(this._server, this._channel);
 
   @pragma(preferInlinePragma)
-  Future<TransportInboundStreamPayload> read() => _server.read(_channel);
+  Future<TransportInboundStreamPayload> read() => _server.readFlush(_channel);
 
   @pragma(preferInlinePragma)
-  Future<void> write(Uint8List bytes) => _server.write(bytes, _channel);
+  Future<void> write(Uint8List bytes) => _server.writeFlush(bytes, _channel);
 
   void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
     while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
@@ -97,7 +156,7 @@ class TransportServerDatagramReceiver {
   TransportServerDatagramReceiver(this._server, this._channel);
 
   @pragma(preferInlinePragma)
-  Future<TransportInboundDatagramPayload> receiveMessage({int? flags}) => _server.receiveMessage(_channel, flags: flags);
+  Future<TransportInboundDatagramPayload> receiveMessage({int? flags}) => _server.receiveMessageFlush(_channel, flags: flags);
 
   void listen(
     void Function(TransportInboundDatagramPayload payload) listener, {
@@ -128,8 +187,24 @@ class TransportServerDatagramSender {
   TransportServerDatagramSender(this._server, this._channel, this._buffers, this._initialBufferId, this.initialPayload);
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags}) => _server.sendMessage(bytes, _initialBufferId, _channel, flags: flags);
+  Future<void> sendMessage(Uint8List bytes, {int? flags}) => _server.sendMessageFlush(bytes, _initialBufferId, _channel, flags: flags);
 
   @pragma(preferInlinePragma)
   void release() => _buffers.release(_initialBufferId);
+}
+
+main() {
+  _func().listen((event) => print(event.toString()), onError: (err) => print(err));
+}
+
+Stream<bool> _func() async* {
+  final okCompleter = Completer<bool>();
+  okCompleter.complete(true);
+  yield* okCompleter.future.asStream();
+
+  final notOkCompleter = Completer<bool>();
+  notOkCompleter.completeError(Exception());
+  yield* notOkCompleter.future.asStream();
+
+  print("after exception");
 }
