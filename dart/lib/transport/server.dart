@@ -82,22 +82,7 @@ class TransportServer {
     callbacks.setInboundRead(bufferId, completer);
     channel.read(bufferId, readTimeout, transportEventRead);
     connection.pending++;
-    return completer.future.then(
-      (length) => TransportInboundStreamPayload(
-        _buffers.read(bufferId, length),
-        () => _buffers.release(bufferId),
-        (bytes) {
-          if (!active) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
-          if (!connection.active) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
-          _buffers.reuse(bufferId);
-          final completer = Completer<void>();
-          callbacks.setInboundWrite(bufferId, completer);
-          channel.writeFlush(bytes, bufferId, writeTimeout, transportEventWrite);
-          connection.pending++;
-          return completer.future;
-        },
-      ),
-    );
+    return completer.future.then((length) => TransportInboundStreamPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
   }
 
   Future<void> write(Uint8List bytes, TransportChannel channel) async {
@@ -129,20 +114,7 @@ class TransportServer {
         bufferId,
         bytes,
       );
-      return TransportInboundDatagramPayload(
-        bytes,
-        sender,
-        () => _buffers.release(bufferId),
-        (bytes, {int? flags}) {
-          if (_closing) throw TransportClosedException.forServer(address, computeDatagramAddress(bufferId));
-          _buffers.reuse(bufferId);
-          final completer = Completer<void>();
-          callbacks.setInboundWrite(bufferId, completer);
-          channel.respondMessageFlush(bytes, bufferId, pointer.ref.family, writeTimeout, flags ?? TransportDatagramMessageFlag.trunc.flag, transportEventSendMessage);
-          _pending++;
-          return completer.future;
-        },
-      );
+      return TransportInboundDatagramPayload(bytes, sender, () => _buffers.release(bufferId));
     });
   }
 
@@ -174,22 +146,7 @@ class TransportServer {
     callbacks.setInboundRead(bufferId, completer);
     channel.readFlush(bufferId, readTimeout, transportEventRead);
     connection.pending++;
-    return completer.future.then(
-      (length) => TransportInboundStreamPayload(
-        _buffers.read(bufferId, length),
-        () => _buffers.release(bufferId),
-        (bytes) {
-          if (!active) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
-          if (!connection.active) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
-          _buffers.reuse(bufferId);
-          final completer = Completer<void>();
-          callbacks.setInboundWrite(bufferId, completer);
-          channel.writeFlush(bytes, bufferId, writeTimeout, transportEventWrite);
-          connection.pending++;
-          return completer.future;
-        },
-      ),
-    );
+    return completer.future.then((length) => TransportInboundStreamPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
   }
 
   Future<void> writeFlush(Uint8List bytes, TransportChannel channel) async {
@@ -221,20 +178,7 @@ class TransportServer {
         bufferId,
         bytes,
       );
-      return TransportInboundDatagramPayload(
-        bytes,
-        sender,
-        () => _buffers.release(bufferId),
-        (bytes, {int? flags}) {
-          if (_closing) throw TransportClosedException.forServer(address, computeDatagramAddress(bufferId));
-          _buffers.reuse(bufferId);
-          final completer = Completer<void>();
-          callbacks.setInboundWrite(bufferId, completer);
-          channel.respondMessageFlush(bytes, bufferId, pointer.ref.family, writeTimeout, flags ?? TransportDatagramMessageFlag.trunc.flag, transportEventSendMessage);
-          _pending++;
-          return completer.future;
-        },
-      );
+      return TransportInboundDatagramPayload(bytes, sender, () => _buffers.release(bufferId));
     });
   }
 

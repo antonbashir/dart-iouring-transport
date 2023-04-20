@@ -151,19 +151,3 @@ class TransportServerDatagramSender {
   @pragma(preferInlinePragma)
   void release() => _buffers.release(_initialBufferId);
 }
-
-main() {
-  _func().listen((event) => print(event.toString()), onError: (err) => print(err));
-}
-
-Stream<bool> _func() async* {
-  final okCompleter = Completer<bool>();
-  okCompleter.complete(true);
-  yield* okCompleter.future.asStream();
-
-  final notOkCompleter = Completer<bool>();
-  notOkCompleter.completeError(Exception());
-  yield* notOkCompleter.future.asStream();
-
-  print("after exception");
-}

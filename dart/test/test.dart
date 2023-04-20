@@ -124,7 +124,7 @@ void testTcp({
           12345,
           (communicator) => communicator.listen(
                 onError: (error, _) => print(error),
-                (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+                (event) => communicator.write(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
               ));
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
@@ -160,7 +160,7 @@ void testUdp({
       await worker.initialize();
       worker.servers.udp("0.0.0.0", 12345).listen(
             onError: (error, _) => print(error),
-            (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+            (event) => event.sender.sendMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
@@ -204,7 +204,7 @@ void testUnixStream({
         serverSocket.path,
         (connection) => connection.listen(
           onError: (error, _) => print(error),
-          (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+          (event) => connection.write(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
@@ -246,7 +246,7 @@ void testUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
       worker.servers.unixDatagram(serverSocket.path).listen(
             onError: (error, _) => print(error),
-            (event) => event.respond(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+            (event) => event.sender.sendMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
