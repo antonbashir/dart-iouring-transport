@@ -56,40 +56,25 @@ class TransportClientStreamCommunicator {
           onRetry: retry.onRetry,
         );
 
-  Future<void> writeFragments(Iterable<Uint8List> bytes, {TransportRetryConfiguration? retry}) async {
-    final iterator = HasNextIterator(bytes.iterator);
-    while (true) {
-      if (iterator.hasNext) {
-        final next = iterator.next();
-        if (iterator.hasNext) {
-          await _writeFragment(next);
-          continue;
-        }
-        await _client.writeFlush(next);
-        break;
-      }
-    }
-  }
+  Future<void> writeFragments(Iterable<Uint8List> fragments, {TransportRetryConfiguration? retry}) => retry == null
+      ? _client.writeFragments(fragments)
+      : retry.options.retry(
+          () => _client.writeFragments(fragments),
+          retryIf: retry.predicate,
+          onRetry: retry.onRetry,
+        );
 
-  @pragma(preferInlinePragma)
-  Future<void> _writeFragment(Uint8List bytes) async {
-    if (bytes.length <= _client.buffers.bufferSize) {
-      if (!_client.buffers.available()) {
-        return await _client.writeFlush(bytes);
+  Future<void> writeStream(Stream<Uint8List> stream, {int fragmentation = 1024, TransportRetryConfiguration? retry}) {
+    final fragments = <Uint8List>[];
+    return stream.listen((bytes) async {
+      fragments.add(bytes);
+      if (fragments.length >= fragmentation) {
+        await writeFragments(fragments, retry: retry);
+        fragments.clear();
       }
-      _client.write(bytes);
-      return;
-    }
-    do {
-      var offset = 0;
-      var limit = min(bytes.length, _client.buffers.bufferSize);
-      bytes = bytes.sublist(offset, limit);
-      if (!_client.buffers.available()) {
-        await _client.writeFlush(bytes);
-      }
-      _client.write(bytes);
-      offset += limit;
-    } while (bytes.isNotEmpty);
+    }, onDone: () async {
+      if (fragments.isNotEmpty) await writeFragments(fragments, retry: retry);
+    }).asFuture();
   }
 
   Future<void> close() => _client.close();

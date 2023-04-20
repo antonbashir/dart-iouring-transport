@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ffi';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
@@ -64,12 +65,54 @@ class TransportClient {
     return completer.future.then((length) => TransportOutboundPayload(buffers.read(bufferId, length), () => buffers.release(bufferId)));
   }
 
-  Future<void> write(Uint8List bytes) async {
-    final bufferId = buffers.get() ?? await buffers.allocate();
+  Future<void> writeChunked(Uint8List bytes) async {
+    final chunks = <int, Uint8List>{};
+    var offset = 0;
+    while (bytes.isNotEmpty) {
+      final limit = min(bytes.length, buffers.bufferSize);
+      bytes = bytes.sublist(offset, limit);
+      chunks[buffers.get() ?? await buffers.allocate()] = bytes;
+      offset += limit;
+    }
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
+    final entries = chunks.entries.toList();
+    final last = chunks.entries.length - 1;
+    for (var index = 0; index < last; index++) {
+      final completer = Completer<void>();
+      _callbacks.setOutboundWrite(entries[index].key, completer);
+      _channel.write(entries[index].value, entries[index].key, _writeTimeout, transportEventWrite | transportEventClient);
+      _pending++;
+    }
     final completer = Completer<void>();
-    _callbacks.setOutboundWrite(bufferId, completer);
-    _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+    _callbacks.setOutboundWrite(entries[last].key, completer);
+    _channel.writeFlush(entries[last].value, entries[last].key, _writeTimeout, transportEventWrite | transportEventClient);
+    _pending++;
+    return completer.future;
+  }
+
+  Future<void> writeFragments(Iterable<Uint8List> bytes) async {
+    final chunks = <int, Uint8List>{};
+    for (var fragment in bytes) {
+      var offset = 0;
+      while (fragment.isNotEmpty) {
+        final limit = min(fragment.length, buffers.bufferSize);
+        fragment = fragment.sublist(offset, limit);
+        chunks[buffers.get() ?? await buffers.allocate()] = fragment;
+        offset += limit;
+      }
+    }
+    if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
+    final entries = chunks.entries.toList();
+    final last = chunks.entries.length - 1;
+    for (var index = 0; index < last; index++) {
+      final completer = Completer<void>();
+      _callbacks.setOutboundWrite(entries[index].key, completer);
+      _channel.write(entries[index].value, entries[index].key, _writeTimeout, transportEventWrite | transportEventClient);
+      _pending++;
+    }
+    final completer = Completer<void>();
+    _callbacks.setOutboundWrite(entries[last].key, completer);
+    _channel.writeFlush(entries[last].value, entries[last].key, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     return completer.future;
   }
