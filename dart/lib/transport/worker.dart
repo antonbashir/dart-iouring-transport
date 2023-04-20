@@ -256,7 +256,7 @@ class TransportWorker {
           _handleWriteSendFileCallback(event, (data >> 16) & 0xffff, result, fd);
           continue;
         }
-        if (event & transportEventConnect != 0) {
+        if (event == transportEventConnect) {
           _handleConnect(fd);
           continue;
         }
