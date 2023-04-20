@@ -80,7 +80,7 @@ char *transport_socket_fd_to_address(int fd, transport_socket_family_t family)
     {
       return NULL;
     }
-    char *name_copy = malloc(strlen(name));
+    char *name_copy = malloc(INET_ADDRSTRLEN);
     strcpy(name_copy, name);
     return name_copy;
   }
@@ -90,7 +90,7 @@ char *transport_socket_fd_to_address(int fd, transport_socket_family_t family)
     return NULL;
   }
   char *name = address.sun_path;
-  char *name_copy = malloc(strlen(name));
+  char *name_copy = malloc(108);
   strcpy(name_copy, name);
   return name_copy;
 }
