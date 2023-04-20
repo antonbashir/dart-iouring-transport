@@ -19,7 +19,7 @@ class TransportClientStreamCommunicator {
   Future<TransportOutboundPayload> read() => _client.read();
 
   void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
-    while (_client.active) {
+    while (!_client.closing) {
       await read().then(listener, onError: onError);
     }
   }
@@ -45,7 +45,7 @@ class TransportClientDatagramCommunicator {
   Future<TransportOutboundPayload> receiveMessage({int? flags}) => _client.receiveMessage(flags: flags);
 
   void listen(void Function(TransportOutboundPayload paylad) listener, {void Function(Exception error)? onError}) async {
-    while (_client.active) {
+    while (!_client.closing) {
       await receiveMessage().then(listener, onError: onError);
     }
   }
