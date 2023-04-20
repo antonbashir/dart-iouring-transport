@@ -197,7 +197,7 @@ class TransportServer {
   bool hasPending() => _pending > 0 || _connections.isNotEmpty;
 
   @pragma(preferInlinePragma)
-  bool connectionIsActive(int fd) => _connections[fd]?.active == true;
+  bool connectionIsActive(int fd) => _connections[fd]?.closing == false;
 
   Future<void> close({Duration? gracefulDuration}) async {
     if (_closing) return;

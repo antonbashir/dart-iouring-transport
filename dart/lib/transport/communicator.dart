@@ -76,7 +76,7 @@ class TransportServerConnection {
   Future<void> write(Uint8List bytes) => _server.write(bytes, _channel);
 
   void listen(void Function(TransportInboundStreamPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
-    while (_server.active && _server.connectionIsActive(_channel.fd)) {
+    while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
       await read().then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
@@ -104,7 +104,7 @@ class TransportServerDatagramReceiver {
     void Function(Exception error, StackTrace stackTrace)? onError,
     int? flags,
   }) async {
-    while (_server.active) {
+    while (!_server.closing) {
       await receiveMessage(flags: flags).then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
