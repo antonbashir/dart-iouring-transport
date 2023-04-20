@@ -189,7 +189,7 @@ class TransportServer {
     if (_active && connection.active) return true;
     _buffers.release(bufferId);
     if (!connection.active && connection.pending == 0) connection.closer.complete();
-    if (!_closing && _pending == 0 && _connections.isEmpty) _closer.complete();
+    if (!_active && _pending == 0 && _connections.isEmpty) _closer.complete();
     return false;
   }
 
