@@ -131,9 +131,6 @@ class TransportServerDatagramReceiver {
       });
     }
   }
-
-  @pragma(preferInlinePragma)
-  Future<void> close() => _server.close();
 }
 
 class TransportServerDatagramSender {

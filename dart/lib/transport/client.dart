@@ -90,6 +90,25 @@ class TransportClient {
   @pragma(preferInlinePragma)
   Future<void> write(Uint8List bytes) => bytes.length > _buffers.bufferSize ? _writeChunked(bytes) : _writeFlush(bytes);
 
+  Future<void> writeFragments(Iterable<Uint8List> fragments) async {
+    final chunks = <int, Uint8List>{};
+    for (var fragment in fragments) chunks[_buffers.get() ?? await _buffers.allocate()] = fragment;
+    if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
+    final entries = chunks.entries.toList();
+    final last = chunks.entries.length - 1;
+    for (var index = 0; index < last; index++) {
+      final completer = Completer<void>();
+      _callbacks.setOutboundWrite(entries[index].key, completer);
+      _channel.write(entries[index].value, entries[index].key, _writeTimeout, transportEventWrite | transportEventClient);
+      _pending++;
+    }
+    final completer = Completer<void>();
+    _callbacks.setOutboundWrite(entries[last].key, completer);
+    _channel.writeFlush(entries[last].value, entries[last].key, _writeTimeout, transportEventWrite | transportEventClient);
+    _pending++;
+    return completer.future;
+  }
+
   Future<void> _writeFlush(Uint8List bytes) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
