@@ -13,6 +13,7 @@ class TransportPayloadPool {
   TransportPayloadPool(int buffersCount, this._buffers) {
     for (var bufferId = 0; bufferId < buffersCount; bufferId++) {
       _payloads.add(TransportPayload(bufferId, this));
+      _datagramResponders.add(TransportDatagramResponder(bufferId, this));
     }
   }
 

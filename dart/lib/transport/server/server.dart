@@ -175,7 +175,7 @@ class TransportServer {
     if (_closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
     _callbacks.setInboundRead(bufferId, completer);
-    channel.addReceiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
+    channel.receiveMessageSubmit(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     _pending++;
     return completer.future.then((length) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId, length), this, channel));
   }
