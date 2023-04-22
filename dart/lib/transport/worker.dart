@@ -9,7 +9,7 @@ import 'package:meta/meta.dart';
 import 'payload.dart';
 import 'bindings.dart';
 import 'buffers.dart';
-import 'channels.dart';
+import 'channel.dart';
 import 'client/factory.dart';
 import 'client/registry.dart';
 import 'constants.dart';

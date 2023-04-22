@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'channels.dart';
+import 'channel.dart';
 import 'client/client.dart';
 import 'constants.dart';
 

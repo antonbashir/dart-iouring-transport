@@ -2,7 +2,7 @@ import 'dart:ffi';
 
 import '../bindings.dart';
 import '../buffers.dart';
-import '../channels.dart';
+import '../channel.dart';
 import 'configuration.dart';
 import 'connection.dart';
 import 'datagram.dart';

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../buffers.dart';
-import '../channels.dart';
+import '../channel.dart';
 import '../constants.dart';
 import '../payload.dart';
 import '../callbacks.dart';

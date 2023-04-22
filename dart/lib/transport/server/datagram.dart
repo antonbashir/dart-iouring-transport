@@ -1,4 +1,4 @@
-import '../channels.dart';
+import '../channel.dart';
 import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';

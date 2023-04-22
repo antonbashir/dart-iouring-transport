@@ -8,7 +8,7 @@ import 'package:ffi/ffi.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../callbacks.dart';
-import '../channels.dart';
+import '../channel.dart';
 import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';

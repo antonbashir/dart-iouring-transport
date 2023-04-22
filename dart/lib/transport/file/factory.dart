@@ -7,7 +7,7 @@ import '../payload.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../callbacks.dart';
-import '../channels.dart';
+import '../channel.dart';
 import 'file.dart';
 
 class TransportFilesFactory {

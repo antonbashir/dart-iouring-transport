@@ -7,7 +7,7 @@ import '../extensions.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../callbacks.dart';
-import '../channels.dart';
+import '../channel.dart';
 import '../constants.dart';
 import '../defaults.dart';
 import 'client.dart';

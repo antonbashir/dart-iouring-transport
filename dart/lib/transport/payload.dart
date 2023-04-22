@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'buffers.dart';
-import 'channels.dart';
+import 'channel.dart';
 import 'constants.dart';
 import 'server/server.dart';
 
