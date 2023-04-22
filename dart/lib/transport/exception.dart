@@ -12,8 +12,6 @@ class TransportInitializationException implements Exception {
 class TransportInternalException implements Exception {
   final TransportEvent event;
   final int code;
-  final String source;
-  final String target;
 
   late final String message;
 
@@ -21,10 +19,8 @@ class TransportInternalException implements Exception {
     required this.event,
     required this.code,
     required String message,
-    required this.source,
-    required this.target,
   }) {
-    this.message = "[$event] code = $code, message = $message, source = '$source', target = '$target'";
+    this.message = "[$event] code = $code, message = $message";
   }
 
   @override
@@ -34,11 +30,9 @@ class TransportInternalException implements Exception {
 class TransportCancelledException implements Exception {
   late final String message;
   final TransportEvent event;
-  final String source;
-  final String target;
 
-  TransportCancelledException({required this.event, required this.source, required this.target}) {
-    this.message = "[$event] cancelled, source = '$source', target = '$target'";
+  TransportCancelledException({required this.event}) {
+    this.message = "[$event] cancelled";
   }
 
   @override
@@ -50,9 +44,9 @@ class TransportClosedException implements Exception {
 
   TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer(String source, String target) => TransportClosedException._("Server closed: source = $source, target = $target");
+  factory TransportClosedException.forServer() => TransportClosedException._("Server closed");
 
-  factory TransportClosedException.forClient(String source, String destination) => TransportClosedException._("Client closed: source = $source, target = $destination");
+  factory TransportClosedException.forClient() => TransportClosedException._("Client closed");
 
   @override
   String toString() => message;
@@ -60,17 +54,13 @@ class TransportClosedException implements Exception {
 
 class TransportZeroDataException implements Exception {
   final TransportEvent event;
-  final String source;
-  final String target;
 
   late final String message;
 
   TransportZeroDataException({
     required this.event,
-    required this.source,
-    required this.target,
   }) {
-    message = "[$event] completed with zero result (no data), source = $source, target = $target";
+    message = "[$event] completed with zero result (no data)";
   }
 
   @override

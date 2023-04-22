@@ -15029,22 +15029,6 @@ class TransportBindings {
   late final _transport_server_destroy = _transport_server_destroyPtr
       .asFunction<void Function(ffi.Pointer<transport_server_t>)>();
 
-  ffi.Pointer<ffi.Char> transport_server_address_to_string(
-    ffi.Pointer<transport_server_t> server,
-  ) {
-    return _transport_server_address_to_string(
-      server,
-    );
-  }
-
-  late final _transport_server_address_to_stringPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Char> Function(ffi.Pointer<transport_server_t>)>>(
-      'transport_server_address_to_string');
-  late final _transport_server_address_to_string =
-      _transport_server_address_to_stringPtr.asFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<transport_server_t>)>();
-
   int access(
     ffi.Pointer<ffi.Char> __name,
     int __type,
@@ -20026,55 +20010,6 @@ class TransportBindings {
   late final _transport_close_descritor =
       _transport_close_descritorPtr.asFunction<void Function(int)>();
 
-  ffi.Pointer<ffi.Char> transport_address_to_string(
-    ffi.Pointer<sockaddr> address,
-    int family,
-  ) {
-    return _transport_address_to_string(
-      address,
-      family,
-    );
-  }
-
-  late final _transport_address_to_stringPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<sockaddr>,
-              ffi.Int32)>>('transport_address_to_string');
-  late final _transport_address_to_string = _transport_address_to_stringPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<sockaddr>, int)>();
-
-  ffi.Pointer<ffi.Char> transport_socket_fd_to_address(
-    int fd,
-    int family,
-  ) {
-    return _transport_socket_fd_to_address(
-      fd,
-      family,
-    );
-  }
-
-  late final _transport_socket_fd_to_addressPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Int, ffi.Int32)>>('transport_socket_fd_to_address');
-  late final _transport_socket_fd_to_address =
-      _transport_socket_fd_to_addressPtr
-          .asFunction<ffi.Pointer<ffi.Char> Function(int, int)>();
-
-  int transport_socket_fd_to_port(
-    int fd,
-  ) {
-    return _transport_socket_fd_to_port(
-      fd,
-    );
-  }
-
-  late final _transport_socket_fd_to_portPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
-          'transport_socket_fd_to_port');
-  late final _transport_socket_fd_to_port =
-      _transport_socket_fd_to_portPtr.asFunction<int Function(int)>();
-
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
   ) {
@@ -23394,11 +23329,6 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_server_t>)>>
       get transport_server_destroy => _library._transport_server_destroyPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Char> Function(ffi.Pointer<transport_server_t>)>>
-      get transport_server_address_to_string =>
-          _library._transport_server_address_to_stringPtr;
-  ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int)>>
       get access => _library._accessPtr;
   ffi.Pointer<
@@ -24414,19 +24344,6 @@ class _SymbolAddresses {
       get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Char> Function(ffi.Pointer<sockaddr>, ffi.Int32)>>
-      get transport_address_to_string =>
-          _library._transport_address_to_stringPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Char> Function(ffi.Int, ffi.Int32)>>
-      get transport_socket_fd_to_address =>
-          _library._transport_socket_fd_to_addressPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>
-      get transport_socket_fd_to_port =>
-          _library._transport_socket_fd_to_portPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<
@@ -31701,7 +31618,9 @@ const int TRANSPORT_EVENT_CLIENT = 64;
 
 const int TRANSPORT_EVENT_FILE = 128;
 
-const int TRANSPORT_EVENT_CUSTOM = 256;
+const int TRANSPORT_EVENT_SERVER = 256;
+
+const int TRANSPORT_EVENT_CUSTOM = 512;
 
 const int TRANSPORT_BUFFER_USED = -1;
 

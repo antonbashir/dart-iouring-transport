@@ -54,8 +54,6 @@ extern "C"
                                              transport_server_configuration_t *configuration,
                                              const char *path);
   void transport_server_destroy(transport_server_t *server);
-  
-  char* transport_server_address_to_string(transport_server_t *server);
 
 #if defined(__cplusplus)
 }

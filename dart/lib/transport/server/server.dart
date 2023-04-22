@@ -3,8 +3,6 @@ import 'dart:ffi';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:ffi/ffi.dart';
-
 import '../chunk.dart';
 import 'connection.dart';
 import 'registry.dart';
@@ -44,8 +42,6 @@ class TransportServer {
   var _closing = false;
   bool get closing => _closing;
 
-  late final String address;
-
   TransportServer(
     this.pointer,
     this._workerPointer,
@@ -56,13 +52,11 @@ class TransportServer {
     this._buffers,
     this._registry,
     this._payloadPool,
-  ) {
-    address = _computeSourceAddress();
-  }
+  );
 
   @pragma(preferInlinePragma)
   void accept(void Function(TransportServerConnection connection) onAccept) {
-    if (_closing) throw TransportClosedException.forServer(address, unknown);
+    if (_closing) throw TransportClosedException.forServer();
     _callbacks.setAccept(pointer.ref.fd, (channel) {
       _connections[channel.fd] = _TransportConnectionState();
       onAccept(TransportServerConnection(this, channel));
@@ -79,9 +73,9 @@ class TransportServer {
 
   Future<TransportPayload> read(TransportChannel channel) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (connection == null || connection.closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
     _callbacks.setInboundRead(bufferId, completer);
     channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventServer);
@@ -93,9 +87,9 @@ class TransportServer {
     final chunks = <Future<TransportPayload>>[];
     final allocatedBuffers = <int>[];
     for (var index = 0; index < count; index++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
-    if (_closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (connection == null || connection.closing) throw TransportClosedException.forServer();
     for (var index = 0; index < count - 1; index++) {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
@@ -118,9 +112,9 @@ class TransportServer {
   Future<void> writeBatch(Iterable<Uint8List> fragments, TransportChannel channel) async {
     final chunks = <TransportChunk>[];
     for (var fragment in fragments) chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), fragment));
-    if (_closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (connection == null || connection.closing) throw TransportClosedException.forServer();
     final last = chunks.length - 1;
     for (var index = 0; index < last; index++) {
       final chunk = chunks[index];
@@ -138,9 +132,9 @@ class TransportServer {
 
   Future<void> _writeSubmit(Uint8List bytes, TransportChannel channel) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (connection == null || connection.closing) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _callbacks.setInboundWrite(bufferId, completer);
     channel.writeSubmit(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
@@ -157,9 +151,9 @@ class TransportServer {
       chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), bytes));
       offset += limit;
     }
-    if (_closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
+    if (connection == null || connection.closing) throw TransportClosedException.forServer();
     final last = chunks.length - 1;
     for (var index = 0; index < last; index++) {
       final chunk = chunks[index];
@@ -178,7 +172,7 @@ class TransportServer {
   Future<TransportDatagramResponder> receiveMessage(TransportChannel channel, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forServer(address, unknown);
+    if (_closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
     _callbacks.setInboundRead(bufferId, completer);
     channel.addReceiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
@@ -191,7 +185,7 @@ class TransportServer {
     final chunks = <Future<TransportDatagramResponder>>[];
     final allocatedBuffers = <int>[];
     for (var index = 0; index < count; index++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
-    if (_closing) throw TransportClosedException.forServer(address, unknown);
+    if (_closing) throw TransportClosedException.forServer();
     for (var index = 0; index < count - 1; index++) {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
@@ -210,16 +204,26 @@ class TransportServer {
 
   @pragma(preferInlinePragma)
   Future<void> respondMessage(TransportChannel channel, int bufferId, Uint8List bytes, {int? flags}) => bytes.length > _buffers.bufferSize
-      ? _respondMessageChunks(channel, _getDatagramAddress(bufferId), bytes, flags: flags)
-      : _respondMessageSubmit(channel, _getDatagramAddress(bufferId), bytes, flags: flags);
+      ? _respondMessageChunks(
+          channel,
+          _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
+          bytes,
+          flags: flags,
+        )
+      : _respondMessageSubmit(
+          channel,
+          _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
+          bytes,
+          flags: flags,
+        );
 
   Future<void> respondMessageBatch(Iterable<Uint8List> fragments, TransportChannel channel, int bufferId, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final chunks = <TransportChunk>[];
     for (var fragment in fragments) chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), fragment));
-    if (_closing) throw TransportClosedException.forServer(address, unknown);
+    if (_closing) throw TransportClosedException.forServer();
+    final destination = _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId);
     final last = chunks.length - 1;
-    final destination = _getDatagramAddress(bufferId);
     for (var index = 0; index < last; index++) {
       final chunk = chunks[index];
       final completer = Completer<void>();
@@ -245,7 +249,7 @@ class TransportServer {
       chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), bytes));
       offset += limit;
     }
-    if (_closing) throw TransportClosedException.forServer(address, printDatagramAddress(destination));
+    if (_closing) throw TransportClosedException.forServer();
     final last = chunks.length - 1;
     for (var index = 0; index < last; index++) {
       final chunk = chunks[index];
@@ -263,7 +267,7 @@ class TransportServer {
   Future<void> _respondMessageSubmit(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forServer(address, printDatagramAddress(destination));
+    if (_closing) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _callbacks.setInboundWrite(bufferId, completer);
     channel.sendMessageSubmit(bytes, bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage | transportEventServer);
@@ -300,9 +304,6 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  bool hasPending() => _pending > 0 || _connections.isNotEmpty;
-
-  @pragma(preferInlinePragma)
   bool connectionIsActive(int fd) => _connections[fd]?.closing == false;
 
   @pragma(preferInlinePragma)
@@ -331,60 +332,5 @@ class TransportServer {
     if (connection.pending > 0) await connection.closer.future;
     _registry.removeConnection(fd);
     _connections.remove(fd);
-  }
-
-  @pragma(preferInlinePragma)
-  String computeStreamAddress(int fd) {
-    final address = _bindings.transport_socket_fd_to_address(fd, pointer.ref.family);
-    if (address == nullptr) return unknown;
-    try {
-      final addressString = address.cast<Utf8>().toDartString();
-      malloc.free(address);
-      if (pointer.ref.family == transport_socket_family.UNIX) return addressString;
-      return "$addressString:${_bindings.transport_socket_fd_to_port(fd)}";
-    } catch (_) {
-      return unknown;
-    }
-  }
-
-  @pragma(preferInlinePragma)
-  Pointer<sockaddr> _getDatagramAddress(int bufferId) => _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId);
-
-  @pragma(preferInlinePragma)
-  String computeDatagramAddress(int bufferId) {
-    final endpointAddress = _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId);
-    final address = _bindings.transport_address_to_string(endpointAddress, pointer.ref.family);
-    if (address == nullptr) return unknown;
-    try {
-      final addressString = address.cast<Utf8>().toDartString();
-      malloc.free(address);
-      if (pointer.ref.family == transport_socket_family.UNIX) return addressString;
-      return "$addressString:${endpointAddress.cast<sockaddr_in>().ref.sin_port}";
-    } catch (_) {
-      return unknown;
-    }
-  }
-
-  @pragma(preferInlinePragma)
-  String printDatagramAddress(Pointer<sockaddr> destination) {
-    final address = _bindings.transport_address_to_string(destination, pointer.ref.family);
-    if (address == nullptr) return unknown;
-    try {
-      final addressString = address.cast<Utf8>().toDartString();
-      malloc.free(address);
-      if (pointer.ref.family == transport_socket_family.UNIX) return addressString;
-      return "$addressString:${destination.cast<sockaddr_in>().ref.sin_port}";
-    } catch (_) {
-      return unknown;
-    }
-  }
-
-  @pragma(preferInlinePragma)
-  String _computeSourceAddress() {
-    final address = _bindings.transport_server_address_to_string(pointer);
-    final addressString = address.cast<Utf8>().toDartString();
-    malloc.free(address);
-    if (pointer.ref.family == transport_socket_family.UNIX) return addressString;
-    return "$addressString:${pointer.ref.inet_server_address.sin_port}";
   }
 }

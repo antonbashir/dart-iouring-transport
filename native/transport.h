@@ -36,13 +36,6 @@ extern "C"
   void transport_destroy(transport_t *transport);
 
   void transport_close_descritor(int fd);
-
-  char* transport_address_to_string(struct sockaddr* address, transport_socket_family_t family);
-  
-  char* transport_socket_fd_to_address(int fd, transport_socket_family_t family);
-  
-  int transport_socket_fd_to_port(int fd);
-
 #if defined(__cplusplus)
 }
 #endif

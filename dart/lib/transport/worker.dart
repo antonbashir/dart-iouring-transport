@@ -278,20 +278,13 @@ class TransportWorker {
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeStreamAddress(fd)));
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
     if (result == 0) {
       _inboundBuffers.release(bufferId);
       unawaited(server.closeConnection(fd));
-      _callbacks.notifyInboundReadError(
-        bufferId,
-        TransportZeroDataException(
-          event: TransportEvent.serverRead,
-          source: server.address,
-          target: server.computeStreamAddress(fd),
-        ),
-      );
+      _callbacks.notifyInboundReadError(bufferId, TransportZeroDataException(event: TransportEvent.serverRead));
       return;
     }
     _callbacks.notifyInboundRead(bufferId, result);
@@ -301,7 +294,7 @@ class TransportWorker {
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnection(fd, bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeStreamAddress(fd)));
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }
     _inboundBuffers.release(bufferId);
@@ -311,8 +304,6 @@ class TransportWorker {
         bufferId,
         TransportZeroDataException(
           event: TransportEvent.serverWrite,
-          source: server.address,
-          target: server.computeStreamAddress(fd),
         ),
       );
       return;
@@ -324,19 +315,12 @@ class TransportWorker {
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer(server.address, server.computeDatagramAddress(bufferId)));
+      _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
     if (result == 0) {
       _inboundBuffers.release(bufferId);
-      _callbacks.notifyInboundReadError(
-        bufferId,
-        TransportZeroDataException(
-          event: TransportEvent.serverReceive,
-          source: server.address,
-          target: server.computeDatagramAddress(bufferId),
-        ),
-      );
+      _callbacks.notifyInboundReadError(bufferId, TransportZeroDataException(event: TransportEvent.serverReceive));
       return;
     }
     _callbacks.notifyInboundRead(bufferId, result);
@@ -346,19 +330,12 @@ class TransportWorker {
   void _handleSendMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer(server.address, server.computeDatagramAddress(bufferId)));
+      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }
     _inboundBuffers.release(bufferId);
     if (result == 0) {
-      _callbacks.notifyInboundWriteError(
-        bufferId,
-        TransportZeroDataException(
-          event: TransportEvent.serverSend,
-          source: server.address,
-          target: server.computeDatagramAddress(bufferId),
-        ),
-      );
+      _callbacks.notifyInboundWriteError(bufferId, TransportZeroDataException(event: TransportEvent.serverSend));
       return;
     }
     _callbacks.notifyInboundWrite(bufferId);
@@ -368,18 +345,12 @@ class TransportWorker {
   void _handleReadReceiveClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient(client.source, client.destination));
+      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
       return;
     }
     if (result == 0) {
       _outboundBuffers.release(bufferId);
-      _callbacks.notifyOutboundReadError(
-          bufferId,
-          TransportZeroDataException(
-            event: TransportEvent.ofEvent(event),
-            source: client.source,
-            target: client.destination,
-          ));
+      _callbacks.notifyOutboundReadError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundRead(bufferId, result);
@@ -394,18 +365,12 @@ class TransportWorker {
   void _handleWriteSendClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient(client.source, client.destination));
+      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
       return;
     }
     _outboundBuffers.release(bufferId);
     if (result == 0) {
-      _callbacks.notifyOutboundWriteError(
-          bufferId,
-          TransportZeroDataException(
-            event: TransportEvent.ofEvent(event),
-            source: client.source,
-            target: client.destination,
-          ));
+      _callbacks.notifyOutboundWriteError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundWrite(bufferId);
@@ -421,7 +386,7 @@ class TransportWorker {
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyConnect()) {
-      _callbacks.notifyConnectError(fd, TransportClosedException.forClient(client.source, client.destination));
+      _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       return;
     }
     _callbacks.notifyConnect(fd, client);

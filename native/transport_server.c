@@ -145,20 +145,6 @@ int transport_server_initialize_unix_dgram(transport_server_t *server, transport
   return 0;
 }
 
-char *transport_server_address_to_string(transport_server_t *server)
-{
-  if (server->family == INET)
-  {
-    char name[INET_ADDRSTRLEN];
-    if (inet_ntop(AF_INET, &server->inet_server_address.sin_addr, name, INET_ADDRSTRLEN) == NULL)
-    {
-      return NULL;
-    }
-    return strdup(name);
-  }
-  return strdup(server->unix_server_address.sun_path);
-}
-
 void transport_server_destroy(transport_server_t *server)
 {
   free(server);
