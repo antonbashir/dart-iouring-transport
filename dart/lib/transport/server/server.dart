@@ -84,7 +84,7 @@ class TransportServer {
     if (connection == null || connection.closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
     final completer = Completer<int>();
     _callbacks.setInboundRead(bufferId, completer);
-    channel.readSubmit(bufferId, _readTimeout, transportEventRead);
+    channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventServer);
     connection.pending++;
     return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length)));
   }
@@ -100,13 +100,13 @@ class TransportServer {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
       _callbacks.setInboundRead(bufferId, completer);
-      channel.addRead(bufferId, _readTimeout, transportEventRead);
+      channel.addRead(bufferId, _readTimeout, transportEventRead | transportEventServer);
       chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     }
     final completer = Completer<int>();
     final bufferId = allocatedBuffers[count - 1];
     _callbacks.setInboundRead(bufferId, completer);
-    channel.readSubmit(bufferId, _readTimeout, transportEventRead);
+    channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventServer);
     chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     connection.pending += chunks.length;
     return Future.wait(chunks);
@@ -126,12 +126,12 @@ class TransportServer {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setInboundWrite(chunk.bufferId, completer);
-      channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite);
+      channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();
     _callbacks.setInboundWrite(chunk.bufferId, completer);
-    channel.writeSubmit(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite);
+    channel.writeSubmit(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending += chunks.length;
     return completer.future;
   }
@@ -143,7 +143,7 @@ class TransportServer {
     if (connection == null || connection.closing) throw TransportClosedException.forServer(address, computeStreamAddress(channel.fd));
     final completer = Completer<void>();
     _callbacks.setInboundWrite(bufferId, completer);
-    channel.writeSubmit(bytes, bufferId, _writeTimeout, transportEventWrite);
+    channel.writeSubmit(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending++;
     return completer.future;
   }
@@ -165,12 +165,12 @@ class TransportServer {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setInboundWrite(chunk.bufferId, completer);
-      channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite);
+      channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();
     _callbacks.setInboundWrite(chunk.bufferId, completer);
-    channel.writeSubmit(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite);
+    channel.writeSubmit(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending += chunks.length;
     return completer.future;
   }
@@ -181,7 +181,7 @@ class TransportServer {
     if (_closing) throw TransportClosedException.forServer(address, unknown);
     final completer = Completer<int>();
     _callbacks.setInboundRead(bufferId, completer);
-    channel.addReceiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage);
+    channel.addReceiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     _pending++;
     return completer.future.then((length) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId, length), this, channel));
   }
@@ -196,13 +196,13 @@ class TransportServer {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
       _callbacks.setInboundRead(bufferId, completer);
-      channel.addReceiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage);
+      channel.addReceiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
       chunks.add(completer.future.then((length) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId, length), this, channel)));
     }
     final completer = Completer<int>();
     final bufferId = allocatedBuffers[count - 1];
     _callbacks.setInboundRead(bufferId, completer);
-    channel.receiveMessageSubmit(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage);
+    channel.receiveMessageSubmit(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     chunks.add(completer.future.then((length) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId, length), this, channel)));
     _pending += chunks.length;
     return Future.wait(chunks);
@@ -219,16 +219,17 @@ class TransportServer {
     for (var fragment in fragments) chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), fragment));
     if (_closing) throw TransportClosedException.forServer(address, unknown);
     final last = chunks.length - 1;
+    final destination = _getDatagramAddress(bufferId);
     for (var index = 0; index < last; index++) {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setInboundWrite(chunk.bufferId, completer);
-      channel.addSendMessage(chunk.bytes, chunk.bufferId, pointer.ref.family, _getDatagramAddress(bufferId), _writeTimeout, flags, transportEventSendMessage);
+      channel.addSendMessage(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage | transportEventServer);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();
     _callbacks.setInboundWrite(chunk.bufferId, completer);
-    channel.sendMessageSubmit(chunk.bytes, chunk.bufferId, pointer.ref.family, _getDatagramAddress(bufferId), _writeTimeout, flags, transportEventSendMessage);
+    channel.sendMessageSubmit(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage | transportEventServer);
     _pending += chunks.length;
     return completer.future;
   }
@@ -250,11 +251,11 @@ class TransportServer {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setInboundWrite(chunk.bufferId, completer);
-      channel.addSendMessage(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage);
+      channel.addSendMessage(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage | transportEventServer);
     }
     final chunk = chunks[last];
     _callbacks.setInboundWrite(chunk.bufferId, completer);
-    channel.sendMessageSubmit(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage);
+    channel.sendMessageSubmit(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage | transportEventServer);
     _pending += chunks.length;
     return completer.future;
   }
@@ -265,7 +266,7 @@ class TransportServer {
     if (_closing) throw TransportClosedException.forServer(address, printDatagramAddress(destination));
     final completer = Completer<void>();
     _callbacks.setInboundWrite(bufferId, completer);
-    channel.sendMessageSubmit(bytes, bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage);
+    channel.sendMessageSubmit(bytes, bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage | transportEventServer);
     _pending++;
     return completer.future;
   }

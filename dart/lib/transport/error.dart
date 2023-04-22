@@ -246,19 +246,19 @@ class TransportErrorHandler {
       _handleWriteSendCallbacks(((data >> 16) & 0xffff), fd, event, result);
       return;
     }
-    if (event == transportEventRead || event == transportEventWrite) {
+    if (event == (transportEventRead | transportEventServer)) {
       _handleRead(((data >> 16) & 0xffff), fd, event, result);
       return;
     }
-    if (event == transportEventWrite) {
-      _handleWrite(((data >> 16) & 0xffff), fd, event, result);
-      return;
-    }
-    if (event == transportEventReceiveMessage) {
+    if (event == (transportEventReceiveMessage | transportEventServer)) {
       _handleReceiveMessage(((data >> 16) & 0xffff), fd, event, result);
       return;
     }
-    if (event == transportEventSendMessage) {
+    if (event == (transportEventWrite | transportEventServer)) {
+      _handleWrite(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == (transportEventSendMessage | transportEventServer)) {
       _handleSendMessage(((data >> 16) & 0xffff), fd, event, result);
       return;
     }

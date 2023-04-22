@@ -111,7 +111,8 @@ const transportEventAccept = 1 << 4;
 const transportEventConnect = 1 << 5;
 const transportEventClient = 1 << 6;
 const transportEventFile = 1 << 7;
-const transportEventCustom = 1 << 8;
+const transportEventServer = 1 << 8;
+const transportEventCustom = 1 << 9;
 
 const transportEventAll = transportEventRead |
     transportEventWrite |
@@ -121,6 +122,7 @@ const transportEventAll = transportEventRead |
     transportEventSendMessage |
     transportEventClient |
     transportEventFile |
+    transportEventServer |
     transportEventCustom;
 
 const ringSetupIopoll = 1 << 0;
@@ -219,14 +221,14 @@ enum TransportEvent {
     if (event == (transportEventWrite | transportEventClient)) return TransportEvent.clientWrite;
     if (event == (transportEventRead | transportEventFile)) return TransportEvent.fileRead;
     if (event == (transportEventWrite | transportEventFile)) return TransportEvent.fileWrite;
-    if (event == transportEventRead) return TransportEvent.serverRead;
-    if (event == transportEventWrite) return TransportEvent.serverWrite;
+    if (event == (transportEventRead | transportEventServer)) return TransportEvent.serverRead;
+    if (event == (transportEventWrite | transportEventServer)) return TransportEvent.serverWrite;
     if (event == transportEventAccept) return TransportEvent.accept;
     if (event == transportEventConnect) return TransportEvent.connect;
     if (event == (transportEventSendMessage | transportEventClient)) return TransportEvent.clientSend;
     if (event == (transportEventReceiveMessage | transportEventClient)) return TransportEvent.clientReceive;
-    if (event == transportEventSendMessage) return TransportEvent.serverSend;
-    if (event == transportEventReceiveMessage) return TransportEvent.serverReceive;
+    if (event == (transportEventSendMessage | transportEventServer)) return TransportEvent.serverSend;
+    if (event == (transportEventReceiveMessage | transportEventServer)) return TransportEvent.serverReceive;
     return TransportEvent.unknown;
   }
 

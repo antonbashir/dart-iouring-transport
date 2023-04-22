@@ -210,7 +210,7 @@ class TransportWorker {
           _errorHandler.handle(result, data, fd, event);
           continue;
         }
-        switch (event) {
+        switch (event & ~transportEventServer) {
           case transportEventRead:
             _handleRead((data >> 16) & 0xffff, fd, result);
             continue;
@@ -254,15 +254,15 @@ class TransportWorker {
           _handleReadReceiveClientCallback(event, (data >> 16) & 0xffff, result, fd);
           continue;
         }
-        if (event == transportEventRead | transportEventFile || event == transportEventReceiveMessage | transportEventFile) {
-          _handleReadReceiveFileCallback(event, (data >> 16) & 0xffff, result, fd);
-          continue;
-        }
         if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
           _handleWriteSendClientCallback(event, (data >> 16) & 0xffff, result, fd);
           continue;
         }
-        if (event == transportEventWrite | transportEventFile || event == transportEventSendMessage | transportEventFile) {
+        if (event == transportEventRead | transportEventFile) {
+          _handleReadReceiveFileCallback(event, (data >> 16) & 0xffff, result, fd);
+          continue;
+        }
+        if (event == transportEventWrite | transportEventFile) {
           _handleWriteSendFileCallback(event, (data >> 16) & 0xffff, result, fd);
           continue;
         }
