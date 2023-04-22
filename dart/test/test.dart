@@ -63,9 +63,9 @@ void main() {
   group("[custom]", () {
     final testsCount = 20;
     for (var index = 0; index < testsCount; index++) {
-      testCustom(1);
-      testCustom(2);
-      testCustom(4);
+      testCustom(index, 1);
+      testCustom(index, 2);
+      testCustom(index, 4);
     }
   });
 }
@@ -95,7 +95,7 @@ void testInitialization({
   });
 }
 
-void testCustom(int workers) {
+void testCustom(int data, int workers) {
   test("callback", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
@@ -109,7 +109,6 @@ void testCustom(int workers) {
       final completer = Completer<int>();
       await worker.initialize();
       final id = 1;
-      final data = Random().nextInt(100);
       worker.registerCallback(id, completer);
       worker.notifyCustom(id, data);
       final result = await completer.future;
