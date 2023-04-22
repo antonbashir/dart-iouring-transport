@@ -1,49 +1,96 @@
 import 'dart:typed_data';
 
-import 'communicator.dart';
+import 'buffers.dart';
+import 'channels.dart';
+import 'constants.dart';
+import 'server/server.dart';
 
-class TransportOutboundPayload {
-  final Uint8List bytes;
-  final void Function() _releaser;
+class TransportPayloadPool {
+  final TransportBuffers _buffers;
+  final _payloads = <TransportPayload>[];
+  final _datagramResponders = <TransportDatagramResponder>[];
 
-  TransportOutboundPayload(this.bytes, this._releaser);
+  TransportPayloadPool(int buffersCount, this._buffers) {
+    for (var bufferId = 0; bufferId < buffersCount; bufferId++) {
+      _payloads.add(TransportPayload(bufferId, this));
+    }
+  }
 
-  void release() => _releaser();
+  @pragma(preferInlinePragma)
+  TransportPayload getPayload(int bufferId, Uint8List bytes) {
+    final payload = _payloads[bufferId];
+    payload._bytes = bytes;
+    payload._released = false;
+    return payload;
+  }
 
+  @pragma(preferInlinePragma)
+  void releasePayload(int bufferId) {
+    _payloads[bufferId]._released = true;
+    _buffers.release(bufferId);
+  }
+
+  @pragma(preferInlinePragma)
+  TransportDatagramResponder getDatagramResponder(int bufferId, Uint8List bytes, TransportServer server, TransportChannel channel) {
+    final payload = _datagramResponders[bufferId];
+    payload._bytes = bytes;
+    payload._released = false;
+    payload._server = server;
+    payload._channel = channel;
+    return payload;
+  }
+
+  @pragma(preferInlinePragma)
+  void releaseDatagramResponder(int bufferId) {
+    _payloads[bufferId]._released = true;
+    _buffers.release(bufferId);
+  }
+}
+
+class TransportPayload {
+  late Uint8List _bytes;
+  final int _bufferId;
+  final TransportPayloadPool _pool;
+  var _released = false;
+
+  Uint8List get bytes => _bytes;
+  bool get released => _released;
+
+  TransportPayload(this._bufferId, this._pool);
+
+  @pragma(preferInlinePragma)
+  void release() => _pool.releasePayload(_bufferId);
+
+  @pragma(preferInlinePragma)
   Uint8List extract({bool release = true}) {
-    final result = Uint8List.fromList(bytes.toList());
-    if (release) _releaser();
+    final result = Uint8List.fromList(_bytes.toList());
+    if (release) _pool.releasePayload(_bufferId);
     return result;
   }
 }
 
-class TransportInboundStreamPayload {
-  final Uint8List bytes;
-  final void Function() _releaser;
+class TransportDatagramResponder {
+  final int _bufferId;
+  final TransportPayloadPool _pool;
+  late Uint8List _bytes;
+  late TransportServer _server;
+  late TransportChannel _channel;
+  var _released = false;
 
-  TransportInboundStreamPayload(this.bytes, this._releaser);
+  Uint8List get receivedBytes => _bytes;
+  bool get released => _released;
 
-  void release() => _releaser();
+  TransportDatagramResponder(this._bufferId, this._pool);
 
-  Uint8List extract({bool release = true}) {
-    final result = Uint8List.fromList(bytes.toList());
-    if (release) _releaser();
-    return result;
-  }
-}
+  @pragma(preferInlinePragma)
+  Future<void> respondMessage(Uint8List bytes, {int? flags}) => _server.respondMessage(_channel, _bufferId, bytes, flags: flags);
 
-class TransportInboundDatagramPayload {
-  final Uint8List bytes;
-  final void Function() _releaser;
-  final TransportServerDatagramSender sender;
-
-  TransportInboundDatagramPayload(this.bytes, this.sender, this._releaser);
-
-  void release() => _releaser();
+  @pragma(preferInlinePragma)
+  void release() => _pool.releaseDatagramResponder(_bufferId);
 
   List<int> extract({bool release = true}) {
-    final result = bytes.toList();
-    if (release) _releaser();
+    final result = _bytes.toList();
+    if (release) _server.releaseBuffer(_bufferId);
     return result;
   }
 }

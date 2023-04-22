@@ -160,7 +160,7 @@ void testUdp({
       await worker.initialize();
       worker.servers.udp("0.0.0.0", 12345).listen(
             onError: (error, _) => print(error),
-            (event) => event.sender.sendMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+            (event) => event.respondMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
@@ -246,7 +246,7 @@ void testUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
       worker.servers.unixDatagram(serverSocket.path).listen(
             onError: (error, _) => print(error),
-            (event) => event.sender.sendMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+            (event) => event.respondMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {

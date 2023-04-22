@@ -1,33 +1,40 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'buffers.dart';
-import 'channels.dart';
-import 'constants.dart';
-import 'payload.dart';
-import 'callbacks.dart';
+import '../buffers.dart';
+import '../channels.dart';
+import '../constants.dart';
+import '../payload.dart';
+import '../callbacks.dart';
 
 class TransportFile {
   final String path;
   final TransportChannel _channel;
   final TransportCallbacks _states;
   final TransportBuffers _buffers;
+  final TransportPayloadPool _pool;
 
-  TransportFile(this.path, this._states, this._channel, this._buffers);
+  TransportFile(
+    this.path,
+    this._states,
+    this._channel,
+    this._buffers,
+    this._pool,
+  );
 
-  Future<TransportOutboundPayload> readBuffer({int offset = 0}) async {
+  Future<TransportPayload> readBuffer({int offset = 0}) async {
     final completer = Completer<int>();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     _states.setOutboundRead(bufferId, completer);
-    _channel.readFlush(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
-    return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
+    _channel.readSubmit(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
+    return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId, length)));
   }
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
     final completer = Completer<void>();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     _states.setOutboundWrite(bufferId, completer);
-    _channel.writeFlush(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
+    _channel.writeSubmit(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     return completer.future;
   }
 

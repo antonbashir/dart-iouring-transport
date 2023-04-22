@@ -5,16 +5,17 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import '../bindings.dart';
+import '../buffers.dart';
+import '../callbacks.dart';
+import '../channels.dart';
+import '../constants.dart';
+import '../exception.dart';
+import '../payload.dart';
+import '../chunk.dart';
 import 'registry.dart';
 
-import 'bindings.dart';
-import 'buffers.dart';
-import 'channels.dart';
 import 'communicator.dart';
-import 'constants.dart';
-import 'exception.dart';
-import 'payload.dart';
-import 'callbacks.dart';
 
 class TransportClient {
   final TransportCallbacks _callbacks;
@@ -27,6 +28,7 @@ class TransportClient {
   final int _writeTimeout;
   final TransportBuffers _buffers;
   final TransportClientRegistry _registry;
+  final TransportPayloadPool _payloadPool;
 
   late final String sourceAddress;
   late final String destinationAddress;
@@ -48,15 +50,16 @@ class TransportClient {
     this._readTimeout,
     this._writeTimeout,
     this._buffers,
-    this._registry, {
+    this._registry,
+    this._payloadPool, {
     int? connectTimeout,
   }) : _connectTimeout = connectTimeout {
     sourceAddress = _computeSourceAddress(_pointer.ref.fd);
     destinationAddress = _computeDestinationAddress();
   }
 
-  Future<List<TransportOutboundPayload>> readChunks(int count) async {
-    final chunks = <Future<TransportOutboundPayload>>[];
+  Future<List<TransportPayload>> readBatch(int count) async {
+    final chunks = <Future<TransportPayload>>[];
     final allocatedBuffers = <int>[];
     for (var index = 0; index < count; index++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
@@ -64,89 +67,88 @@ class TransportClient {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
       _callbacks.setOutboundRead(bufferId, completer);
-      _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
-      _pending++;
-      chunks.add(completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId))));
+      _channel.addRead(bufferId, _readTimeout, transportEventRead | transportEventClient);
+      chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     }
     final completer = Completer<int>();
     final bufferId = allocatedBuffers[count - 1];
     _callbacks.setOutboundRead(bufferId, completer);
-    _channel.readFlush(bufferId, _readTimeout, transportEventRead | transportEventClient);
-    _pending++;
-    chunks.add(completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId))));
+    _channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventClient);
+    chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
+    _pending += chunks.length;
     return Future.wait(chunks);
   }
 
-  Future<TransportOutboundPayload> readFlush() async {
+  Future<TransportPayload> read() async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
-    _channel.readFlush(bufferId, _readTimeout, transportEventRead | transportEventClient);
+    _channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
-    return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
+    return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length)));
   }
 
   @pragma(preferInlinePragma)
-  Future<void> write(Uint8List bytes) => bytes.length > _buffers.bufferSize ? _writeChunked(bytes) : _writeFlush(bytes);
+  Future<void> write(Uint8List bytes) => bytes.length > _buffers.bufferSize ? _writeChunked(bytes) : _writeSubmit(bytes);
 
-  Future<void> writeFragments(Iterable<Uint8List> fragments) async {
-    final chunks = <int, Uint8List>{};
-    for (var fragment in fragments) chunks[_buffers.get() ?? await _buffers.allocate()] = fragment;
+  Future<void> writeBatch(Iterable<Uint8List> fragments) async {
+    final chunks = <TransportChunk>[];
+    for (var fragment in fragments) chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), fragment));
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
-    final entries = chunks.entries.toList();
-    final last = chunks.entries.length - 1;
+    final last = chunks.length - 1;
     for (var index = 0; index < last; index++) {
+      final chunk = chunks[index];
       final completer = Completer<void>();
-      _callbacks.setOutboundWrite(entries[index].key, completer);
-      _channel.write(entries[index].value, entries[index].key, _writeTimeout, transportEventWrite | transportEventClient);
-      _pending++;
+      _callbacks.setOutboundWrite(chunk.bufferId, completer);
+      _channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     }
+    final chunk = chunks[last];
     final completer = Completer<void>();
-    _callbacks.setOutboundWrite(entries[last].key, completer);
-    _channel.writeFlush(entries[last].value, entries[last].key, _writeTimeout, transportEventWrite | transportEventClient);
-    _pending++;
+    _callbacks.setOutboundWrite(chunk.bufferId, completer);
+    _channel.writeSubmit(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+    _pending += chunks.length;
     return completer.future;
   }
 
-  Future<void> _writeFlush(Uint8List bytes) async {
+  Future<void> _writeSubmit(Uint8List bytes) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
-    _channel.writeFlush(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+    _channel.writeSubmit(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     return completer.future;
   }
 
   Future<void> _writeChunked(Uint8List bytes) async {
-    final chunks = <int, Uint8List>{};
+    final chunks = <TransportChunk>[];
     var offset = 0;
     while (bytes.isNotEmpty) {
       final limit = min(bytes.length, _buffers.bufferSize);
       bytes = bytes.sublist(offset, limit);
-      chunks[_buffers.get() ?? await _buffers.allocate()] = bytes;
+      chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), bytes));
       offset += limit;
     }
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
-    final entries = chunks.entries.toList();
-    final last = chunks.entries.length - 1;
+    final last = chunks.length - 1;
     for (var index = 0; index < last; index++) {
+      final chunk = chunks[index];
       final completer = Completer<void>();
-      _callbacks.setOutboundWrite(entries[index].key, completer);
-      _channel.write(entries[index].value, entries[index].key, _writeTimeout, transportEventWrite | transportEventClient);
-      _pending++;
+      _callbacks.setOutboundWrite(chunk.bufferId, completer);
+      _channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     }
+    final chunk = chunks[last];
     final completer = Completer<void>();
-    _callbacks.setOutboundWrite(entries[last].key, completer);
-    _channel.writeFlush(entries[last].value, entries[last].key, _writeTimeout, transportEventWrite | transportEventClient);
-    _pending++;
+    _callbacks.setOutboundWrite(chunk.bufferId, completer);
+    _channel.writeSubmit(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+    _pending += chunks.length;
     return completer.future;
   }
 
-  Future<List<TransportOutboundPayload>> receiveMessageChunks(int count, {int? flags}) async {
+  Future<List<TransportPayload>> receiveMessageBatch(int count, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final chunks = <Future<TransportOutboundPayload>>[];
+    final chunks = <Future<TransportPayload>>[];
     final allocatedBuffers = <int>[];
     for (var index = 0; index < count; index++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
@@ -154,82 +156,81 @@ class TransportClient {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
       _callbacks.setOutboundRead(bufferId, completer);
-      _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
-      _pending++;
-      chunks.add(completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId))));
+      _channel.addReceiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
+      chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     }
     final completer = Completer<int>();
     final bufferId = allocatedBuffers[count - 1];
     _callbacks.setOutboundRead(bufferId, completer);
-    _channel.receiveMessageFlush(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
-    _pending++;
-    chunks.add(completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId))));
+    _channel.receiveMessageSubmit(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
+    chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
+    _pending += chunks.length;
     return Future.wait(chunks);
   }
 
-  Future<TransportOutboundPayload> receiveMessageFlush({int? flags}) async {
+  Future<TransportPayload> receiveMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<int>();
     _callbacks.setOutboundRead(bufferId, completer);
-    _channel.receiveMessageFlush(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
+    _channel.receiveMessageSubmit(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
-    return completer.future.then((length) => TransportOutboundPayload(_buffers.read(bufferId, length), () => _buffers.release(bufferId)));
+    return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length)));
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendMessage(Uint8List bytes, {int? flags}) => bytes.length > _buffers.bufferSize ? _sendMessageChunks(bytes, flags: flags) : _sendMessageFlush(bytes, flags: flags);
+  Future<void> sendMessage(Uint8List bytes, {int? flags}) => bytes.length > _buffers.bufferSize ? _sendMessageChunks(bytes, flags: flags) : _sendMessageSubmit(bytes, flags: flags);
 
   Future<void> _sendMessageChunks(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final chunks = <int, Uint8List>{};
+    final chunks = <TransportChunk>[];
     var offset = 0;
     while (bytes.isNotEmpty) {
       final limit = min(bytes.length, _buffers.bufferSize);
       bytes = bytes.sublist(offset, limit);
-      chunks[_buffers.get() ?? await _buffers.allocate()] = bytes;
+      chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), bytes));
       offset += limit;
     }
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
-    final entries = chunks.entries.toList();
-    final last = chunks.entries.length - 1;
+    final last = chunks.length - 1;
     for (var index = 0; index < last; index++) {
+      final chunk = chunks[index];
       final completer = Completer<void>();
-      _callbacks.setOutboundWrite(entries[index].key, completer);
-      _channel.sendMessage(
-        entries[index].value,
-        entries[index].key,
+      _callbacks.setOutboundWrite(chunk.bufferId, completer);
+      _channel.addSendMessage(
+        chunk.bytes,
+        chunk.bufferId,
         _pointer.ref.family,
         _bindings.transport_client_get_destination_address(_pointer),
         _writeTimeout,
         flags,
         transportEventSendMessage | transportEventClient,
       );
-      _pending++;
     }
+    final chunk = chunks[last];
     final completer = Completer<void>();
-    _callbacks.setOutboundWrite(entries[last].key, completer);
-    _channel.sendMessageFlush(
-      entries[last].value,
-      entries[last].key,
+    _callbacks.setOutboundWrite(chunk.bufferId, completer);
+    _channel.sendMessageSubmit(
+      chunk.bytes,
+      chunk.bufferId,
       _pointer.ref.family,
       _bindings.transport_client_get_destination_address(_pointer),
       _writeTimeout,
       flags,
       transportEventSendMessage | transportEventClient,
     );
-    _pending++;
+    _pending += chunks.length;
     return completer.future;
   }
 
-  Future<void> _sendMessageFlush(Uint8List bytes, {int? flags}) async {
+  Future<void> _sendMessageSubmit(Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient(sourceAddress, destinationAddress);
     final completer = Completer<void>();
     _callbacks.setOutboundWrite(bufferId, completer);
-    _channel.sendMessageFlush(
+    _channel.sendMessageSubmit(
       bytes,
       bufferId,
       _pointer.ref.family,

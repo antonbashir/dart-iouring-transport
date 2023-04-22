@@ -1,6 +1,8 @@
+import 'client/configuration.dart';
 import 'exception.dart';
 import 'configuration.dart';
 import 'constants.dart';
+import 'server/configuration.dart';
 
 class TransportDefaults {
   TransportDefaults._();

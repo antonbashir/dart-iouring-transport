@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'channels.dart';
-import 'client.dart';
+import 'client/client.dart';
 import 'constants.dart';
 
 class TransportCallbacks {

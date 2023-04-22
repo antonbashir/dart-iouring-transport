@@ -3,10 +3,11 @@ import 'dart:async';
 import 'bindings.dart';
 import 'buffers.dart';
 import 'callbacks.dart';
+import 'client/registry.dart';
 import 'constants.dart';
 import 'exception.dart';
 import 'extensions.dart';
-import 'registry.dart';
+import 'server/registry.dart';
 
 class TransportErrorHandler {
   final TransportServerRegistry _serverRegistry;

@@ -6,17 +6,20 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
 
+import 'payload.dart';
 import 'bindings.dart';
 import 'buffers.dart';
 import 'channels.dart';
+import 'client/factory.dart';
+import 'client/registry.dart';
 import 'constants.dart';
 import 'exception.dart';
-import 'factory.dart';
+import 'file/factory.dart';
 import 'lookup.dart';
 import 'error.dart';
-import 'registry.dart';
-
 import 'callbacks.dart';
+import 'server/factory.dart';
+import 'server/registry.dart';
 import 'timeout.dart';
 
 class TransportWorker {
@@ -51,6 +54,8 @@ class TransportWorker {
   late final TransportTimeoutChecker _outboundTimeoutChecker;
   late final SendPort _jobsListener;
   late final SendPort _jobCompletionsListener;
+  late final TransportPayloadPool _inboundPayloadPool;
+  late final TransportPayloadPool _outboundPayloadPool;
 
   late final SendPort? transmitter;
 
@@ -112,17 +117,21 @@ class TransportWorker {
       _inboundWorkerPointer.ref.buffers_count,
       _outboundWorkerPointer.ref.buffers_count,
     );
+    _inboundPayloadPool = TransportPayloadPool(_inboundWorkerPointer.ref.buffers_count, _inboundBuffers);
+    _outboundPayloadPool = TransportPayloadPool(_outboundWorkerPointer.ref.buffers_count, _outboundBuffers);
     _clientRegistry = TransportClientRegistry(
       _bindings,
       _callbacks,
       _outboundWorkerPointer,
       _outboundBuffers,
+      _outboundPayloadPool,
     );
     _serverRegistry = TransportServerRegistry(
       _bindings,
       _callbacks,
       _inboundWorkerPointer,
       _inboundBuffers,
+      _inboundPayloadPool,
     );
     _serversFactory = TransportServersFactory(
       _bindings,
@@ -138,6 +147,7 @@ class TransportWorker {
       _callbacks,
       _outboundWorkerPointer,
       _outboundBuffers,
+      _outboundPayloadPool,
     );
     _inboundRing = _inboundWorkerPointer.ref.ring;
     _outboundRing = _outboundWorkerPointer.ref.ring;
