@@ -109,7 +109,7 @@ void testCustom(int workers) {
       final completer = Completer<int>();
       await worker.initialize();
       final id = 1;
-      final data = Random().nextInt(100) - 50;
+      final data = Random().nextInt(100);
       worker.registerCallback(id, completer);
       worker.notifyCustom(id, data);
       final result = await completer.future;
