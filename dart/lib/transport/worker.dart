@@ -368,7 +368,7 @@ class TransportWorker {
   void _handleReadReceiveClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
+      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient(client.source, client.destination));
       return;
     }
     if (result == 0) {
@@ -377,8 +377,8 @@ class TransportWorker {
           bufferId,
           TransportZeroDataException(
             event: TransportEvent.ofEvent(event),
-            source: client.sourceAddress,
-            target: client.destinationAddress,
+            source: client.source,
+            target: client.destination,
           ));
       return;
     }
@@ -394,7 +394,7 @@ class TransportWorker {
   void _handleWriteSendClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
+      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient(client.source, client.destination));
       return;
     }
     _outboundBuffers.release(bufferId);
@@ -403,8 +403,8 @@ class TransportWorker {
           bufferId,
           TransportZeroDataException(
             event: TransportEvent.ofEvent(event),
-            source: client.sourceAddress,
-            target: client.destinationAddress,
+            source: client.source,
+            target: client.destination,
           ));
       return;
     }
@@ -421,7 +421,7 @@ class TransportWorker {
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyConnect()) {
-      _callbacks.notifyConnectError(fd, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
+      _callbacks.notifyConnectError(fd, TransportClosedException.forClient(client.source, client.destination));
       return;
     }
     _callbacks.notifyConnect(fd, client);

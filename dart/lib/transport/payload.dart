@@ -86,6 +86,9 @@ class TransportDatagramResponder {
   Future<void> respondMessage(Uint8List bytes, {int? flags}) => _server.respondMessage(_channel, _bufferId, bytes, flags: flags);
 
   @pragma(preferInlinePragma)
+  Future<void> respondMessageBatch(Iterable<Uint8List> fragments, {int? flags}) => _server.respondMessageBatch(fragments, _channel, _bufferId, flags: flags);
+
+  @pragma(preferInlinePragma)
   void release() => _pool.releaseDatagramResponder(_bufferId);
 
   List<int> extract({bool release = true}) {

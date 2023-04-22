@@ -24,6 +24,9 @@ class _TransportConnectionState {
 }
 
 class TransportServer {
+  final _closer = Completer();
+  final _connections = <int, _TransportConnectionState>{};
+
   final Pointer<transport_server_t> pointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
@@ -34,15 +37,12 @@ class TransportServer {
   final TransportServerRegistry _registry;
   final TransportPayloadPool _payloadPool;
 
+  var _pending = 0;
+
   var _active = true;
   bool get active => _active;
   var _closing = false;
   bool get closing => _closing;
-
-  final _closer = Completer();
-  final _connections = <int, _TransportConnectionState>{};
-
-  var _pending = 0;
 
   late final String address;
 
@@ -125,12 +125,12 @@ class TransportServer {
     for (var index = 0; index < last; index++) {
       final chunk = chunks[index];
       final completer = Completer<void>();
-      _callbacks.setOutboundWrite(chunk.bufferId, completer);
+      _callbacks.setInboundWrite(chunk.bufferId, completer);
       channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();
-    _callbacks.setOutboundWrite(chunk.bufferId, completer);
+    _callbacks.setInboundWrite(chunk.bufferId, completer);
     channel.writeSubmit(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite);
     connection.pending += chunks.length;
     return completer.future;
@@ -210,8 +210,28 @@ class TransportServer {
 
   @pragma(preferInlinePragma)
   Future<void> respondMessage(TransportChannel channel, int bufferId, Uint8List bytes, {int? flags}) => bytes.length > _buffers.bufferSize
-      ? _respondMessageChunks(channel, getDatagramAddress(bufferId), bytes, flags: flags)
-      : _respondMessageSubmit(channel, getDatagramAddress(bufferId), bytes, flags: flags);
+      ? _respondMessageChunks(channel, _getDatagramAddress(bufferId), bytes, flags: flags)
+      : _respondMessageSubmit(channel, _getDatagramAddress(bufferId), bytes, flags: flags);
+
+  Future<void> respondMessageBatch(Iterable<Uint8List> fragments, TransportChannel channel, int bufferId, {int? flags}) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    final chunks = <TransportChunk>[];
+    for (var fragment in fragments) chunks.add(TransportChunk(_buffers.get() ?? await _buffers.allocate(), fragment));
+    if (_closing) throw TransportClosedException.forServer(address, unknown);
+    final last = chunks.length - 1;
+    for (var index = 0; index < last; index++) {
+      final chunk = chunks[index];
+      final completer = Completer<void>();
+      _callbacks.setInboundWrite(chunk.bufferId, completer);
+      channel.addSendMessage(chunk.bytes, chunk.bufferId, pointer.ref.family, _getDatagramAddress(bufferId), _writeTimeout, flags, transportEventSendMessage);
+    }
+    final chunk = chunks[last];
+    final completer = Completer<void>();
+    _callbacks.setInboundWrite(chunk.bufferId, completer);
+    channel.sendMessageSubmit(chunk.bytes, chunk.bufferId, pointer.ref.family, _getDatagramAddress(bufferId), _writeTimeout, flags, transportEventSendMessage);
+    _pending += chunks.length;
+    return completer.future;
+  }
 
   Future<void> _respondMessageChunks(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
@@ -234,7 +254,7 @@ class TransportServer {
     }
     final chunk = chunks[last];
     _callbacks.setInboundWrite(chunk.bufferId, completer);
-    channel.addSendMessage(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage);
+    channel.sendMessageSubmit(chunk.bytes, chunk.bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage);
     _pending += chunks.length;
     return completer.future;
   }
@@ -244,7 +264,7 @@ class TransportServer {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer(address, printDatagramAddress(destination));
     final completer = Completer<void>();
-    _callbacks.setOutboundWrite(bufferId, completer);
+    _callbacks.setInboundWrite(bufferId, completer);
     channel.sendMessageSubmit(bytes, bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage);
     _pending++;
     return completer.future;
@@ -327,7 +347,7 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  Pointer<sockaddr> getDatagramAddress(int bufferId) => _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId);
+  Pointer<sockaddr> _getDatagramAddress(int bufferId) => _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId);
 
   @pragma(preferInlinePragma)
   String computeDatagramAddress(int bufferId) {

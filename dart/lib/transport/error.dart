@@ -153,7 +153,7 @@ class TransportErrorHandler {
   void _handleConnect(int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyConnect()) {
-      _callbacks.notifyConnectError(fd, TransportClosedException.forClient(client.destinationAddress, client.sourceAddress));
+      _callbacks.notifyConnectError(fd, TransportClosedException.forClient(client.destination, client.source));
       return;
     }
     unawaited(client.close());
@@ -162,8 +162,8 @@ class TransportErrorHandler {
         fd,
         TransportCancelledException(
           event: TransportEvent.ofEvent(event),
-          source: client.sourceAddress,
-          target: client.destinationAddress,
+          source: client.source,
+          target: client.destination,
         ),
       );
       return;
@@ -172,8 +172,8 @@ class TransportErrorHandler {
         fd,
         TransportInternalException(
           event: TransportEvent.ofEvent(event),
-          source: client.sourceAddress,
-          target: client.destinationAddress,
+          source: client.source,
+          target: client.destination,
           code: result,
           message: result.kernelErrorToString(_bindings),
         ));
@@ -182,7 +182,7 @@ class TransportErrorHandler {
   void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
+      _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient(client.source, client.destination));
       return;
     }
     _outboundBuffers.release(bufferId);
@@ -191,8 +191,8 @@ class TransportErrorHandler {
         bufferId,
         TransportCancelledException(
           event: TransportEvent.ofEvent(event),
-          source: client.sourceAddress,
-          target: client.destinationAddress,
+          source: client.source,
+          target: client.destination,
         ),
       );
       return;
@@ -201,8 +201,8 @@ class TransportErrorHandler {
         bufferId,
         TransportInternalException(
           event: TransportEvent.ofEvent(event),
-          source: client.sourceAddress,
-          target: client.destinationAddress,
+          source: client.source,
+          target: client.destination,
           code: result,
           message: result.kernelErrorToString(_bindings),
         ));
@@ -211,7 +211,7 @@ class TransportErrorHandler {
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient(client.sourceAddress, client.destinationAddress));
+      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient(client.source, client.destination));
       return;
     }
     _outboundBuffers.release(bufferId);
@@ -220,8 +220,8 @@ class TransportErrorHandler {
         bufferId,
         TransportCancelledException(
           event: TransportEvent.ofEvent(event),
-          source: client.sourceAddress,
-          target: client.destinationAddress,
+          source: client.source,
+          target: client.destination,
         ),
       );
       return;
@@ -230,8 +230,8 @@ class TransportErrorHandler {
         bufferId,
         TransportInternalException(
           event: TransportEvent.ofEvent(event),
-          source: client.sourceAddress,
-          target: client.destinationAddress,
+          source: client.source,
+          target: client.destination,
           code: result,
           message: result.kernelErrorToString(_bindings),
         ));
