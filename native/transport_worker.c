@@ -126,8 +126,17 @@ void transport_worker_release_sequence(transport_worker_t *worker, uint16_t sequ
   transport_buffers_pool_push(&worker->free_sequences, sequence_id);
 }
 
+void transport_worker_sequence_delete_element(transport_worker_t *worker, uint16_t sequence_id, transport_worker_sequence_element_t *element)
+{
+  rlist_del(&element->link);
+}
+
 void transport_worker_sequence_release_element(transport_worker_t *worker, uint16_t sequence_id, transport_worker_sequence_element_t *element)
 {
+  struct iovec buffer = worker->buffers[element->buffer_id];
+  memset(buffer.iov_base, 0, worker->buffer_size);
+  buffer.iov_len = worker->buffer_size;
+  transport_buffers_pool_push(&worker->free_buffers, element->buffer_id);
   rlist_del(&element->link);
 }
 

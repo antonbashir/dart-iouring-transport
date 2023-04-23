@@ -28,7 +28,7 @@ class TransportErrorHandler {
 
   void _handleRead(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
-    if (!server.notifyConnection(fd, bufferId)) {
+    if (!server.notifyConnectionData(fd, bufferId)) {
       _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -49,7 +49,7 @@ class TransportErrorHandler {
 
   void _handleWrite(int bufferId, int fd, int event, int result) {
     final server = _serverRegistry.getByConnection(fd);
-    if (!server.notifyConnection(fd, bufferId)) {
+    if (!server.notifyConnectionData(fd, bufferId)) {
       _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }

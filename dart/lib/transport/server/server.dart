@@ -269,7 +269,7 @@ class TransportServer {
   }
 
   @pragma(preferInlinePragma)
-  bool notifyConnection(int fd, int bufferId) {
+  bool notifyConnectionData(int fd, int bufferId) {
     final connection = _connections[fd]!;
     connection.pending--;
     if (_active && connection.active) return true;

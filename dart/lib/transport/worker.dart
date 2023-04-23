@@ -36,6 +36,7 @@ class TransportWorker {
   late final Pointer<Pointer<io_uring_cqe>> _inboundCqes;
   late final Pointer<Pointer<io_uring_cqe>> _outboundCqes;
   late final RawReceivePort _listener;
+  late final RawReceivePort _sequenceListener;
   late final RawReceivePort _activator;
   late final RawReceivePort _closer;
   late final RawReceivePort _jobRunner;
@@ -70,6 +71,10 @@ class TransportWorker {
       if (queue?.isNotEmpty == true) queue!.removeFirst().complete(input[1]);
     });
     _listener = RawReceivePort((_) {
+      _handleInboundCqes();
+      _handleOutboundCqes();
+    });
+    _sequenceListener = RawReceivePort((_) {
       _handleInboundCqes();
       _handleOutboundCqes();
     });
@@ -295,7 +300,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
-    if (!server.notifyConnection(fd, bufferId)) {
+    if (!server.notifyConnectionData(fd, bufferId)) {
       _callbacks.notifyInboundReadError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -311,7 +316,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
-    if (!server.notifyConnection(fd, bufferId)) {
+    if (!server.notifyConnectionData(fd, bufferId)) {
       _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
       return;
     }
