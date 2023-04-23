@@ -33,40 +33,59 @@ class TransportFile {
     return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId, length)));
   }
 
+  @pragma(preferInlinePragma)
+  Future<TransportPayload> _addRead(int bufferId, {int offset = 0}) {
+    final completer = Completer<int>();
+    _states.setOutboundRead(bufferId, completer);
+    _channel.addRead(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
+    return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId, length)));
+  }
+
   Stream<TransportPayload> stream() async* {
-    final controller = StreamController<TransportPayload>();
     var offset = 0;
     var payload = await read(offset: offset);
     if (payload.bytes.isEmpty || payload.bytes.first == 0) {
       payload.release();
-      await controller.close();
       return;
     }
-    yield payload;
     offset += payload.bytes.length;
+    yield payload;
     while (true) {
       payload = await read(offset: offset);
-      if (payload.bytes.isEmpty || payload.bytes.first == 0) break;
-      yield payload;
+      if (payload.bytes.isEmpty || payload.bytes.first == 0) return;
       offset += payload.bytes.length;
+      yield payload;
     }
   }
 
-  Future<Uint8List> load() async {
+  Future<Uint8List> load({int batchCount = 32}) async {
+    final allocatedBuffers = <int>[];
+    for (var i = 0; i < batchCount; i++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
     BytesBuilder builder = BytesBuilder();
     var offset = 0;
-    var payload = await read(offset: offset);
-    if (payload.bytes.isEmpty || payload.bytes.first == 0) {
-      payload.release();
-      return Uint8List.fromList([]);
-    }
-    builder.add(payload.extract());
-    offset += payload.bytes.length;
     while (true) {
-      payload = await read(offset: offset);
-      if (payload.bytes.isEmpty || payload.bytes.first == 0) break;
-      builder.add(payload.extract());
-      offset += payload.bytes.length;
+      for (var i = 0; i < batchCount - 1; i++) {
+        _addRead(allocatedBuffers[i], offset: offset).then((fragmentPayload) {
+          if (fragmentPayload.bytes.isEmpty) {
+            fragmentPayload.release();
+            return;
+          }
+          builder.add(fragmentPayload.bytes);
+          fragmentPayload.release();
+        });
+        offset += _buffers.bufferSize;
+      }
+      final submitCompleter = Completer<int>();
+      _states.setOutboundRead(allocatedBuffers[batchCount - 1], submitCompleter);
+      _channel.readSubmit(allocatedBuffers[batchCount - 1], transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
+      final payload = await submitCompleter.future.then((length) => _pool.getPayload(allocatedBuffers[batchCount - 1], _buffers.read(allocatedBuffers[batchCount - 1], length)));
+      offset += _buffers.bufferSize;
+      if (payload.bytes.isEmpty) {
+        payload.release();
+        break;
+      }
+      builder.add(payload.bytes);
+      payload.release();
     }
     return builder.takeBytes();
   }

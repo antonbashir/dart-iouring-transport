@@ -139,12 +139,27 @@ class TransportErrorHandler {
         ));
   }
 
-  void _handleReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
+  void _handleClientReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
       _callbacks.notifyOutboundReadError(bufferId, TransportClosedException.forClient());
       return;
     }
+    _outboundBuffers.release(bufferId);
+    if (result == -ECANCELED) {
+      _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      return;
+    }
+    _callbacks.notifyOutboundReadError(
+        bufferId,
+        TransportInternalException(
+          event: TransportEvent.ofEvent(event),
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ));
+  }
+
+  void _handleFileReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
     _outboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
       _callbacks.notifyOutboundReadError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
@@ -181,7 +196,11 @@ class TransportErrorHandler {
 
   void handle(int result, int data, int fd, int event) {
     if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-      _handleReadReceiveCallbacks(((data >> 16) & 0xffff), fd, event, result);
+      _handleClientReadReceiveCallbacks(((data >> 16) & 0xffff), fd, event, result);
+      return;
+    }
+    if (event == transportEventRead | transportEventFile) {
+      _handleFileReadReceiveCallbacks(((data >> 16) & 0xffff), fd, event, result);
       return;
     }
     if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {

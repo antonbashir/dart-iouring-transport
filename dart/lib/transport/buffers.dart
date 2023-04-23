@@ -34,6 +34,7 @@ class TransportBuffers {
 
   @pragma(preferInlinePragma)
   Uint8List read(int bufferId, int length) {
+    if (length == 0) return Uint8List.fromList([]);
     final buffer = buffers[bufferId];
     final bufferBytes = buffer.iov_base.cast<Uint8>();
     return bufferBytes.asTypedList(length);
@@ -58,7 +59,6 @@ class TransportBuffers {
     while (bufferId == transportBufferUsed) {
       final completer = Completer();
       _finalizers.add(completer);
-      print("wait buffer");
       await completer.future;
       bufferId = _bindings.transport_worker_get_buffer(_worker);
     }

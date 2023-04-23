@@ -21,15 +21,11 @@ class TransportPayloadPool {
   TransportPayload getPayload(int bufferId, Uint8List bytes) {
     final payload = _payloads[bufferId];
     payload._bytes = bytes;
-    payload._released = false;
     return payload;
   }
 
   @pragma(preferInlinePragma)
-  void releasePayload(int bufferId) {
-    _payloads[bufferId]._released = true;
-    _buffers.release(bufferId);
-  }
+  void releasePayload(int bufferId) => _buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
   TransportDatagramResponder getDatagramResponder(int bufferId, Uint8List bytes, TransportServer server, TransportChannel channel) {
@@ -42,20 +38,15 @@ class TransportPayloadPool {
   }
 
   @pragma(preferInlinePragma)
-  void releaseDatagramResponder(int bufferId) {
-    _payloads[bufferId]._released = true;
-    _buffers.release(bufferId);
-  }
+  void releaseDatagramResponder(int bufferId) => _buffers.release(bufferId);
 }
 
 class TransportPayload {
   late Uint8List _bytes;
   final int _bufferId;
   final TransportPayloadPool _pool;
-  var _released = false;
 
   Uint8List get bytes => _bytes;
-  bool get released => _released;
 
   TransportPayload(this._bufferId, this._pool);
 
@@ -63,8 +54,15 @@ class TransportPayload {
   void release() => _pool.releasePayload(_bufferId);
 
   @pragma(preferInlinePragma)
-  Uint8List extract({bool release = true}) {
+  Uint8List extractData({bool release = true}) {
     final result = Uint8List.fromList(_bytes.toList());
+    if (release) _pool.releasePayload(_bufferId);
+    return result;
+  }
+
+  @pragma(preferInlinePragma)
+  List<int> extractBytes({bool release = true}) {
+    final result = _bytes.toList();
     if (release) _pool.releasePayload(_bufferId);
     return result;
   }

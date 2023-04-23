@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
@@ -42,7 +41,7 @@ void testTcp({
                 (event) => communicator.write(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
               ));
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
-      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extract()))).toList());
+      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extractData()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
     });
     (await done.take(workers * clientsPool * 2).toList()).forEach((response) => expect(response, serverData));
