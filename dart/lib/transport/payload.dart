@@ -31,7 +31,6 @@ class TransportPayloadPool {
   TransportDatagramResponder getDatagramResponder(int bufferId, Uint8List bytes, TransportServer server, TransportChannel channel) {
     final payload = _datagramResponders[bufferId];
     payload._bytes = bytes;
-    payload._released = false;
     payload._server = server;
     payload._channel = channel;
     return payload;
@@ -52,9 +51,9 @@ class TransportPayload {
 
   @pragma(preferInlinePragma)
   Uint8List takeBytes({bool release = true}) {
-    final result = _bytes;
+    final result = BytesBuilder()..add(_bytes);
     if (release) _pool.release(_bufferId);
-    return result;
+    return result.takeBytes();
   }
 
   @pragma(preferInlinePragma)
@@ -71,15 +70,13 @@ class TransportDatagramResponder {
   late Uint8List _bytes;
   late TransportServer _server;
   late TransportChannel _channel;
-  var _released = false;
 
   Uint8List get receivedBytes => _bytes;
-  bool get released => _released;
 
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  Future<void> respondSibgleMessage(Uint8List bytes, {int? flags}) => _server.respondSingleMessage(_channel, _bufferId, bytes, flags: flags);
+  Future<void> respondSingleMessage(Uint8List bytes, {int? flags}) => _server.respondSingleMessage(_channel, _bufferId, bytes, flags: flags);
 
   @pragma(preferInlinePragma)
   Future<void> respondManyMessage(List<Uint8List> bytes, {int? flags}) => _server.respondManyMessages(_channel, _bufferId, bytes, flags: flags);
@@ -89,9 +86,9 @@ class TransportDatagramResponder {
 
   @pragma(preferInlinePragma)
   Uint8List takeBytes({bool release = true}) {
-    final result = _bytes;
+    final result = BytesBuilder()..add(_bytes);
     if (release) _pool.release(_bufferId);
-    return result;
+    return result.takeBytes();
   }
 
   List<int> toBytes({bool release = true}) {

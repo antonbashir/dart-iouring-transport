@@ -242,14 +242,14 @@ class TransportServer {
   Future<void> respondManyMessages(TransportChannel channel, int bufferId, List<Uint8List> bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = <int>[];
-    final lastBufferId = _buffers.get() ?? await _buffers.allocate();
+    final lastBufferId = bufferId;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = _buffers.get() ?? await _buffers.allocate();
       _links.setInbound(bufferId, lastBufferId);
       bufferIds.add(bufferId);
     }
     if (_closing) throw TransportClosedException.forServer();
-    final destination = _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId);
+    final destination = _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, lastBufferId);
     for (var index = 0; index < bytes.length - 1; index++) {
       channel.sendMessage(
         bytes[index],

@@ -4,9 +4,9 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/links.dart';
 import 'package:meta/meta.dart';
 
+import 'links.dart';
 import 'payload.dart';
 import 'bindings.dart';
 import 'buffers.dart';
