@@ -13,11 +13,19 @@ int transport_worker_initialize(transport_worker_t *worker, transport_worker_con
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
+  worker->sequences = malloc(sizeof(transport_worker_sequence_element_t) * configuration->sequences_count);
+
+  if (!worker->sequences)
+  {
+    return -ENOMEM;
+  }
+
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   if (!worker->buffers)
   {
     return -ENOMEM;
   }
+
   worker->events = mh_events_new();
   if (!worker->events)
   {
@@ -36,6 +44,12 @@ int transport_worker_initialize(transport_worker_t *worker, transport_worker_con
   if (!worker->inet_used_messages || !worker->unix_used_messages)
   {
     return -ENOMEM;
+  }
+
+  for (size_t index = 0; index < configuration->sequences_count; index++)
+  {
+    memset(&worker->sequences[index], 0, sizeof(transport_worker_sequence_element_t));
+    rlist_create(&worker->sequences[index].link);
   }
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
@@ -87,6 +101,49 @@ int transport_worker_initialize(transport_worker_t *worker, transport_worker_con
 int32_t transport_worker_get_buffer(transport_worker_t *worker)
 {
   return transport_buffers_pool_pop(&worker->free_buffers);
+}
+
+void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
+{
+  struct iovec buffer = worker->buffers[buffer_id];
+  memset(buffer.iov_base, 0, worker->buffer_size);
+  buffer.iov_len = worker->buffer_size;
+  transport_buffers_pool_push(&worker->free_buffers, buffer_id);
+}
+
+void transport_worker_sequence_add_buffer(transport_worker_t *worker, uint16_t sequence_id, uint16_t buffer_id)
+{
+  rlist_add_entry(&worker->sequences[sequence_id].link, &worker->sequence_buffers[buffer_id], link);
+}
+
+int32_t transport_worker_get_sequence(transport_worker_t *worker)
+{
+  return transport_buffers_pool_pop(&worker->free_sequences);
+}
+
+void transport_worker_release_sequence(transport_worker_t *worker, uint16_t sequence_id)
+{
+  transport_buffers_pool_push(&worker->free_sequences, sequence_id);
+}
+
+void transport_worker_sequence_release_element(transport_worker_t *worker, uint16_t sequence_id, transport_worker_sequence_element_t *element)
+{
+  rlist_del(&element->link);
+}
+
+transport_worker_sequence_element_t *transport_worker_sequence_get_last_element(transport_worker_t *worker, uint16_t sequence_id)
+{
+  return rlist_last_entry(&worker->sequences[sequence_id].link, transport_worker_sequence_element_t, link);
+}
+
+transport_worker_sequence_element_t *transport_worker_sequence_get_first_element(transport_worker_t *worker, uint16_t sequence_id)
+{
+  return rlist_first_entry(&worker->sequences[sequence_id].link, transport_worker_sequence_element_t, link);
+}
+
+transport_worker_sequence_element_t *transport_worker_sequence_get_next_element(transport_worker_t *worker, uint16_t sequence_id, transport_worker_sequence_element_t *element)
+{
+  return rlist_next_entry(element, link);
 }
 
 static inline transport_listener_t *transport_listener_pool_next(transport_listener_pool_t *pool)
@@ -160,7 +217,8 @@ void transport_worker_add_read(transport_worker_t *worker,
                                uint32_t offset,
                                int64_t timeout,
                                uint16_t event,
-                               uint8_t sqe_flags)
+                               uint8_t sqe_flags,
+                               uint16_t sequence_id)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -171,7 +229,8 @@ void transport_worker_add_read(transport_worker_t *worker,
   transport_worker_add_event(worker, fd, data, timeout);
   sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  data = sequence_id ? ((uint64_t)sequence_id << 16) | ((uint64_t)TRANSPORT_EVENT_SEQUENCE) : 0;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, data, 0);
   sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 
@@ -184,8 +243,7 @@ void transport_worker_add_send_message(transport_worker_t *worker,
                                        int64_t timeout,
                                        uint16_t event,
                                        uint8_t sqe_flags,
-                                       uint16_t sequence_id,
-                                       uint8_t sequence_last)
+                                       uint16_t sequence_id)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -214,7 +272,7 @@ void transport_worker_add_send_message(transport_worker_t *worker,
   transport_worker_add_event(worker, fd, data, timeout);
   sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  data = sequence_id ? (((uint64_t)sequence_last) << 32 | (uint64_t)sequence_id << 16) | ((uint64_t)TRANSPORT_EVENT_SEQUENCE) : 0;
+  data = sequence_id ? ((uint64_t)sequence_id << 16) | ((uint64_t)TRANSPORT_EVENT_SEQUENCE) : 0;
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, data, 0);
   sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
@@ -294,27 +352,6 @@ void transport_worker_submit(transport_worker_t *worker)
 {
   io_uring_submit(worker->ring);
 }
-
-void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id)
-{
-  struct iovec buffer = worker->buffers[buffer_id];
-  memset(buffer.iov_base, 0, worker->buffer_size);
-  buffer.iov_len = worker->buffer_size;
-}
-
-void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
-{
-  struct iovec buffer = worker->buffers[buffer_id];
-  memset(buffer.iov_base, 0, worker->buffer_size);
-  buffer.iov_len = worker->buffer_size;
-  transport_buffers_pool_push(&worker->free_buffers, buffer_id);
-}
-
-bool transport_worker_has_free_buffer(transport_worker_t *worker)
-{
-  return worker->free_buffers.count != 0;
-}
-
 void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
 {
   mh_int_t index;

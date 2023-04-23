@@ -19,24 +19,16 @@ class TransportBuffers {
   }
 
   @pragma(preferInlinePragma)
-  bool available() => _bindings.transport_worker_has_free_buffer(_worker);
-
-  @pragma(preferInlinePragma)
   void release(int bufferId) {
     _bindings.transport_worker_release_buffer(_worker, bufferId);
     if (_finalizers.isNotEmpty) _finalizers.removeLast().complete();
   }
 
   @pragma(preferInlinePragma)
-  void reuse(int bufferId) {
-    _bindings.transport_worker_reuse_buffer(_worker, bufferId);
-  }
-
-  @pragma(preferInlinePragma)
-  Uint8List read(int bufferId, int length) {
+  Uint8List read(int bufferId) {
     final buffer = buffers[bufferId];
     final bufferBytes = buffer.iov_base.cast<Uint8>();
-    return bufferBytes.asTypedList(length);
+    return bufferBytes.asTypedList(buffer.iov_len);
   }
 
   @pragma(preferInlinePragma)

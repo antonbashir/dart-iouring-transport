@@ -19477,6 +19477,7 @@ class TransportBindings {
     int timeout,
     int event,
     int sqe_flags,
+    int sequence_id,
   ) {
     return _transport_worker_add_read(
       worker,
@@ -19486,6 +19487,7 @@ class TransportBindings {
       timeout,
       event,
       sqe_flags,
+      sequence_id,
     );
   }
 
@@ -19498,11 +19500,12 @@ class TransportBindings {
               ffi.Uint32,
               ffi.Int64,
               ffi.Uint16,
-              ffi.Uint8)>>('transport_worker_add_read');
+              ffi.Uint8,
+              ffi.Uint16)>>('transport_worker_add_read');
   late final _transport_worker_add_read =
       _transport_worker_add_readPtr.asFunction<
-          void Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
+          void Function(ffi.Pointer<transport_worker_t>, int, int, int, int,
+              int, int, int)>();
 
   void transport_worker_add_send_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19514,6 +19517,7 @@ class TransportBindings {
     int timeout,
     int event,
     int sqe_flags,
+    int sequence_id,
   ) {
     return _transport_worker_add_send_message(
       worker,
@@ -19525,6 +19529,7 @@ class TransportBindings {
       timeout,
       event,
       sqe_flags,
+      sequence_id,
     );
   }
 
@@ -19539,11 +19544,12 @@ class TransportBindings {
               ffi.Int,
               ffi.Int64,
               ffi.Uint16,
-              ffi.Uint8)>>('transport_worker_add_send_message');
+              ffi.Uint8,
+              ffi.Uint16)>>('transport_worker_add_send_message');
   late final _transport_worker_add_send_message =
       _transport_worker_add_send_messagePtr.asFunction<
           void Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr>, int, int, int, int, int)>();
+              ffi.Pointer<sockaddr>, int, int, int, int, int, int)>();
 
   void transport_worker_add_receive_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19704,23 +19710,6 @@ class TransportBindings {
   late final _transport_worker_get_buffer = _transport_worker_get_bufferPtr
       .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
 
-  void transport_worker_reuse_buffer(
-    ffi.Pointer<transport_worker_t> worker,
-    int buffer_id,
-  ) {
-    return _transport_worker_reuse_buffer(
-      worker,
-      buffer_id,
-    );
-  }
-
-  late final _transport_worker_reuse_bufferPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_worker_t>,
-              ffi.Uint16)>>('transport_worker_reuse_buffer');
-  late final _transport_worker_reuse_buffer = _transport_worker_reuse_bufferPtr
-      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
-
   void transport_worker_release_buffer(
     ffi.Pointer<transport_worker_t> worker,
     int buffer_id,
@@ -19739,21 +19728,129 @@ class TransportBindings {
       _transport_worker_release_bufferPtr
           .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
-  bool transport_worker_has_free_buffer(
+  ffi.Pointer<transport_worker_sequence_element_t>
+      transport_worker_sequence_get_last_element(
+    ffi.Pointer<transport_worker_t> worker,
+    int sequence_id,
+  ) {
+    return _transport_worker_sequence_get_last_element(
+      worker,
+      sequence_id,
+    );
+  }
+
+  late final _transport_worker_sequence_get_last_elementPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_worker_sequence_element_t> Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint16)>>('transport_worker_sequence_get_last_element');
+  late final _transport_worker_sequence_get_last_element =
+      _transport_worker_sequence_get_last_elementPtr.asFunction<
+          ffi.Pointer<transport_worker_sequence_element_t> Function(
+              ffi.Pointer<transport_worker_t>, int)>();
+
+  ffi.Pointer<transport_worker_sequence_element_t>
+      transport_worker_sequence_get_first_element(
+    ffi.Pointer<transport_worker_t> worker,
+    int sequence_id,
+  ) {
+    return _transport_worker_sequence_get_first_element(
+      worker,
+      sequence_id,
+    );
+  }
+
+  late final _transport_worker_sequence_get_first_elementPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<transport_worker_sequence_element_t> Function(
+              ffi.Pointer<transport_worker_t>,
+              ffi.Uint16)>>('transport_worker_sequence_get_first_element');
+  late final _transport_worker_sequence_get_first_element =
+      _transport_worker_sequence_get_first_elementPtr.asFunction<
+          ffi.Pointer<transport_worker_sequence_element_t> Function(
+              ffi.Pointer<transport_worker_t>, int)>();
+
+  ffi.Pointer<transport_worker_sequence_element_t>
+      transport_worker_sequence_get_next_element(
+    ffi.Pointer<transport_worker_t> worker,
+    int sequence_id,
+    ffi.Pointer<transport_worker_sequence_element_t> element,
+  ) {
+    return _transport_worker_sequence_get_next_element(
+      worker,
+      sequence_id,
+      element,
+    );
+  }
+
+  late final _transport_worker_sequence_get_next_elementPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Pointer<transport_worker_sequence_element_t> Function(
+                  ffi.Pointer<transport_worker_t>,
+                  ffi.Uint16,
+                  ffi.Pointer<transport_worker_sequence_element_t>)>>(
+      'transport_worker_sequence_get_next_element');
+  late final _transport_worker_sequence_get_next_element =
+      _transport_worker_sequence_get_next_elementPtr.asFunction<
+          ffi.Pointer<transport_worker_sequence_element_t> Function(
+              ffi.Pointer<transport_worker_t>,
+              int,
+              ffi.Pointer<transport_worker_sequence_element_t>)>();
+
+  int transport_worker_get_sequence(
     ffi.Pointer<transport_worker_t> worker,
   ) {
-    return _transport_worker_has_free_buffer(
+    return _transport_worker_get_sequence(
       worker,
     );
   }
 
-  late final _transport_worker_has_free_bufferPtr = _lookup<
+  late final _transport_worker_get_sequencePtr = _lookup<
           ffi.NativeFunction<
-              ffi.Bool Function(ffi.Pointer<transport_worker_t>)>>(
-      'transport_worker_has_free_buffer');
-  late final _transport_worker_has_free_buffer =
-      _transport_worker_has_free_bufferPtr
-          .asFunction<bool Function(ffi.Pointer<transport_worker_t>)>();
+              ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>(
+      'transport_worker_get_sequence');
+  late final _transport_worker_get_sequence = _transport_worker_get_sequencePtr
+      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
+
+  void transport_worker_release_sequence(
+    ffi.Pointer<transport_worker_t> worker,
+    int sequence_id,
+  ) {
+    return _transport_worker_release_sequence(
+      worker,
+      sequence_id,
+    );
+  }
+
+  late final _transport_worker_release_sequencePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<transport_worker_t>,
+              ffi.Uint16)>>('transport_worker_release_sequence');
+  late final _transport_worker_release_sequence =
+      _transport_worker_release_sequencePtr
+          .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
+
+  void transport_worker_sequence_release_element(
+    ffi.Pointer<transport_worker_t> worker,
+    int sequence_id,
+    ffi.Pointer<transport_worker_sequence_element_t> element,
+  ) {
+    return _transport_worker_sequence_release_element(
+      worker,
+      sequence_id,
+      element,
+    );
+  }
+
+  late final _transport_worker_sequence_release_elementPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16,
+                  ffi.Pointer<transport_worker_sequence_element_t>)>>(
+      'transport_worker_sequence_release_element');
+  late final _transport_worker_sequence_release_element =
+      _transport_worker_sequence_release_elementPtr.asFunction<
+          void Function(ffi.Pointer<transport_worker_t>, int,
+              ffi.Pointer<transport_worker_sequence_element_t>)>();
 
   ffi.Pointer<sockaddr> transport_worker_get_datagram_address(
     ffi.Pointer<transport_worker_t> worker,
@@ -24087,7 +24184,8 @@ class _SymbolAddresses {
               ffi.Uint32,
               ffi.Int64,
               ffi.Uint16,
-              ffi.Uint8)>> get transport_worker_add_read =>
+              ffi.Uint8,
+              ffi.Uint16)>> get transport_worker_add_read =>
       _library._transport_worker_add_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -24100,7 +24198,8 @@ class _SymbolAddresses {
               ffi.Int,
               ffi.Int64,
               ffi.Uint16,
-              ffi.Uint8)>> get transport_worker_add_send_message =>
+              ffi.Uint8,
+              ffi.Uint16)>> get transport_worker_add_send_message =>
       _library._transport_worker_add_send_messagePtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -24153,18 +24252,44 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
-      get transport_worker_reuse_buffer =>
-          _library._transport_worker_reuse_bufferPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
       get transport_worker_release_buffer =>
           _library._transport_worker_release_bufferPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Bool Function(ffi.Pointer<transport_worker_t>)>>
-      get transport_worker_has_free_buffer =>
-          _library._transport_worker_has_free_bufferPtr;
+              ffi.Pointer<transport_worker_sequence_element_t> Function(
+                  ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
+      get transport_worker_sequence_get_last_element =>
+          _library._transport_worker_sequence_get_last_elementPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<transport_worker_sequence_element_t> Function(
+                  ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
+      get transport_worker_sequence_get_first_element =>
+          _library._transport_worker_sequence_get_first_elementPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<transport_worker_sequence_element_t> Function(
+                  ffi.Pointer<transport_worker_t>,
+                  ffi.Uint16,
+                  ffi.Pointer<transport_worker_sequence_element_t>)>>
+      get transport_worker_sequence_get_next_element =>
+          _library._transport_worker_sequence_get_next_elementPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_get_sequence =>
+          _library._transport_worker_get_sequencePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
+      get transport_worker_release_sequence =>
+          _library._transport_worker_release_sequencePtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16,
+                  ffi.Pointer<transport_worker_sequence_element_t>)>>
+      get transport_worker_sequence_release_element =>
+          _library._transport_worker_sequence_release_elementPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<sockaddr> Function(
@@ -27520,9 +27645,19 @@ class transport_buffers_pool extends ffi.Struct {
   external int size;
 }
 
+class transport_worker_sequence_element extends ffi.Struct {
+  @ffi.Uint16()
+  external int buffer_id;
+
+  external rlist link;
+}
+
 class transport_worker_configuration extends ffi.Struct {
   @ffi.Uint16()
   external int buffers_count;
+
+  @ffi.Uint16()
+  external int sequences_count;
 
   @ffi.Uint32()
   external int buffer_size;
@@ -27543,6 +27678,8 @@ class transport_worker extends ffi.Struct {
 
   external transport_buffers_pool free_buffers;
 
+  external transport_buffers_pool free_sequences;
+
   external ffi.Pointer<io_uring> ring;
 
   external ffi.Pointer<transport_listener_pool_t> listeners;
@@ -27551,6 +27688,9 @@ class transport_worker extends ffi.Struct {
 
   @ffi.Uint32()
   external int buffer_size;
+
+  @ffi.Uint32()
+  external int sequences_count;
 
   @ffi.Uint16()
   external int buffers_count;
@@ -27563,8 +27703,13 @@ class transport_worker extends ffi.Struct {
   external ffi.Pointer<msghdr> unix_used_messages;
 
   external ffi.Pointer<mh_events_t> events;
+
+  external ffi.Pointer<transport_worker_sequence_element_t> sequences;
+
+  external ffi.Pointer<transport_worker_sequence_element_t> sequence_buffers;
 }
 
+typedef transport_worker_sequence_element_t = transport_worker_sequence_element;
 typedef transport_worker_t = transport_worker;
 typedef transport_worker_configuration_t = transport_worker_configuration;
 
@@ -31477,6 +31622,8 @@ const int TRANSPORT_EVENT_SERVER = 256;
 
 const int TRANSPORT_EVENT_CUSTOM = 512;
 
+const int TRANSPORT_EVENT_SEQUENCE = 1024;
+
 const int TRANSPORT_BUFFER_USED = -1;
 
 const int TRANSPORT_TIMEOUT_INFINITY = -1;
@@ -31547,7 +31694,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 

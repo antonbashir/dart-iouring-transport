@@ -14,7 +14,7 @@ class TransportChannel {
   TransportChannel(this._workerPointer, this.fd, this._bindings, this._buffers);
 
   @pragma(preferInlinePragma)
-  void addRead(int bufferId, int timeout, int event, int sqeFlags, {int offset = 0}) {
+  void addRead(int bufferId, int timeout, int event, int sqeFlags, {int sequenceId = 0, int offset = 0}) {
     _bindings.transport_worker_add_read(
       _workerPointer,
       fd,
@@ -23,6 +23,7 @@ class TransportChannel {
       timeout,
       event,
       sqeFlags,
+      sequenceId,
     );
   }
 
@@ -67,6 +68,7 @@ class TransportChannel {
       timeout,
       event,
       sqeFlags,
+      0,
     );
   }
 

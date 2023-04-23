@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:iouring_transport/transport/sequences.dart';
+import 'package:iouring_transport/transport/worker.dart';
 
 import '../buffers.dart';
 import '../channel.dart';
@@ -13,7 +17,9 @@ class TransportFile {
   final TransportChannel _channel;
   final TransportCallbacks _states;
   final TransportBuffers _buffers;
+  final TransportSequences _sequences;
   final TransportPayloadPool _pool;
+  final TransportWorker _worker;
   final File delegate;
 
   TransportFile(
@@ -22,15 +28,52 @@ class TransportFile {
     this._states,
     this._channel,
     this._buffers,
+    this._sequences,
     this._pool,
+    this._worker,
   );
 
   Future<TransportPayload> read({int offset = 0}) async {
     final completer = Completer<int>();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     _states.setOutboundRead(bufferId, completer);
-    _channel.readSubmit(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
-    return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId, length)));
+    _channel.addRead(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, 0, offset: offset);
+    _worker.submitOutbound();
+    return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId)));
+  }
+
+  Future<Uint8List> readSequence(int count, {int offset = 0}) async {
+    final bytes = BytesBuilder();
+    final sequenceId = _sequences.get() ?? await _sequences.allocate();
+    for (var i = 0; i < count - 1; i++) {
+      final bufferId = _buffers.get() ?? await _buffers.allocate();
+      _channel.addRead(
+        bufferId,
+        transportTimeoutInfinity,
+        transportEventRead | transportEventFile,
+        transportIosqeIoLink,
+        sequenceId: sequenceId,
+        offset: offset,
+      );
+    }
+    final completer = Completer<int>();
+    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    _states.setOutboundRead(bufferId, completer);
+    _channel.addRead(
+      bufferId,
+      transportTimeoutInfinity,
+      transportEventRead | transportEventFile,
+      0,
+      sequenceId: sequenceId,
+      offset: offset,
+    );
+    _worker.submitOutbound();
+    await completer.future;
+    _sequences.drain(sequenceId, count, (element) {
+      bytes.add(_buffers.read(element.ref.buffer_id));
+      _buffers.release(bufferId);
+    });
+    return bytes.takeBytes();
   }
 
   @pragma(preferInlinePragma)
