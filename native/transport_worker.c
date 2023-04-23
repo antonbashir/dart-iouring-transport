@@ -38,6 +38,12 @@ int transport_worker_initialize(transport_worker_t *worker, transport_worker_con
     return -ENOMEM;
   }
 
+  result = transport_buffers_pool_create(&worker->free_sequences, configuration->sequences_count);
+  if (result == -1)
+  {
+    return -ENOMEM;
+  }
+
   worker->inet_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
   worker->unix_used_messages = malloc(sizeof(struct msghdr) * configuration->buffers_count);
 
@@ -50,6 +56,7 @@ int transport_worker_initialize(transport_worker_t *worker, transport_worker_con
   {
     memset(&worker->sequences[index], 0, sizeof(transport_worker_sequence_element_t));
     rlist_create(&worker->sequences[index].link);
+    transport_buffers_pool_push(&worker->free_sequences, index + 1);
   }
 
   for (size_t index = 0; index < configuration->buffers_count; index++)
