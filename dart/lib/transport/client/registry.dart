@@ -1,7 +1,8 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/payload.dart';
+import '../links.dart';
+import '../payload.dart';
 import '../exception.dart';
 import '../extensions.dart';
 import '../bindings.dart';
@@ -19,11 +20,12 @@ class TransportClientRegistry {
   final TransportCallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
+  final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
 
   final _clients = <int, TransportClient>{};
 
-  TransportClientRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool);
+  TransportClientRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
 
   Future<TransportClientStreamCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     final communicators = <Future<TransportClientStreamCommunicator>>[];
@@ -51,6 +53,7 @@ class TransportClientRegistry {
       }
       final client = TransportClient(
         _callbacks,
+        _links,
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -98,6 +101,7 @@ class TransportClientRegistry {
       }
       final client = TransportClient(
         _callbacks,
+        _links,
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -183,6 +187,7 @@ class TransportClientRegistry {
     });
     final client = TransportClient(
       _callbacks,
+      _links,
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
@@ -226,6 +231,7 @@ class TransportClientRegistry {
     }
     final client = TransportClient(
       _callbacks,
+      _links,
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,

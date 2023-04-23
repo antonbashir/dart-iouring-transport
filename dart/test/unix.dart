@@ -40,7 +40,7 @@ void testUnixStream({
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
-      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.takeBytes()))).toList());
+      final responses = await Future.wait(clients.map((client) => client.writeSingle(clientData).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
     });
@@ -83,7 +83,7 @@ void testUnixDgram({
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-        responseFutures.add(client.sendMessage(clientData, retry: TransportDefaults.retry()).then((value) => client.receiveMessage()).then((value) => value.takeBytes()));
+        responseFutures.add(client.sendSingleMessage(clientData, retry: TransportDefaults.retry()).then((value) => client.receiveSingleMessage()).then((value) => value.takeBytes()));
       }
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));

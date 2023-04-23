@@ -131,14 +131,15 @@ class TransportWorker {
       _outboundWorkerPointer,
       _outboundBuffers,
       _outboundPayloadPool,
+      _links,
     );
     _serverRegistry = TransportServerRegistry(
       _bindings,
       _callbacks,
       _inboundWorkerPointer,
       _inboundBuffers,
-      _links,
       _inboundPayloadPool,
+      _links,
     );
     _serversFactory = TransportServersFactory(
       _bindings,
