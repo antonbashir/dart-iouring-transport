@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/links.dart';
 import '../payload.dart';
 
 import '../bindings.dart';
@@ -21,9 +22,10 @@ class TransportServerRegistry {
   final TransportBindings _bindings;
   final TransportCallbacks _callbacks;
   final TransportBuffers _buffers;
+  final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
 
-  TransportServerRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool);
+  TransportServerRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._links, this._payloadPool);
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
@@ -57,6 +59,7 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
+          _links,
         );
       },
     );
@@ -132,6 +135,7 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
+          _links,
         );
       },
     );
@@ -170,6 +174,7 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
+          _links,
         );
       },
     );
@@ -208,6 +213,7 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
+          _links,
         );
       },
     );

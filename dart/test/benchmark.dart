@@ -31,7 +31,7 @@ Future<void> _benchTcp() async {
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.tcp("0.0.0.0", 12345, (connection) => connection.listen((payload) => connection.write(payload.extractData())));
+      worker.servers.tcp("0.0.0.0", 12345, (connection) => connection.listenBySingle((payload) => connection.writeSingle(payload.extractData())));
       final connector = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();

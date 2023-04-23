@@ -36,7 +36,6 @@ class TransportWorker {
   late final Pointer<Pointer<io_uring_cqe>> _inboundCqes;
   late final Pointer<Pointer<io_uring_cqe>> _outboundCqes;
   late final RawReceivePort _listener;
-  late final RawReceivePort _sequenceListener;
   late final RawReceivePort _activator;
   late final RawReceivePort _closer;
   late final RawReceivePort _jobRunner;
@@ -71,10 +70,6 @@ class TransportWorker {
       if (queue?.isNotEmpty == true) queue!.removeFirst().complete(input[1]);
     });
     _listener = RawReceivePort((_) {
-      _handleInboundCqes();
-      _handleOutboundCqes();
-    });
-    _sequenceListener = RawReceivePort((_) {
       _handleInboundCqes();
       _handleOutboundCqes();
     });
@@ -200,24 +195,6 @@ class TransportWorker {
     _jobs.remove(name);
   }
 
-  Future<dynamic> batchInbound(List<Future<dynamic> Function()> actions) async {
-    final futures = actions.map((action) => action());
-    _bindings.transport_worker_submit(_inboundWorkerPointer);
-    await Future.wait(futures);
-  }
-
-  Future<dynamic> batchOutbound(List<Future<dynamic> Function()> actions) async {
-    final futures = actions.map((action) => action());
-    _bindings.transport_worker_submit(_outboundWorkerPointer);
-    await Future.wait(futures);
-  }
-
-  @pragma(preferInlinePragma)
-  void submitInbound() => _bindings.transport_worker_submit(_inboundWorkerPointer);
-
-  @pragma(preferInlinePragma)
-  void submitOutbound() => _bindings.transport_worker_submit(_outboundWorkerPointer);
-
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
@@ -301,108 +278,108 @@ class TransportWorker {
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnectionData(fd, bufferId)) {
-      _callbacks.notifyInboundBufferError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
     if (result == 0) {
       _inboundBuffers.release(bufferId);
       unawaited(server.closeConnection(fd));
-      _callbacks.notifyInboundBufferError(bufferId, TransportZeroDataException(event: TransportEvent.serverRead));
+      _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverRead));
       return;
     }
-    _callbacks.notifyInboundBuffer(bufferId, result);
+    _inboundBuffers.setLength(bufferId, result);
+    _callbacks.notifyInbound(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (!server.notifyConnectionData(fd, bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
     _inboundBuffers.release(bufferId);
     if (result == 0) {
       unawaited(server.closeConnection(fd));
-      _callbacks.notifyInboundWriteError(
-        bufferId,
-        TransportZeroDataException(
-          event: TransportEvent.serverWrite,
-        ),
-      );
+      _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverWrite));
       return;
     }
-    _callbacks.notifyInboundWrite(bufferId);
+    _callbacks.notifyInbound(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundBufferError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
     if (result == 0) {
       _inboundBuffers.release(bufferId);
-      _callbacks.notifyInboundBufferError(bufferId, TransportZeroDataException(event: TransportEvent.serverReceive));
+      _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverReceive));
       return;
     }
-    _callbacks.notifyInboundBuffer(bufferId, result);
+    _inboundBuffers.setLength(bufferId, result);
+    _callbacks.notifyInbound(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _handleSendMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (!server.notifyData(bufferId)) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportClosedException.forServer());
+      _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
     _inboundBuffers.release(bufferId);
     if (result == 0) {
-      _callbacks.notifyInboundWriteError(bufferId, TransportZeroDataException(event: TransportEvent.serverSend));
+      _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverSend));
       return;
     }
-    _callbacks.notifyInboundWrite(bufferId);
+    _inboundBuffers.setLength(bufferId, result);
+    _callbacks.notifyInbound(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _handleReadReceiveClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundBufferError(bufferId, TransportClosedException.forClient());
+      _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
     }
     if (result == 0) {
       _outboundBuffers.release(bufferId);
-      _callbacks.notifyOutboundBufferError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyOutboundError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
-    _callbacks.notifyOutboundBuffer(bufferId, result);
+    _outboundBuffers.setLength(bufferId, result);
+    _callbacks.notifyOutbound(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _handleReadReceiveFileCallback(int event, int bufferId, int result, int fd) {
-    _callbacks.notifyOutboundBuffer(bufferId, result);
+    _outboundBuffers.setLength(bufferId, result);
+    _callbacks.notifyOutbound(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _handleWriteSendClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportClosedException.forClient());
+      _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
     }
     _outboundBuffers.release(bufferId);
     if (result == 0) {
-      _callbacks.notifyOutboundWriteError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyOutboundError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
-    _callbacks.notifyOutboundWrite(bufferId);
+    _callbacks.notifyOutbound(bufferId);
   }
 
   @pragma(preferInlinePragma)
   void _handleWriteSendFileCallback(int event, int bufferId, int result, int fd) {
     _outboundBuffers.release(bufferId);
-    _callbacks.notifyOutboundWrite(bufferId);
+    _callbacks.notifyOutbound(bufferId);
   }
 
   @pragma(preferInlinePragma)

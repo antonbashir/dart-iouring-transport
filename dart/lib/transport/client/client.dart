@@ -10,7 +10,6 @@ import '../channel.dart';
 import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';
-import '../chunk.dart';
 import 'registry.dart';
 
 import 'communicator.dart';
@@ -64,13 +63,13 @@ class TransportClient {
     for (var index = 0; index < count - 1; index++) {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
-      _callbacks.setOutboundBuffer(bufferId, completer);
-      _channel.addRead(bufferId, _readTimeout, transportEventRead | transportEventClient);
+      _callbacks.setOutbound(bufferId, completer);
+      _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
       chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     }
     final completer = Completer<int>();
     final bufferId = allocatedBuffers[count - 1];
-    _callbacks.setOutboundBuffer(bufferId, completer);
+    _callbacks.setOutbound(bufferId, completer);
     _channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventClient);
     chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     _pending += chunks.length;
@@ -81,7 +80,7 @@ class TransportClient {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
     final completer = Completer<int>();
-    _callbacks.setOutboundBuffer(bufferId, completer);
+    _callbacks.setOutbound(bufferId, completer);
     _channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
     return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length)));
@@ -99,7 +98,7 @@ class TransportClient {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setOutboundWrite(chunk.bufferId, completer);
-      _channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+      _channel.write(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();
@@ -134,7 +133,7 @@ class TransportClient {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setOutboundWrite(chunk.bufferId, completer);
-      _channel.addWrite(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+      _channel.write(chunk.bytes, chunk.bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();
@@ -153,13 +152,13 @@ class TransportClient {
     for (var index = 0; index < count - 1; index++) {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
-      _callbacks.setOutboundBuffer(bufferId, completer);
-      _channel.addReceiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
+      _callbacks.setOutbound(bufferId, completer);
+      _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
       chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     }
     final completer = Completer<int>();
     final bufferId = allocatedBuffers[count - 1];
-    _callbacks.setOutboundBuffer(bufferId, completer);
+    _callbacks.setOutbound(bufferId, completer);
     _channel.receiveMessageSubmit(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
     _pending += chunks.length;
@@ -171,7 +170,7 @@ class TransportClient {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
     final completer = Completer<int>();
-    _callbacks.setOutboundBuffer(bufferId, completer);
+    _callbacks.setOutbound(bufferId, completer);
     _channel.receiveMessageSubmit(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
     return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length)));
@@ -196,7 +195,7 @@ class TransportClient {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setOutboundWrite(chunk.bufferId, completer);
-      _channel.addSendMessage(chunk.bytes, chunk.bufferId, _pointer.ref.family, _destination, _writeTimeout, flags, transportEventSendMessage | transportEventClient);
+      _channel.sendMessage(chunk.bytes, chunk.bufferId, _pointer.ref.family, _destination, _writeTimeout, flags, transportEventSendMessage | transportEventClient);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();
@@ -227,7 +226,7 @@ class TransportClient {
       final chunk = chunks[index];
       final completer = Completer<void>();
       _callbacks.setOutboundWrite(chunk.bufferId, completer);
-      _channel.addSendMessage(chunk.bytes, chunk.bufferId, _pointer.ref.family, _destination, _writeTimeout, flags, transportEventSendMessage | transportEventClient);
+      _channel.sendMessage(chunk.bytes, chunk.bufferId, _pointer.ref.family, _destination, _writeTimeout, flags, transportEventSendMessage | transportEventClient);
     }
     final chunk = chunks[last];
     final completer = Completer<void>();

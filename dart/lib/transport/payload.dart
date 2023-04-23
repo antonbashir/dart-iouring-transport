@@ -25,7 +25,7 @@ class TransportPayloadPool {
   }
 
   @pragma(preferInlinePragma)
-  void releasePayload(int bufferId) => _buffers.release(bufferId);
+  void release(int bufferId) => _buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
   TransportDatagramResponder getDatagramResponder(int bufferId, Uint8List bytes, TransportServer server, TransportChannel channel) {
@@ -36,9 +36,6 @@ class TransportPayloadPool {
     payload._channel = channel;
     return payload;
   }
-
-  @pragma(preferInlinePragma)
-  void releaseDatagramResponder(int bufferId) => _buffers.release(bufferId);
 }
 
 class TransportPayload {
@@ -51,19 +48,19 @@ class TransportPayload {
   TransportPayload(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  void release() => _pool.releasePayload(_bufferId);
+  void release() => _pool.release(_bufferId);
 
   @pragma(preferInlinePragma)
-  Uint8List extractData({bool release = true}) {
-    final result = Uint8List.fromList(_bytes.toList());
-    if (release) _pool.releasePayload(_bufferId);
+  Uint8List takeBytes({bool release = true}) {
+    final result = _bytes;
+    if (release) _pool.release(_bufferId);
     return result;
   }
 
   @pragma(preferInlinePragma)
-  List<int> extractBytes({bool release = true}) {
+  List<int> toBytes({bool release = true}) {
     final result = _bytes.toList();
-    if (release) _pool.releasePayload(_bufferId);
+    if (release) _pool.release(_bufferId);
     return result;
   }
 }
@@ -82,17 +79,24 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  Future<void> respondMessage(Uint8List bytes, {int? flags}) => _server.respondMessage(_channel, _bufferId, bytes, flags: flags);
+  Future<void> respondSibgleMessage(Uint8List bytes, {int? flags}) => _server.respondSingleMessage(_channel, _bufferId, bytes, flags: flags);
 
   @pragma(preferInlinePragma)
-  Future<void> respondMessageBatch(Iterable<Uint8List> fragments, {int? flags}) => _server.respondMessageBatch(fragments, _channel, _bufferId, flags: flags);
+  Future<void> respondManyMessage(List<Uint8List> bytes, {int? flags}) => _server.respondManyMessages(_channel, _bufferId, bytes, flags: flags);
 
   @pragma(preferInlinePragma)
-  void release() => _pool.releaseDatagramResponder(_bufferId);
+  void release() => _pool.release(_bufferId);
 
-  List<int> extract({bool release = true}) {
+  @pragma(preferInlinePragma)
+  Uint8List takeBytes({bool release = true}) {
+    final result = _bytes;
+    if (release) _pool.release(_bufferId);
+    return result;
+  }
+
+  List<int> toBytes({bool release = true}) {
     final result = _bytes.toList();
-    if (release) _server.releaseBuffer(_bufferId);
+    if (release) _pool.release(_bufferId);
     return result;
   }
 }

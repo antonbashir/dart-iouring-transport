@@ -34,9 +34,9 @@ void testUnixStream({
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.servers.unixStream(
         serverSocket.path,
-        (connection) => connection.listen(
+        (connection) => connection.listenBySingle(
           onError: (error, _) => print(error),
-          (event) => connection.write(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+          (event) => connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
@@ -78,7 +78,7 @@ void testUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
       worker.servers.unixDatagram(serverSocket.path).listen(
             onError: (error, _) => print(error),
-            (event) => event.respondMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+            (event) => event.respondSibgleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {

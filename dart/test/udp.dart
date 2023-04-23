@@ -31,7 +31,7 @@ void testUdp({
       await worker.initialize();
       worker.servers.udp("0.0.0.0", 12345).listen(
             onError: (error, _) => print(error),
-            (event) => event.respondMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+            (event) => event.respondSibgleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {

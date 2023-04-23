@@ -32,6 +32,9 @@ class TransportBuffers {
   }
 
   @pragma(preferInlinePragma)
+  void setLength(int bufferId, int length) => buffers[bufferId].iov_len = length;
+
+  @pragma(preferInlinePragma)
   void write(int bufferId, Uint8List bytes) {
     final buffer = buffers[bufferId];
     buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);

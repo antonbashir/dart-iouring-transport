@@ -113,6 +113,7 @@ const transportEventClient = 1 << 6;
 const transportEventFile = 1 << 7;
 const transportEventServer = 1 << 8;
 const transportEventCustom = 1 << 9;
+const transportEventLink = 1 << 10;
 
 const transportEventAll = transportEventRead |
     transportEventWrite |
@@ -123,7 +124,8 @@ const transportEventAll = transportEventRead |
     transportEventClient |
     transportEventFile |
     transportEventServer |
-    transportEventCustom;
+    transportEventCustom |
+    transportEventLink;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;

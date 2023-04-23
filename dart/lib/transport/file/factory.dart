@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
+import '../links.dart';
 import '../payload.dart';
 import '../bindings.dart';
 import '../buffers.dart';
@@ -15,6 +16,7 @@ class TransportFilesFactory {
   final TransportCallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
+  final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
 
   TransportFilesFactory(
@@ -22,6 +24,7 @@ class TransportFilesFactory {
     this._callbacks,
     this._workerPointer,
     this._buffers,
+    this._links,
     this._payloadPool,
   );
 
@@ -30,9 +33,12 @@ class TransportFilesFactory {
     return TransportFile(
       path,
       File(path),
+      _bindings,
+      _workerPointer,
       _callbacks,
       TransportChannel(_workerPointer, fd, _bindings, _buffers),
       _buffers,
+      _links,
       _payloadPool,
     );
   }
