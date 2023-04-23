@@ -71,39 +71,15 @@ class TransportServer {
     _pending++;
   }
 
-  Future<TransportPayload> read(TransportChannel channel) async {
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
+  Future<TransportPayload> read(int bufferId, TransportChannel channel) async {
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
     _callbacks.setInboundRead(bufferId, completer);
-    channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventServer);
+    channel.addRead(bufferId, _readTimeout, transportEventRead | transportEventServer, 0);
     connection.pending++;
     return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length)));
-  }
-
-  Future<List<TransportPayload>> readBatch(TransportChannel channel, int count) async {
-    final chunks = <Future<TransportPayload>>[];
-    final allocatedBuffers = <int>[];
-    for (var index = 0; index < count; index++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
-    if (_closing) throw TransportClosedException.forServer();
-    final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    for (var index = 0; index < count - 1; index++) {
-      final completer = Completer<int>();
-      final bufferId = allocatedBuffers[index];
-      _callbacks.setInboundRead(bufferId, completer);
-      channel.addRead(bufferId, _readTimeout, transportEventRead | transportEventServer);
-      chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
-    }
-    final completer = Completer<int>();
-    final bufferId = allocatedBuffers[count - 1];
-    _callbacks.setInboundRead(bufferId, completer);
-    channel.readSubmit(bufferId, _readTimeout, transportEventRead | transportEventServer);
-    chunks.add(completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length))));
-    connection.pending += chunks.length;
-    return Future.wait(chunks);
   }
 
   @pragma(preferInlinePragma)

@@ -8,20 +8,24 @@ class TransportCallbacks {
   final _connect = <int, Completer<TransportClient>>{};
   final _accept = <int, void Function(TransportChannel channel)>{};
   final _custom = <int, Completer<int>>{};
-  final _inboundRead = <Completer<int>>[];
-  final _inboundWrite = <Completer<void>>[];
-  final _outboundRead = <Completer<int>>[];
-  final _outboundWrite = <Completer<void>>[];
+  final _inboundReadEvents = <Completer<int>>[];
+  final _inboundWriteEvents = <Completer<void>>[];
+  final _outboundReadEvents = <Completer<int>>[];
+  final _outboundWriteEvents = <Completer<void>>[];
+  final _inboundReadSequences = <Completer<void>>[];
+  final _inboundWriteSequences = <Completer<void>>[];
+  final _outboundReadSequences = <Completer<void>>[];
+  final _outboundWriteSequences = <Completer<void>>[];
 
   TransportCallbacks(int inboundBuffersCount, int outboundBuffersCount) {
     for (var index = 0; index < inboundBuffersCount; index++) {
-      _inboundRead.add(Completer());
-      _inboundWrite.add(Completer());
+      _inboundReadEvents.add(Completer());
+      _inboundWriteEvents.add(Completer());
     }
 
     for (var index = 0; index < outboundBuffersCount; index++) {
-      _outboundRead.add(Completer());
-      _outboundWrite.add(Completer());
+      _outboundReadEvents.add(Completer());
+      _outboundWriteEvents.add(Completer());
     }
   }
 
@@ -32,16 +36,16 @@ class TransportCallbacks {
   void setAccept(int fd, void Function(TransportChannel channel) onAccept) => _accept[fd] = onAccept;
 
   @pragma(preferInlinePragma)
-  void setOutboundRead(int bufferId, Completer<int> completer) => _outboundRead[bufferId] = completer;
+  void setOutboundRead(int bufferId, Completer<int> completer) => _outboundReadEvents[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void setOutboundWrite(int bufferId, Completer<void> completer) => _outboundWrite[bufferId] = completer;
+  void setOutboundWrite(int bufferId, Completer<void> completer) => _outboundWriteEvents[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void setInboundRead(int bufferId, Completer<int> completer) => _inboundRead[bufferId] = completer;
+  void setInboundRead(int bufferId, Completer<int> completer) => _inboundReadEvents[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void setInboundWrite(int bufferId, Completer<void> completer) => _inboundWrite[bufferId] = completer;
+  void setInboundWrite(int bufferId, Completer<void> completer) => _inboundWriteEvents[bufferId] = completer;
 
   @pragma(preferInlinePragma)
   void setCustom(int id, Completer<int> completer) => _custom[id] = completer;
@@ -53,22 +57,22 @@ class TransportCallbacks {
   void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!(channel);
 
   @pragma(preferInlinePragma)
-  void notifyInboundRead(int bufferId, int length) => _inboundRead[bufferId].complete(length);
+  void notifyInboundRead(int bufferId, int length) => _inboundReadEvents[bufferId].complete(length);
 
   @pragma(preferInlinePragma)
-  void notifyInboundReadError(int bufferId, Exception error) => _inboundRead[bufferId].completeError(error);
+  void notifyInboundReadError(int bufferId, Exception error) => _inboundReadEvents[bufferId].completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyInboundWrite(int bufferId) => _inboundWrite[bufferId].complete();
+  void notifyInboundWrite(int bufferId) => _inboundWriteEvents[bufferId].complete();
 
   @pragma(preferInlinePragma)
-  void notifyInboundWriteError(int bufferId, Exception error) => _inboundWrite[bufferId].completeError(error);
+  void notifyInboundWriteError(int bufferId, Exception error) => _inboundWriteEvents[bufferId].completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundRead(int bufferId, int length) => _outboundRead[bufferId].complete(length);
+  void notifyOutboundRead(int bufferId, int length) => _outboundReadEvents[bufferId].complete(length);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundWrite(int bufferId) => _outboundWrite[bufferId].complete();
+  void notifyOutboundWrite(int bufferId) => _outboundWriteEvents[bufferId].complete();
 
   @pragma(preferInlinePragma)
   void notifyCustom(int id, int data) => _custom.remove(id)?.complete(data);
@@ -77,10 +81,10 @@ class TransportCallbacks {
   void notifyConnectError(int fd, Exception error) => _connect.remove(fd)!.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundReadError(int bufferId, Exception error) => _outboundRead[bufferId].completeError(error);
+  void notifyOutboundReadError(int bufferId, Exception error) => _outboundReadEvents[bufferId].completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyOutboundWriteError(int bufferId, Exception error) => _outboundWrite[bufferId].completeError(error);
+  void notifyOutboundWriteError(int bufferId, Exception error) => _outboundWriteEvents[bufferId].completeError(error);
 
   @pragma(preferInlinePragma)
   void removeCustom(int id) => _custom.remove(id);

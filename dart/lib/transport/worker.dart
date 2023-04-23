@@ -195,6 +195,24 @@ class TransportWorker {
     _jobs.remove(name);
   }
 
+  Future<dynamic> batchInbound(List<Future<dynamic> Function()> actions) async {
+    final futures = actions.map((action) => action());
+    _bindings.transport_worker_submit(_inboundWorkerPointer);
+    await Future.wait(futures);
+  }
+
+  Future<dynamic> batchOutbound(List<Future<dynamic> Function()> actions) async {
+    final futures = actions.map((action) => action());
+    _bindings.transport_worker_submit(_outboundWorkerPointer);
+    await Future.wait(futures);
+  }
+
+  @pragma(preferInlinePragma)
+  void submitInbound() => _bindings.transport_worker_submit(_inboundWorkerPointer);
+
+  @pragma(preferInlinePragma)
+  void submitOutbound() => _bindings.transport_worker_submit(_outboundWorkerPointer);
+
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {

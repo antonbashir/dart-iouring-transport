@@ -133,7 +133,13 @@ void transport_worker_custom(transport_worker_t *worker, uint32_t id, uint32_t c
   io_uring_submit(ring);
 }
 
-static inline void transport_worker_prepare_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event, uint8_t sqe_flags)
+void transport_worker_add_write(transport_worker_t *worker,
+                                uint32_t fd,
+                                uint16_t buffer_id,
+                                uint32_t offset,
+                                int64_t timeout,
+                                uint16_t event,
+                                uint8_t sqe_flags)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -148,7 +154,13 @@ static inline void transport_worker_prepare_write(transport_worker_t *worker, ui
   sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 
-static inline void transport_worker_prepare_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event, uint8_t sqe_flags)
+void transport_worker_add_read(transport_worker_t *worker,
+                               uint32_t fd,
+                               uint16_t buffer_id,
+                               uint32_t offset,
+                               int64_t timeout,
+                               uint16_t event,
+                               uint8_t sqe_flags)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -160,19 +172,20 @@ static inline void transport_worker_prepare_read(transport_worker_t *worker, uin
   sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-  sqe->flags |= sqe_flags;
-  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
+  sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 
-static inline void transport_worker_prepare_send_message(transport_worker_t *worker,
-                                                         uint32_t fd,
-                                                         uint16_t buffer_id,
-                                                         struct sockaddr *address,
-                                                         transport_socket_family_t socket_family,
-                                                         int message_flags,
-                                                         int64_t timeout,
-                                                         uint16_t event,
-                                                         uint8_t sqe_flags)
+void transport_worker_add_send_message(transport_worker_t *worker,
+                                       uint32_t fd,
+                                       uint16_t buffer_id,
+                                       struct sockaddr *address,
+                                       transport_socket_family_t socket_family,
+                                       int message_flags,
+                                       int64_t timeout,
+                                       uint16_t event,
+                                       uint8_t sqe_flags,
+                                       uint16_t sequence_id,
+                                       uint8_t sequence_last)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -201,18 +214,19 @@ static inline void transport_worker_prepare_send_message(transport_worker_t *wor
   transport_worker_add_event(worker, fd, data, timeout);
   sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  data = sequence_id ? (((uint64_t)sequence_last) << 32 | (uint64_t)sequence_id << 16) | ((uint64_t)TRANSPORT_EVENT_SEQUENCE) : 0;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, data, 0);
   sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 
-static inline void transport_worker_prepare_receive_message(transport_worker_t *worker,
-                                                            uint32_t fd,
-                                                            uint16_t buffer_id,
-                                                            transport_socket_family_t socket_family,
-                                                            int message_flags,
-                                                            int64_t timeout,
-                                                            uint16_t event,
-                                                            uint8_t sqe_flags)
+void transport_worker_add_receive_message(transport_worker_t *worker,
+                                          uint32_t fd,
+                                          uint16_t buffer_id,
+                                          transport_socket_family_t socket_family,
+                                          int message_flags,
+                                          int64_t timeout,
+                                          uint16_t event,
+                                          uint8_t sqe_flags)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -242,76 +256,6 @@ static inline void transport_worker_prepare_receive_message(transport_worker_t *
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
-}
-
-void transport_worker_add_write(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event)
-{
-  transport_worker_prepare_write(worker, fd, buffer_id, offset, timeout, event, IOSQE_IO_LINK);
-}
-
-void transport_worker_write_submit(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event)
-{
-  transport_worker_prepare_write(worker, fd, buffer_id, offset, timeout, event, 0);
-  io_uring_submit(worker->ring);
-}
-
-void transport_worker_add_read(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event)
-{
-  transport_worker_prepare_read(worker, fd, buffer_id, offset, timeout, event, IOSQE_IO_LINK);
-}
-
-void transport_worker_read_submit(transport_worker_t *worker, uint32_t fd, uint16_t buffer_id, uint32_t offset, int64_t timeout, uint16_t event)
-{
-  transport_worker_prepare_read(worker, fd, buffer_id, offset, timeout, event, 0);
-  io_uring_submit(worker->ring);
-}
-
-void transport_worker_add_send_message(transport_worker_t *worker,
-                                       uint32_t fd,
-                                       uint16_t buffer_id,
-                                       struct sockaddr *address,
-                                       transport_socket_family_t socket_family,
-                                       int message_flags,
-                                       int64_t timeout,
-                                       uint16_t event)
-{
-  transport_worker_prepare_send_message(worker, fd, buffer_id, address, socket_family, message_flags, timeout, event, IOSQE_IO_LINK);
-}
-
-void transport_worker_send_message_submit(transport_worker_t *worker,
-                                          uint32_t fd,
-                                          uint16_t buffer_id,
-                                          struct sockaddr *address,
-                                          transport_socket_family_t socket_family,
-                                          int message_flags,
-                                          int64_t timeout,
-                                          uint16_t event)
-{
-  transport_worker_prepare_send_message(worker, fd, buffer_id, address, socket_family, message_flags, timeout, event, 0);
-  io_uring_submit(worker->ring);
-}
-
-void transport_worker_add_receive_message(transport_worker_t *worker,
-                                          uint32_t fd,
-                                          uint16_t buffer_id,
-                                          transport_socket_family_t socket_family,
-                                          int message_flags,
-                                          int64_t timeout,
-                                          uint16_t event)
-{
-  transport_worker_prepare_receive_message(worker, fd, buffer_id, socket_family, message_flags, timeout, event, IOSQE_IO_LINK);
-}
-
-void transport_worker_receive_message_submit(transport_worker_t *worker,
-                                             uint32_t fd,
-                                             uint16_t buffer_id,
-                                             transport_socket_family_t socket_family,
-                                             int message_flags,
-                                             int64_t timeout,
-                                             uint16_t event)
-{
-  transport_worker_prepare_receive_message(worker, fd, buffer_id, socket_family, message_flags, timeout, event, 0);
-  io_uring_submit(worker->ring);
 }
 
 void transport_worker_connect(transport_worker_t *worker, transport_client_t *client, int64_t timeout)
@@ -344,6 +288,11 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
   sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
   io_uring_submit(ring);
   transport_worker_add_event(worker, server->fd, data, TRANSPORT_TIMEOUT_INFINITY);
+}
+
+void transport_worker_submit(transport_worker_t *worker)
+{
+  io_uring_submit(worker->ring);
 }
 
 void transport_worker_reuse_buffer(transport_worker_t *worker, uint16_t buffer_id)

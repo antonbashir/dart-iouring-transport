@@ -172,6 +172,14 @@ const transportSocketOptionTcpSyncnt = 1 << 29;
 
 const transportTimeoutInfinity = -1;
 
+const transportIosqeFixedFile = 1 << 0;
+const transportIosqeIoDrain = 1 << 1;
+const transportIosqeIoLink = 1 << 2;
+const transportIosqeIoHardlink = 1 << 3;
+const transportIosqeAsync = 1 << 4;
+const transportIosqeBufferSelect = 1 << 5;
+const transportIosqeCqeSkipSuccess = 1 << 6;
+
 enum TransportDatagramMessageFlag {
   oob(0x01),
   peek(0x02),

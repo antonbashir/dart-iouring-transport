@@ -19441,6 +19441,7 @@ class TransportBindings {
     int offset,
     int timeout,
     int event,
+    int sqe_flags,
   ) {
     return _transport_worker_add_write(
       worker,
@@ -19449,6 +19450,7 @@ class TransportBindings {
       offset,
       timeout,
       event,
+      sqe_flags,
     );
   }
 
@@ -19460,43 +19462,12 @@ class TransportBindings {
               ffi.Uint16,
               ffi.Uint32,
               ffi.Int64,
-              ffi.Uint16)>>('transport_worker_add_write');
+              ffi.Uint16,
+              ffi.Uint8)>>('transport_worker_add_write');
   late final _transport_worker_add_write =
       _transport_worker_add_writePtr.asFunction<
           void Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
-
-  void transport_worker_write_submit(
-    ffi.Pointer<transport_worker_t> worker,
-    int fd,
-    int buffer_id,
-    int offset,
-    int timeout,
-    int event,
-  ) {
-    return _transport_worker_write_submit(
-      worker,
-      fd,
-      buffer_id,
-      offset,
-      timeout,
-      event,
-    );
-  }
-
-  late final _transport_worker_write_submitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              ffi.Uint32,
-              ffi.Int64,
-              ffi.Uint16)>>('transport_worker_write_submit');
-  late final _transport_worker_write_submit =
-      _transport_worker_write_submitPtr.asFunction<
-          void Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+              ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
   void transport_worker_add_read(
     ffi.Pointer<transport_worker_t> worker,
@@ -19505,6 +19476,7 @@ class TransportBindings {
     int offset,
     int timeout,
     int event,
+    int sqe_flags,
   ) {
     return _transport_worker_add_read(
       worker,
@@ -19513,6 +19485,7 @@ class TransportBindings {
       offset,
       timeout,
       event,
+      sqe_flags,
     );
   }
 
@@ -19524,43 +19497,12 @@ class TransportBindings {
               ffi.Uint16,
               ffi.Uint32,
               ffi.Int64,
-              ffi.Uint16)>>('transport_worker_add_read');
+              ffi.Uint16,
+              ffi.Uint8)>>('transport_worker_add_read');
   late final _transport_worker_add_read =
       _transport_worker_add_readPtr.asFunction<
           void Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
-
-  void transport_worker_read_submit(
-    ffi.Pointer<transport_worker_t> worker,
-    int fd,
-    int buffer_id,
-    int offset,
-    int timeout,
-    int event,
-  ) {
-    return _transport_worker_read_submit(
-      worker,
-      fd,
-      buffer_id,
-      offset,
-      timeout,
-      event,
-    );
-  }
-
-  late final _transport_worker_read_submitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              ffi.Uint32,
-              ffi.Int64,
-              ffi.Uint16)>>('transport_worker_read_submit');
-  late final _transport_worker_read_submit =
-      _transport_worker_read_submitPtr.asFunction<
-          void Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int)>();
+              ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
 
   void transport_worker_add_send_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19571,6 +19513,7 @@ class TransportBindings {
     int message_flags,
     int timeout,
     int event,
+    int sqe_flags,
   ) {
     return _transport_worker_add_send_message(
       worker,
@@ -19581,6 +19524,7 @@ class TransportBindings {
       message_flags,
       timeout,
       event,
+      sqe_flags,
     );
   }
 
@@ -19594,49 +19538,12 @@ class TransportBindings {
               ffi.Int32,
               ffi.Int,
               ffi.Int64,
-              ffi.Uint16)>>('transport_worker_add_send_message');
+              ffi.Uint16,
+              ffi.Uint8)>>('transport_worker_add_send_message');
   late final _transport_worker_add_send_message =
       _transport_worker_add_send_messagePtr.asFunction<
           void Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr>, int, int, int, int)>();
-
-  void transport_worker_send_message_submit(
-    ffi.Pointer<transport_worker_t> worker,
-    int fd,
-    int buffer_id,
-    ffi.Pointer<sockaddr> address,
-    int socket_family,
-    int message_flags,
-    int timeout,
-    int event,
-  ) {
-    return _transport_worker_send_message_submit(
-      worker,
-      fd,
-      buffer_id,
-      address,
-      socket_family,
-      message_flags,
-      timeout,
-      event,
-    );
-  }
-
-  late final _transport_worker_send_message_submitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              ffi.Pointer<sockaddr>,
-              ffi.Int32,
-              ffi.Int,
-              ffi.Int64,
-              ffi.Uint16)>>('transport_worker_send_message_submit');
-  late final _transport_worker_send_message_submit =
-      _transport_worker_send_message_submitPtr.asFunction<
-          void Function(ffi.Pointer<transport_worker_t>, int, int,
-              ffi.Pointer<sockaddr>, int, int, int, int)>();
+              ffi.Pointer<sockaddr>, int, int, int, int, int)>();
 
   void transport_worker_add_receive_message(
     ffi.Pointer<transport_worker_t> worker,
@@ -19646,6 +19553,7 @@ class TransportBindings {
     int message_flags,
     int timeout,
     int event,
+    int sqe_flags,
   ) {
     return _transport_worker_add_receive_message(
       worker,
@@ -19655,6 +19563,7 @@ class TransportBindings {
       message_flags,
       timeout,
       event,
+      sqe_flags,
     );
   }
 
@@ -19667,46 +19576,12 @@ class TransportBindings {
               ffi.Int32,
               ffi.Int,
               ffi.Int64,
-              ffi.Uint16)>>('transport_worker_add_receive_message');
+              ffi.Uint16,
+              ffi.Uint8)>>('transport_worker_add_receive_message');
   late final _transport_worker_add_receive_message =
       _transport_worker_add_receive_messagePtr.asFunction<
-          void Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
-
-  void transport_worker_receive_message_submit(
-    ffi.Pointer<transport_worker_t> worker,
-    int fd,
-    int buffer_id,
-    int socket_family,
-    int message_flags,
-    int timeout,
-    int event,
-  ) {
-    return _transport_worker_receive_message_submit(
-      worker,
-      fd,
-      buffer_id,
-      socket_family,
-      message_flags,
-      timeout,
-      event,
-    );
-  }
-
-  late final _transport_worker_receive_message_submitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              ffi.Int32,
-              ffi.Int,
-              ffi.Int64,
-              ffi.Uint16)>>('transport_worker_receive_message_submit');
-  late final _transport_worker_receive_message_submit =
-      _transport_worker_receive_message_submitPtr.asFunction<
-          void Function(
-              ffi.Pointer<transport_worker_t>, int, int, int, int, int, int)>();
+          void Function(ffi.Pointer<transport_worker_t>, int, int, int, int,
+              int, int, int)>();
 
   void transport_worker_connect(
     ffi.Pointer<transport_worker_t> worker,
@@ -19748,6 +19623,21 @@ class TransportBindings {
   late final _transport_worker_accept = _transport_worker_acceptPtr.asFunction<
       void Function(
           ffi.Pointer<transport_worker_t>, ffi.Pointer<transport_server_t>)>();
+
+  void transport_worker_submit(
+    ffi.Pointer<transport_worker_t> worker,
+  ) {
+    return _transport_worker_submit(
+      worker,
+    );
+  }
+
+  late final _transport_worker_submitPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<transport_worker_t>)>>('transport_worker_submit');
+  late final _transport_worker_submit = _transport_worker_submitPtr
+      .asFunction<void Function(ffi.Pointer<transport_worker_t>)>();
 
   void transport_worker_cancel_by_fd(
     ffi.Pointer<transport_worker_t> worker,
@@ -24185,7 +24075,8 @@ class _SymbolAddresses {
               ffi.Uint16,
               ffi.Uint32,
               ffi.Int64,
-              ffi.Uint16)>> get transport_worker_add_write =>
+              ffi.Uint16,
+              ffi.Uint8)>> get transport_worker_add_write =>
       _library._transport_worker_add_writePtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -24195,17 +24086,8 @@ class _SymbolAddresses {
               ffi.Uint16,
               ffi.Uint32,
               ffi.Int64,
-              ffi.Uint16)>> get transport_worker_write_submit =>
-      _library._transport_worker_write_submitPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
               ffi.Uint16,
-              ffi.Uint32,
-              ffi.Int64,
-              ffi.Uint16)>> get transport_worker_add_read =>
+              ffi.Uint8)>> get transport_worker_add_read =>
       _library._transport_worker_add_readPtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -24213,21 +24095,12 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Uint32,
-              ffi.Int64,
-              ffi.Uint16)>> get transport_worker_read_submit =>
-      _library._transport_worker_read_submitPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
               ffi.Pointer<sockaddr>,
               ffi.Int32,
               ffi.Int,
               ffi.Int64,
-              ffi.Uint16)>> get transport_worker_add_send_message =>
+              ffi.Uint16,
+              ffi.Uint8)>> get transport_worker_add_send_message =>
       _library._transport_worker_add_send_messagePtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -24235,34 +24108,12 @@ class _SymbolAddresses {
               ffi.Pointer<transport_worker_t>,
               ffi.Uint32,
               ffi.Uint16,
-              ffi.Pointer<sockaddr>,
               ffi.Int32,
               ffi.Int,
               ffi.Int64,
-              ffi.Uint16)>> get transport_worker_send_message_submit =>
-      _library._transport_worker_send_message_submitPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
               ffi.Uint16,
-              ffi.Int32,
-              ffi.Int,
-              ffi.Int64,
-              ffi.Uint16)>> get transport_worker_add_receive_message =>
+              ffi.Uint8)>> get transport_worker_add_receive_message =>
       _library._transport_worker_add_receive_messagePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>,
-              ffi.Uint32,
-              ffi.Uint16,
-              ffi.Int32,
-              ffi.Int,
-              ffi.Int64,
-              ffi.Uint16)>> get transport_worker_receive_message_submit =>
-      _library._transport_worker_receive_message_submitPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Void Function(
@@ -24275,6 +24126,10 @@ class _SymbolAddresses {
           ffi.Void Function(ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_server_t>)>> get transport_worker_accept =>
       _library._transport_worker_acceptPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_submit => _library._transport_worker_submitPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Int)>>
@@ -31692,7 +31547,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

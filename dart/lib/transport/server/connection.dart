@@ -1,5 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/buffers.dart';
+import 'package:iouring_transport/transport/worker.dart';
+
 import '../channel.dart';
 import '../constants.dart';
 import '../exception.dart';
@@ -9,11 +12,17 @@ import 'server.dart';
 class TransportServerConnection {
   final TransportServer _server;
   final TransportChannel _channel;
+  final TransportBuffers _buffers;
+  final TransportWorker _worker;
 
-  TransportServerConnection(this._server, this._channel);
+  TransportServerConnection(this._server, this._channel, this._buffers, this._worker);
 
-  @pragma(preferInlinePragma)
-  Future<TransportPayload> read() => _server.read(_channel);
+  Future<TransportPayload> read({bool submit = false}) async {
+    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    final payload = _server.read(bufferId, _channel);
+    if (submit) _worker.submitInbound();
+    return payload;
+  }
 
   @pragma(preferInlinePragma)
   Future<List<TransportPayload>> readBatch(int count) => _server.readBatch(_channel, count);
