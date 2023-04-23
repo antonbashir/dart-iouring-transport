@@ -11,18 +11,18 @@ class TransportServerDatagramReceiver {
   TransportServerDatagramReceiver(this._server, this._channel);
 
   @pragma(preferInlinePragma)
-  Future<TransportDatagramResponder> receiveMessage({int? flags}) => _server.receiveSingleMessage(_channel, flags: flags);
+  Future<TransportDatagramResponder> receiveSingleMessage({int? flags}) => _server.receiveSingleMessage(_channel, flags: flags);
 
   @pragma(preferInlinePragma)
-  Future<List<TransportDatagramResponder>> receiveMessageBatch(int count, {int? flags}) => _server.receiveManyMessages(_channel, count, flags: flags);
+  Future<List<TransportDatagramResponder>> receiveManyMessages(int count, {int? flags}) => _server.receiveManyMessages(_channel, count, flags: flags);
 
-  void listen(
+  void listenBySingle(
     void Function(TransportDatagramResponder payload) listener, {
     void Function(Exception error, StackTrace stackTrace)? onError,
     int? flags,
   }) async {
     while (!_server.closing) {
-      await receiveMessage(flags: flags).then(listener, onError: (error, stackTrace) {
+      await receiveSingleMessage(flags: flags).then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
@@ -31,14 +31,14 @@ class TransportServerDatagramReceiver {
     }
   }
 
-  void listenBatched(
+  void listenByMany(
     int count,
     void Function(TransportDatagramResponder payload) listener, {
     void Function(Exception error, StackTrace stackTrace)? onError,
     int? flags,
   }) async {
     while (!_server.closing) {
-      await receiveMessageBatch(count, flags: flags).then((fragments) => fragments.forEach(listener), onError: (error, stackTrace) {
+      await receiveManyMessages(count, flags: flags).then((fragments) => fragments.forEach(listener), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;

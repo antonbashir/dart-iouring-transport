@@ -12,10 +12,10 @@ class TransportClientStreamCommunicator {
   TransportClientStreamCommunicator(this._client);
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> read() => _client.read();
+  Future<TransportPayload> read() => _client.readSingle();
 
   @pragma(preferInlinePragma)
-  Future<List<TransportPayload>> readBatch(int count) => _client.readBatch(count);
+  Future<List<TransportPayload>> readBatch(int count) => _client.readMany(count);
 
   void listen(void Function(TransportPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
@@ -31,9 +31,9 @@ class TransportClientStreamCommunicator {
 
   @pragma(preferInlinePragma)
   Future<void> write(Uint8List bytes, {TransportRetryConfiguration? retry}) => retry == null
-      ? _client.write(bytes)
+      ? _client.writeSingle(bytes)
       : retry.options.retry(
-          () => _client.write(bytes),
+          () => _client.writeSingle(bytes),
           retryIf: retry.predicate,
           onRetry: retry.onRetry,
         );
@@ -47,10 +47,10 @@ class TransportClientDatagramCommunicator {
   TransportClientDatagramCommunicator(this._client);
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> receiveMessage({int? flags}) => _client.receiveMessage(flags: flags);
+  Future<TransportPayload> receiveMessage({int? flags}) => _client.receiveSingleMessage(flags: flags);
 
   @pragma(preferInlinePragma)
-  Future<List<TransportPayload>> receiveMessageBatch(int count, {int? flags}) => _client.receiveMessageBatch(count, flags: flags);
+  Future<List<TransportPayload>> receiveMessageBatch(int count, {int? flags}) => _client.receiveManyMessage(count, flags: flags);
 
   void listen(void Function(TransportPayload paylad) listener, {void Function(Exception error)? onError}) async {
     while (!_client.closing) {
@@ -66,9 +66,9 @@ class TransportClientDatagramCommunicator {
 
   @pragma(preferInlinePragma)
   Future<void> sendMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry}) => retry == null
-      ? _client.sendMessage(bytes, flags: flags)
+      ? _client.sendSingleMessage(bytes, flags: flags)
       : retry.options.retry(
-          () => _client.sendMessage(bytes, flags: flags),
+          () => _client.sendSingleMessage(bytes, flags: flags),
           retryIf: retry.predicate,
           onRetry: retry.onRetry,
         );

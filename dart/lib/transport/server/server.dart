@@ -72,7 +72,7 @@ class TransportServer {
     _pending++;
   }
 
-  Future<TransportPayload> readSingle(TransportChannel channel) async {
+  Future<TransportPayload> readSingle(TransportChannel channel, {bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
@@ -81,11 +81,11 @@ class TransportServer {
     _callbacks.setInbound(bufferId, completer);
     channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
     connection.pending++;
-    _bindings.transport_worker_submit(_workerPointer);
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
   }
 
-  Future<List<TransportPayload>> readMany(TransportChannel channel, int count) async {
+  Future<List<TransportPayload>> readMany(TransportChannel channel, int count, {bool submit = true}) async {
     final messages = <TransportPayload>[];
     final bufferIds = <int>[];
     final lastBufferId = _buffers.get() ?? await _buffers.allocate();
@@ -95,11 +95,13 @@ class TransportServer {
       bufferIds.add(bufferId);
     }
     if (_closing) throw TransportClosedException.forServer();
+    final connection = _connections[channel.fd];
+    if (connection == null || connection.closing) throw TransportClosedException.forServer();
     for (var index = 0; index < count - 1; index++) {
       channel.read(
         bufferIds[index],
         _readTimeout,
-        transportEventReceiveMessage | transportEventServer | transportEventLink,
+        transportEventRead | transportEventServer | transportEventLink,
         sqeFlags: transportIosqeIoLink,
       );
     }
@@ -109,28 +111,29 @@ class TransportServer {
     channel.read(
       lastBufferId,
       _readTimeout,
-      transportEventReceiveMessage | transportEventServer | transportEventLink,
+      transportEventRead | transportEventServer | transportEventLink,
     );
-    _bindings.transport_worker_submit(_workerPointer);
+    connection.pending += count;
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future;
     for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
     return messages;
   }
 
-  Future<void> writeSingle(TransportChannel channel, Uint8List bytes) async {
+  Future<void> writeSingle(TransportChannel channel, Uint8List bytes, {bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _callbacks.setInbound(bufferId, completer);
-    channel.write(bytes, bufferId, _readTimeout, transportEventWrite | transportEventServer);
+    channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending++;
-    _bindings.transport_worker_submit(_workerPointer);
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future;
   }
 
-  Future<void> writeMany(TransportChannel channel, List<Uint8List> bytes) async {
+  Future<void> writeMany(TransportChannel channel, List<Uint8List> bytes, {bool submit = true}) async {
     final bufferIds = <int>[];
     final lastBufferId = _buffers.get() ?? await _buffers.allocate();
     for (var index = 0; index < bytes.length - 1; index++) {
@@ -154,16 +157,17 @@ class TransportServer {
     final completer = Completer();
     _callbacks.setInbound(lastBufferId, completer);
     channel.write(
-      bytes[lastBufferId],
+      bytes[bytes.length - 1],
       lastBufferId,
       _writeTimeout,
       transportEventWrite | transportEventServer | transportEventLink,
     );
-    _bindings.transport_worker_submit(_workerPointer);
+    connection.pending += bytes.length;
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future;
   }
 
-  Future<TransportDatagramResponder> receiveSingleMessage(TransportChannel channel, {int? flags}) async {
+  Future<TransportDatagramResponder> receiveSingleMessage(TransportChannel channel, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
@@ -171,11 +175,11 @@ class TransportServer {
     _callbacks.setInbound(bufferId, completer);
     channel.receiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     _pending++;
-    _bindings.transport_worker_submit(_workerPointer);
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future.then((_) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId), this, channel));
   }
 
-  Future<List<TransportDatagramResponder>> receiveManyMessages(TransportChannel channel, int count, {int? flags}) async {
+  Future<List<TransportDatagramResponder>> receiveManyMessages(TransportChannel channel, int count, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final messages = <TransportDatagramResponder>[];
     final bufferIds = <int>[];
@@ -206,26 +210,36 @@ class TransportServer {
       flags,
       transportEventReceiveMessage | transportEventServer | transportEventLink,
     );
-    _bindings.transport_worker_submit(_workerPointer);
+    _pending += count;
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future;
     for (var bufferId in bufferIds) messages.add(_payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId), this, channel));
     return messages;
   }
 
   @pragma(preferInlinePragma)
-  Future<void> respondSingleMessage(TransportChannel channel, int bufferId, Uint8List bytes, {int? flags}) async {
+  Future<void> respondSingleMessage(TransportChannel channel, int bufferId, Uint8List bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     if (_closing) throw TransportClosedException.forServer();
     final completer = Completer<void>();
     _callbacks.setInbound(bufferId, completer);
     final destination = _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId);
-    channel.sendMessage(bytes, bufferId, pointer.ref.family, destination, _writeTimeout, flags, transportEventSendMessage | transportEventServer);
+    channel.sendMessage(
+      bytes,
+      bufferId,
+      pointer.ref.family,
+      destination,
+      _writeTimeout,
+      flags,
+      transportEventSendMessage | transportEventServer,
+    );
     _pending++;
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future;
   }
 
   @pragma(preferInlinePragma)
-  Future<void> respondManyMessages(TransportChannel channel, int bufferId, List<Uint8List> bytes, {int? flags}) async {
+  Future<void> respondManyMessages(TransportChannel channel, int bufferId, List<Uint8List> bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = <int>[];
     final lastBufferId = _buffers.get() ?? await _buffers.allocate();
@@ -242,7 +256,7 @@ class TransportServer {
         bufferIds[index],
         pointer.ref.family,
         destination,
-        _readTimeout,
+        _writeTimeout,
         flags,
         transportEventSendMessage | transportEventServer | transportEventLink,
         sqeFlags: transportIosqeIoLink,
@@ -256,11 +270,12 @@ class TransportServer {
       lastBufferId,
       pointer.ref.family,
       destination,
-      _readTimeout,
+      _writeTimeout,
       flags,
       transportEventSendMessage | transportEventServer | transportEventLink,
     );
-    _bindings.transport_worker_submit(_workerPointer);
+    _pending += bytes.length;
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future;
   }
 

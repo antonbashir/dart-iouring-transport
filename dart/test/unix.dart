@@ -40,7 +40,7 @@ void testUnixStream({
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
-      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.extractData()))).toList());
+      final responses = await Future.wait(clients.map((client) => client.write(clientData).then((_) => client.read().then((value) => value.takeBytes()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
     });
@@ -76,14 +76,14 @@ void testUnixDgram({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
-      worker.servers.unixDatagram(serverSocket.path).listen(
+      worker.servers.unixDatagram(serverSocket.path).listenBySingle(
             onError: (error, _) => print(error),
             (event) => event.respondSibgleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-        responseFutures.add(client.sendMessage(clientData, retry: TransportDefaults.retry()).then((value) => client.receiveMessage()).then((value) => value.extractData()));
+        responseFutures.add(client.sendMessage(clientData, retry: TransportDefaults.retry()).then((value) => client.receiveMessage()).then((value) => value.takeBytes()));
       }
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));

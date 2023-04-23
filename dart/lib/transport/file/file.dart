@@ -118,7 +118,7 @@ class TransportFile {
     final completer = Completer();
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.write(
-      bytes[lastBufferId],
+      bytes[bytes.length - 1],
       lastBufferId,
       transportTimeoutInfinity,
       transportEventWrite | transportEventFile | transportEventLink,

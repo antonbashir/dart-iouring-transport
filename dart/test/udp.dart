@@ -29,14 +29,14 @@ void testUdp({
       final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.udp("0.0.0.0", 12345).listen(
+      worker.servers.udp("0.0.0.0", 12345).listenBySingle(
             onError: (error, _) => print(error),
             (event) => event.respondSibgleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
-        responseFutures.add(client.sendMessage(clientData, retry: TransportDefaults.retry()).then((value) => client.receiveMessage()).then((value) => value.extractData()));
+        responseFutures.add(client.sendMessage(clientData, retry: TransportDefaults.retry()).then((value) => client.receiveMessage()).then((value) => value.takeBytes()));
       }
       final responses = await Future.wait(responseFutures);
       responses.forEach((response) => worker.transmitter!.send(response));

@@ -4,6 +4,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/links.dart';
 import 'package:meta/meta.dart';
 
 import 'payload.dart';
@@ -45,6 +46,7 @@ class TransportWorker {
   late final TransportServersFactory _serversFactory;
   late final TransportFilesFactory _filesFactory;
   late final TransportCallbacks _callbacks;
+  late final TransportLinks _links;
   late final int _inboundRingSize;
   late final int _outboundRingSize;
   late final TransportErrorHandler _errorHandler;
@@ -117,6 +119,10 @@ class TransportWorker {
       _inboundWorkerPointer.ref.buffers_count,
       _outboundWorkerPointer.ref.buffers_count,
     );
+    _links = TransportLinks(
+      _inboundWorkerPointer.ref.buffers_count,
+      _outboundWorkerPointer.ref.buffers_count,
+    );
     _inboundPayloadPool = TransportPayloadPool(_inboundWorkerPointer.ref.buffers_count, _inboundBuffers);
     _outboundPayloadPool = TransportPayloadPool(_outboundWorkerPointer.ref.buffers_count, _outboundBuffers);
     _clientRegistry = TransportClientRegistry(
@@ -131,6 +137,7 @@ class TransportWorker {
       _callbacks,
       _inboundWorkerPointer,
       _inboundBuffers,
+      _links,
       _inboundPayloadPool,
     );
     _serversFactory = TransportServersFactory(
@@ -147,6 +154,7 @@ class TransportWorker {
       _callbacks,
       _outboundWorkerPointer,
       _outboundBuffers,
+      _links,
       _outboundPayloadPool,
     );
     _inboundRing = _inboundWorkerPointer.ref.ring;
