@@ -24,7 +24,7 @@ class TransportServerConnection {
   @pragma(preferInlinePragma)
   Future<void> writeMany(List<Uint8List> bytes) => _server.writeMany(_channel, bytes);
 
-  void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
+  void listenBySingle(void Function(TransportPayload payload) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
     while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
       await readSingle().then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
@@ -35,7 +35,7 @@ class TransportServerConnection {
     }
   }
 
-  void listenByMany(int count, void Function(TransportPayload paylad) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
+  void listenByMany(int count, void Function(TransportPayload payload) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
     while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
       await readMany(count).then((fragments) => fragments.forEach(listener), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
