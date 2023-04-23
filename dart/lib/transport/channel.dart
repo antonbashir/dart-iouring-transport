@@ -28,7 +28,7 @@ class TransportChannel {
   }
 
   @pragma(preferInlinePragma)
-  void addWrite(Uint8List bytes, int bufferId, int timeout, int event, int sqeFlags, {int offset = 0}) {
+  void addWrite(Uint8List bytes, int bufferId, int timeout, int event, int sqeFlags, {int sequenceId = 0, int offset = 0}) {
     _buffers.write(bufferId, bytes);
     _bindings.transport_worker_add_write(
       _workerPointer,
@@ -38,11 +38,12 @@ class TransportChannel {
       timeout,
       event,
       sqeFlags,
+      sequenceId,
     );
   }
 
   @pragma(preferInlinePragma)
-  void addReceiveMessage(int bufferId, int socketFamily, int timeout, int flags, int event, int sqeFlags) {
+  void addReceiveMessage(int bufferId, int socketFamily, int timeout, int flags, int event, int sqeFlags, {int sequenceId = 0}) {
     _bindings.transport_worker_add_receive_message(
       _workerPointer,
       fd,
@@ -52,11 +53,12 @@ class TransportChannel {
       timeout,
       event,
       sqeFlags,
+      sequenceId,
     );
   }
 
   @pragma(preferInlinePragma)
-  void addSendMessage(Uint8List bytes, int bufferId, int socketFamily, Pointer<sockaddr> destination, int timeout, int flags, int event, int sqeFlags) {
+  void addSendMessage(Uint8List bytes, int bufferId, int socketFamily, Pointer<sockaddr> destination, int timeout, int flags, int event, int sqeFlags, {int sequenceId = 0}) {
     _buffers.write(bufferId, bytes);
     _bindings.transport_worker_add_send_message(
       _workerPointer,
@@ -68,7 +70,7 @@ class TransportChannel {
       timeout,
       event,
       sqeFlags,
-      0,
+      sequenceId,
     );
   }
 

@@ -13,6 +13,9 @@ class TransportSequences {
   TransportSequences(this._bindings, this._worker);
 
   @pragma(preferInlinePragma)
+  void add(int sequenceId, int bufferId) => _bindings.transport_worker_sequence_add_buffer(_worker, sequenceId, bufferId);
+
+  @pragma(preferInlinePragma)
   Pointer<transport_worker_sequence_element_t> last(int sequenceId) => _bindings.transport_worker_sequence_get_last_element(_worker, sequenceId);
 
   @pragma(preferInlinePragma)
@@ -26,13 +29,19 @@ class TransportSequences {
       );
 
   @pragma(preferInlinePragma)
-  void drain(int sequenceId, int size, void Function(Pointer<transport_worker_sequence_element_t> current) action) {
+  void drain(int sequenceId, int size, bool Function(Pointer<transport_worker_sequence_element_t> current) action) {
     var element = _bindings.transport_worker_sequence_get_first_element(_worker, sequenceId);
-    action(element);
+    if (!action(element)) {
+      release(sequenceId, size);
+      return;
+    }
     for (var i = 0; i < size; i++) {
       final nextElement = next(sequenceId, element);
-      _bindings.transport_worker_sequence_release_element(_worker, sequenceId, element);
-      action(nextElement);
+      _bindings.transport_worker_sequence_delete_element(_worker, sequenceId, element);
+      if (!action(nextElement)) {
+        release(sequenceId, size);
+        return;
+      }
       element = nextElement;
     }
     _bindings.transport_worker_release_sequence(_worker, sequenceId);

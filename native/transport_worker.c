@@ -205,7 +205,8 @@ void transport_worker_add_write(transport_worker_t *worker,
                                 uint32_t offset,
                                 int64_t timeout,
                                 uint16_t event,
-                                uint8_t sqe_flags)
+                                uint8_t sqe_flags,
+                                uint16_t sequence_id)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -216,7 +217,8 @@ void transport_worker_add_write(transport_worker_t *worker,
   transport_worker_add_event(worker, fd, data, timeout);
   sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  data = sequence_id ? ((uint64_t)sequence_id << 16) | ((uint64_t)TRANSPORT_EVENT_SEQUENCE) : 0;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, data, 0);
   sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 
@@ -293,7 +295,8 @@ void transport_worker_add_receive_message(transport_worker_t *worker,
                                           int message_flags,
                                           int64_t timeout,
                                           uint16_t event,
-                                          uint8_t sqe_flags)
+                                          uint8_t sqe_flags,
+                                          uint16_t sequence_id)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -321,7 +324,8 @@ void transport_worker_add_receive_message(transport_worker_t *worker,
   transport_worker_add_event(worker, fd, data, timeout);
   sqe = provide_sqe(ring);
   transport_listener_t *listener = transport_listener_pool_next(worker->listeners);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  data = sequence_id ? ((uint64_t)sequence_id << 16) | ((uint64_t)TRANSPORT_EVENT_SEQUENCE) : 0;
+  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, data, 0);
   sqe->flags |= sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 

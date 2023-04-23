@@ -76,7 +76,7 @@ class TransportServer {
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
-    _callbacks.setInboundRead(bufferId, completer);
+    _callbacks.setInboundBuffer(bufferId, completer);
     channel.addRead(bufferId, _readTimeout, transportEventRead | transportEventServer, 0);
     connection.pending++;
     return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId, length)));
@@ -150,7 +150,7 @@ class TransportServer {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
-    _callbacks.setInboundRead(bufferId, completer);
+    _callbacks.setInboundBuffer(bufferId, completer);
     channel.receiveMessageSubmit(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     _pending++;
     return completer.future.then((length) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId, length), this, channel));
@@ -165,13 +165,13 @@ class TransportServer {
     for (var index = 0; index < count - 1; index++) {
       final completer = Completer<int>();
       final bufferId = allocatedBuffers[index];
-      _callbacks.setInboundRead(bufferId, completer);
+      _callbacks.setInboundBuffer(bufferId, completer);
       channel.addReceiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
       chunks.add(completer.future.then((length) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId, length), this, channel)));
     }
     final completer = Completer<int>();
     final bufferId = allocatedBuffers[count - 1];
-    _callbacks.setInboundRead(bufferId, completer);
+    _callbacks.setInboundBuffer(bufferId, completer);
     channel.receiveMessageSubmit(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     chunks.add(completer.future.then((length) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId, length), this, channel)));
     _pending += chunks.length;
