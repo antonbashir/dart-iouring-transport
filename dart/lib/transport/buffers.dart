@@ -34,7 +34,6 @@ class TransportBuffers {
 
   @pragma(preferInlinePragma)
   Uint8List read(int bufferId, int length) {
-    if (length == 0) return Uint8List.fromList([]);
     final buffer = buffers[bufferId];
     final bufferBytes = buffer.iov_base.cast<Uint8>();
     return bufferBytes.asTypedList(length);

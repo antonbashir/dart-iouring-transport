@@ -55,7 +55,7 @@ Future<void> _benchFile(bool ring) async {
     file.createSync();
     final random = Random();
     final sink = file.openWrite(mode: FileMode.append);
-    for (var i = 0; i < 128; i++) {
+    for (var i = 0; i < 1024; i++) {
       sink.add(List.filled(1024 * 1024, 100, growable: false));
       await sink.flush();
     }
@@ -79,13 +79,13 @@ Future<void> _benchFile(bool ring) async {
       time.start();
       if (ring) {
         while (true) {
-          await file.load();
+          print((await file.load()).length);
           count += 1;
           if (time.elapsed.inSeconds >= 10) break;
         }
       } else {
         while (true) {
-          await File("data").openRead().toList();
+          print((await File("data").readAsBytes()).length);
           count += 1;
           if (time.elapsed.inSeconds >= 10) break;
         }

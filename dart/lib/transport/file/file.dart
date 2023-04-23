@@ -41,36 +41,19 @@ class TransportFile {
     return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId, length)));
   }
 
-  Stream<TransportPayload> stream() async* {
-    var offset = 0;
-    var payload = await read(offset: offset);
-    if (payload.bytes.isEmpty || payload.bytes.first == 0) {
-      payload.release();
-      return;
-    }
-    offset += payload.bytes.length;
-    yield payload;
-    while (true) {
-      payload = await read(offset: offset);
-      if (payload.bytes.isEmpty || payload.bytes.first == 0) return;
-      offset += payload.bytes.length;
-      yield payload;
-    }
-  }
-
-  Future<Uint8List> load({int batchCount = 32}) async {
-    final allocatedBuffers = <int>[];
-    for (var i = 0; i < batchCount; i++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
-    BytesBuilder builder = BytesBuilder();
+  Stream<List<int>> stream({int batchCount = 32}) async* {
     var offset = 0;
     while (true) {
+      final allocatedBuffers = <int>[];
+      for (var i = 0; i < batchCount; i++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
+      final bytes = BytesBuilder();
       for (var i = 0; i < batchCount - 1; i++) {
         _addRead(allocatedBuffers[i], offset: offset).then((fragmentPayload) {
           if (fragmentPayload.bytes.isEmpty) {
             fragmentPayload.release();
             return;
           }
-          builder.add(fragmentPayload.bytes);
+          bytes.add(fragmentPayload.bytes);
           fragmentPayload.release();
         });
         offset += _buffers.bufferSize;
@@ -84,10 +67,54 @@ class TransportFile {
         payload.release();
         break;
       }
-      builder.add(payload.bytes);
+      bytes.add(payload.bytes);
+      yield bytes.takeBytes();
       payload.release();
     }
-    return builder.takeBytes();
+  }
+
+  Future<Uint8List> load({int batchCount = 8}) async {
+    BytesBuilder builder = BytesBuilder();
+    var offset = 0;
+    final delta = _buffers.bufferSize * batchCount;
+    final completer = Completer<Uint8List>();
+    final allocatedBuffers = <int>[];
+    for (var i = 0; i < batchCount; i++) allocatedBuffers.add(_buffers.get() ?? await _buffers.allocate());
+
+    void _read(TransportPayload payload) async {
+      offset += delta;
+      if (payload.bytes.isEmpty) {
+        payload.release();
+        completer.complete(builder.takeBytes());
+        return;
+      }
+      builder.add(payload.bytes);
+      payload.release();
+      for (var i = 0; i < batchCount - 1; i++) {
+        _addRead(allocatedBuffers[i], offset: offset).then((fragmentPayload) {
+          builder.add(fragmentPayload.bytes);
+          fragmentPayload.release();
+        });
+      }
+      final submitCompleter = Completer<int>();
+      final buffer = allocatedBuffers[batchCount - 1];
+      _states.setOutboundRead(buffer, submitCompleter);
+      _channel.readSubmit(buffer, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
+      submitCompleter.future.then((length) => _read(_pool.getPayload(buffer, _buffers.read(buffer, length))));
+    }
+
+    for (var i = 0; i < batchCount - 1; i++) {
+      _addRead(allocatedBuffers[i], offset: offset).then((fragmentPayload) {
+        builder.add(fragmentPayload.bytes);
+        fragmentPayload.release();
+      });
+    }
+    final submitCompleter = Completer<int>();
+    final buffer = allocatedBuffers[batchCount - 1];
+    _states.setOutboundRead(buffer, submitCompleter);
+    _channel.readSubmit(buffer, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
+    submitCompleter.future.then((length) => _read(_pool.getPayload(buffer, _buffers.read(buffer, length))));
+    return completer.future;
   }
 
   Future<void> write(Uint8List bytes, {int offset = 0}) async {
