@@ -48,6 +48,8 @@ class TransportClosedException implements Exception {
 
   factory TransportClosedException.forClient() => TransportClosedException._("Client closed");
 
+  factory TransportClosedException.forFile() => TransportClosedException._("File closed");
+
   @override
   String toString() => message;
 }
