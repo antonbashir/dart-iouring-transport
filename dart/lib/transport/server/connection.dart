@@ -13,7 +13,7 @@ class TransportServerConnection {
   TransportServerConnection(this._server, this._channel);
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> readSingle({bool submit = true}) => _server.readSingle(_channel);
+  Future<TransportPayload> readSingle({bool submit = true}) => _server.readSingle(_channel, submit: submit);
 
   @pragma(preferInlinePragma)
   Future<List<TransportPayload>> readMany(int count, {bool submit = true}) => _server.readMany(_channel, count, submit: submit);

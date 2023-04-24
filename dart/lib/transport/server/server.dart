@@ -82,7 +82,10 @@ class TransportServer {
     channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
+    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)), onError: (error) {
+      _buffers.release(bufferId);
+      throw error;
+    });
   }
 
   Future<List<TransportPayload>> readMany(TransportChannel channel, int count, {bool submit = true}) async {
@@ -133,7 +136,7 @@ class TransportServer {
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future;
+    return completer.future.whenComplete(() => _buffers.release(bufferId));
   }
 
   Future<void> writeMany(TransportChannel channel, List<Uint8List> bytes, {bool submit = true}) async {
@@ -181,7 +184,10 @@ class TransportServer {
     channel.receiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((_) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId), this, channel));
+    return completer.future.then((_) => _payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId), this, channel), onError: (error) {
+      _buffers.release(bufferId);
+      throw error;
+    });
   }
 
   Future<List<TransportDatagramResponder>> receiveManyMessages(TransportChannel channel, int count, {bool submit = true, int? flags}) async {
@@ -242,7 +248,7 @@ class TransportServer {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future;
+    return completer.future.whenComplete(() => _buffers.release(bufferId));
   }
 
   @pragma(preferInlinePragma)
@@ -283,7 +289,7 @@ class TransportServer {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.onError((error, stackTrace) {
+    await completer.future.whenComplete(() {
       for (var bufferId in bufferIds) _buffers.release(bufferId);
     });
   }
