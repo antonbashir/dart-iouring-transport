@@ -217,7 +217,7 @@ class TransportWorker {
       var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
-        print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+        //print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           _errorHandler.handle(result, data, fd, event);
@@ -261,7 +261,7 @@ class TransportWorker {
       var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
-        print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+        //print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         if (event == transportEventCustom) {
           _callbacks.notifyCustom(result, data);
           continue;

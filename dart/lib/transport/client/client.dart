@@ -139,9 +139,7 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.whenComplete(() {
-      _buffers.releaseArray(bufferIds);
-    });
+    return completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
   }
 
   Future<TransportPayload> receiveSingleMessage({bool submit = true, int? flags}) async {

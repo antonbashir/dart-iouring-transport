@@ -38,7 +38,7 @@ void testTcp({
             configuration: TransportDefaults.tcpServer().copyWith(),
             (connection) => connection.listenBySingle(
                   onError: (error, _) => print(error),
-                  (event) => connection.writeMany(List.generate(count, (index) => serverData)).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+                  (event) => connection.writeMany(List.generate(count, (index) => serverData)).onError((error, stackTrace) => print(error)),
                 ));
         final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
         final payloads = await Future.wait(clients.map((client) => client.writeMany(List.generate(count, (index) => clientData)).then((_) => client.readMany(count))));
@@ -50,13 +50,13 @@ void testTcp({
           12345,
           (connection) => connection.listenBySingle(
                 onError: (error, _) => print(error),
-                (event) => connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+                (event) => connection.writeSingle(serverData).onError((error, stackTrace) => print(error)),
               ));
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.writeSingle(clientData).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
     });
-    (await done.take(workers * clientsPool * 2 * count).toList()).forEach((response) => expect(response, serverData));
+    (await done.take(workers * clientsPool * count).toList()).forEach((response) => expect(response, serverData));
     done.close();
     await transport.shutdown();
   });
