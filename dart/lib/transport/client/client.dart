@@ -72,8 +72,8 @@ class TransportClient {
   Future<List<TransportPayload>> readMany(int count, {bool submit = true}) async {
     final payloads = <TransportPayload>[];
     final bufferIds = await _buffers.allocateArray(count);
-    final lastBufferId = bufferIds.last;
     if (_closing) throw TransportClosedException.forClient();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
       _links.setOutbound(bufferId, lastBufferId);
@@ -114,8 +114,8 @@ class TransportClient {
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
-    final lastBufferId = bufferIds.last;
     if (_closing) throw TransportClosedException.forClient();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
       _links.setOutbound(bufferId, lastBufferId);
@@ -159,8 +159,8 @@ class TransportClient {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final payloads = <TransportPayload>[];
     final bufferIds = await _buffers.allocateArray(count);
-    final lastBufferId = bufferIds.last;
     if (_closing) throw TransportClosedException.forClient();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
       _links.setInbound(bufferId, lastBufferId);
@@ -215,8 +215,8 @@ class TransportClient {
   Future<void> sendManyMessages(List<Uint8List> bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(bytes.length);
-    final lastBufferId = bufferIds.last;
     if (_closing) throw TransportClosedException.forServer();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
       _links.setInbound(bufferId, lastBufferId);
@@ -234,7 +234,7 @@ class TransportClient {
     final completer = Completer();
     _callbacks.setInbound(lastBufferId, completer);
     _channel.sendMessage(
-      bytes[bytes.length - 1],
+      bytes.last,
       lastBufferId,
       _pointer.ref.family,
       _destination,

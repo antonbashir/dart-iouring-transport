@@ -91,10 +91,10 @@ class TransportServer {
   Future<List<TransportPayload>> readMany(TransportChannel channel, int count, {bool submit = true}) async {
     final messages = <TransportPayload>[];
     final bufferIds = await _buffers.allocateArray(count);
-    final lastBufferId = bufferIds.last;
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
       _links.setInbound(bufferId, lastBufferId);
@@ -137,10 +137,10 @@ class TransportServer {
 
   Future<void> writeMany(TransportChannel channel, List<Uint8List> bytes, {bool submit = true}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
-    final lastBufferId = bufferIds.last;
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
       _links.setInbound(bufferId, lastBufferId);
@@ -155,7 +155,7 @@ class TransportServer {
     final completer = Completer();
     _callbacks.setInbound(lastBufferId, completer);
     channel.write(
-      bytes[bytes.length - 1],
+      bytes.last,
       lastBufferId,
       _writeTimeout,
       transportEventWrite | transportEventServer | transportEventLink,
@@ -184,8 +184,8 @@ class TransportServer {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final responders = <TransportDatagramResponder>[];
     final bufferIds = await _buffers.allocateArray(count);
-    final lastBufferId = bufferIds.last;
     if (_closing) throw TransportClosedException.forServer();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
       _links.setInbound(bufferId, lastBufferId);
@@ -242,8 +242,8 @@ class TransportServer {
   Future<void> respondManyMessages(TransportChannel channel, int bufferId, List<Uint8List> bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(bytes.length - 1);
-    final lastBufferId = bufferId;
     if (_closing) throw TransportClosedException.forServer();
+    final lastBufferId = bufferId;
     final destination = _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, lastBufferId);
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
@@ -262,7 +262,7 @@ class TransportServer {
     final completer = Completer();
     _callbacks.setInbound(lastBufferId, completer);
     channel.sendMessage(
-      bytes[bytes.length - 1],
+      bytes.last,
       lastBufferId,
       pointer.ref.family,
       destination,
