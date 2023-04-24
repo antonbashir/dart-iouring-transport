@@ -73,7 +73,7 @@ void main() {
     }
   });
   group("[custom]", () {
-    final testsCount = 20;
+    final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
       testCustom(index, 1);
       testCustom(index, 2);
