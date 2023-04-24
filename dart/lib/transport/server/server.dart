@@ -113,9 +113,12 @@ class TransportServer {
       _readTimeout,
       transportEventRead | transportEventServer | transportEventLink,
     );
-    connection.pending += count;
+    connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.onError<Exception>((error, stackTrace) {
+      for (var index = 0; index < count - 1; index++) _buffers.release(bufferIds[index]);
+      throw error;
+    });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
     return messages;
   }
@@ -162,9 +165,11 @@ class TransportServer {
       _writeTimeout,
       transportEventWrite | transportEventServer | transportEventLink,
     );
-    connection.pending += bytes.length;
+    connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future;
+    return completer.future.onError((error, stackTrace) {
+      for (var index = 0; index < bytes.length - 1; index++) _buffers.release(bufferIds[index]);
+    });
   }
 
   Future<TransportDatagramResponder> receiveSingleMessage(TransportChannel channel, {bool submit = true, int? flags}) async {
@@ -210,9 +215,11 @@ class TransportServer {
       flags,
       transportEventReceiveMessage | transportEventServer | transportEventLink,
     );
-    _pending += count;
+    _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.onError((error, stackTrace) {
+      for (var index = 0; index < count - 1; index++) _buffers.release(bufferIds[index]);
+    });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId), this, channel));
     return messages;
   }
@@ -274,9 +281,11 @@ class TransportServer {
       flags,
       transportEventSendMessage | transportEventServer | transportEventLink,
     );
-    _pending += bytes.length;
+    _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.onError((error, stackTrace) {
+      for (var index = 0; index < bytes.length - 1; index++) _buffers.release(bufferIds[index]);
+    });
   }
 
   @pragma(preferInlinePragma)
@@ -291,7 +300,6 @@ class TransportServer {
   bool notifyData(int bufferId) {
     _pending--;
     if (_active) return true;
-    _buffers.release(bufferId);
     if (_pending == 0 && _connections.isEmpty) _closer.complete();
     return false;
   }
@@ -301,7 +309,6 @@ class TransportServer {
     final connection = _connections[fd]!;
     connection.pending--;
     if (_active && connection.active) return true;
-    _buffers.release(bufferId);
     if (!connection.active && connection.pending == 0) connection.closer.complete();
     if (!_active && _pending == 0 && _connections.isEmpty) _closer.complete();
     return false;

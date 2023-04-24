@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'links.dart';
 import 'bindings.dart';
 import 'buffers.dart';
 import 'callbacks.dart';
@@ -16,6 +17,7 @@ class TransportErrorHandler {
   final TransportBuffers _inboundBuffers;
   final TransportBuffers _outboundBuffers;
   final TransportCallbacks _callbacks;
+  final TransportLinks _links;
 
   TransportErrorHandler(
     this._serverRegistry,
@@ -24,6 +26,7 @@ class TransportErrorHandler {
     this._inboundBuffers,
     this._outboundBuffers,
     this._callbacks,
+    this._links,
   );
 
   void _handleRead(int bufferId, int fd, int event, int result) {
@@ -32,19 +35,19 @@ class TransportErrorHandler {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
-    _inboundBuffers.release(bufferId);
     unawaited(server.closeConnection(fd));
     if (result == -ECANCELED) {
       _callbacks.notifyInboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyInboundError(
-        bufferId,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void _handleWrite(int bufferId, int fd, int event, int result) {
@@ -53,19 +56,19 @@ class TransportErrorHandler {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
-    _inboundBuffers.release(bufferId);
     unawaited(server.closeConnection(fd));
     if (result == -ECANCELED) {
       _callbacks.notifyInboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyInboundError(
-        bufferId,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void _handleReceiveMessage(int bufferId, int fd, int event, int result) {
@@ -74,18 +77,18 @@ class TransportErrorHandler {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
-    _inboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
       _callbacks.notifyInboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyInboundError(
-        bufferId,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void _handleSendMessage(int bufferId, int fd, int event, int result) {
@@ -94,7 +97,6 @@ class TransportErrorHandler {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
-    _inboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
       _callbacks.notifyInboundError(
         bufferId,
@@ -105,12 +107,13 @@ class TransportErrorHandler {
       return;
     }
     _callbacks.notifyInboundError(
-        bufferId,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void _handleAccept(int fd) {
@@ -131,12 +134,13 @@ class TransportErrorHandler {
       return;
     }
     _callbacks.notifyConnectError(
-        fd,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      fd,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void _handleClientReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
@@ -145,33 +149,33 @@ class TransportErrorHandler {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
     }
-    _outboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
       _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundError(
-        bufferId,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void _handleFileReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
-    _outboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
       _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundError(
-        bufferId,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
@@ -180,47 +184,51 @@ class TransportErrorHandler {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
     }
-    _outboundBuffers.release(bufferId);
     if (result == -ECANCELED) {
       _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundError(
-        bufferId,
-        TransportInternalException(
-          event: TransportEvent.ofEvent(event),
-          code: result,
-          message: result.kernelErrorToString(_bindings),
-        ));
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
   }
 
   void handle(int result, int data, int fd, int event) {
+    var bufferId = ((data >> 16) & 0xffff);
+    if (event & transportEventLink != 0) {
+      bufferId = event & transportEventServer != 0 ? _links.getInbound(bufferId) : _links.getOutbound(bufferId);
+    }
     if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-      _handleClientReadReceiveCallbacks(((data >> 16) & 0xffff), fd, event, result);
+      _handleClientReadReceiveCallbacks(bufferId, fd, event, result);
       return;
     }
     if (event == transportEventRead | transportEventFile) {
-      _handleFileReadReceiveCallbacks(((data >> 16) & 0xffff), fd, event, result);
+      _handleFileReadReceiveCallbacks(bufferId, fd, event, result);
       return;
     }
     if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-      _handleWriteSendCallbacks(((data >> 16) & 0xffff), fd, event, result);
+      _handleWriteSendCallbacks(bufferId, fd, event, result);
       return;
     }
     if (event == (transportEventRead | transportEventServer)) {
-      _handleRead(((data >> 16) & 0xffff), fd, event, result);
+      _handleRead(bufferId, fd, event, result);
       return;
     }
     if (event == (transportEventReceiveMessage | transportEventServer)) {
-      _handleReceiveMessage(((data >> 16) & 0xffff), fd, event, result);
+      _handleReceiveMessage(bufferId, fd, event, result);
       return;
     }
     if (event == (transportEventWrite | transportEventServer)) {
-      _handleWrite(((data >> 16) & 0xffff), fd, event, result);
+      _handleWrite(bufferId, fd, event, result);
       return;
     }
     if (event == (transportEventSendMessage | transportEventServer)) {
-      _handleSendMessage(((data >> 16) & 0xffff), fd, event, result);
+      _handleSendMessage(bufferId, fd, event, result);
       return;
     }
     if (event == transportEventAccept) {

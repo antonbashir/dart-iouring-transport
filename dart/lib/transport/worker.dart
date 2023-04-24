@@ -171,6 +171,7 @@ class TransportWorker {
       _inboundBuffers,
       _outboundBuffers,
       _callbacks,
+      _links,
     );
     _inboundTimeoutChecker = TransportTimeoutChecker(
       _bindings,
@@ -219,18 +220,20 @@ class TransportWorker {
           _errorHandler.handle(result, data, fd, event);
           continue;
         }
+        int bufferId = (data >> 16) & 0xffff;
+        if (event & transportEventLink != 0 && bufferId != _links.getInbound(bufferId)) continue;
         switch (event & ~transportEventServer) {
           case transportEventRead:
-            _handleRead((data >> 16) & 0xffff, fd, result);
+            _handleRead(bufferId, fd, result);
             continue;
           case transportEventReceiveMessage:
-            _handleReceiveMessage((data >> 16) & 0xffff, fd, result);
+            _handleReceiveMessage(bufferId, fd, result);
             continue;
           case transportEventWrite:
-            _handleWrite((data >> 16) & 0xffff, fd, result);
+            _handleWrite(bufferId, fd, result);
             continue;
           case transportEventSendMessage:
-            _handleSendMessage((data >> 16) & 0xffff, fd, result);
+            _handleSendMessage(bufferId, fd, result);
             continue;
           case transportEventAccept:
             _handleAccept(fd, result);
@@ -259,20 +262,22 @@ class TransportWorker {
           _errorHandler.handle(result, data, fd, event);
           continue;
         }
+        final bufferId = (data >> 16) & 0xffff;
+        if (event & transportEventLink != 0 && bufferId != _links.getOutbound(bufferId)) continue;
         if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-          _handleReadReceiveClientCallback(event, (data >> 16) & 0xffff, result, fd);
+          _handleReadReceiveClientCallback(event, bufferId, result, fd);
           continue;
         }
         if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-          _handleWriteSendClientCallback(event, (data >> 16) & 0xffff, result, fd);
+          _handleWriteSendClientCallback(event, bufferId, result, fd);
           continue;
         }
         if (event == transportEventRead | transportEventFile) {
-          _handleReadReceiveFileCallback(event, (data >> 16) & 0xffff, result, fd);
+          _handleReadFileCallback(event, bufferId, result, fd);
           continue;
         }
         if (event == transportEventWrite | transportEventFile) {
-          _handleWriteSendFileCallback(event, (data >> 16) & 0xffff, result, fd);
+          _handleWriteFileCallback(event, bufferId, result, fd);
           continue;
         }
         if (event == transportEventConnect) {
@@ -291,7 +296,6 @@ class TransportWorker {
       return;
     }
     if (result == 0) {
-      _inboundBuffers.release(bufferId);
       unawaited(server.closeConnection(fd));
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverRead));
       return;
@@ -307,7 +311,6 @@ class TransportWorker {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
-    _inboundBuffers.release(bufferId);
     if (result == 0) {
       unawaited(server.closeConnection(fd));
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverWrite));
@@ -324,7 +327,6 @@ class TransportWorker {
       return;
     }
     if (result == 0) {
-      _inboundBuffers.release(bufferId);
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverReceive));
       return;
     }
@@ -339,7 +341,6 @@ class TransportWorker {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
-    _inboundBuffers.release(bufferId);
     if (result == 0) {
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverSend));
       return;
@@ -356,7 +357,6 @@ class TransportWorker {
       return;
     }
     if (result == 0) {
-      _outboundBuffers.release(bufferId);
       _callbacks.notifyOutboundError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
@@ -365,7 +365,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleReadReceiveFileCallback(int event, int bufferId, int result, int fd) {
+  void _handleReadFileCallback(int event, int bufferId, int result, int fd) {
     _outboundBuffers.setLength(bufferId, result);
     _callbacks.notifyOutbound(bufferId);
   }
@@ -377,7 +377,6 @@ class TransportWorker {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
     }
-    _outboundBuffers.release(bufferId);
     if (result == 0) {
       _callbacks.notifyOutboundError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
@@ -386,8 +385,7 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleWriteSendFileCallback(int event, int bufferId, int result, int fd) {
-    _outboundBuffers.release(bufferId);
+  void _handleWriteFileCallback(int event, int bufferId, int result, int fd) {
     _callbacks.notifyOutbound(bufferId);
   }
 

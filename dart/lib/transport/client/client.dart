@@ -63,7 +63,10 @@ class TransportClient {
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
+    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)), onError: (error) {
+      _buffers.release(bufferId);
+      throw error;
+    });
   }
 
   Future<List<TransportPayload>> readMany(int count, {bool submit = true}) async {
@@ -92,9 +95,12 @@ class TransportClient {
       _readTimeout,
       transportEventRead | transportEventClient | transportEventLink,
     );
-    _pending += count;
+    _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.onError<Exception>((error, _) {
+      for (var index = 0; index < count; index++) _buffers.release(bufferIds[index]);
+      throw error;
+    });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
     return messages;
   }
@@ -107,7 +113,7 @@ class TransportClient {
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future;
+    return completer.future.whenComplete((() => _buffers.release(bufferId)));
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) async {
@@ -137,9 +143,11 @@ class TransportClient {
       _writeTimeout,
       transportEventWrite | transportEventClient | transportEventLink,
     );
-    _pending += bytes.length;
+    _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future;
+    return completer.future.whenComplete(() {
+      for (var index = 0; index < bytes.length; index++) _buffers.release(bufferIds[index]);
+    });
   }
 
   Future<TransportPayload> receiveSingleMessage({bool submit = true, int? flags}) async {
@@ -151,7 +159,10 @@ class TransportClient {
     _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
+    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)), onError: (error) {
+      _buffers.release(bufferId);
+      throw error;
+    });
   }
 
   Future<List<TransportPayload>> receiveManyMessage(int count, {bool submit = true, int? flags}) async {
@@ -185,9 +196,12 @@ class TransportClient {
       flags,
       transportEventReceiveMessage | transportEventClient | transportEventLink,
     );
-    _pending += count;
+    _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.onError<Exception>((error, _) {
+      for (var index = 0; index < count; index++) _buffers.release(bufferIds[index]);
+      throw error;
+    });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
     return messages;
   }
@@ -209,7 +223,7 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future;
+    return completer.future.whenComplete((() => _buffers.release(bufferId)));
   }
 
   Future<void> sendManyMessages(List<Uint8List> bytes, {bool submit = true, int? flags}) async {
@@ -246,9 +260,11 @@ class TransportClient {
       flags,
       transportEventSendMessage | transportEventClient | transportEventLink,
     );
-    _pending += bytes.length;
+    _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.whenComplete(() {
+      for (var index = 0; index < bytes.length; index++) _buffers.release(bufferIds[index]);
+    });
   }
 
   Future<TransportClient> connect() {
@@ -272,7 +288,6 @@ class TransportClient {
   bool notifyData(int bufferId) {
     _pending--;
     if (_active) return true;
-    _buffers.release(bufferId);
     if (_pending == 0) _closer.complete();
     return false;
   }
