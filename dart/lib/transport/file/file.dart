@@ -111,16 +111,6 @@ class TransportFile {
     return bytes.takeBytes();
   }
 
-  Future<Uint8List> load({int blocksCount = 1, int offset = 0}) {
-    if (blocksCount == 1) return readSingle(submit: true).then((value) => value.takeBytes());
-    final bytes = BytesBuilder();
-    return readMany(blocksCount, offset: offset).then((value) {
-      if (value.isEmpty) return value;
-      bytes.add(value);
-      return load(blocksCount: blocksCount, offset: offset + value.length);
-    });
-  }
-
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true, int offset = 0}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forFile();

@@ -47,6 +47,7 @@ class TransportClientStreamCommunicator {
           onRetry: retry.onRetry,
         );
 
+  @pragma(preferInlinePragma)
   Future<void> close() => _client.close();
 }
 
