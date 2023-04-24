@@ -301,7 +301,7 @@ class TransportClient {
     if (_pending > 0) await _closer.future;
     _channel.close();
     _bindings.transport_client_destroy(_pointer);
-    _registry.removeClient(_pointer.ref.fd);
+    _registry.remove(_pointer.ref.fd);
   }
 }
 

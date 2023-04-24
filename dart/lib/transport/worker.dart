@@ -4,6 +4,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/file/registry.dart';
 import 'package:meta/meta.dart';
 
 import 'links.dart';
@@ -44,6 +45,7 @@ class TransportWorker {
   late final TransportServerRegistry _serverRegistry;
   late final TransportClientsFactory _clientsFactory;
   late final TransportServersFactory _serversFactory;
+  late final TransportFileRegistry _filesRegistry;
   late final TransportFilesFactory _filesFactory;
   late final TransportCallbacks _callbacks;
   late final TransportLinks _links;
@@ -150,14 +152,15 @@ class TransportWorker {
     _clientsFactory = TransportClientsFactory(
       _clientRegistry,
     );
-    _filesFactory = TransportFilesFactory(
+    _filesRegistry = TransportFileRegistry(
       _bindings,
       _callbacks,
       _outboundWorkerPointer,
       _outboundBuffers,
-      _links,
       _outboundPayloadPool,
+      _links,
     );
+    _filesFactory = TransportFilesFactory(_filesRegistry);
     _inboundRing = _inboundWorkerPointer.ref.ring;
     _outboundRing = _outboundWorkerPointer.ref.ring;
     _inboundCqes = _bindings.transport_allocate_cqes(_transportPointer.ref.inbound_worker_configuration.ref.ring_size);

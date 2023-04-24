@@ -258,7 +258,7 @@ class TransportClientRegistry {
     _clients.clear();
   }
 
-  void removeClient(int fd) => _clients.remove(fd);
+  void remove(int fd) => _clients.remove(fd);
 
   Pointer<transport_client_configuration_t> _tcpConfiguration(TransportTcpClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
