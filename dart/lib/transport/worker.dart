@@ -170,9 +170,8 @@ class TransportWorker {
     _errorHandler = TransportErrorHandler(
       _serverRegistry,
       _clientRegistry,
+      _filesRegistry,
       _bindings,
-      _inboundBuffers,
-      _outboundBuffers,
       _callbacks,
       _links,
     );
@@ -368,6 +367,11 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleReadFileCallback(int event, int bufferId, int result, int fd) {
+    final file = _filesRegistry.get(fd);
+    if (!file.notify(bufferId)) {
+      _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
+      return;
+    }
     _outboundBuffers.setLength(bufferId, result);
     _callbacks.notifyOutbound(bufferId);
   }
@@ -388,6 +392,11 @@ class TransportWorker {
 
   @pragma(preferInlinePragma)
   void _handleWriteFileCallback(int event, int bufferId, int result, int fd) {
+    final file = _filesRegistry.get(fd);
+    if (!file.notify(bufferId)) {
+      _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
+      return;
+    }
     _callbacks.notifyOutbound(bufferId);
   }
 

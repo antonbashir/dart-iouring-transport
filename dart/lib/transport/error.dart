@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:iouring_transport/transport/file/registry.dart';
+
 import 'links.dart';
 import 'bindings.dart';
 import 'buffers.dart';
@@ -13,18 +15,16 @@ import 'server/registry.dart';
 class TransportErrorHandler {
   final TransportServerRegistry _serverRegistry;
   final TransportClientRegistry _clientRegistry;
+  final TransportFileRegistry _fileRegistry;
   final TransportBindings _bindings;
-  final TransportBuffers _inboundBuffers;
-  final TransportBuffers _outboundBuffers;
   final TransportCallbacks _callbacks;
   final TransportLinks _links;
 
   TransportErrorHandler(
     this._serverRegistry,
     this._clientRegistry,
+    this._fileRegistry,
     this._bindings,
-    this._inboundBuffers,
-    this._outboundBuffers,
     this._callbacks,
     this._links,
   );
@@ -163,7 +163,12 @@ class TransportErrorHandler {
     );
   }
 
-  void _handleFileReadReceiveCallbacks(int bufferId, int fd, int event, int result) {
+  void _handleFileReadCallback(int bufferId, int fd, int event, int result) {
+    final file = _fileRegistry.get(fd);
+    if (!file.notify(bufferId)) {
+      _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
+      return;
+    }
     if (result == -ECANCELED) {
       _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
       return;
@@ -178,7 +183,27 @@ class TransportErrorHandler {
     );
   }
 
-  void _handleWriteSendCallbacks(int bufferId, int fd, int event, int result) {
+  void _handleFileWriteCallback(int bufferId, int fd, int event, int result) {
+    final file = _fileRegistry.get(fd);
+    if (!file.notify(bufferId)) {
+      _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
+      return;
+    }
+    if (result == -ECANCELED) {
+      _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      return;
+    }
+    _callbacks.notifyOutboundError(
+      bufferId,
+      TransportInternalException(
+        event: TransportEvent.ofEvent(event),
+        code: result,
+        message: result.kernelErrorToString(_bindings),
+      ),
+    );
+  }
+
+  void _handleClientWriteSendCallbacks(int bufferId, int fd, int event, int result) {
     final client = _clientRegistry.get(fd);
     if (!client.notifyData(bufferId)) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
@@ -207,12 +232,8 @@ class TransportErrorHandler {
       _handleClientReadReceiveCallbacks(bufferId, fd, event, result);
       return;
     }
-    if (event == transportEventRead | transportEventFile) {
-      _handleFileReadReceiveCallbacks(bufferId, fd, event, result);
-      return;
-    }
     if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-      _handleWriteSendCallbacks(bufferId, fd, event, result);
+      _handleClientWriteSendCallbacks(bufferId, fd, event, result);
       return;
     }
     if (event == (transportEventRead | transportEventServer)) {
@@ -229,6 +250,14 @@ class TransportErrorHandler {
     }
     if (event == (transportEventSendMessage | transportEventServer)) {
       _handleSendMessage(bufferId, fd, event, result);
+      return;
+    }
+    if (event == transportEventRead | transportEventFile) {
+      _handleFileReadCallback(bufferId, fd, event, result);
+      return;
+    }
+    if (event == transportEventWrite | transportEventFile) {
+      _handleFileWriteCallback(bufferId, fd, event, result);
       return;
     }
     if (event == transportEventAccept) {

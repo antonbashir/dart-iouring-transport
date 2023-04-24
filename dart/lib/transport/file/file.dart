@@ -50,7 +50,7 @@ class TransportFile {
   );
 
   Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) async {
-    final completer = Completer<int>();
+    final completer = Completer();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
     _callbacks.setOutbound(bufferId, completer);
@@ -63,7 +63,7 @@ class TransportFile {
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true, int offset = 0}) async {
-    final completer = Completer<int>();
+    final completer = Completer();
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
     _callbacks.setOutbound(bufferId, completer);
