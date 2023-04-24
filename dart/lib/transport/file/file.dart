@@ -81,9 +81,11 @@ class TransportFile {
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future;
     for (var bufferId in bufferIds) {
-      bytes.add(_buffers.read(bufferId));
-      _buffers.release(bufferId);
+      final payload = _buffers.read(bufferId);
+      if (payload.isEmpty) break;
+      bytes.add(payload);
     }
+    for (var bufferId in bufferIds) _buffers.release(bufferId);
     return bytes.takeBytes();
   }
 
