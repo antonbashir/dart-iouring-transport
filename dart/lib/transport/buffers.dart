@@ -58,4 +58,15 @@ class TransportBuffers {
     }
     return bufferId;
   }
+
+  Future<List<int>> allocateArray(int count) async {
+    final bufferIds = <int>[];
+    for (var index = 0; index < count; index++) bufferIds.add(get() ?? await allocate());
+    return bufferIds;
+  }
+
+  @pragma(preferInlinePragma)
+  void releaseArray(List<int> buffers) {
+    for (var id in buffers) release(id);
+  }
 }

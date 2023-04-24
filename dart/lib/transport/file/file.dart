@@ -74,25 +74,21 @@ class TransportFile {
 
   Future<Uint8List> readMany(int count, {bool submit = true, int offset = 0}) async {
     final bytes = BytesBuilder();
-    final bufferIds = <int>[];
-    final lastBufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferIds = await _buffers.allocateArray(count);
+    if (_closing) throw TransportClosedException.forFile();
+    final lastBufferId = bufferIds.length;
     for (var index = 0; index < count - 1; index++) {
-      final bufferId = _buffers.get() ?? await _buffers.allocate();
+      final bufferId = bufferIds[index];
       offset += _buffers.bufferSize;
       _links.setOutbound(bufferId, lastBufferId);
-      bufferIds.add(bufferId);
-    }
-    if (_closing) throw TransportClosedException.forFile();
-    for (var index = 0; index < count - 1; index++) {
       _channel.read(
-        bufferIds[index],
+        bufferId,
         transportTimeoutInfinity,
         transportEventRead | transportEventFile | transportEventLink,
         sqeFlags: transportIosqeIoLink,
         offset: offset,
       );
     }
-    bufferIds.add(lastBufferId);
     final completer = Completer();
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.read(
@@ -103,7 +99,7 @@ class TransportFile {
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.onError<Exception>((error, _) {
-      for (var bufferId in bufferIds) _buffers.release(bufferId);
+      _buffers.releaseArray(bufferIds);
       throw error;
     });
     for (var bufferId in bufferIds) {
@@ -111,7 +107,7 @@ class TransportFile {
       if (payload.isEmpty) break;
       bytes.add(payload);
     }
-    for (var bufferId in bufferIds) _buffers.release(bufferId);
+    _buffers.releaseArray(bufferIds);
     return bytes.takeBytes();
   }
 
@@ -126,26 +122,22 @@ class TransportFile {
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true, int offset = 0}) async {
-    final bufferIds = <int>[];
-    final lastBufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferIds = await _buffers.allocateArray(bytes.length);
+    if (_closing) throw TransportClosedException.forFile();
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
-      final bufferId = _buffers.get() ?? await _buffers.allocate();
+      final bufferId = bufferIds[index];
       offset += _buffers.bufferSize;
       _links.setOutbound(bufferId, lastBufferId);
-      bufferIds.add(bufferId);
-    }
-    if (_closing) throw TransportClosedException.forFile();
-    for (var index = 0; index < bytes.length - 1; index++) {
       _channel.write(
         bytes[index],
-        bufferIds[index],
+        bufferId,
         transportTimeoutInfinity,
         transportEventWrite | transportEventFile | transportEventLink,
         sqeFlags: transportIosqeIoLink,
         offset: offset,
       );
     }
-    bufferIds.add(lastBufferId);
     final completer = Completer();
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.write(
@@ -156,9 +148,7 @@ class TransportFile {
       offset: offset,
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.whenComplete(() {
-      for (var bufferId in bufferIds) _buffers.release(bufferId);
-    });
+    await completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
   }
 
   bool notify(int bufferId) {
