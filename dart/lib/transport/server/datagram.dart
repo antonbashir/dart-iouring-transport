@@ -46,4 +46,7 @@ class TransportServerDatagramReceiver {
       });
     }
   }
+
+  @pragma(preferInlinePragma)
+  Future<void> closeServer({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
 }
