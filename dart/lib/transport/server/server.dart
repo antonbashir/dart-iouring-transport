@@ -244,6 +244,7 @@ class TransportServer {
     final bufferIds = await _buffers.allocateArray(bytes.length - 1);
     if (_closing) throw TransportClosedException.forServer();
     final lastBufferId = bufferId;
+    bufferIds.add(lastBufferId);
     final destination = _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, lastBufferId);
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
