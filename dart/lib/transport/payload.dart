@@ -76,10 +76,10 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  Future<void> respondSingleMessage(Uint8List bytes, {int? flags}) => _server.respondSingleMessage(_channel, _bufferId, bytes, flags: flags);
+  Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags}) => _server.respondSingleMessage(_channel, _bufferId, bytes, submit: submit, flags: flags);
 
   @pragma(preferInlinePragma)
-  Future<void> respondManyMessage(List<Uint8List> bytes, {int? flags}) => _server.respondManyMessages(_channel, _bufferId, bytes, flags: flags);
+  Future<void> respondManyMessage(List<Uint8List> bytes, {bool submit = true, int? flags}) => _server.respondManyMessages(_channel, _bufferId, bytes, submit: submit, flags: flags);
 
   @pragma(preferInlinePragma)
   void release() => _pool.release(_bufferId);

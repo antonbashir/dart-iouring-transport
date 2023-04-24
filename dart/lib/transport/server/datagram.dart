@@ -11,10 +11,10 @@ class TransportServerDatagramReceiver {
   TransportServerDatagramReceiver(this._server, this._channel);
 
   @pragma(preferInlinePragma)
-  Future<TransportDatagramResponder> receiveSingleMessage({int? flags, bool submit = true}) => _server.receiveSingleMessage(_channel, flags: flags, submit: submit);
+  Future<TransportDatagramResponder> receiveSingleMessage({bool submit = true, int? flags}) => _server.receiveSingleMessage(_channel, flags: flags, submit: submit);
 
   @pragma(preferInlinePragma)
-  Future<List<TransportDatagramResponder>> receiveManyMessages(int count, {int? flags, bool submit = true}) => _server.receiveManyMessages(_channel, count, flags: flags, submit: submit);
+  Future<List<TransportDatagramResponder>> receiveManyMessages(int count, {bool submit = true, int? flags}) => _server.receiveManyMessages(_channel, count, flags: flags, submit: submit);
 
   void listenBySingle(
     void Function(TransportDatagramResponder payload) listener, {
