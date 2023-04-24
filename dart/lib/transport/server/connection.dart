@@ -13,16 +13,16 @@ class TransportServerConnection {
   TransportServerConnection(this._server, this._channel);
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> readSingle({bool submit = false}) => _server.readSingle(_channel);
+  Future<TransportPayload> readSingle({bool submit = true}) => _server.readSingle(_channel);
 
   @pragma(preferInlinePragma)
-  Future<List<TransportPayload>> readMany(int count) => _server.readMany(_channel, count);
+  Future<List<TransportPayload>> readMany(int count, {bool submit = true}) => _server.readMany(_channel, count, submit: submit);
 
   @pragma(preferInlinePragma)
-  Future<void> writeSingle(Uint8List bytes) => _server.writeSingle(_channel, bytes);
+  Future<void> writeSingle(Uint8List bytes, {bool submit = true}) => _server.writeSingle(_channel, bytes, submit: submit);
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes) => _server.writeMany(_channel, bytes);
+  Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) => _server.writeMany(_channel, bytes, submit: submit);
 
   void listenBySingle(void Function(TransportPayload payload) listener, {void Function(dynamic error, StackTrace? stackTrace)? onError}) async {
     while (!_server.closing && _server.connectionIsActive(_channel.fd)) {

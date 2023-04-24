@@ -13,7 +13,8 @@ import 'package:iouring_transport/transport/worker.dart';
 
 Future<void> main(List<String> args) async {
   // await _benchFile(true);
-  await _benchFile(true);
+  //await _benchFile(true);
+  await _benchTcp();
 }
 
 Future<void> _benchTcp() async {
