@@ -272,7 +272,7 @@ class TransportClientRegistry {
     if (clientConfiguration.tcpQuickack == true) flags |= transportSocketOptionTcpQuickack;
     if (clientConfiguration.tcpDeferAccept == true) flags |= transportSocketOptionTcpDeferAccept;
     if (clientConfiguration.tcpFastopen == true) flags |= transportSocketOptionTcpFastopen;
-    if (clientConfiguration.tcpNodelay == true) flags |= transportSocketOptionTcpNodelay;
+    if (clientConfiguration.tcpDisableNoDelay == true) flags |= transportSocketOptionTcpDisableNoDelay;
     if (clientConfiguration.socketReceiveBufferSize != null) {
       flags |= transportSocketOptionSocketRcvbuf;
       nativeClientConfiguration.ref.socket_receive_buffer_size = clientConfiguration.socketReceiveBufferSize!;

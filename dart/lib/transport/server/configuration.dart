@@ -22,7 +22,7 @@ class TransportTcpServerConfiguration {
   final int? tcpKeepAliveMaxCount;
   final int? tcpKeepAliveIndividualCount;
   final int? tcpMaxSegmentSize;
-  final bool? tcpNodelay;
+  final bool? tcpDisableNoDelay;
   final int? tcpSynCount;
 
   TransportTcpServerConfiguration({
@@ -47,7 +47,7 @@ class TransportTcpServerConfiguration {
     this.tcpKeepAliveMaxCount,
     this.tcpKeepAliveIndividualCount,
     this.tcpMaxSegmentSize,
-    this.tcpNodelay,
+    this.tcpDisableNoDelay,
     this.tcpSynCount,
   });
 
@@ -73,7 +73,7 @@ class TransportTcpServerConfiguration {
     int? tcpKeepAliveMaxCount,
     int? tcpKeepAliveIndividualCount,
     int? tcpMaxSegmentSize,
-    bool? tcpNodelay,
+    bool? tcpDisableNoDelay,
     int? tcpSynCount,
   }) =>
       TransportTcpServerConfiguration(
@@ -98,7 +98,7 @@ class TransportTcpServerConfiguration {
         tcpKeepAliveMaxCount: tcpKeepAliveMaxCount ?? this.tcpKeepAliveMaxCount,
         tcpKeepAliveIndividualCount: tcpKeepAliveIndividualCount ?? this.tcpKeepAliveIndividualCount,
         tcpMaxSegmentSize: tcpMaxSegmentSize ?? this.tcpMaxSegmentSize,
-        tcpNodelay: tcpNodelay ?? this.tcpNodelay,
+        tcpDisableNoDelay: tcpDisableNoDelay ?? this.tcpDisableNoDelay,
         tcpSynCount: tcpSynCount ?? this.tcpSynCount,
       );
 }

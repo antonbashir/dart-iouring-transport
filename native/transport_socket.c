@@ -26,6 +26,7 @@ int64_t transport_socket_create_tcp(uint64_t flags,
                                     uint16_t tcp_syn_count)
 {
   int activate_option = 1;
+  int deactivate_option = 0;
 
   int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1)
@@ -171,11 +172,11 @@ int64_t transport_socket_create_tcp(uint64_t flags,
       return -TRANSPORT_SOCKET_OPTION_TCP_MAXSEG;
     }
   }
-  if (flags & TRANSPORT_SOCKET_OPTION_TCP_NODELAY)
+  if (flags & TRANSPORT_SOCKET_OPTION_TCP_DISABLE_NODELAY)
   {
-    if (setsockopt(fd, SOL_TCP, TCP_NODELAY, &activate_option, sizeof(activate_option)))
+    if (setsockopt(fd, SOL_TCP, TCP_NODELAY, &deactivate_option, sizeof(deactivate_option)))
     {
-      return -TRANSPORT_SOCKET_OPTION_TCP_NODELAY;
+      return -TRANSPORT_SOCKET_OPTION_TCP_DISABLE_NODELAY;
     }
   }
   if (flags & TRANSPORT_SOCKET_OPTION_TCP_SYNCNT)

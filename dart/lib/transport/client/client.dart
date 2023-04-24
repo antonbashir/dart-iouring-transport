@@ -85,6 +85,7 @@ class TransportClient {
       );
     }
     final completer = Completer();
+    _links.setOutbound(lastBufferId, lastBufferId);
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.read(
       lastBufferId,
@@ -129,6 +130,7 @@ class TransportClient {
     }
     final completer = Completer();
     _callbacks.setOutbound(lastBufferId, completer);
+    _links.setOutbound(lastBufferId, lastBufferId);
     _channel.write(
       bytes.last,
       lastBufferId,
@@ -137,7 +139,9 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
+    return completer.future.whenComplete(() {
+      _buffers.releaseArray(bufferIds);
+    });
   }
 
   Future<TransportPayload> receiveSingleMessage({bool submit = true, int? flags}) async {
@@ -163,7 +167,7 @@ class TransportClient {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setInbound(bufferId, lastBufferId);
+      _links.setOutbound(bufferId, lastBufferId);
       _channel.receiveMessage(
         bufferId,
         _pointer.ref.family,
@@ -174,7 +178,8 @@ class TransportClient {
       );
     }
     final completer = Completer();
-    _callbacks.setInbound(lastBufferId, completer);
+    _callbacks.setOutbound(lastBufferId, completer);
+    _links.setOutbound(lastBufferId, lastBufferId);
     _channel.receiveMessage(
       lastBufferId,
       _pointer.ref.family,
@@ -219,7 +224,7 @@ class TransportClient {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setInbound(bufferId, lastBufferId);
+      _links.setOutbound(bufferId, lastBufferId);
       _channel.sendMessage(
         bytes[index],
         bufferId,
@@ -232,7 +237,8 @@ class TransportClient {
       );
     }
     final completer = Completer();
-    _callbacks.setInbound(lastBufferId, completer);
+    _links.setOutbound(lastBufferId, lastBufferId);
+    _callbacks.setOutbound(lastBufferId, completer);
     _channel.sendMessage(
       bytes.last,
       lastBufferId,

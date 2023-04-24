@@ -214,16 +214,22 @@ class TransportWorker {
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_inboundRing, 1);
-      final event = data & 0xffff;
+      var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
+        print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           _errorHandler.handle(result, data, fd, event);
           continue;
         }
-        int bufferId = (data >> 16) & 0xffff;
-        if (event & transportEventLink != 0 && bufferId != _links.getInbound(bufferId)) continue;
+        final bufferId = (data >> 16) & 0xffff;
+        if (event & transportEventLink != 0) {
+          event &= ~transportEventLink;
+          if (bufferId != _links.getInbound(bufferId)) {
+            continue;
+          }
+        }
         switch (event & ~transportEventServer) {
           case transportEventRead:
             _handleRead(bufferId, fd, result);
@@ -252,9 +258,10 @@ class TransportWorker {
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_outboundRing, 1);
-      final event = data & 0xffff;
+      var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
+        print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         if (event == transportEventCustom) {
           _callbacks.notifyCustom(result, data);
           continue;
@@ -265,7 +272,12 @@ class TransportWorker {
           continue;
         }
         final bufferId = (data >> 16) & 0xffff;
-        if (event & transportEventLink != 0 && bufferId != _links.getOutbound(bufferId)) continue;
+        if (event & transportEventLink != 0) {
+          event &= ~transportEventLink;
+          if (bufferId != _links.getOutbound(bufferId)) {
+            continue;
+          }
+        }
         if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
           _handleReadReceiveClientCallback(event, bufferId, result, fd);
           continue;

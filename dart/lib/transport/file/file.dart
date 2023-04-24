@@ -90,6 +90,7 @@ class TransportFile {
       );
     }
     final completer = Completer();
+    _links.setOutbound(lastBufferId, lastBufferId);
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.read(
       lastBufferId,
@@ -129,6 +130,7 @@ class TransportFile {
       );
     }
     final completer = Completer();
+    _links.setOutbound(lastBufferId, lastBufferId);
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.write(
       bytes.last,

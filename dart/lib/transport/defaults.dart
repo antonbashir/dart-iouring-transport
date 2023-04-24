@@ -43,7 +43,7 @@ class TransportDefaults {
         socketNonblock: true,
         socketClockexec: true,
         tcpFastopen: true,
-        tcpNodelay: true,
+        tcpDisableNoDelay: true,
         tcpQuickack: true,
         tcpDeferAccept: true,
       );
@@ -87,7 +87,7 @@ class TransportDefaults {
         socketNonblock: true,
         socketClockexec: true,
         tcpFastopen: true,
-        tcpNodelay: true,
+        tcpDisableNoDelay: true,
         tcpQuickack: true,
         tcpDeferAccept: true,
       );

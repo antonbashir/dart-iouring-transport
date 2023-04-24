@@ -106,6 +106,7 @@ class TransportServer {
       );
     }
     final completer = Completer();
+    _links.setInbound(lastBufferId, lastBufferId);
     _callbacks.setInbound(lastBufferId, completer);
     channel.read(
       lastBufferId,
@@ -153,6 +154,7 @@ class TransportServer {
       );
     }
     final completer = Completer();
+    _links.setInbound(lastBufferId, lastBufferId);
     _callbacks.setInbound(lastBufferId, completer);
     channel.write(
       bytes.last,
@@ -199,6 +201,7 @@ class TransportServer {
       );
     }
     final completer = Completer();
+    _links.setInbound(lastBufferId, lastBufferId);
     _callbacks.setInbound(lastBufferId, completer);
     channel.receiveMessage(
       lastBufferId,
@@ -261,6 +264,7 @@ class TransportServer {
       );
     }
     final completer = Completer();
+    _links.setInbound(lastBufferId, lastBufferId);
     _callbacks.setInbound(lastBufferId, completer);
     channel.sendMessage(
       bytes.last,
