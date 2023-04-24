@@ -116,7 +116,7 @@ class TransportServer {
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.onError<Exception>((error, stackTrace) {
-      for (var index = 0; index < count - 1; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
       throw error;
     });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
@@ -168,7 +168,7 @@ class TransportServer {
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future.onError((error, stackTrace) {
-      for (var index = 0; index < bytes.length - 1; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
     });
   }
 
@@ -218,7 +218,7 @@ class TransportServer {
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.onError((error, stackTrace) {
-      for (var index = 0; index < count - 1; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
     });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getDatagramResponder(bufferId, _buffers.read(bufferId), this, channel));
     return messages;
@@ -284,7 +284,7 @@ class TransportServer {
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.onError((error, stackTrace) {
-      for (var index = 0; index < bytes.length - 1; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
     });
   }
 

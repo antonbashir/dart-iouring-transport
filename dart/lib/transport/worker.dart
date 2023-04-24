@@ -345,7 +345,6 @@ class TransportWorker {
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverSend));
       return;
     }
-    _inboundBuffers.setLength(bufferId, result);
     _callbacks.notifyInbound(bufferId);
   }
 

@@ -98,7 +98,7 @@ class TransportClient {
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.onError<Exception>((error, _) {
-      for (var index = 0; index < count; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
       throw error;
     });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
@@ -113,7 +113,7 @@ class TransportClient {
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.whenComplete((() => _buffers.release(bufferId)));
+    return completer.future.whenComplete(() => _buffers.release(bufferId));
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) async {
@@ -146,7 +146,7 @@ class TransportClient {
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future.whenComplete(() {
-      for (var index = 0; index < bytes.length; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
     });
   }
 
@@ -199,7 +199,7 @@ class TransportClient {
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.onError<Exception>((error, _) {
-      for (var index = 0; index < count; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
       throw error;
     });
     for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
@@ -263,7 +263,7 @@ class TransportClient {
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.whenComplete(() {
-      for (var index = 0; index < bytes.length; index++) _buffers.release(bufferIds[index]);
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
     });
   }
 

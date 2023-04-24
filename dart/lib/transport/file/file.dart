@@ -4,12 +4,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../bindings.dart';
-import '../links.dart';
 import '../buffers.dart';
+import '../callbacks.dart';
 import '../channel.dart';
 import '../constants.dart';
+import '../links.dart';
 import '../payload.dart';
-import '../callbacks.dart';
 
 class TransportFile {
   final String path;
@@ -40,7 +40,10 @@ class TransportFile {
     _callbacks.setOutbound(bufferId, completer);
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId)));
+    return completer.future.then((length) => _pool.getPayload(bufferId, _buffers.read(bufferId)), onError: (error) {
+      _buffers.release(bufferId);
+      throw error;
+    });
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true, int offset = 0}) async {
@@ -49,7 +52,7 @@ class TransportFile {
     _callbacks.setOutbound(bufferId, completer);
     _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.whenComplete(() => _buffers.release(bufferId));
   }
 
   Future<Uint8List> readMany(int count, {bool submit = true, int offset = 0}) async {
@@ -79,7 +82,10 @@ class TransportFile {
       offset: offset,
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.onError<Exception>((error, _) {
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
+      throw error;
+    });
     for (var bufferId in bufferIds) {
       final payload = _buffers.read(bufferId);
       if (payload.isEmpty) break;
@@ -127,7 +133,9 @@ class TransportFile {
       offset: offset,
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future;
+    await completer.future.whenComplete(() {
+      for (var bufferId in bufferIds) _buffers.release(bufferId);
+    });
   }
 
   void close() => _channel.close();
