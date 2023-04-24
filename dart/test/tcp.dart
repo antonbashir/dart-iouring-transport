@@ -14,11 +14,7 @@ void testTcp({
   required int clientsPool,
   required int listenerFlags,
   required int workerFlags,
-  Duration? serverTimeout,
-  Duration? clientTimeout,
 }) {
-  serverTimeout = serverTimeout ?? Duration(days: 1);
-  clientTimeout = clientTimeout ?? Duration(seconds: 90);
   test("[index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
