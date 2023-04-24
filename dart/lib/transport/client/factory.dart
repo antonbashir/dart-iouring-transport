@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'client.dart';
-import 'communicator.dart';
+import 'provider.dart';
 import 'configuration.dart';
 import 'registry.dart';
 
@@ -10,14 +10,14 @@ class TransportClientsFactory {
 
   TransportClientsFactory(this._registry);
 
-  Future<TransportClientStreamCommunicators> tcp(
+  Future<TransportClientStreamPool> tcp(
     String host,
     int port, {
     TransportTcpClientConfiguration? configuration,
   }) =>
       _registry.createTcp(host, port, configuration: configuration);
 
-  TransportClientDatagramCommunicator udp(
+  TransportClientDatagramProvider udp(
     String sourceHost,
     int sourcePort,
     String destinationHost,
@@ -32,13 +32,13 @@ class TransportClientsFactory {
         configuration: configuration,
       );
 
-  Future<TransportClientStreamCommunicators> unixStream(
+  Future<TransportClientStreamPool> unixStream(
     String path, {
     TransportUnixStreamClientConfiguration? configuration,
   }) =>
       _registry.createUnixStream(path, configuration: configuration);
 
-  TransportClientDatagramCommunicator unixDatagram(
+  TransportClientDatagramProvider unixDatagram(
     String sourcePath,
     String destinationPath, {
     TransportUnixDatagramClientConfiguration? configuration,

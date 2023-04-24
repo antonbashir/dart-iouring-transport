@@ -12,7 +12,7 @@ import '../channel.dart';
 import '../constants.dart';
 import '../defaults.dart';
 import 'client.dart';
-import 'communicator.dart';
+import 'provider.dart';
 import 'configuration.dart';
 
 class TransportClientRegistry {
@@ -27,8 +27,8 @@ class TransportClientRegistry {
 
   TransportClientRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
 
-  Future<TransportClientStreamCommunicators> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
-    final communicators = <Future<TransportClientStreamCommunicator>>[];
+  Future<TransportClientStreamPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
+    final providers = <Future<TransportClientStreamProvider>>[];
     configuration = configuration ?? TransportDefaults.tcpClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = calloc<transport_client_t>();
@@ -71,13 +71,13 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      communicators.add(client.connect().then((client) => TransportClientStreamCommunicator(client)));
+      providers.add(client.connect().then((client) => TransportClientStreamProvider(client)));
     }
-    return TransportClientStreamCommunicators(await Future.wait(communicators));
+    return TransportClientStreamPool(await Future.wait(providers));
   }
 
-  Future<TransportClientStreamCommunicators> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
-    final clients = <Future<TransportClientStreamCommunicator>>[];
+  Future<TransportClientStreamPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
+    final clients = <Future<TransportClientStreamProvider>>[];
     configuration = configuration ?? TransportDefaults.unixStreamClient();
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = calloc<transport_client_t>();
@@ -119,12 +119,12 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      clients.add(client.connect().then((client) => TransportClientStreamCommunicator(client)));
+      clients.add(client.connect().then((client) => TransportClientStreamProvider(client)));
     }
-    return TransportClientStreamCommunicators(await Future.wait(clients));
+    return TransportClientStreamPool(await Future.wait(clients));
   }
 
-  TransportClientDatagramCommunicator createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
+  TransportClientDatagramProvider createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpClient();
     final clientPointer = using((arena) {
       final pointer = calloc<transport_client_t>();
@@ -204,10 +204,10 @@ class TransportClientRegistry {
       _payloadPool,
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportClientDatagramCommunicator(client);
+    return TransportClientDatagramProvider(client);
   }
 
-  TransportClientDatagramCommunicator createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
+  TransportClientDatagramProvider createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramClient();
     final clientPointer = calloc<transport_client_t>();
     if (clientPointer == nullptr) {
@@ -248,7 +248,7 @@ class TransportClientRegistry {
       _payloadPool,
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportClientDatagramCommunicator(client);
+    return TransportClientDatagramProvider(client);
   }
 
   TransportClient get(int fd) => _clients[fd]!;

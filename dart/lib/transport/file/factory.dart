@@ -1,4 +1,4 @@
-import 'communicator.dart';
+import 'provider.dart';
 import 'registry.dart';
 
 class TransportFilesFactory {
@@ -6,5 +6,5 @@ class TransportFilesFactory {
 
   TransportFilesFactory(this._registry);
 
-  TransportFileCommunicator open(String path) => TransportFileCommunicator(_registry.open(path));
+  TransportFileProvider open(String path) => TransportFileProvider(_registry.open(path));
 }

@@ -38,7 +38,7 @@ class TransportServersFactory {
     );
   }
 
-  void unixStream(String path, void Function(TransportServerConnection communicator) onAccept) {
+  void unixStream(String path, void Function(TransportServerConnection connection) onAccept) {
     _registry.createUnixStream(path).accept(onAccept);
   }
 

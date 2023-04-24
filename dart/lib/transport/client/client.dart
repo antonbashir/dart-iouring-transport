@@ -12,7 +12,7 @@ import '../exception.dart';
 import '../payload.dart';
 import 'registry.dart';
 
-import 'communicator.dart';
+import 'provider.dart';
 
 class TransportClient {
   final TransportCallbacks _callbacks;
@@ -285,19 +285,19 @@ class TransportClient {
   }
 }
 
-class TransportClientStreamCommunicators {
-  final List<TransportClientStreamCommunicator> _communicators;
+class TransportClientStreamPool {
+  final List<TransportClientStreamProvider> _providers;
   var _next = 0;
 
-  TransportClientStreamCommunicators(this._communicators);
+  TransportClientStreamPool(this._providers);
 
-  TransportClientStreamCommunicator select() {
-    final client = _communicators[_next];
-    if (++_next == _communicators.length) _next = 0;
+  TransportClientStreamProvider select() {
+    final client = _providers[_next];
+    if (++_next == _providers.length) _next = 0;
     return client;
   }
 
-  void forEach(FutureOr<void> Function(TransportClientStreamCommunicator communicator) action) => _communicators.forEach(action);
+  void forEach(FutureOr<void> Function(TransportClientStreamProvider provider) action) => _providers.forEach(action);
 
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamCommunicator communicator) mapper) => _communicators.map(mapper);
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamProvider provider) mapper) => _providers.map(mapper);
 }

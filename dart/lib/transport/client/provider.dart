@@ -6,10 +6,10 @@ import '../constants.dart';
 import '../payload.dart';
 import 'client.dart';
 
-class TransportClientStreamCommunicator {
+class TransportClientStreamProvider {
   final TransportClient _client;
 
-  TransportClientStreamCommunicator(this._client);
+  TransportClientStreamProvider(this._client);
 
   @pragma(preferInlinePragma)
   Future<TransportPayload> readSingle({bool submit = true}) => _client.readSingle(submit: submit);
@@ -51,10 +51,10 @@ class TransportClientStreamCommunicator {
   Future<void> close() => _client.close();
 }
 
-class TransportClientDatagramCommunicator {
+class TransportClientDatagramProvider {
   final TransportClient _client;
 
-  TransportClientDatagramCommunicator(this._client);
+  TransportClientDatagramProvider(this._client);
 
   @pragma(preferInlinePragma)
   Future<TransportPayload> receiveSingleMessage({bool submit = true, int? flags}) => _client.receiveSingleMessage(flags: flags, submit: submit);

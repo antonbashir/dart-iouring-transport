@@ -36,9 +36,9 @@ void testTcp({
       worker.servers.tcp(
           "0.0.0.0",
           12345,
-          (communicator) => communicator.listenBySingle(
+          (connection) => connection.listenBySingle(
                 onError: (error, _) => print(error),
-                (event) => communicator.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+                (event) => connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
               ));
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(clients.map((client) => client.writeSingle(clientData).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList());
