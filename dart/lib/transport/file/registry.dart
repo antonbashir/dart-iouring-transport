@@ -29,7 +29,6 @@ class TransportFileRegistry {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
     final file = TransportFile(
       path,
-      File(path),
       fd,
       _bindings,
       _workerPointer,

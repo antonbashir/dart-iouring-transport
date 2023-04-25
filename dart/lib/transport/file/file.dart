@@ -25,7 +25,6 @@ class TransportFile {
   final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
   final TransportFileRegistry _registry;
-  final File delegate;
 
   var _active = true;
   bool get active => _active;
@@ -37,7 +36,6 @@ class TransportFile {
 
   TransportFile(
     this.path,
-    this.delegate,
     this._fd,
     this._bindings,
     this._workerPointer,

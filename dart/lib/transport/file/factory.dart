@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'provider.dart';
 import 'registry.dart';
 
@@ -6,5 +8,5 @@ class TransportFilesFactory {
 
   TransportFilesFactory(this._registry);
 
-  TransportFileProvider open(String path) => TransportFileProvider(_registry.open(path));
+  TransportFileProvider open(String path) => TransportFileProvider(_registry.open(path), File(path));
 }

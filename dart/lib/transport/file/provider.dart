@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import '../constants.dart';
@@ -6,8 +7,9 @@ import 'file.dart';
 
 class TransportFileProvider {
   final TransportFile _file;
+  final File delegate;
 
-  TransportFileProvider(this._file);
+  TransportFileProvider(this._file, this.delegate);
 
   @pragma(preferInlinePragma)
   Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) => _file.readSingle(submit: submit, offset: offset);

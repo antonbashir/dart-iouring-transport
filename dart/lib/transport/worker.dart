@@ -207,6 +207,15 @@ class TransportWorker {
     _jobs.remove(name);
   }
 
+  void submit({required bool inbound, required bool outbound}) {
+    if (inbound) {
+      _bindings.transport_worker_submit(_inboundWorkerPointer);
+    }
+    if (outbound) {
+      _bindings.transport_worker_submit(_outboundWorkerPointer);
+    }
+  }
+
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {

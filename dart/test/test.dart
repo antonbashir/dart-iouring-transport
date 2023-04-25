@@ -97,6 +97,22 @@ void testInitialization({
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
       await worker.initialize();
+
+      final futures = <Future>[];
+      final client = await worker.clients.tcp("127.0.0.1", 12345);
+      final file = worker.files.open("file");
+      futures.add(client.select().readSingle(submit: false));
+      futures.add(client.select().readSingle(submit: false));
+      futures.add(client.select().readSingle(submit: false));
+      futures.add(client.select().readSingle(submit: false));
+      futures.add(file.readSingle(submit: false));
+      futures.add(file.readSingle(submit: false));
+      futures.add(file.readSingle(submit: false));
+      futures.add(file.readSingle(submit: false));
+      futures.add(file.readSingle(submit: false));
+      worker.submit(inbound: false, outbound: true);
+      await Future.wait(futures);
+
       worker.transmitter!.send(null);
     });
     await done.take(workers);
