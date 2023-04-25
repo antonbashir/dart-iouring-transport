@@ -1,18 +1,16 @@
 import 'dart:async';
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:typed_data';
-
-import '../exception.dart';
-import 'registry.dart';
 
 import '../bindings.dart';
 import '../buffers.dart';
 import '../callbacks.dart';
 import '../channel.dart';
 import '../constants.dart';
+import '../exception.dart';
 import '../links.dart';
 import '../payload.dart';
+import 'registry.dart';
 
 class TransportFile {
   final String path;

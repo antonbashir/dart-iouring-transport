@@ -8,6 +8,8 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
+import 'test.dart';
+
 void testUnixStream({
   required int index,
   required int listeners,
@@ -36,7 +38,7 @@ void testUnixStream({
         serverSocket.path,
         (connection) => connection.listenBySingle(
           onError: (error, _) => print(error),
-          (event) => connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+          (event) => check(event, clientData, () => connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error))),
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
@@ -78,7 +80,7 @@ void testUnixDgram({
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
       worker.servers.unixDatagram(serverSocket.path).listenBySingle(
             onError: (error, _) => print(error),
-            (event) => event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error)),
+            (event) => check(event, clientData, () => event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error))),
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
