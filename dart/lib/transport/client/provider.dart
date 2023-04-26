@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../configuration.dart';
 import '../constants.dart';
+import '../exception.dart';
 import '../payload.dart';
 import 'client.dart';
 
@@ -19,13 +20,23 @@ class TransportClientStreamProvider {
 
   void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
-      await readSingle().then(listener, onError: onError);
+      await readSingle().then(listener, onError: (error, stackTrace) {
+        if (error is TransportClosedException) return;
+        if (error is TransportZeroDataException) return;
+        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
+        onError?.call(error);
+      });
     }
   }
 
   void listeByMany(int count, void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
-      await readMany(count).then((chunks) => chunks.forEach(listener), onError: onError);
+      await readMany(count).then((fragments) => fragments.forEach(listener), onError: (error, stackTrace) {
+        if (error is TransportClosedException) return;
+        if (error is TransportZeroDataException) return;
+        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
+        onError?.call(error);
+      });
     }
   }
 
@@ -64,13 +75,23 @@ class TransportClientDatagramProvider {
 
   void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
-      await receiveSingleMessage().then(listener, onError: onError);
+      await receiveSingleMessage().then(listener, onError: (error, stackTrace) {
+        if (error is TransportClosedException) return;
+        if (error is TransportZeroDataException) return;
+        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
+        onError?.call(error);
+      });
     }
   }
 
   void listenByMany(int count, void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
-      await receiveManyMessages(count).then((chunks) => chunks.forEach(listener), onError: onError);
+      await receiveManyMessages(count).then((fragments) => fragments.forEach(listener), onError: (error, stackTrace) {
+        if (error is TransportClosedException) return;
+        if (error is TransportZeroDataException) return;
+        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
+        onError?.call(error);
+      });
     }
   }
 
