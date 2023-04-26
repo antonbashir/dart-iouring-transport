@@ -248,7 +248,7 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
+    return completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
   }
 
   Future<TransportClient> connect() {
@@ -296,12 +296,14 @@ class TransportClientStreamPool {
   TransportClientStreamPool(this._providers);
 
   TransportClientStreamProvider select() {
-    final client = _providers[_next];
+    final provider = _providers[_next];
     if (++_next == _providers.length) _next = 0;
-    return client;
+    return provider;
   }
 
   void forEach(FutureOr<void> Function(TransportClientStreamProvider provider) action) => _providers.forEach(action);
 
   Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamProvider provider) mapper) => _providers.map(mapper);
+
+  int count() => _providers.length;
 }

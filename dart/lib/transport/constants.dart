@@ -169,7 +169,7 @@ const transportSocketOptionTcpKeepidle = 1 << 24;
 const transportSocketOptionTcpKeepcnt = 1 << 25;
 const transportSocketOptionTcpKeepintvl = 1 << 26;
 const transportSocketOptionTcpMaxseg = 1 << 27;
-const transportSocketOptionTcpDisableNoDelay = 1 << 28;
+const transportSocketOptionTcpNoDelay = 1 << 28;
 const transportSocketOptionTcpSyncnt = 1 << 29;
 
 const transportTimeoutInfinity = -1;

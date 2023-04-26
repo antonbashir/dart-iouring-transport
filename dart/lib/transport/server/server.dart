@@ -277,7 +277,7 @@ class TransportServer {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
+    return completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
   }
 
   @pragma(preferInlinePragma)

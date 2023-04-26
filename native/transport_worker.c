@@ -93,9 +93,9 @@ int32_t transport_worker_get_buffer(transport_worker_t *worker)
 
 void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
 {
-  struct iovec buffer = worker->buffers[buffer_id];
-  memset(buffer.iov_base, 0, worker->buffer_size);
-  buffer.iov_len = worker->buffer_size;
+  struct iovec *buffer = &worker->buffers[buffer_id];
+  memset(buffer->iov_base, 0, worker->buffer_size);
+  buffer->iov_len = worker->buffer_size;
   transport_buffers_pool_push(&worker->free_buffers, buffer_id);
 }
 
@@ -144,12 +144,12 @@ void transport_worker_custom(transport_worker_t *worker, uint32_t id, uint32_t c
 }
 
 void transport_worker_write(transport_worker_t *worker,
-                                uint32_t fd,
-                                uint16_t buffer_id,
-                                uint32_t offset,
-                                int64_t timeout,
-                                uint16_t event,
-                                uint8_t sqe_flags)
+                            uint32_t fd,
+                            uint16_t buffer_id,
+                            uint32_t offset,
+                            int64_t timeout,
+                            uint16_t event,
+                            uint8_t sqe_flags)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -165,12 +165,12 @@ void transport_worker_write(transport_worker_t *worker,
 }
 
 void transport_worker_read(transport_worker_t *worker,
-                               uint32_t fd,
-                               uint16_t buffer_id,
-                               uint32_t offset,
-                               int64_t timeout,
-                               uint16_t event,
-                               uint8_t sqe_flags)
+                           uint32_t fd,
+                           uint16_t buffer_id,
+                           uint32_t offset,
+                           int64_t timeout,
+                           uint16_t event,
+                           uint8_t sqe_flags)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -186,14 +186,14 @@ void transport_worker_read(transport_worker_t *worker,
 }
 
 void transport_worker_send_message(transport_worker_t *worker,
-                                       uint32_t fd,
-                                       uint16_t buffer_id,
-                                       struct sockaddr *address,
-                                       transport_socket_family_t socket_family,
-                                       int message_flags,
-                                       int64_t timeout,
-                                       uint16_t event,
-                                       uint8_t sqe_flags)
+                                   uint32_t fd,
+                                   uint16_t buffer_id,
+                                   struct sockaddr *address,
+                                   transport_socket_family_t socket_family,
+                                   int message_flags,
+                                   int64_t timeout,
+                                   uint16_t event,
+                                   uint8_t sqe_flags)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);
@@ -226,13 +226,13 @@ void transport_worker_send_message(transport_worker_t *worker,
 }
 
 void transport_worker_receive_message(transport_worker_t *worker,
-                                          uint32_t fd,
-                                          uint16_t buffer_id,
-                                          transport_socket_family_t socket_family,
-                                          int message_flags,
-                                          int64_t timeout,
-                                          uint16_t event,
-                                          uint8_t sqe_flags)
+                                      uint32_t fd,
+                                      uint16_t buffer_id,
+                                      transport_socket_family_t socket_family,
+                                      int message_flags,
+                                      int64_t timeout,
+                                      uint16_t event,
+                                      uint8_t sqe_flags)
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = provide_sqe(ring);

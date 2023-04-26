@@ -8,7 +8,9 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
+import 'generators.dart';
 import 'test.dart';
+import 'validators.dart';
 
 void testSingleTcp({
   required int index,
@@ -67,13 +69,8 @@ void testManyTcp({
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
-    final clientRequests = List.generate(count, (index) => Utf8Encoder().convert("request-$index")).reduce((value, element) => Uint8List.fromList(value + element));
-    final serverResponses = List.generate(count, (index) => Utf8Encoder().convert("respond-$index"));
     await transport.run(transmitter: done.sendPort, (input) async {
       final serverResults = BytesBuilder();
-      final clientResults = <Uint8List>[];
-      final clientRequests = List.generate(count, (index) => Utf8Encoder().convert("request-$index"));
-      final serverResponses = List.generate(count, (index) => Utf8Encoder().convert("respond-$index"));
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.tcp(
@@ -83,7 +80,7 @@ void testManyTcp({
           onError: (error, _) => print(error),
           (event) {
             serverResults.add(event.takeBytes());
-            connection.writeMany(serverResponses).onError((error, stackTrace) => print(error));
+            connection.writeMany(Generators.responses(count)).onError((error, stackTrace) => print(error));
           },
         ),
       );
@@ -92,15 +89,12 @@ void testManyTcp({
         12345,
         configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool),
       );
-      await Future.wait(clients
-          .map((client) => client.writeMany(clientRequests).then((_) => client.readMany(count)).then((responses) => responses.map((element) => element.takeBytes())))
-          .map((responses) => responses.then(clientResults.addAll)));
-      worker.transmitter!.send([serverResults.takeBytes(), clientResults]);
+      final results = await Future.wait(clients.map((client) => client.writeMany(Generators.requests(count)).then((_) => client.readMany(count + 3))));
+      Validators.requestsSum(serverResults.takeBytes(), count * clients.count());
+      results.forEach((elements) => Validators.responses(elements.map((bytes) => bytes.takeBytes()).toList()));
+      worker.transmitter!.send(null);
     });
-    (await done.take(workers).toList()).forEach((result) {
-      expect(result[0], clientRequests);
-      expect(result[1].map(Uint8List.fromList).toList(), serverResponses);
-    });
+    await done.take(workers).toList();
     done.close();
     await transport.shutdown();
   });

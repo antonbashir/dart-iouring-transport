@@ -13,9 +13,11 @@ class TransportBuffers {
   final Pointer<transport_worker_t> _worker;
 
   late final int bufferSize;
+  late final int buffersCount;
 
   TransportBuffers(this._bindings, this.buffers, this._worker) {
     bufferSize = _worker.ref.buffer_size;
+    buffersCount = _worker.ref.buffers_count;
   }
 
   @pragma(preferInlinePragma)

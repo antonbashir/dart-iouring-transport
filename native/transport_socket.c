@@ -172,11 +172,11 @@ int64_t transport_socket_create_tcp(uint64_t flags,
       return -TRANSPORT_SOCKET_OPTION_TCP_MAXSEG;
     }
   }
-  if (flags & TRANSPORT_SOCKET_OPTION_TCP_DISABLE_NODELAY)
+  if (flags & TRANSPORT_SOCKET_OPTION_TCP_NODELAY)
   {
-    if (setsockopt(fd, SOL_TCP, TCP_NODELAY, &deactivate_option, sizeof(deactivate_option)))
+    if (setsockopt(fd, SOL_TCP, TCP_NODELAY, &activate_option, sizeof(activate_option)))
     {
-      return -TRANSPORT_SOCKET_OPTION_TCP_DISABLE_NODELAY;
+      return -TRANSPORT_SOCKET_OPTION_TCP_NODELAY;
     }
   }
   if (flags & TRANSPORT_SOCKET_OPTION_TCP_SYNCNT)

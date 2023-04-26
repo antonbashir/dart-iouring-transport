@@ -250,7 +250,7 @@ class TransportServerRegistry {
     if (serverConfiguration.tcpQuickack == true) flags |= transportSocketOptionTcpQuickack;
     if (serverConfiguration.tcpDeferAccept == true) flags |= transportSocketOptionTcpDeferAccept;
     if (serverConfiguration.tcpFastopen == true) flags |= transportSocketOptionTcpFastopen;
-    if (serverConfiguration.tcpDisableNoDelay == true) flags |= transportSocketOptionTcpDisableNoDelay;
+    if (serverConfiguration.tcpNoDelay == true) flags |= transportSocketOptionTcpNoDelay;
     if (serverConfiguration.socketMaxConnections != null) {
       nativeServerConfiguration.ref.socket_max_connections = serverConfiguration.socketMaxConnections!;
     }

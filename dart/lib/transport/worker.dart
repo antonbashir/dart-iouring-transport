@@ -4,9 +4,9 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/file/registry.dart';
 import 'package:meta/meta.dart';
 
+import 'file/registry.dart';
 import 'links.dart';
 import 'payload.dart';
 import 'bindings.dart';
@@ -226,7 +226,7 @@ class TransportWorker {
       var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
-        //print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+        print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           _errorHandler.handle(result, data, fd, event);
@@ -235,9 +235,8 @@ class TransportWorker {
         final bufferId = (data >> 16) & 0xffff;
         if (event & transportEventLink != 0) {
           event &= ~transportEventLink;
-          if (bufferId != _links.getInbound(bufferId)) {
-            continue;
-          }
+          _inboundBuffers.setLength(bufferId, result);
+          if (bufferId != _links.getInbound(bufferId)) continue;
         }
         switch (event & ~transportEventServer) {
           case transportEventRead:
@@ -270,7 +269,7 @@ class TransportWorker {
       var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
-        //print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+        print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         if (event == transportEventCustom) {
           _callbacks.notifyCustom(result, data);
           continue;
@@ -283,9 +282,8 @@ class TransportWorker {
         final bufferId = (data >> 16) & 0xffff;
         if (event & transportEventLink != 0) {
           event &= ~transportEventLink;
-          if (bufferId != _links.getOutbound(bufferId)) {
-            continue;
-          }
+          _outboundBuffers.setLength(bufferId, result);
+          if (bufferId != _links.getOutbound(bufferId)) continue;
         }
         if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
           _handleReadReceiveClientCallback(event, bufferId, result, fd);

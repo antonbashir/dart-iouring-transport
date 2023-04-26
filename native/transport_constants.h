@@ -50,7 +50,7 @@ extern "C"
 #define TRANSPORT_SOCKET_OPTION_TCP_KEEPCNT ((uint64_t)1 << 25)
 #define TRANSPORT_SOCKET_OPTION_TCP_KEEPINTVL ((uint64_t)1 << 26)
 #define TRANSPORT_SOCKET_OPTION_TCP_MAXSEG ((uint64_t)1 << 27)
-#define TRANSPORT_SOCKET_OPTION_TCP_DISABLE_NODELAY ((uint64_t)1 << 28)
+#define TRANSPORT_SOCKET_OPTION_TCP_NODELAY ((uint64_t)1 << 28)
 #define TRANSPORT_SOCKET_OPTION_TCP_SYNCNT ((uint64_t)1 << 29)
 
   typedef enum transport_socket_family
