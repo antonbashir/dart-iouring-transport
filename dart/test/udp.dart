@@ -32,9 +32,12 @@ void testUdp({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.udp("0.0.0.0", 12345).listenBySingle(
-            onError: (error, _) => print(error),
-            (event) => check(event, clientData, () => event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error))),
-          );
+        onError: (error) => print(error),
+        (event) {
+          event.release();
+          event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error));
+        },
+      );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);

@@ -17,13 +17,13 @@ class TransportClientStreamProvider {
   @pragma(preferInlinePragma)
   Future<List<TransportPayload>> readMany(int count, {bool submit = true}) => _client.readMany(count, submit: submit);
 
-  void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Exception error)? onError}) async {
+  void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
       await readSingle().then(listener, onError: onError);
     }
   }
 
-  void listeByMany(int count, void Function(TransportPayload paylad) listener, {void Function(Exception error)? onError}) async {
+  void listeByMany(int count, void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
       await readMany(count).then((chunks) => chunks.forEach(listener), onError: onError);
     }
@@ -62,13 +62,13 @@ class TransportClientDatagramProvider {
   @pragma(preferInlinePragma)
   Future<List<TransportPayload>> receiveManyMessages(int count, {bool submit = true, int? flags}) => _client.receiveManyMessage(count, flags: flags, submit: submit);
 
-  void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Exception error)? onError}) async {
+  void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
       await receiveSingleMessage().then(listener, onError: onError);
     }
   }
 
-  void listenByMany(int count, void Function(TransportPayload paylad) listener, {void Function(Exception error)? onError}) async {
+  void listenByMany(int count, void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
       await receiveManyMessages(count).then((chunks) => chunks.forEach(listener), onError: onError);
     }

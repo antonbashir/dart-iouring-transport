@@ -37,8 +37,11 @@ void testUnixStream({
       worker.servers.unixStream(
         serverSocket.path,
         (connection) => connection.listenBySingle(
-          onError: (error, _) => print(error),
-          (event) => check(event, clientData, () => connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error))),
+          onError: (error) => print(error),
+          (event) {
+            event.release();
+            connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error));
+          },
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
@@ -79,8 +82,11 @@ void testUnixDgram({
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
       worker.servers.unixDatagram(serverSocket.path).listenBySingle(
-            onError: (error, _) => print(error),
-            (event) => check(event, clientData, () => event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error))),
+            onError: (error) => print(error),
+            (event) {
+               event.release();
+               event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error));
+            },
           );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {

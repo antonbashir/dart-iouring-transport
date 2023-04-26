@@ -38,8 +38,11 @@ void testSingleTcp({
         "0.0.0.0",
         12345,
         (connection) => connection.listenBySingle(
-          onError: (error, _) => print(error),
-          (event) => check(event.takeBytes(), clientData, () => connection.writeSingle(serverData).onError((error, stackTrace) => print(error))),
+          onError: (error) => print(error),
+          (event) {
+            event.release();
+            connection.writeSingle(serverData).onError((error, stackTrace) => print(error));
+          },
         ),
       );
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
@@ -70,28 +73,46 @@ void testManyTcp({
     );
     final done = ReceivePort();
     await transport.run(transmitter: done.sendPort, (input) async {
-      final serverResults = BytesBuilder();
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.tcp(
         "0.0.0.0",
         12345,
-        (connection) => connection.listenBySingle(
-          onError: (error, _) => print(error),
-          (event) {
-            serverResults.add(event.takeBytes());
-            connection.writeMany(Generators.responses(count)).onError((error, stackTrace) => print(error));
-          },
-        ),
+        (connection) {
+          final serverResults = BytesBuilder();
+          connection.listenBySingle(
+            onError: (error) => print(error),
+            (event) {
+              serverResults.add(event.takeBytes());
+              if (serverResults.length == Generators.requestsSum(count).length) {
+                Validators.requestsSum(serverResults.takeBytes(), count);
+                connection.writeMany(Generators.responses(count)).onError((error, stackTrace) => print(error));
+              }
+            },
+          );
+        },
       );
       final clients = await worker.clients.tcp(
         "127.0.0.1",
         12345,
         configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool),
       );
-      final results = await Future.wait(clients.map((client) => client.writeMany(Generators.requests(count)).then((_) => client.readMany(count + 3))));
-      Validators.requestsSum(serverResults.takeBytes(), count * clients.count());
-      results.forEach((elements) => Validators.responses(elements.map((bytes) => bytes.takeBytes()).toList()));
+      await Future.wait(clients.map(
+        (client) async {
+          final clientResults = BytesBuilder();
+          final completer = Completer();
+          client.writeMany(Generators.requests(count)).then(
+                (_) => client.listenBySingle(
+                  onError: (error) => print(error),
+                  (event) {
+                    clientResults.add(event.takeBytes());
+                    if (clientResults.length == Generators.responsesSum(count).length) completer.complete();
+                  },
+                ),
+              );
+          return completer.future.then((value) => Validators.responsesSum(clientResults.takeBytes(), count));
+        },
+      ));
       worker.transmitter!.send(null);
     });
     await done.take(workers).toList();

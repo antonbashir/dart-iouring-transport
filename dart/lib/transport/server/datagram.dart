@@ -18,7 +18,7 @@ class TransportServerDatagramReceiver {
 
   void listenBySingle(
     void Function(TransportDatagramResponder payload) listener, {
-    void Function(Exception error, StackTrace stackTrace)? onError,
+    void Function(dynamic error)? onError,
     int? flags,
   }) async {
     while (!_server.closing) {
@@ -26,7 +26,7 @@ class TransportServerDatagramReceiver {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
-        onError?.call(error, stackTrace);
+        onError?.call(error);
       });
     }
   }
@@ -34,7 +34,7 @@ class TransportServerDatagramReceiver {
   void listenByMany(
     int count,
     void Function(TransportDatagramResponder payload) listener, {
-    void Function(Exception error, StackTrace stackTrace)? onError,
+    void Function(dynamic error)? onError,
     int? flags,
   }) async {
     while (!_server.closing) {
@@ -42,7 +42,7 @@ class TransportServerDatagramReceiver {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
-        onError?.call(error, stackTrace);
+        onError?.call(error);
       });
     }
   }
