@@ -31,13 +31,13 @@ Future<void> _benchTcp() async {
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.tcp("0.0.0.0", 12345, (connection) => connection.listenBySingle((payload) => connection.writeSingle(payload.takeBytes())));
+      worker.servers.tcp("0.0.0.0", 12345, (connection) => connection.listen((payload) => connection.writeSingle(payload.takeBytes())));
       final connector = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();
       time.start();
       while (true) {
-        count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.readSingle()).then((value) => value.release())))).length;
+        count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
         if (time.elapsed.inSeconds >= 10) break;
       }
       worker.transmitter!.send(count);

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import '../constants.dart';
@@ -24,16 +25,33 @@ class TransportFileProvider {
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true, int offset = 0}) => _file.writeMany(bytes, submit: submit, offset: offset);
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => _file.close(gracefulDuration: gracefulDuration);
+  Future<Uint8List> load({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
+        final bytes = BytesBuilder();
+
+        Future<Uint8List> single(int blocksCount, int offset) => _file.readSingle().then(
+              (payload) {
+                final payloadBites = payload.takeBytes();
+                if (payloadBites.isEmpty) return bytes.takeBytes();
+                bytes.add(payloadBites);
+                final left = stat.size - bytes.length;
+                if (left == 0) return bytes.takeBytes();
+                return single(blocksCount, offset + payloadBites.length);
+              },
+            );
+
+        Future<Uint8List> many(int blocksCount, int offset) => _file.readMany(blocksCount, offset: offset).then(
+              (value) {
+                if (value.isEmpty) return bytes.takeBytes();
+                bytes.add(value);
+                final left = stat.size - bytes.length;
+                if (left == 0) return bytes.takeBytes();
+                return many(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset + value.length);
+              },
+            );
+
+        return blocksCount == 1 ? single(blocksCount, offset) : many(blocksCount, offset);
+      });
 
   @pragma(preferInlinePragma)
-  Future<Uint8List> load({int blocksCount = 1, int offset = 0}) {
-    if (blocksCount == 1) return _file.readSingle().then((value) => value.takeBytes());
-    final bytes = BytesBuilder();
-    return _file.readMany(blocksCount, offset: offset).then((value) {
-      if (value.isEmpty) return value;
-      bytes.add(value);
-      return load(blocksCount: blocksCount, offset: offset + value.length);
-    });
-  }
+  Future<void> close({Duration? gracefulDuration}) => _file.close(gracefulDuration: gracefulDuration);
 }

@@ -8,6 +8,7 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'generators.dart';
+import 'test.dart';
 import 'validators.dart';
 
 void testSingleTcp({
@@ -32,16 +33,18 @@ void testSingleTcp({
       worker.servers.tcp(
         "0.0.0.0",
         12345,
-        (connection) => connection.listenBySingle(
-          onError: (error) => print(error),
+        (connection) => connection.listen(
+          onError: print,
           (event) {
             Validators.request(event.takeBytes());
-            connection.writeSingle(Generators.response()).onError((error, stackTrace) => print(error));
+            connection.writeSingle(Generators.response()).onError(errorPrinter);
           },
         ),
       );
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
-      final responses = await Future.wait(clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList());
+      final responses = await Future.wait(
+        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
+      );
       responses.forEach((response) => Validators.response(response));
       worker.transmitter!.send(null);
     });
@@ -76,13 +79,13 @@ void testManyTcp({
         12345,
         (connection) {
           final serverResults = BytesBuilder();
-          connection.listenBySingle(
-            onError: (error) => print(error),
+          connection.listen(
+            onError: print,
             (event) {
               serverResults.add(event.takeBytes());
               if (serverResults.length == Generators.requestsSum(count).length) {
                 Validators.requestsSum(serverResults.takeBytes(), count);
-                connection.writeMany(Generators.responses(count)).onError((error, stackTrace) => print(error));
+                connection.writeMany(Generators.responses(count)).onError(errorPrinter);
               }
             },
           );
@@ -98,8 +101,8 @@ void testManyTcp({
           final clientResults = BytesBuilder();
           final completer = Completer();
           client.writeMany(Generators.requests(count)).then(
-                (_) => client.listenBySingle(
-                  onError: (error) => print(error),
+                (_) => client.listen(
+                  onError: print,
                   (event) {
                     clientResults.add(event.takeBytes());
                     if (clientResults.length == Generators.responsesSum(count).length) completer.complete();

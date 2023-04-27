@@ -8,8 +8,6 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
-import 'test.dart';
-
 void testUnixStream({
   required int index,
   required int listeners,
@@ -36,7 +34,7 @@ void testUnixStream({
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.servers.unixStream(
         serverSocket.path,
-        (connection) => connection.listenBySingle(
+        (connection) => connection.listen(
           onError: (error) => print(error),
           (event) {
             event.release();
@@ -45,7 +43,7 @@ void testUnixStream({
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
-      final responses = await Future.wait(clients.map((client) => client.writeSingle(clientData).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList());
+      final responses = await Future.wait(clients.map((client) => client.writeSingle(clientData).then((_) => client.read().then((value) => value.takeBytes()))).toList());
       responses.forEach((response) => worker.transmitter!.send(response));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
     });
@@ -82,12 +80,12 @@ void testUnixDgram({
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
       worker.servers.unixDatagram(serverSocket.path).listenBySingle(
-            onError: (error) => print(error),
-            (event) {
-               event.release();
-               event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error));
-            },
-          );
+        onError: (error) => print(error),
+        (event) {
+          event.release();
+          event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error));
+        },
+      );
       final responseFutures = <Future<List<int>>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);

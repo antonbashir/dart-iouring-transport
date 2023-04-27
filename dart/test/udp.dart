@@ -7,8 +7,6 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
-import 'test.dart';
-
 void testUdp({
   required int index,
   required int listeners,

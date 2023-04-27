@@ -135,3 +135,5 @@ void testCustom(int data, int workers) {
     await transport.shutdown();
   });
 }
+
+final errorPrinter = (error, _) => print(error);

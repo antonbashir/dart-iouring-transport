@@ -19,7 +19,7 @@ class TransportFile {
   final TransportBindings _bindings;
   final TransportChannel _channel;
   final TransportCallbacks _callbacks;
-  final TransportBuffers _buffers;
+  final TransportBuffers buffers;
   final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
   final TransportFileRegistry _registry;
@@ -39,7 +39,7 @@ class TransportFile {
     this._workerPointer,
     this._callbacks,
     this._channel,
-    this._buffers,
+    this.buffers,
     this._links,
     this._payloadPool,
     this._registry,
@@ -47,35 +47,35 @@ class TransportFile {
 
   Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) async {
     final completer = Completer();
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
     _callbacks.setOutbound(bufferId, completer);
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((length) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)), onError: (error) {
-      _buffers.release(bufferId);
+    return completer.future.then((length) => _payloadPool.getPayload(bufferId, buffers.read(bufferId)), onError: (error) {
+      buffers.release(bufferId);
       throw error;
     });
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true, int offset = 0}) async {
     final completer = Completer();
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
     _callbacks.setOutbound(bufferId, completer);
     _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.whenComplete(() => _buffers.release(bufferId));
+    await completer.future.whenComplete(() => buffers.release(bufferId));
   }
 
   Future<Uint8List> readMany(int count, {bool submit = true, int offset = 0}) async {
     final bytes = BytesBuilder();
-    final bufferIds = await _buffers.allocateArray(count);
+    final bufferIds = await buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forFile();
     final lastBufferId = bufferIds.length;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      offset += _buffers.bufferSize;
+      offset += buffers.bufferSize;
       _links.setOutbound(bufferId, lastBufferId);
       _channel.read(
         bufferId,
@@ -96,25 +96,25 @@ class TransportFile {
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.onError<Exception>((error, _) {
-      _buffers.releaseArray(bufferIds);
+      buffers.releaseArray(bufferIds);
       throw error;
     });
     for (var bufferId in bufferIds) {
-      final payload = _buffers.read(bufferId);
+      final payload = buffers.read(bufferId);
       if (payload.isEmpty) break;
       bytes.add(payload);
     }
-    _buffers.releaseArray(bufferIds);
+    buffers.releaseArray(bufferIds);
     return bytes.takeBytes();
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true, int offset = 0}) async {
-    final bufferIds = await _buffers.allocateArray(bytes.length);
+    final bufferIds = await buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forFile();
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      offset += _buffers.bufferSize;
+      offset += buffers.bufferSize;
       _links.setOutbound(bufferId, lastBufferId);
       _channel.write(
         bytes[index],
@@ -136,7 +136,7 @@ class TransportFile {
       offset: offset,
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
+    await completer.future.whenComplete(() => buffers.releaseArray(bufferIds));
   }
 
   bool notify(int bufferId) {
