@@ -6,20 +6,20 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
 
-import 'file/registry.dart';
-import 'links.dart';
-import 'payload.dart';
 import 'bindings.dart';
 import 'buffers.dart';
+import 'callbacks.dart';
 import 'channel.dart';
 import 'client/factory.dart';
 import 'client/registry.dart';
 import 'constants.dart';
+import 'error.dart';
 import 'exception.dart';
 import 'file/factory.dart';
+import 'file/registry.dart';
+import 'links.dart';
 import 'lookup.dart';
-import 'error.dart';
-import 'callbacks.dart';
+import 'payload.dart';
 import 'server/factory.dart';
 import 'server/registry.dart';
 import 'timeout.dart';
@@ -78,11 +78,12 @@ class TransportWorker {
       _handleOutboundCqes();
     });
     _activator = RawReceivePort((_) => _initializer.complete());
-    _closer = RawReceivePort((_) async {
+    _closer = RawReceivePort((gracefulDuration) async {
       _inboundTimeoutChecker.stop();
       _outboundTimeoutChecker.stop();
-      await _clientRegistry.close();
-      await _serverRegistry.close();
+      await _clientRegistry.close(gracefulDuration: gracefulDuration);
+      await _serverRegistry.close(gracefulDuration: gracefulDuration);
+      await _filesRegistry.close(gracefulDuration: gracefulDuration);
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
       malloc.free(_outboundCqes);
       _bindings.transport_worker_destroy(_inboundWorkerPointer);

@@ -236,7 +236,7 @@ class TransportServerRegistry {
   @pragma(preferInlinePragma)
   void removeServer(int fd) => _servers.remove(fd);
 
-  Future<void> close() => Future.wait(_servers.values.map((server) => server.close()));
+  Future<void> close({Duration? gracefulDuration}) => Future.wait(_servers.values.map((server) => server.close(gracefulDuration: gracefulDuration)));
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();

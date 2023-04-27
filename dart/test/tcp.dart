@@ -8,10 +8,9 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'generators.dart';
-import 'test.dart';
 import 'validators.dart';
 
-void testSingleTcp({
+void testTcpSingle({
   required int index,
   required int listeners,
   required int workers,
@@ -34,10 +33,9 @@ void testSingleTcp({
         "0.0.0.0",
         12345,
         (connection) => connection.listen(
-          onError: print,
           (event) {
             Validators.request(event.takeBytes());
-            connection.writeSingle(Generators.response()).onError(errorPrinter);
+            connection.writeSingle(Generators.response());
           },
         ),
       );
@@ -45,16 +43,16 @@ void testSingleTcp({
       final responses = await Future.wait(
         clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
       );
-      responses.forEach((response) => Validators.response(response));
+      responses.forEach(Validators.response);
       worker.transmitter!.send(null);
     });
     await done.take(workers).toList();
     done.close();
-    await transport.shutdown();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
 
-void testManyTcp({
+void testTcpMany({
   required int index,
   required int listeners,
   required int workers,
@@ -63,7 +61,7 @@ void testManyTcp({
   required int workerFlags,
   required int count,
 }) {
-  test("(many) [index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
+  test("(many) [index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
@@ -78,14 +76,13 @@ void testManyTcp({
         "0.0.0.0",
         12345,
         (connection) {
-          final serverResults = BytesBuilder();
+          final serverRequests = BytesBuilder();
           connection.listen(
-            onError: print,
             (event) {
-              serverResults.add(event.takeBytes());
-              if (serverResults.length == Generators.requestsSum(count).length) {
-                Validators.requestsSum(serverResults.takeBytes(), count);
-                connection.writeMany(Generators.responses(count)).onError(errorPrinter);
+              serverRequests.add(event.takeBytes());
+              if (serverRequests.length == Generators.requestsSum(count).length) {
+                Validators.requestsSum(serverRequests.takeBytes(), count);
+                connection.writeMany(Generators.responses(count));
               }
             },
           );
@@ -102,7 +99,6 @@ void testManyTcp({
           final completer = Completer();
           client.writeMany(Generators.requests(count)).then(
                 (_) => client.listen(
-                  onError: print,
                   (event) {
                     clientResults.add(event.takeBytes());
                     if (clientResults.length == Generators.responsesSum(count).length) completer.complete();
@@ -116,6 +112,6 @@ void testManyTcp({
     });
     await done.take(workers).toList();
     done.close();
-    await transport.shutdown();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }

@@ -8,7 +8,11 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
-void testUnixStream({
+import 'generators.dart';
+import 'test.dart';
+import 'validators.dart';
+
+void testUnixStreamSingle({
   required int index,
   required int listeners,
   required int workers,
@@ -16,7 +20,7 @@ void testUnixStream({
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("[index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
+  test("(single) [index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
@@ -24,10 +28,7 @@ void testUnixStream({
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
-    final serverData = Utf8Encoder().convert("respond");
     await transport.run(transmitter: done.sendPort, (input) async {
-      final clientData = Utf8Encoder().convert("request");
-      final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
@@ -35,21 +36,86 @@ void testUnixStream({
       worker.servers.unixStream(
         serverSocket.path,
         (connection) => connection.listen(
-          onError: (error) => print(error),
+          onError: print,
           (event) {
-            event.release();
-            connection.writeSingle(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error));
+            Validators.request(event.takeBytes());
+            connection.writeSingle(Generators.response()).onError(errorPrinter);
           },
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
-      final responses = await Future.wait(clients.map((client) => client.writeSingle(clientData).then((_) => client.read().then((value) => value.takeBytes()))).toList());
-      responses.forEach((response) => worker.transmitter!.send(response));
+      final responses = await Future.wait(
+        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
+      );
+      responses.forEach(Validators.response);
       if (serverSocket.existsSync()) serverSocket.deleteSync();
+      worker.transmitter!.send(null);
     });
-    (await done.take(workers * clientsPool * 2).toList()).forEach((response) => expect(response, serverData));
+    await done.take(workers).toList();
     done.close();
-    await transport.shutdown();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+  });
+}
+
+void testUnixStreamMany({
+  required int index,
+  required int listeners,
+  required int workers,
+  required int clientsPool,
+  required int listenerFlags,
+  required int workerFlags,
+  required int count,
+}) {
+  test("(many) [index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool, count = $count]", () async {
+    final transport = Transport(
+      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
+      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
+    );
+    final done = ReceivePort();
+    await transport.run(transmitter: done.sendPort, (input) async {
+      final worker = TransportWorker(input);
+      await worker.initialize();
+      final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
+      if (serverSocket.existsSync()) serverSocket.deleteSync();
+      worker.servers.unixStream(
+        serverSocket.path,
+        (connection) {
+          final serverResults = BytesBuilder();
+          connection.listen(
+            (event) {
+              serverResults.add(event.takeBytes());
+              if (serverResults.length == Generators.requestsSum(count).length) {
+                Validators.requestsSum(serverResults.takeBytes(), count);
+                connection.writeMany(Generators.responses(count));
+              }
+            },
+          );
+        },
+      );
+      final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
+      await Future.wait(clients.map(
+        (client) async {
+          final clientResults = BytesBuilder();
+          final completer = Completer();
+          client.writeMany(Generators.requests(count)).then(
+                (_) => client.listen(
+                  (event) {
+                    clientResults.add(event.takeBytes());
+                    if (clientResults.length == Generators.responsesSum(count).length) completer.complete();
+                  },
+                ),
+              );
+          return completer.future.then((value) => Validators.responsesSum(clientResults.takeBytes(), count));
+        },
+      ));
+      if (serverSocket.existsSync()) serverSocket.deleteSync();
+      worker.transmitter!.send(null);
+    });
+    await done.take(workers).toList();
+    done.close();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
 

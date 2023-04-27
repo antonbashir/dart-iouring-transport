@@ -68,8 +68,8 @@ class Transport {
     );
   }
 
-  Future<void> shutdown() async {
-    _workerClosers.forEach((worker) => worker.send(null));
+  Future<void> shutdown({Duration? gracefulDuration}) async {
+    _workerClosers.forEach((worker) => worker.send(gracefulDuration));
     await _workerExit.take(transportConfiguration.workerInsolates).toList();
     _workerExit.close();
     _jobListener.close();
