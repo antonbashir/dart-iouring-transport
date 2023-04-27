@@ -81,9 +81,9 @@ class TransportWorker {
     _closer = RawReceivePort((gracefulDuration) async {
       _inboundTimeoutChecker.stop();
       _outboundTimeoutChecker.stop();
+      await _filesRegistry.close(gracefulDuration: gracefulDuration);
       await _clientRegistry.close(gracefulDuration: gracefulDuration);
       await _serverRegistry.close(gracefulDuration: gracefulDuration);
-      await _filesRegistry.close(gracefulDuration: gracefulDuration);
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
       malloc.free(_outboundCqes);
       _bindings.transport_worker_destroy(_inboundWorkerPointer);

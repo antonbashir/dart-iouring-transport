@@ -46,7 +46,10 @@ class TransportCallbacks {
   void notifyInbound(int bufferId) => _inboundBuffers[bufferId].complete();
 
   @pragma(preferInlinePragma)
-  void notifyInboundError(int bufferId, Exception error) => _inboundBuffers[bufferId].completeError(error);
+  void notifyInboundError(int bufferId, Exception error) {
+    final callback = _inboundBuffers[bufferId];
+    if (!callback.isCompleted) callback.completeError(error);
+  }
 
   @pragma(preferInlinePragma)
   void notifyCustom(int id, int data) => _custom.remove(id)?.complete(data);
@@ -58,7 +61,10 @@ class TransportCallbacks {
   void notifyOutbound(int bufferId) => _outboundBuffers[bufferId].complete();
 
   @pragma(preferInlinePragma)
-  void notifyOutboundError(int bufferId, Exception error) => _outboundBuffers[bufferId].completeError(error);
+  void notifyOutboundError(int bufferId, Exception error) {
+    final callback = _outboundBuffers[bufferId];
+    if (!callback.isCompleted) callback.completeError(error);
+  }
 
   @pragma(preferInlinePragma)
   void removeCustom(int id) => _custom.remove(id);

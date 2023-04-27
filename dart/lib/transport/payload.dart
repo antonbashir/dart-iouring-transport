@@ -1,5 +1,7 @@
+import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'bindings.dart';
 import 'buffers.dart';
 import 'channel.dart';
 import 'constants.dart';
@@ -28,11 +30,12 @@ class TransportPayloadPool {
   void release(int bufferId) => _buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
-  TransportDatagramResponder getDatagramResponder(int bufferId, Uint8List bytes, TransportServer server, TransportChannel channel) {
+  TransportDatagramResponder getDatagramResponder(int bufferId, Uint8List bytes, TransportServer server, TransportChannel channel, Pointer<sockaddr> destination) {
     final payload = _datagramResponders[bufferId];
     payload._bytes = bytes;
     payload._server = server;
     payload._channel = channel;
+    payload._destination = destination;
     return payload;
   }
 }
@@ -66,6 +69,7 @@ class TransportPayload {
 
 class TransportDatagramResponder {
   final int _bufferId;
+  late Pointer<sockaddr> _destination;
   final TransportPayloadPool _pool;
   late Uint8List _bytes;
   late TransportServer _server;
@@ -78,7 +82,7 @@ class TransportDatagramResponder {
   @pragma(preferInlinePragma)
   Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags}) => _server.respondSingleMessage(
         _channel,
-        _bufferId,
+        _destination,
         bytes,
         submit: submit,
         flags: flags,
@@ -87,7 +91,7 @@ class TransportDatagramResponder {
   @pragma(preferInlinePragma)
   Future<void> respondManyMessage(List<Uint8List> bytes, {bool submit = true, int? flags}) => _server.respondManyMessages(
         _channel,
-        _bufferId,
+        _destination,
         bytes,
         submit: submit,
         flags: flags,

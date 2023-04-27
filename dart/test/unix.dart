@@ -36,16 +36,15 @@ void testUnixStreamSingle({
       worker.servers.unixStream(
         serverSocket.path,
         (connection) => connection.listen(
-          onError: print,
           (event) {
             Validators.request(event.takeBytes());
-            connection.writeSingle(Generators.response()).onError(errorPrinter);
+            connection.writeSingle(Generators.response());
           },
         ),
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(
-        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
+        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList(),
       );
       responses.forEach(Validators.response);
       if (serverSocket.existsSync()) serverSocket.deleteSync();
@@ -145,7 +144,7 @@ void testUnixDgram({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
-      worker.servers.unixDatagram(serverSocket.path).listenBySingle(
+      worker.servers.unixDatagram(serverSocket.path).listen(
         onError: (error) => print(error),
         (event) {
           event.release();

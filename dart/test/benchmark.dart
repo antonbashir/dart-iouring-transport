@@ -37,7 +37,7 @@ Future<void> _benchTcp() async {
       final time = Stopwatch();
       time.start();
       while (true) {
-        count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
+        count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.readSingle()).then((value) => value.release())))).length;
         if (time.elapsed.inSeconds >= 10) break;
       }
       worker.transmitter!.send(count);

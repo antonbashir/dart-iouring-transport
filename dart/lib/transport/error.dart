@@ -227,6 +227,7 @@ class TransportErrorHandler {
     var bufferId = ((data >> 16) & 0xffff);
     if (event & transportEventLink != 0) {
       bufferId = event & transportEventServer != 0 ? _links.getInbound(bufferId) : _links.getOutbound(bufferId);
+      event &= ~transportEventLink;
     }
     if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
       _handleClientReadReceiveCallbacks(bufferId, fd, event, result);

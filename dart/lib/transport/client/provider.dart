@@ -13,11 +13,14 @@ class TransportClientStreamProvider {
   TransportClientStreamProvider(this._client);
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> read({bool submit = true}) => _client.read(submit: submit);
+  Future<TransportPayload> readSingle({bool submit = true}) => _client.readSingle(submit: submit);
+
+  @pragma(preferInlinePragma)
+  Future<List<TransportPayload>> readMany(int count, {bool submit = true}) => _client.readMany(count, submit: submit);
 
   void listen(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
-      await read().then(listener, onError: (error, stackTrace) {
+      await readSingle().then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;

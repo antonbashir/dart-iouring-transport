@@ -41,7 +41,7 @@ void testTcpSingle({
       );
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(
-        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
+        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList(),
       );
       responses.forEach(Validators.response);
       worker.transmitter!.send(null);

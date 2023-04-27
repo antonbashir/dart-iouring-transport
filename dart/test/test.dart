@@ -8,6 +8,7 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'tcp.dart';
+import 'udp.dart';
 import 'unix.dart';
 
 void main() {
@@ -48,16 +49,21 @@ void main() {
       testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
     }
   });
-  // group("[udp]", () {
-  //   final testsCount = 5;
-  //   for (var index = 0; index < testsCount; index++) {
-  //     testUdp(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUdp(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUdp(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUdp(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUdp(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //   }
-  // });
+  group("[udp]", () {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
+      testUdpSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+      testUdpMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUdpMany(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUdpMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+      testUdpMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+    }
+  });
   // group("[unix dgram]", timeout: Timeout(Duration(minutes: 5)), () {
   //   final testsCount = 5;
   //   for (var index = 0; index < testsCount; index++) {

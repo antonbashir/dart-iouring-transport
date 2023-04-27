@@ -55,7 +55,7 @@ class TransportClient {
     _destination = _bindings.transport_client_get_destination_address(_pointer);
   }
 
-  Future<TransportPayload> read({bool submit = true}) async {
+  Future<TransportPayload> readSingle({bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
     final completer = Completer<void>();
@@ -67,6 +67,39 @@ class TransportClient {
       _buffers.release(bufferId);
       throw error;
     });
+  }
+
+  Future<List<TransportPayload>> readMany(int count, {bool submit = true}) async {
+    final payloads = <TransportPayload>[];
+    final bufferIds = await _buffers.allocateArray(count);
+    if (_closing) throw TransportClosedException.forClient();
+    final lastBufferId = bufferIds.last;
+    for (var index = 0; index < count - 1; index++) {
+      final bufferId = bufferIds[index];
+      _links.setOutbound(bufferId, lastBufferId);
+      _channel.read(
+        bufferId,
+        _readTimeout,
+        transportEventRead | transportEventClient | transportEventLink,
+        sqeFlags: transportIosqeIoLink,
+      );
+    }
+    final completer = Completer();
+    _links.setOutbound(lastBufferId, lastBufferId);
+    _callbacks.setOutbound(lastBufferId, completer);
+    _channel.read(
+      lastBufferId,
+      _readTimeout,
+      transportEventRead | transportEventClient | transportEventLink,
+    );
+    _pending++;
+    if (submit) _bindings.transport_worker_submit(_workerPointer);
+    await completer.future.onError<Exception>((error, _) {
+      _buffers.releaseArray(bufferIds);
+      throw error;
+    });
+    for (var bufferId in bufferIds) payloads.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
+    return payloads;
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true}) async {

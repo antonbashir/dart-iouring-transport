@@ -253,10 +253,7 @@ class TransportClientRegistry {
 
   TransportClient get(int fd) => _clients[fd]!;
 
-  Future<void> close({Duration? gracefulDuration}) async {
-    await Future.wait(_clients.values.map((client) => client.close(gracefulDuration: gracefulDuration)));
-    _clients.clear();
-  }
+  Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.values.map((client) => client.close(gracefulDuration: gracefulDuration)));
 
   void remove(int fd) => _clients.remove(fd);
 

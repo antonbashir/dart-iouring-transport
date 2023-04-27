@@ -13,7 +13,10 @@ class TransportServerConnection {
   TransportServerConnection(this._server, this._channel);
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);
+  Future<TransportPayload> readSingle({bool submit = true}) => _server.readSingle(_channel, submit: submit);
+
+  @pragma(preferInlinePragma)
+  Future<List<TransportPayload>> readMany(int count, {bool submit = true}) => _server.readMany(_channel, count, submit: submit);
 
   @pragma(preferInlinePragma)
   Future<void> writeSingle(Uint8List bytes, {bool submit = true}) => _server.writeSingle(_channel, bytes, submit: submit);
@@ -23,7 +26,7 @@ class TransportServerConnection {
 
   void listen(void Function(TransportPayload payload) listener, {void Function(dynamic error)? onError}) async {
     while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
-      await read().then(listener, onError: (error, stackTrace) {
+      await readSingle().then(listener, onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;

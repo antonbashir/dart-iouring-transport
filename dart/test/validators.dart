@@ -25,18 +25,18 @@ class Validators {
     if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convertMany(actual)}\nexpected = ${_decoder.convertMany(expected)}");
   }
 
-  static void responses(Iterable<Uint8List> actual) {
-    print(actual);
-    return responsesSum(actual.reduce((value, element) => Uint8List.fromList(value + element)), actual.length);
-  }
-
   static void requestsSum(Uint8List actual, int count) {
-    final expected = Generators.requests(count).reduce((value, element) => Uint8List.fromList(value + element));
+    final expected = Generators.requestsSum(count);
     if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
   static void responsesSum(Uint8List actual, int count) {
-    final expected = Generators.responses(count).reduce((value, element) => Uint8List.fromList(value + element));
+    final expected = Generators.responsesSum(count);
+    if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
+  }
+
+  static void responsesUnorderedSum(Uint8List actual, int count) {
+    final expected = Generators.responsesSumUnordered(count);
     if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 }
@@ -47,9 +47,13 @@ extension on Utf8Decoder {
 
 extension on Uint8List {
   bool equals(Uint8List bytes) {
-    if (length != bytes.length) return false;
+    if (length != bytes.length) {
+      return false;
+    }
     for (var i = 0; i < length; i++) {
-      if (this[i] != bytes[i]) return false;
+      if (this[i] != bytes[i]) {
+        return false;
+      }
     }
     return true;
   }
