@@ -72,7 +72,7 @@ class TransportServer {
     _pending++;
   }
 
-  Future<TransportPayload> readSingle(TransportChannel channel, {bool submit = true}) async {
+  Future<TransportPayload> read(TransportChannel channel, {bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
@@ -86,41 +86,6 @@ class TransportServer {
       _buffers.release(bufferId);
       throw error;
     });
-  }
-
-  Future<List<TransportPayload>> readMany(TransportChannel channel, int count, {bool submit = true}) async {
-    final messages = <TransportPayload>[];
-    final bufferIds = await _buffers.allocateArray(count);
-    if (_closing) throw TransportClosedException.forServer();
-    final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    final lastBufferId = bufferIds.last;
-    for (var index = 0; index < count - 1; index++) {
-      final bufferId = bufferIds[index];
-      _links.setInbound(bufferId, lastBufferId);
-      channel.read(
-        bufferId,
-        _readTimeout,
-        transportEventRead | transportEventServer | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
-      );
-    }
-    final completer = Completer();
-    _links.setInbound(lastBufferId, lastBufferId);
-    _callbacks.setInbound(lastBufferId, completer);
-    channel.read(
-      lastBufferId,
-      _readTimeout,
-      transportEventRead | transportEventServer | transportEventLink,
-    );
-    connection.pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.onError<Exception>((error, stackTrace) {
-      _buffers.releaseArray(bufferIds);
-      throw error;
-    });
-    for (var bufferId in bufferIds) messages.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
-    return messages;
   }
 
   Future<void> writeSingle(TransportChannel channel, Uint8List bytes, {bool submit = true}) async {

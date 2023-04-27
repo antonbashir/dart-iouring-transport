@@ -44,7 +44,7 @@ void testUnixStreamSingle({
       );
       final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(
-        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList(),
+        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
       );
       responses.forEach(Validators.response);
       if (serverSocket.existsSync()) serverSocket.deleteSync();
@@ -85,9 +85,9 @@ void testUnixStreamMany({
           connection.listen(
             (event) {
               serverResults.add(event.takeBytes());
-              if (serverResults.length == Generators.requestsSum(count).length) {
-                Validators.requestsSum(serverResults.takeBytes(), count);
-                connection.writeMany(Generators.responses(count));
+              if (serverResults.length == Generators.requestsSumOrdered(count).length) {
+                Validators.requestsSumOrdered(serverResults.takeBytes(), count);
+                connection.writeMany(Generators.responsesOrdered(count));
               }
             },
           );
@@ -98,15 +98,15 @@ void testUnixStreamMany({
         (client) async {
           final clientResults = BytesBuilder();
           final completer = Completer();
-          client.writeMany(Generators.requests(count)).then(
+          client.writeMany(Generators.requestsOrdered(count)).then(
                 (_) => client.listen(
                   (event) {
                     clientResults.add(event.takeBytes());
-                    if (clientResults.length == Generators.responsesSum(count).length) completer.complete();
+                    if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();
                   },
                 ),
               );
-          return completer.future.then((value) => Validators.responsesSum(clientResults.takeBytes(), count));
+          return completer.future.then((value) => Validators.responsesSumOrdered(clientResults.takeBytes(), count));
         },
       ));
       if (serverSocket.existsSync()) serverSocket.deleteSync();

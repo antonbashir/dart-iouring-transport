@@ -41,7 +41,7 @@ void testTcpSingle({
       );
       final clients = await worker.clients.tcp("127.0.0.1", 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(
-        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.readSingle().then((value) => value.takeBytes()))).toList(),
+        clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
       );
       responses.forEach(Validators.response);
       worker.transmitter!.send(null);
@@ -80,9 +80,9 @@ void testTcpMany({
           connection.listen(
             (event) {
               serverRequests.add(event.takeBytes());
-              if (serverRequests.length == Generators.requestsSum(count).length) {
-                Validators.requestsSum(serverRequests.takeBytes(), count);
-                connection.writeMany(Generators.responses(count));
+              if (serverRequests.length == Generators.requestsSumOrdered(count).length) {
+                Validators.requestsSumOrdered(serverRequests.takeBytes(), count);
+                connection.writeMany(Generators.responsesOrdered(count));
               }
             },
           );
@@ -97,15 +97,15 @@ void testTcpMany({
         (client) async {
           final clientResults = BytesBuilder();
           final completer = Completer();
-          client.writeMany(Generators.requests(count)).then(
+          client.writeMany(Generators.requestsOrdered(count)).then(
                 (_) => client.listen(
                   (event) {
                     clientResults.add(event.takeBytes());
-                    if (clientResults.length == Generators.responsesSum(count).length) completer.complete();
+                    if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();
                   },
                 ),
               );
-          return completer.future.then((value) => Validators.responsesSum(clientResults.takeBytes(), count));
+          return completer.future.then((value) => Validators.responsesSumOrdered(clientResults.takeBytes(), count));
         },
       ));
       worker.transmitter!.send(null);

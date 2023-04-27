@@ -20,18 +20,18 @@ class Validators {
     if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
-  static void requests(Iterable<Uint8List> actual) {
-    final expected = Generators.requests(actual.length);
+  static void requestsOrdered(Iterable<Uint8List> actual) {
+    final expected = Generators.requestsOrdered(actual.length);
     if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convertMany(actual)}\nexpected = ${_decoder.convertMany(expected)}");
   }
 
-  static void requestsSum(Uint8List actual, int count) {
-    final expected = Generators.requestsSum(count);
+  static void requestsSumOrdered(Uint8List actual, int count) {
+    final expected = Generators.requestsSumOrdered(count);
     if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
-  static void responsesSum(Uint8List actual, int count) {
-    final expected = Generators.responsesSum(count);
+  static void responsesSumOrdered(Uint8List actual, int count) {
+    final expected = Generators.responsesSumOrdered(count);
     if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
