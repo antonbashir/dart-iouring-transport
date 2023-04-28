@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
@@ -29,7 +30,7 @@ void testUdpSingle({
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.udp("0.0.0.0", 12345).listen(
+      worker.servers.udp(InternetAddress("0.0.0.0"), 12345).listen(
         (event) {
           event.respondSingleMessage(Generators.response()).then((value) {
             Validators.request(event.takeBytes());
@@ -38,7 +39,7 @@ void testUdpSingle({
       );
       final responseFutures = <Future<Uint8List>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
+        final client = worker.clients.udp(InternetAddress("127.0.0.1"), (worker.id + 1) * 2000 + (clientIndex + 1), InternetAddress("127.0.0.1"), 12345);
         responseFutures.add(client.sendSingleMessage(Generators.request(), retry: TransportDefaults.retry()).then((value) => client.receiveSingleMessage()).then((value) => value.takeBytes()));
       }
       final responses = await Future.wait(responseFutures);
@@ -71,12 +72,12 @@ void testUdpMany({
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.udp("0.0.0.0", 12345).listen((event) {
+      worker.servers.udp(InternetAddress("0.0.0.0"), 12345).listen((event) {
         event.respondManyMessage(Generators.responsesUnordered(count)).then((value) => Validators.request(event.takeBytes()));
       });
       final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-        final client = worker.clients.udp("127.0.0.1", (worker.id + 1) * 2000 + (clientIndex + 1), "127.0.0.1", 12345);
+        final client = worker.clients.udp(InternetAddress("127.0.0.1"), (worker.id + 1) * 2000 + (clientIndex + 1), InternetAddress("127.0.0.1"), 12345);
         final clientResults = BytesBuilder();
         final completer = Completer();
         client.sendManyMessages(Generators.requestsUnordered(count)).then(

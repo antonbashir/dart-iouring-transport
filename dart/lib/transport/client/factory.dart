@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'client.dart';
 import 'provider.dart';
@@ -11,23 +12,23 @@ class TransportClientsFactory {
   TransportClientsFactory(this._registry);
 
   Future<TransportClientStreamPool> tcp(
-    String host,
+    InternetAddress address,
     int port, {
     TransportTcpClientConfiguration? configuration,
   }) =>
-      _registry.createTcp(host, port, configuration: configuration);
+      _registry.createTcp(address.address, port, configuration: configuration);
 
   TransportClientDatagramProvider udp(
-    String sourceHost,
+    InternetAddress sourceAddress,
     int sourcePort,
-    String destinationHost,
+    InternetAddress destinationAddress,
     int destinationPort, {
     TransportUdpClientConfiguration? configuration,
   }) =>
       _registry.createUdp(
-        sourceHost,
+        sourceAddress.address,
         sourcePort,
-        destinationHost,
+        destinationAddress.address,
         destinationPort,
         configuration: configuration,
       );

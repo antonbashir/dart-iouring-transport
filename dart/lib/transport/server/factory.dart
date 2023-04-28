@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io';
 
 import '../bindings.dart';
 import '../buffers.dart';
@@ -21,12 +22,12 @@ class TransportServersFactory {
     this._buffers,
   );
 
-  void tcp(String host, int port, void Function(TransportServerConnection connection) onAccept, {TransportTcpServerConfiguration? configuration}) {
-    _registry.createTcp(host, port, configuration: configuration).accept(onAccept);
+  void tcp(InternetAddress address, int port, void Function(TransportServerConnection connection) onAccept, {TransportTcpServerConfiguration? configuration}) {
+    _registry.createTcp(address.address, port, configuration: configuration).accept(onAccept);
   }
 
-  TransportServerDatagramReceiver udp(String host, int port) {
-    final server = _registry.createUdp(host, port);
+  TransportServerDatagramReceiver udp(InternetAddress address, int port) {
+    final server = _registry.createUdp(address.address, port);
     return TransportServerDatagramReceiver(
       server,
       TransportChannel(

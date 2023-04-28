@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
@@ -104,6 +107,7 @@ void main() {
       testCustom(index, 4);
     }
   });
+  testDomain();
 }
 
 void testInitialization({
@@ -156,4 +160,25 @@ void testCustom(int index, int workers) {
   });
 }
 
-final errorPrinter = (error, _) => print(error);
+void testDomain() {
+  test("[domain]", () async {
+    final transport = Transport(
+      TransportDefaults.transport(),
+      TransportDefaults.listener(),
+      TransportDefaults.inbound(),
+      TransportDefaults.outbound(),
+    );
+    final done = ReceivePort();
+    await transport.run(transmitter: done.sendPort, (input) async {
+      final worker = TransportWorker(input);
+      await worker.initialize();
+      final address = (await InternetAddress.lookup("google.com")).last;
+      final clients = await worker.clients.tcp(address, 443);
+      await clients.select().writeSingle(Utf8Encoder().convert("GET"));
+      worker.transmitter!.send(null);
+    });
+    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    done.close();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+  });
+}
