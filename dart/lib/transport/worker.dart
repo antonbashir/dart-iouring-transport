@@ -272,7 +272,7 @@ class TransportWorker {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
         //print("${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         if (event == transportEventCustom) {
-          _callbacks.notifyCustom(result, data);
+          _callbacks.notifyCustom(result, (data >> 16) & 0xffffffff);
           continue;
         }
         final fd = (data >> 32) & 0xffffffff;
