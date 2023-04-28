@@ -294,7 +294,7 @@ class TransportServer {
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
-    await Future.wait(_connections.keys.map(closeConnection));
+    await Future.wait(_connections.keys.toList().map(closeConnection));
     if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
     _bindings.transport_close_descritor(pointer.ref.fd);
     _bindings.transport_server_destroy(pointer);

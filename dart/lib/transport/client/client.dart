@@ -273,4 +273,6 @@ class TransportClientStreamPool {
   Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamProvider provider) mapper) => _providers.map(mapper);
 
   int count() => _providers.length;
+
+  Future<void> close() => Future.wait(_providers.map((provider) => provider.close()));
 }
