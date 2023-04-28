@@ -19396,13 +19396,11 @@ class TransportBindings {
     ffi.Pointer<transport_worker_t> worker,
     ffi.Pointer<transport_worker_configuration_t> configuration,
     int id,
-    int parent_fd,
   ) {
     return _transport_worker_initialize(
       worker,
       configuration,
       id,
-      parent_fd,
     );
   }
 
@@ -19411,12 +19409,11 @@ class TransportBindings {
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Uint8,
-              ffi.Int)>>('transport_worker_initialize');
+              ffi.Uint8)>>('transport_worker_initialize');
   late final _transport_worker_initialize =
       _transport_worker_initializePtr.asFunction<
           int Function(ffi.Pointer<transport_worker_t>,
-              ffi.Pointer<transport_worker_configuration_t>, int, int)>();
+              ffi.Pointer<transport_worker_configuration_t>, int)>();
 
   void transport_worker_custom(
     ffi.Pointer<transport_worker_t> worker,
@@ -24043,8 +24040,7 @@ class _SymbolAddresses {
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Uint8,
-              ffi.Int)>> get transport_worker_initialize =>
+              ffi.Uint8)>> get transport_worker_initialize =>
       _library._transport_worker_initializePtr;
   ffi.Pointer<
           ffi.NativeFunction<

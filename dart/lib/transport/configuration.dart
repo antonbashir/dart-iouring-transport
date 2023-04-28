@@ -3,27 +3,19 @@ import 'package:retry/retry.dart';
 class TransportConfiguration {
   final int listenerIsolates;
   final int workerInsolates;
-  final int inboundWorkerMaxThreads;
-  final int outboundWorkerMaxThreads;
 
   TransportConfiguration({
     required this.listenerIsolates,
     required this.workerInsolates,
-    required this.inboundWorkerMaxThreads,
-    required this.outboundWorkerMaxThreads,
   });
 
   TransportConfiguration copyWith({
     int? listenerIsolates,
     int? workerInsolates,
-    int? inboundWorkerMaxThreads,
-    int? outboundWorkerMaxThreads,
   }) =>
       TransportConfiguration(
         listenerIsolates: listenerIsolates ?? this.listenerIsolates,
         workerInsolates: workerInsolates ?? this.workerInsolates,
-        inboundWorkerMaxThreads: inboundWorkerMaxThreads ?? this.inboundWorkerMaxThreads,
-        outboundWorkerMaxThreads: outboundWorkerMaxThreads ?? this.outboundWorkerMaxThreads,
       );
 }
 

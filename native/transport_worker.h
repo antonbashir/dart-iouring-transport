@@ -46,8 +46,7 @@ extern "C"
 
   int transport_worker_initialize(transport_worker_t *worker,
                                   transport_worker_configuration_t *configuration,
-                                  uint8_t id,
-                                  int parent_fd);
+                                  uint8_t id);
 
   void transport_worker_custom(transport_worker_t *worker, uint32_t id, uint32_t custom_data);
   void transport_worker_write(transport_worker_t *worker,
