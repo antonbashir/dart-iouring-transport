@@ -7,6 +7,7 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
+import 'file.dart';
 import 'tcp.dart';
 import 'udp.dart';
 import 'unix.dart';
@@ -64,31 +65,36 @@ void main() {
   //     testUdpMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
   //   }
   // });
-  group("[unix dgram]", timeout: Timeout(Duration(minutes: 5)), () {
-    final testsCount = 5;
-    for (var index = 0; index < testsCount; index++) {
-      testUnixDgramSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-      testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-    }
-  });
-  // group("[file]", timeout: Timeout(Duration(minutes: 5)), () {
+  // group("[unix dgram]", timeout: Timeout(Duration(minutes: 5)), () {
   //   final testsCount = 5;
   //   for (var index = 0; index < testsCount; index++) {
-  //     testFile(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFile(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFile(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFile(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFile(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testUnixDgramSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+  //     testUnixDgramMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+  //     testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+  //     testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+  //     testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+  //     testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
   //   }
   // });
+  group("[file]", timeout: Timeout(Duration(minutes: 5)), () {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
+      testFileSingle(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileLoad(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
+      testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
+      testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
+      testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+      testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+    }
+  });
   // group("[custom]", () {
   //   final testsCount = 10;
   //   for (var index = 0; index < testsCount; index++) {

@@ -43,7 +43,7 @@ class TransportFileRegistry {
     return file;
   }
 
-  Future<void> close({Duration? gracefulDuration}) => Future.wait(_files.values.map((file) => file.close(gracefulDuration: gracefulDuration)));
+  Future<void> close({Duration? gracefulDuration}) => Future.wait(_files.values.toList().map((file) => file.close(gracefulDuration: gracefulDuration)));
 
   void remove(int fd) => _files.remove(fd);
 }
