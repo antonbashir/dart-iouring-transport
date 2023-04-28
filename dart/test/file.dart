@@ -67,7 +67,7 @@ void testFileLoad({
       final file = worker.files.open(nativeFile.path);
       final data = Generators.requestsOrdered(count * count);
       final result = await file.writeMany(data).then((_) => file.load(blocksCount: count));
-      Validators.responsesSumOrdered(result, count * count);
+      Validators.requestsSumOrdered(result, count * count);
       if (nativeFile.existsSync()) nativeFile.deleteSync();
       worker.transmitter!.send(null);
     });

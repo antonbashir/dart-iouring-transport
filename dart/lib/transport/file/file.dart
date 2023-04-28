@@ -72,10 +72,9 @@ class TransportFile {
     final bytes = BytesBuilder();
     final bufferIds = await buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forFile();
-    final lastBufferId = bufferIds.length;
+    final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      offset += buffers.bufferSize;
       _links.setOutbound(bufferId, lastBufferId);
       _channel.read(
         bufferId,
@@ -84,6 +83,7 @@ class TransportFile {
         sqeFlags: transportIosqeIoLink,
         offset: offset,
       );
+      offset += buffers.bufferSize;
     }
     final completer = Completer();
     _links.setOutbound(lastBufferId, lastBufferId);

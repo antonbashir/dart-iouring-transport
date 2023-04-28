@@ -49,7 +49,7 @@ class TransportFileProvider {
               },
             );
 
-        return blocksCount == 1 ? single(blocksCount, offset) : many(blocksCount, offset);
+        return (blocksCount == 1 ? single(blocksCount, offset) : many(blocksCount, offset));
       });
 
   @pragma(preferInlinePragma)
