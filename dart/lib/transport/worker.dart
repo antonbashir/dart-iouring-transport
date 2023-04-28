@@ -449,4 +449,10 @@ class TransportWorker {
   void notifyCustom(int id, int data) {
     _bindings.transport_worker_custom(_outboundWorkerPointer, id, data);
   }
+
+  @visibleForTesting
+  TransportBuffers get inboundBuffers => _inboundBuffers;
+
+  @visibleForTesting
+  TransportBuffers get outboundBuffers => _outboundBuffers;
 }

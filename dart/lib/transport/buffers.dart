@@ -67,6 +67,10 @@ class TransportBuffers {
     return bufferIds;
   }
 
+  int available() => _bindings.transport_worker_available_buffers(_worker);
+
+  int used() => _bindings.transport_worker_used_buffers(_worker);
+
   @pragma(preferInlinePragma)
   void releaseArray(List<int> buffers) {
     for (var id in buffers) release(id);

@@ -19720,6 +19720,37 @@ class TransportBindings {
       _transport_worker_release_bufferPtr
           .asFunction<void Function(ffi.Pointer<transport_worker_t>, int)>();
 
+  int transport_worker_available_buffers(
+    ffi.Pointer<transport_worker_t> worker,
+  ) {
+    return _transport_worker_available_buffers(
+      worker,
+    );
+  }
+
+  late final _transport_worker_available_buffersPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>(
+      'transport_worker_available_buffers');
+  late final _transport_worker_available_buffers =
+      _transport_worker_available_buffersPtr
+          .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
+
+  int transport_worker_used_buffers(
+    ffi.Pointer<transport_worker_t> worker,
+  ) {
+    return _transport_worker_used_buffers(
+      worker,
+    );
+  }
+
+  late final _transport_worker_used_buffersPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>(
+      'transport_worker_used_buffers');
+  late final _transport_worker_used_buffers = _transport_worker_used_buffersPtr
+      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
+
   ffi.Pointer<sockaddr> transport_worker_get_datagram_address(
     ffi.Pointer<transport_worker_t> worker,
     int socket_family,
@@ -24135,6 +24166,16 @@ class _SymbolAddresses {
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint16)>>
       get transport_worker_release_buffer =>
           _library._transport_worker_release_bufferPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_available_buffers =>
+          _library._transport_worker_available_buffersPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_used_buffers =>
+          _library._transport_worker_used_buffersPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<sockaddr> Function(

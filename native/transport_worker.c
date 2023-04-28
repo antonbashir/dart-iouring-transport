@@ -93,6 +93,16 @@ int32_t transport_worker_get_buffer(transport_worker_t *worker)
   return transport_buffers_pool_pop(&worker->free_buffers);
 }
 
+int32_t transport_worker_available_buffers(transport_worker_t *worker)
+{
+  return worker->free_buffers.count;
+}
+
+int32_t transport_worker_used_buffers(transport_worker_t *worker)
+{
+  return worker->buffers_count - worker->free_buffers.count;
+}
+
 void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id)
 {
   struct iovec *buffer = &worker->buffers[buffer_id];

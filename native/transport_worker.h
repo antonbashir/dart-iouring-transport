@@ -91,6 +91,8 @@ extern "C"
 
   int32_t transport_worker_get_buffer(transport_worker_t *worker);
   void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer_id);
+  int32_t transport_worker_available_buffers(transport_worker_t *worker);
+  int32_t transport_worker_used_buffers(transport_worker_t *worker);
 
   struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id);
 
