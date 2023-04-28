@@ -154,5 +154,13 @@ struct sockaddr *transport_client_get_destination_address(transport_client_t *cl
 
 void transport_client_destroy(transport_client_t *client)
 {
+  if (client->family == UNIX)
+  {
+    unlink(client->unix_destination_address.sun_path);
+    if (strlen(client->unix_source_address.sun_path))
+    {
+      unlink(client->unix_source_address.sun_path);
+    }
+  }
   free(client);
 }

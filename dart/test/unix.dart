@@ -46,7 +46,6 @@ void testUnixStreamSingle({
         clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
       );
       responses.forEach(Validators.response);
-      if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.transmitter!.send(null);
     });
     await done.take(workers).toList();

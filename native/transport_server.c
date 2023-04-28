@@ -147,5 +147,9 @@ int transport_server_initialize_unix_dgram(transport_server_t *server, transport
 
 void transport_server_destroy(transport_server_t *server)
 {
+  if (server->family == UNIX)
+  {
+    unlink(server->unix_server_address.sun_path);
+  }
   free(server);
 }
