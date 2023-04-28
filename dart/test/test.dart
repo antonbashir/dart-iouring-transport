@@ -93,6 +93,7 @@ void main() {
       testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
       testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
       testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 1);
     }
   });
   group("[custom]", () {
