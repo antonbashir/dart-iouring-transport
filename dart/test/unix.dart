@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
@@ -9,7 +9,6 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'generators.dart';
-import 'test.dart';
 import 'validators.dart';
 
 void testUnixStreamSingle({
@@ -109,7 +108,6 @@ void testUnixStreamMany({
           return completer.future.then((value) => Validators.responsesSumOrdered(clientResults.takeBytes(), count));
         },
       ));
-      if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.transmitter!.send(null);
     });
     await done.take(workers).toList();
@@ -118,7 +116,7 @@ void testUnixStreamMany({
   });
 }
 
-void testUnixDgram({
+void testUnixDgramSingle({
   required int index,
   required int listeners,
   required int workers,
@@ -126,7 +124,7 @@ void testUnixDgram({
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("[index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
+  test("(single) [index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
       TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
@@ -134,35 +132,80 @@ void testUnixDgram({
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
-    final serverData = Utf8Encoder().convert("respond");
     await transport.run(transmitter: done.sendPort, (input) async {
-      final clientData = Utf8Encoder().convert("request");
-      final serverData = Utf8Encoder().convert("respond");
       final worker = TransportWorker(input);
       await worker.initialize();
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
-      clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
-      worker.servers.unixDatagram(serverSocket.path).listen(
-        onError: (error) => print(error),
-        (event) {
-          event.release();
-          event.respondSingleMessage(serverData).then((value) => worker.transmitter!.send(serverData)).onError((error, stackTrace) => print(error));
-        },
-      );
-      final responseFutures = <Future<List<int>>>[];
+      worker.servers.unixDatagram(serverSocket.path).listen((event) {
+        event.respondSingleMessage(Generators.response()).then((value) {
+          Validators.request(event.takeBytes());
+        });
+      });
+      final responseFutures = <Future<Uint8List>>[];
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
+        if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-        responseFutures.add(client.sendSingleMessage(clientData, retry: TransportDefaults.retry()).then((value) => client.receiveSingleMessage()).then((value) => value.takeBytes()));
+        responseFutures.add(client.sendSingleMessage(Generators.request(), retry: TransportDefaults.retry()).then((value) => client.receiveSingleMessage()).then((value) => value.takeBytes()));
       }
       final responses = await Future.wait(responseFutures);
-      responses.forEach((response) => worker.transmitter!.send(response));
-      if (serverSocket.existsSync()) serverSocket.deleteSync();
-      clientSockets.where((socket) => socket.existsSync()).forEach((socket) => socket.deleteSync());
+      responses.forEach(Validators.response);
+      worker.transmitter!.send(null);
     });
-    (await done.take(workers * clients * 2).toList()).forEach((response) => expect(response, serverData));
+    await done.take(workers).toList();
     done.close();
-    await transport.shutdown();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+  });
+}
+
+void testUnixDgramMany({
+  required int index,
+  required int listeners,
+  required int workers,
+  required int clients,
+  required int listenerFlags,
+  required int workerFlags,
+  required int count,
+}) {
+  test("(many) [index = $index, listeners = $listeners, workers = $workers, clients = $clients, count = $count]", () async {
+    final transport = Transport(
+      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
+      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
+    );
+    final done = ReceivePort();
+    await transport.run(transmitter: done.sendPort, (input) async {
+      final worker = TransportWorker(input);
+      await worker.initialize();
+      final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
+      final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
+      if (serverSocket.existsSync()) serverSocket.deleteSync();
+      worker.servers.unixDatagram(serverSocket.path).listen((event) {
+        event.respondManyMessage(Generators.responsesUnordered(count)).then((value) => Validators.request(event.takeBytes()));
+      });
+      final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
+      for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
+        if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
+        final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
+        final clientResults = BytesBuilder();
+        final completer = Completer();
+        client.sendManyMessages(Generators.requestsUnordered(count)).then(
+              (_) => client.listenByMany(
+                count,
+                (event) {
+                  clientResults.add(event.takeBytes());
+                  if (clientResults.length == responsesSumLength) completer.complete();
+                },
+              ),
+            );
+        await completer.future.then((_) => Validators.responsesUnorderedSum(clientResults.takeBytes(), count * count));
+      }
+      worker.transmitter!.send(null);
+    });
+    await done.take(workers).toList();
+    done.close();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
