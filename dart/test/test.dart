@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';

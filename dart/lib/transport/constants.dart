@@ -173,6 +173,7 @@ const transportSocketOptionTcpNoDelay = 1 << 28;
 const transportSocketOptionTcpSyncnt = 1 << 29;
 
 const transportTimeoutInfinity = -1;
+const transportParentRingNone = -1;
 
 const transportIosqeFixedFile = 1 << 0;
 const transportIosqeIoDrain = 1 << 1;

@@ -2,7 +2,10 @@
 #include "transport_worker.h"
 #include "transport_constants.h"
 
-int transport_worker_initialize(transport_worker_t *worker, transport_worker_configuration_t *configuration, uint8_t id)
+int transport_worker_initialize(transport_worker_t *worker,
+                                transport_worker_configuration_t *configuration,
+                                uint8_t id,
+                                int parent_fd)
 {
   worker->id = id;
   worker->listeners = transport_listener_pool_initialize();
@@ -71,7 +74,28 @@ int transport_worker_initialize(transport_worker_t *worker, transport_worker_con
   {
     return -ENOMEM;
   }
-  result = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
+  if (parent_fd == TRANSPORT_PARENT_RING_NONE)
+  {
+    result = io_uring_queue_init(configuration->ring_size, worker->ring, configuration->ring_flags);
+    if (result)
+    {
+      return result;
+    }
+
+    result = io_uring_register_buffers(worker->ring, worker->buffers, worker->buffers_count);
+    if (result)
+    {
+      return result;
+    }
+
+    return 0;
+  }
+
+  struct io_uring_params params = {
+      .flags = configuration->ring_flags | IORING_SETUP_ATTACH_WQ,
+      .wq_fd = parent_fd,
+  };
+  result = io_uring_queue_init_params(configuration->ring_size, worker->ring, &params);
   if (result)
   {
     return result;
@@ -379,6 +403,11 @@ void transport_worker_remove_event(transport_worker_t *worker, uint64_t data)
 struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id)
 {
   return socket_family == INET ? (struct sockaddr *)worker->inet_used_messages[buffer_id].msg_name : (struct sockaddr *)worker->unix_used_messages[buffer_id].msg_name;
+}
+
+int transport_worker_get_fd(transport_worker_t* worker) 
+{
+  return worker->ring->ring_fd;
 }
 
 void transport_worker_destroy(transport_worker_t *worker)

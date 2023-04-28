@@ -19396,11 +19396,13 @@ class TransportBindings {
     ffi.Pointer<transport_worker_t> worker,
     ffi.Pointer<transport_worker_configuration_t> configuration,
     int id,
+    int parent_fd,
   ) {
     return _transport_worker_initialize(
       worker,
       configuration,
       id,
+      parent_fd,
     );
   }
 
@@ -19409,11 +19411,12 @@ class TransportBindings {
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Uint8)>>('transport_worker_initialize');
+              ffi.Uint8,
+              ffi.Int)>>('transport_worker_initialize');
   late final _transport_worker_initialize =
       _transport_worker_initializePtr.asFunction<
           int Function(ffi.Pointer<transport_worker_t>,
-              ffi.Pointer<transport_worker_configuration_t>, int)>();
+              ffi.Pointer<transport_worker_configuration_t>, int, int)>();
 
   void transport_worker_custom(
     ffi.Pointer<transport_worker_t> worker,
@@ -19760,6 +19763,21 @@ class TransportBindings {
   late final _transport_worker_peek = _transport_worker_peekPtr.asFunction<
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
           ffi.Pointer<io_uring>)>();
+
+  int transport_worker_get_fd(
+    ffi.Pointer<transport_worker_t> worker,
+  ) {
+    return _transport_worker_get_fd(
+      worker,
+    );
+  }
+
+  late final _transport_worker_get_fdPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<transport_worker_t>)>>('transport_worker_get_fd');
+  late final _transport_worker_get_fd = _transport_worker_get_fdPtr
+      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
 
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
@@ -24025,7 +24043,8 @@ class _SymbolAddresses {
           ffi.Int Function(
               ffi.Pointer<transport_worker_t>,
               ffi.Pointer<transport_worker_configuration_t>,
-              ffi.Uint8)>> get transport_worker_initialize =>
+              ffi.Uint8,
+              ffi.Int)>> get transport_worker_initialize =>
       _library._transport_worker_initializePtr;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -24131,6 +24150,9 @@ class _SymbolAddresses {
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
               ffi.Pointer<io_uring>)>> get transport_worker_peek =>
       _library._transport_worker_peekPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_get_fd => _library._transport_worker_get_fdPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
@@ -31445,6 +31467,8 @@ const int TRANSPORT_BUFFER_USED = -1;
 
 const int TRANSPORT_TIMEOUT_INFINITY = -1;
 
+const int TRANSPORT_PARENT_RING_NONE = -1;
+
 const int TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK = 2;
 
 const int TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC = 4;
@@ -31499,7 +31523,7 @@ const int TRANSPORT_SOCKET_OPTION_TCP_KEEPINTVL = 67108864;
 
 const int TRANSPORT_SOCKET_OPTION_TCP_MAXSEG = 134217728;
 
-const int TRANSPORT_SOCKET_OPTION_TCP_DISABLE_NODELAY = 268435456;
+const int TRANSPORT_SOCKET_OPTION_TCP_NODELAY = 268435456;
 
 const int TRANSPORT_SOCKET_OPTION_TCP_SYNCNT = 536870912;
 
@@ -31511,7 +31535,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

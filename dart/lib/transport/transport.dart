@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'constants.dart';
 import 'extensions.dart';
 
 import 'bindings.dart';
@@ -105,6 +106,31 @@ class Transport {
     final workerMeessagePorts = <SendPort>[];
     final workerActivators = <SendPort>[];
 
+    var currentInboundWorker = 0;
+    int nextInboundWorkerFd() {
+      if (inboundWorkerAddresses.length > transportConfiguration.inboundWorkerMaxThreads) {
+        final fd = _bindings.transport_worker_get_fd(Pointer<transport_worker_t>.fromAddress(inboundWorkerAddresses[currentInboundWorker]));
+        if (++currentInboundWorker == transportConfiguration.inboundWorkerMaxThreads) currentInboundWorker = 0;
+        return fd;
+      }
+      return transportParentRingNone;
+    }
+
+    var currentOutboundWorker = 0;
+    int nextOutboundWorkerFd() {
+      if (transportConfiguration.outboundWorkerMaxThreads == 0) {
+        final fd = _bindings.transport_worker_get_fd(Pointer<transport_worker_t>.fromAddress(inboundWorkerAddresses[currentInboundWorker]));
+        if (++currentInboundWorker == inboundWorkerAddresses.length) currentInboundWorker = 0;
+        return fd;
+      }
+      if (outboundWorkerAddresses.length > transportConfiguration.outboundWorkerMaxThreads) {
+        final fd = _bindings.transport_worker_get_fd(Pointer<transport_worker_t>.fromAddress(outboundWorkerAddresses[currentOutboundWorker]));
+        if (++currentOutboundWorker == transportConfiguration.outboundWorkerMaxThreads) currentOutboundWorker = 0;
+        return fd;
+      }
+      return transportParentRingNone;
+    }
+
     fromTransportToWorker.listen((ports) {
       SendPort toWorker = ports[0];
       workerMeessagePorts.add(ports[1]);
@@ -121,6 +147,7 @@ class Transport {
         inboundWorkerPointer,
         _transportPointer.ref.inbound_worker_configuration,
         inboundWorkerAddresses.length,
+        nextInboundWorkerFd(),
       );
       if (result < 0) {
         calloc.free(inboundWorkerPointer);
@@ -139,6 +166,7 @@ class Transport {
         outboundWorkerPointer,
         _transportPointer.ref.outbound_worker_configuration,
         outboundWorkerAddresses.length,
+        nextOutboundWorkerFd(),
       );
       if (result < 0) {
         _bindings.transport_worker_destroy(inboundWorkerPointer);

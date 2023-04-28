@@ -10,6 +10,8 @@ class TransportDefaults {
   static TransportConfiguration transport() => TransportConfiguration(
         listenerIsolates: 1,
         workerInsolates: 2,
+        inboundWorkerMaxThreads: 2,
+        outboundWorkerMaxThreads: 2,
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
