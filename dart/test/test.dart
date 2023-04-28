@@ -171,7 +171,7 @@ void testDomain() {
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
       await worker.initialize();
-      final address = (await InternetAddress.lookup("google.com")).last;
+      final address = (await InternetAddress.lookup("google.com")).first;
       final clients = await worker.clients.tcp(address, 443);
       await clients.select().writeSingle(Utf8Encoder().convert("GET"));
       worker.transmitter!.send(null);
