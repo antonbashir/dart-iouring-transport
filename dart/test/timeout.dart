@@ -29,14 +29,15 @@ void testTcpTimeoutSingle({
       final time = Stopwatch();
       var completer = Completer();
 
-      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (client) {});
-
+      var server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (client) {});
       time.start();
       await worker.clients
           .tcp(InternetAddress("1.1.1.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(connectTimeout: connection))
           .then((_) {}, onError: _handleTimeout(time, connection, completer));
       await completer.future;
+      await server.close();
 
+      server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (client) {});
       time.reset();
       completer = Completer();
       await worker.clients
@@ -44,19 +45,19 @@ void testTcpTimeoutSingle({
           .then((value) => value.select().read())
           .then((_) {}, onError: _handleTimeout(time, clientRead, completer));
       await completer.future;
+      await server.close();
 
-      time.reset();
-      completer = Completer();
-      worker.servers.tcp(
+      server = worker.servers.tcp(
         InternetAddress("0.0.0.0"),
         12345,
         configuration: TransportDefaults.tcpServer().copyWith(readTimeout: serverRead),
         (connection) => connection.read().then((_) {}, onError: _handleTimeout(time, serverRead, completer)),
       );
-
-      var clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
+      time.reset();
+      completer = Completer();
+      await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
       await completer.future;
-      await clients.close();
+      await server.close();
 
       worker.transmitter!.send(null);
     });
@@ -83,16 +84,14 @@ void testUnixStreamTimeoutSingle({
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       if (serverSocket.existsSync()) serverSocket.deleteSync();
 
-      var server = worker.servers.unixStream(serverSocket.path, (client) {
-        print("connect");
-      });
-
+      var server = worker.servers.unixStream(serverSocket.path, (client) {});
       time.start();
       await worker.clients
           .unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(readTimeout: clientRead))
           .then((value) => value.select().read())
           .then((_) {}, onError: _handleTimeout(time, clientRead, completer));
       await completer.future;
+      await server.close();
 
       time.reset();
       completer = Completer();
@@ -101,11 +100,8 @@ void testUnixStreamTimeoutSingle({
         configuration: TransportDefaults.unixStreamServer().copyWith(readTimeout: serverRead),
         (connection) => connection.read().then((_) {}, onError: _handleTimeout(time, serverRead, completer)),
       );
-
-      var clients = await worker.clients.unixStream(serverSocket.path);
+      await worker.clients.unixStream(serverSocket.path);
       await completer.future;
-      await clients.close();
-
       await server.close();
 
       worker.transmitter!.send(null);

@@ -327,7 +327,6 @@ void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
       io_uring_prep_cancel(sqe, (void *)node->data, IORING_ASYNC_CANCEL_ALL);
       sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
       to_delete[to_delete_count++] = index;
-      printf("delete cancel %d\n", node->fd);
     }
   }
   for (int index = 0; index < to_delete_count; index++)
@@ -363,9 +362,6 @@ void transport_worker_check_event_timeouts(transport_worker_t *worker)
     uint64_t timestamp = node->timestamp;
     uint64_t data = node->data;
     time_t current_time = time(NULL);
-    printf("current_time = %d\n", current_time);
-    printf("timestamp = %d\n", timestamp);
-    printf("delta = %d\n", current_time - timestamp);
     if (current_time - timestamp > timeout)
     {
       struct io_uring *ring = worker->ring;
@@ -374,7 +370,6 @@ void transport_worker_check_event_timeouts(transport_worker_t *worker)
       io_uring_prep_cancel(sqe, (void *)data, IORING_ASYNC_CANCEL_ALL);
       sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
       to_delete[to_delete_count++] = index;
-      printf("delete timeout %d\n", node->fd);
     }
   }
   for (int index = 0; index < to_delete_count; index++)

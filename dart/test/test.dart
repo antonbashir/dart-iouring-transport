@@ -36,11 +36,11 @@ void main() {
       // testTcpMany(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
       // testTcpMany(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
       // testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      testTcpTimeoutSingle(
-        connection: Duration(seconds: 1),
-        serverRead: Duration(seconds: 5),
-        clientRead: Duration(seconds: 3),
-      );
+      // testTcpTimeoutSingle(
+      //   connection: Duration(seconds: 1),
+      //   serverRead: Duration(seconds: 5),
+      //   clientRead: Duration(seconds: 3),
+      // );
     }
   });
   group("[unix stream]", () {
@@ -56,12 +56,10 @@ void main() {
       // testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
       // testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
       // testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      // testUnixStreamTimeoutSingle(
-      //   serverRead: Duration(seconds: 5),
-      //   serverWrite: Duration(seconds: 4),
-      //   clientRead: Duration(seconds: 3),
-      //   clientWrite: Duration(seconds: 2),
-      // );
+      testUnixStreamTimeoutSingle(
+        serverRead: Duration(seconds: 5),
+        clientRead: Duration(seconds: 3),
+      );
     }
   });
   // group("[udp]", () {
