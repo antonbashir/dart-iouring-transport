@@ -16,12 +16,12 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = false;
-  final tcp = false;
-  final udp = false;
-  final unixStream = false;
-  final unixDgram = false;
-  final file = false;
+  final initialization = true;
+  final tcp = true;
+  final udp = true;
+  final unixStream = true;
+  final unixDgram = true;
+  final file = true;
   final timeout = true;
 
   group("[initialization]", skip: !initialization, () {
