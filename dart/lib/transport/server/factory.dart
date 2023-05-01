@@ -8,12 +8,17 @@ import 'configuration.dart';
 import 'connection.dart';
 import 'datagram.dart';
 import 'registry.dart';
+import 'server.dart';
+import 'package:meta/meta.dart';
 
 class TransportServersFactory {
   final TransportBindings _bindings;
   final TransportServerRegistry _registry;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
+
+  @visibleForTesting
+  TransportServerRegistry get registry => _registry;
 
   TransportServersFactory(
     this._bindings,
@@ -22,9 +27,8 @@ class TransportServersFactory {
     this._buffers,
   );
 
-  void tcp(InternetAddress address, int port, void Function(TransportServerConnection connection) onAccept, {TransportTcpServerConfiguration? configuration}) {
-    _registry.createTcp(address.address, port, configuration: configuration).accept(onAccept);
-  }
+  TransportServerCloser tcp(InternetAddress address, int port, void Function(TransportServerConnection connection) onAccept, {TransportTcpServerConfiguration? configuration}) =>
+      _registry.createTcp(address.address, port, configuration: configuration)..accept(onAccept);
 
   TransportServerDatagramReceiver udp(InternetAddress address, int port) {
     final server = _registry.createUdp(address.address, port);
@@ -39,9 +43,8 @@ class TransportServersFactory {
     );
   }
 
-  void unixStream(String path, void Function(TransportServerConnection connection) onAccept) {
-    _registry.createUnixStream(path).accept(onAccept);
-  }
+  TransportServerCloser unixStream(String path, void Function(TransportServerConnection connection) onAccept, {TransportUnixStreamServerConfiguration? configuration}) =>
+      _registry.createUnixStream(path, configuration: configuration)..accept(onAccept);
 
   TransportServerDatagramReceiver unixDatagram(String path) {
     final server = _registry.createUnixDatagram(path);

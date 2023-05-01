@@ -34,4 +34,7 @@ class TransportServerConnection {
 
   @pragma(preferInlinePragma)
   Future<void> close() => _server.closeConnection(_channel.fd);
+
+  @pragma(preferInlinePragma)
+  Future<void> closeServer() => _server.close();
 }

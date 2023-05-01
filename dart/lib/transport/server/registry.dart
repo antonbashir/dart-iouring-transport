@@ -13,10 +13,17 @@ import '../exception.dart';
 import '../extensions.dart';
 import 'configuration.dart';
 import 'server.dart';
+import 'package:meta/meta.dart';
 
 class TransportServerRegistry {
   final _servers = <int, TransportServer>{};
   final _serverConnections = <int, TransportServer>{};
+
+  @visibleForTesting
+  Map<int, TransportServer> get servers => _servers;
+
+  @visibleForTesting
+  Map<int, TransportServer> get serverConnections => _serverConnections;
 
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;

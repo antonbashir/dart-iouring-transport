@@ -20,7 +20,11 @@ class _TransportConnectionState {
   Completer<void> closer = Completer();
 }
 
-class TransportServer {
+abstract class TransportServerCloser {
+  Future<void> close();
+}
+
+class TransportServer implements TransportServerCloser {
   final _closer = Completer();
   final _connections = <int, _TransportConnectionState>{};
 
@@ -288,17 +292,18 @@ class TransportServer {
   @pragma(preferInlinePragma)
   bool connectionIsActive(int fd) => _connections[fd]?.closing == false;
 
+  @override
   Future<void> close({Duration? gracefulDuration}) async {
     if (_closing) return;
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
-    await Future.wait(_connections.keys.toList().map(closeConnection));
+    await Future.wait(_connections.keys.toList().map(closeConnection).toList());
     if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
+    _registry.removeServer(pointer.ref.fd);
     _bindings.transport_close_descritor(pointer.ref.fd);
     _bindings.transport_server_destroy(pointer);
-    _registry.removeServer(pointer.ref.fd);
   }
 
   Future<void> closeConnection(int fd, {Duration? gracefulDuration}) async {

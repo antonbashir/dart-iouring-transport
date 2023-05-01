@@ -251,8 +251,8 @@ class TransportClient {
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
     if (_pending > 0) await _closer.future;
     _channel.close();
-    _bindings.transport_client_destroy(_pointer);
     _registry.remove(_pointer.ref.fd);
+    _bindings.transport_client_destroy(_pointer);
   }
 }
 
