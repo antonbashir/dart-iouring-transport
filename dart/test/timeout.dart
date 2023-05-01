@@ -20,7 +20,7 @@ void testTcpTimeoutSingle({
   required Duration serverRead,
   required Duration clientRead,
 }) {
-  test("(tcp) [connection = ${connection.inSeconds}, serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
+  test("(timeout tcp single) [connection = ${connection.inSeconds}, serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
     final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     await transport.run(transmitter: done.sendPort, (input) async {
@@ -72,7 +72,7 @@ void testUdpTimeoutSingle({
   required Duration serverRead,
   required Duration clientRead,
 }) {
-  test("(udp) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
+  test("(timeout udp single) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
     final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     await transport.run(transmitter: done.sendPort, (input) async {
@@ -106,10 +106,6 @@ void testUdpTimeoutSingle({
   });
 }
 
-void testFileTimeoutSingle() {}
+void testTcpTimeoutMany() {}
 
-void testStreamTimeoutMany() {}
-
-void testDatagramTimeoutMany() {}
-
-void testFileTimeoutMany() {}
+void testUdpTimeoutMany() {}

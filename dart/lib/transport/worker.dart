@@ -233,7 +233,7 @@ class TransportWorker {
       var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
-        print("[inboud] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+        //print("[inboud] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         final fd = (data >> 32) & 0xffffffff;
         if (result < 0) {
           _errorHandler.handle(result, data, fd, event);
@@ -276,7 +276,7 @@ class TransportWorker {
       var event = data & 0xffff;
       if (event & transportEventAll != 0) {
         _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
-        print("[outbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+        //print("[outbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
         if (event == transportEventCustom) {
           _callbacks.notifyCustom(result, (data >> 16) & 0xffffffff);
           continue;
@@ -319,6 +319,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
+    if (server == null) return;
     if (!server.notifyConnectionData(fd, bufferId)) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
@@ -335,6 +336,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
+    if (server == null) return;
     if (!server.notifyConnectionData(fd, bufferId)) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
@@ -350,6 +352,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
+    if (server == null) return;
     if (!server.notifyData(bufferId)) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
@@ -365,6 +368,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleSendMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
+    if (server == null) return;
     if (!server.notifyData(bufferId)) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
@@ -379,6 +383,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleReadReceiveClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
+    if (client == null) return;
     if (!client.notifyData(bufferId)) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
@@ -394,6 +399,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleReadFileCallback(int event, int bufferId, int result, int fd) {
     final file = _filesRegistry.get(fd);
+    if (file == null) return;
     if (!file.notify(bufferId)) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
       return;
@@ -405,6 +411,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleWriteSendClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
+    if (client == null) return;
     if (!client.notifyData(bufferId)) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
@@ -419,6 +426,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleWriteFileCallback(int event, int bufferId, int result, int fd) {
     final file = _filesRegistry.get(fd);
+    if (file == null) return;
     if (!file.notify(bufferId)) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
       return;
@@ -429,6 +437,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
+    if (client == null) return;
     if (!client.notifyConnect()) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       return;
@@ -439,6 +448,7 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void _handleAccept(int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
+    if (server == null) return;
     if (!server.notifyAccept()) return;
     _serverRegistry.addConnection(fd, result);
     server.reaccept();

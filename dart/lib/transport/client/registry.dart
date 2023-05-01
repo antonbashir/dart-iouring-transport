@@ -251,7 +251,7 @@ class TransportClientRegistry {
     return TransportClientDatagramProvider(client);
   }
 
-  TransportClient get(int fd) => _clients[fd]!;
+  TransportClient? get(int fd) => _clients[fd];
 
   Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.values.toList().map((client) => client.close(gracefulDuration: gracefulDuration)));
 

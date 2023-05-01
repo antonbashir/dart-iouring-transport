@@ -23,7 +23,7 @@ class TransportFileRegistry {
 
   TransportFileRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
 
-  TransportFile get(int fd) => _files[fd]!;
+  TransportFile? get(int fd) => _files[fd];
 
   TransportFile open(String path) {
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));

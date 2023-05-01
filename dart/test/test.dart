@@ -16,104 +16,107 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  group("[initialization]", () {
+  final initialization = true;
+  final tcp = true;
+  final udp = true;
+  final unixStream = true;
+  final unixDgram = true;
+  final file = true;
+
+  group("[initialization]", skip: !initialization, () {
     testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   });
-  group("[tcp]", () {
+  group("[tcp]", skip: !tcp, () {
     final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
-      // testTcpSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testTcpSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testTcpSingle(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testTcpSingle(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testTcpSingle(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testTcpMany(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
-      // testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
-      // testTcpMany(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
-      // testTcpMany(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      // testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      // testTcpTimeoutSingle(
-      //   connection: Duration(seconds: 1),
-      //   serverRead: Duration(seconds: 5),
-      //   clientRead: Duration(seconds: 3),
-      // );
+      testTcpSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcpSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcpSingle(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcpSingle(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcpSingle(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testTcpMany(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
+      testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
+      testTcpMany(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
+      testTcpMany(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+      testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
     }
+    testTcpTimeoutSingle(connection: Duration(seconds: 1), serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
   });
-  group("[unix stream]", () {
+  group("[unix stream]", skip: !unixStream, () {
     final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
-      // testUnixStreamSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUnixStreamSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUnixStreamSingle(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUnixStreamSingle(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUnixStreamSingle(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUnixStreamMany(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
-      // testUnixStreamMany(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
-      // testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
-      // testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      // testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUnixStreamSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixStreamSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixStreamSingle(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixStreamSingle(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixStreamSingle(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixStreamMany(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
+      testUnixStreamMany(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
+      testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
+      testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+      testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
     }
   });
-  group("[udp]", () {
+  group("[udp]", skip: !udp, () {
     final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
-      // testUdpSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUdpSingle(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUdpSingle(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      // testUdpMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      // testUdpMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      // testUdpMany(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      // testUdpMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-      // testUdpMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-      //testUdpTimeoutSingle(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
+      testUdpSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUdpMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+      testUdpMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUdpMany(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUdpMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+      testUdpMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+    }
+    testUdpTimeoutSingle(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
+  });
+  group("[unix dgram]", skip: !unixDgram, () {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
+      testUnixDgramSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testUnixDgramMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+      testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+      testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
     }
   });
-  // group("[unix dgram]", timeout: Timeout(Duration(minutes: 5)), () {
-  //   final testsCount = 5;
-  //   for (var index = 0; index < testsCount; index++) {
-  //     testUnixDgramSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgramSingle(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testUnixDgramMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-  //     testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-  //     testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-  //     testUnixDgramMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-  //     testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-  //   }
-  // });
-  // group("[file]", timeout: Timeout(Duration(minutes: 5)), () {
-  //   final testsCount = 5;
-  //   for (var index = 0; index < testsCount; index++) {
-  //     testFileSingle(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFileSingle(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFileSingle(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-  //     testFileLoad(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
-  //     testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
-  //     testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
-  //     testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-  //     testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-  //     testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 1);
-  //   }
-  // });
-  // group("[custom]", () {
-  //   final testsCount = 10;
-  //   for (var index = 0; index < testsCount; index++) {
-  //     testCustom(index, 1);
-  //     testCustom(index, 2);
-  //     testCustom(index, 4);
-  //   }
-  // });
-  // testDomain();
+  group("[file]", skip: !file, () {
+    final testsCount = 5;
+    for (var index = 0; index < testsCount; index++) {
+      testFileSingle(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+      testFileLoad(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
+      testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
+      testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 16);
+      testFileLoad(index: index, listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
+      testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 1);
+    }
+  });
+  group("[custom]", () {
+    final testsCount = 10;
+    for (var index = 0; index < testsCount; index++) {
+      testCustom(index, 1);
+      testCustom(index, 2);
+      testCustom(index, 4);
+    }
+  });
+  testDomain();
 }
 
 void testInitialization({

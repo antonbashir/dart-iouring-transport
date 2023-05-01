@@ -229,10 +229,10 @@ class TransportServerRegistry {
   }
 
   @pragma(preferInlinePragma)
-  TransportServer getByServer(int fd) => _servers[fd]!;
+  TransportServer? getByServer(int fd) => _servers[fd];
 
   @pragma(preferInlinePragma)
-  TransportServer getByConnection(int fd) => _serverConnections[fd]!;
+  TransportServer? getByConnection(int fd) => _serverConnections[fd];
 
   @pragma(preferInlinePragma)
   void addConnection(int serverFd, int connectionFd) => _serverConnections[connectionFd] = _servers[serverFd]!;
