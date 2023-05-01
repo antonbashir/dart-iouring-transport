@@ -21,7 +21,7 @@ class _TransportConnectionState {
 }
 
 abstract class TransportServerCloser {
-  Future<void> close();
+  Future<void> close({Duration? gracefulDuration});
 }
 
 class TransportServer implements TransportServerCloser {
