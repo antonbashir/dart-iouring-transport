@@ -45,7 +45,7 @@ class TransportClientStreamProvider {
         );
 
   @pragma(preferInlinePragma)
-  Future<void> close() => _client.close();
+  Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
 }
 
 class TransportClientDatagramProvider {
@@ -100,5 +100,5 @@ class TransportClientDatagramProvider {
         );
 
   @pragma(preferInlinePragma)
-  Future<void> close() => _client.close();
+  Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
 }

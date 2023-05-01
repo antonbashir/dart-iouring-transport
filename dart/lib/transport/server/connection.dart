@@ -33,8 +33,8 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close() => _server.closeConnection(_channel.fd);
+  Future<void> close({Duration? gracefulDuration}) => _server.closeConnection(_channel.fd, gracefulDuration: gracefulDuration);
 
   @pragma(preferInlinePragma)
-  Future<void> closeServer() => _server.close();
+  Future<void> closeServer({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
 }

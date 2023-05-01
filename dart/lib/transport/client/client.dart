@@ -277,5 +277,5 @@ class TransportClientStreamPool {
 
   int count() => _providers.length;
 
-  Future<void> close() => Future.wait(_providers.map((provider) => provider.close()));
+  Future<void> close({Duration? gracefulDuration}) => Future.wait(_providers.map((provider) => provider.close(gracefulDuration: gracefulDuration)));
 }

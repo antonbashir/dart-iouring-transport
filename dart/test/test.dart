@@ -11,6 +11,7 @@ import 'package:test/test.dart';
 
 import 'buffers.dart';
 import 'file.dart';
+import 'shutdown.dart';
 import 'tcp.dart';
 import 'timeout.dart';
 import 'udp.dart';
@@ -25,6 +26,7 @@ void main() {
   final file = true;
   final timeout = true;
   final buffers = true;
+  final shutdown = true;
 
   group("[initialization]", skip: !initialization, () {
     testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -118,6 +120,9 @@ void main() {
     testTcpBuffers();
     testUdpBuffers();
     testFileBuffers();
+  });
+  group("[shutdown]", skip: !shutdown, () {
+    testShutdown(gracefulDuration: Duration(seconds: 10));
   });
   group("[custom]", () {
     final testsCount = 10;
