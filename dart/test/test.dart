@@ -120,6 +120,7 @@ void main() {
     testTcpBuffers();
     testUdpBuffers();
     testFileBuffers();
+    testBuffersOverflow();
   });
   group("[shutdown]", skip: !shutdown, () {
     testShutdown(gracefulDuration: Duration(seconds: 10));
