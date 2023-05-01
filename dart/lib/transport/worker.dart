@@ -240,9 +240,9 @@ class TransportWorker {
           continue;
         }
         final bufferId = (data >> 16) & 0xffff;
-        _inboundBuffers.setLength(bufferId, result);
         if (event & transportEventLink != 0) {
           event &= ~transportEventLink;
+          _inboundBuffers.setLength(bufferId, result);
           if (bufferId != _links.getInbound(bufferId)) continue;
         }
         switch (event & ~transportEventServer) {
@@ -287,9 +287,9 @@ class TransportWorker {
           continue;
         }
         final bufferId = (data >> 16) & 0xffff;
-        _outboundBuffers.setLength(bufferId, result);
         if (event & transportEventLink != 0) {
           event &= ~transportEventLink;
+          _outboundBuffers.setLength(bufferId, result);
           if (bufferId != _links.getOutbound(bufferId)) continue;
         }
         if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
@@ -329,6 +329,7 @@ class TransportWorker {
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverRead));
       return;
     }
+    _inboundBuffers.setLength(bufferId, result);
     _callbacks.notifyInbound(bufferId);
   }
 
@@ -345,6 +346,7 @@ class TransportWorker {
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverWrite));
       return;
     }
+    _inboundBuffers.setLength(bufferId, result);
     _callbacks.notifyInbound(bufferId);
   }
 
@@ -360,6 +362,7 @@ class TransportWorker {
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverReceive));
       return;
     }
+    _inboundBuffers.setLength(bufferId, result);
     _callbacks.notifyInbound(bufferId);
   }
 
@@ -375,6 +378,7 @@ class TransportWorker {
       _callbacks.notifyInboundError(bufferId, TransportZeroDataException(event: TransportEvent.serverSend));
       return;
     }
+    _inboundBuffers.setLength(bufferId, result);
     _callbacks.notifyInbound(bufferId);
   }
 
@@ -390,6 +394,7 @@ class TransportWorker {
       _callbacks.notifyOutboundError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
+    _outboundBuffers.setLength(bufferId, result);
     _callbacks.notifyOutbound(bufferId);
   }
 
@@ -401,6 +406,7 @@ class TransportWorker {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
       return;
     }
+    _outboundBuffers.setLength(bufferId, result);
     _callbacks.notifyOutbound(bufferId);
   }
 
@@ -416,6 +422,7 @@ class TransportWorker {
       _callbacks.notifyOutboundError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
+    _outboundBuffers.setLength(bufferId, result);
     _callbacks.notifyOutbound(bufferId);
   }
 
@@ -427,6 +434,7 @@ class TransportWorker {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
       return;
     }
+    _outboundBuffers.setLength(bufferId, result);
     _callbacks.notifyOutbound(bufferId);
   }
 
