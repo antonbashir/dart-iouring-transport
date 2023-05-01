@@ -11,6 +11,7 @@ import '../exception.dart';
 import '../links.dart';
 import '../payload.dart';
 import 'registry.dart';
+import 'package:meta/meta.dart';
 
 class TransportFile {
   final String path;
@@ -23,6 +24,9 @@ class TransportFile {
   final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
   final TransportFileRegistry _registry;
+
+  @visibleForTesting
+  TransportFileRegistry get registry => _registry;
 
   var _active = true;
   bool get active => _active;

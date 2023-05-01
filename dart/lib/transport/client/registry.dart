@@ -14,6 +14,7 @@ import '../defaults.dart';
 import 'client.dart';
 import 'provider.dart';
 import 'configuration.dart';
+import 'package:meta/meta.dart';
 
 class TransportClientRegistry {
   final TransportBindings _bindings;
@@ -24,6 +25,9 @@ class TransportClientRegistry {
   final TransportPayloadPool _payloadPool;
 
   final _clients = <int, TransportClient>{};
+
+  @visibleForTesting
+  Map<int, TransportClient> get clients => _clients;
 
   TransportClientRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
 

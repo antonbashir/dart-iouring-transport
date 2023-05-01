@@ -1,15 +1,14 @@
 import 'dart:ffi';
-import 'dart:io';
 
 import 'package:ffi/ffi.dart';
-import 'file.dart';
-
+import 'package:meta/meta.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../callbacks.dart';
 import '../channel.dart';
 import '../links.dart';
 import '../payload.dart';
+import 'file.dart';
 
 class TransportFileRegistry {
   final TransportBindings _bindings;
@@ -20,6 +19,9 @@ class TransportFileRegistry {
   final TransportPayloadPool _payloadPool;
 
   final _files = <int, TransportFile>{};
+
+  @visibleForTesting
+  Map<int, TransportFile> get files => _files;
 
   TransportFileRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
 

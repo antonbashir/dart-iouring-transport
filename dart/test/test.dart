@@ -9,6 +9,7 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
+import 'buffers.dart';
 import 'file.dart';
 import 'tcp.dart';
 import 'timeout.dart';
@@ -23,6 +24,7 @@ void main() {
   final unixDgram = true;
   final file = true;
   final timeout = true;
+  final buffers = true;
 
   group("[initialization]", skip: !initialization, () {
     testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -111,6 +113,11 @@ void main() {
     testTcpTimeoutSingle(connection: Duration(seconds: 1), serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
     testUdpTimeoutSingle(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
     testUdpTimeoutMany(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3), count: 8);
+  });
+  group("[buffers]", skip: !buffers, () {
+    testTcpBuffers();
+    testUdpBuffers();
+    testFileBuffers();
   });
   group("[custom]", () {
     final testsCount = 10;

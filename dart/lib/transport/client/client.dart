@@ -11,8 +11,8 @@ import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';
 import 'registry.dart';
-
 import 'provider.dart';
+import 'package:meta/meta.dart';
 
 class TransportClient {
   final TransportCallbacks _callbacks;
@@ -29,6 +29,9 @@ class TransportClient {
   final TransportPayloadPool _payloadPool;
 
   late final Pointer<sockaddr> _destination;
+
+  @visibleForTesting
+  TransportClientRegistry get registry => _registry;
 
   var _active = true;
   bool get active => _active;

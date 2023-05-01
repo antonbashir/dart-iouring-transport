@@ -6,8 +6,13 @@ import 'provider.dart';
 import 'configuration.dart';
 import 'registry.dart';
 
+import 'package:meta/meta.dart';
+
 class TransportClientsFactory {
   final TransportClientRegistry _registry;
+
+  @visibleForTesting
+  TransportClientRegistry get registry => _registry;
 
   TransportClientsFactory(this._registry);
 
