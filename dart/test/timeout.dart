@@ -106,6 +106,41 @@ void testUdpTimeoutSingle({
   });
 }
 
-void testTcpTimeoutMany() {}
+void testUdpTimeoutMany({
+  required Duration serverRead,
+  required Duration clientRead,
+  required int count,
+}) {
+  test("(udp many) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final done = ReceivePort();
+    await transport.run(transmitter: done.sendPort, (input) async {
+      final worker = TransportWorker(input);
+      await worker.initialize();
+      final time = Stopwatch();
+      var completer = Completer();
 
-void testUdpTimeoutMany() {}
+      var server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345);
+      time.start();
+      await worker.clients
+          .udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.udpClient().copyWith(readTimeout: clientRead))
+          .receiveManyMessages(count)
+          .then((_) {}, onError: _handleTimeout(time, clientRead, completer));
+      await completer.future;
+      await server.close();
+
+      server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345, configuration: TransportDefaults.udpServer().copyWith(readTimeout: serverRead));
+      time.reset();
+      completer = Completer();
+      server.receiveManyMessages(count).then((_) {}, onError: _handleTimeout(time, serverRead, completer));
+      await completer.future;
+      await server.close();
+
+      worker.transmitter!.send(null);
+    });
+
+    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    done.close();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+  });
+}

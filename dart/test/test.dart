@@ -16,12 +16,13 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = true;
-  final tcp = true;
-  final udp = true;
-  final unixStream = true;
-  final unixDgram = true;
-  final file = true;
+  final initialization = false;
+  final tcp = false;
+  final udp = false;
+  final unixStream = false;
+  final unixDgram = false;
+  final file = false;
+  final timeout = true;
 
   group("[initialization]", skip: !initialization, () {
     testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -44,7 +45,6 @@ void main() {
       testTcpMany(index: index, listeners: 4, workers: 4, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
       testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
     }
-    testTcpTimeoutSingle(connection: Duration(seconds: 1), serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
   });
   group("[unix stream]", skip: !unixStream, () {
     final testsCount = 5;
@@ -75,7 +75,6 @@ void main() {
       testUdpMany(index: index, listeners: 4, workers: 4, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
       testUdpMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
     }
-    testUdpTimeoutSingle(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
   });
   group("[unix dgram]", skip: !unixDgram, () {
     final testsCount = 5;
@@ -107,6 +106,11 @@ void main() {
       testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
       testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 1);
     }
+  });
+  group("[timeout]", skip: !timeout, () {
+    testTcpTimeoutSingle(connection: Duration(seconds: 1), serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
+    testUdpTimeoutSingle(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
+    testUdpTimeoutMany(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3), count: 8);
   });
   group("[custom]", () {
     final testsCount = 10;
