@@ -68,11 +68,11 @@ void testTcpTimeoutSingle({
   });
 }
 
-void testUnixStreamTimeoutSingle({
+void testUdpTimeoutSingle({
   required Duration serverRead,
   required Duration clientRead,
 }) {
-  test("(unix stream) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
+  test("(udp) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
     final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     await transport.run(transmitter: done.sendPort, (input) async {
@@ -81,26 +81,19 @@ void testUnixStreamTimeoutSingle({
       final time = Stopwatch();
       var completer = Completer();
 
-      final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
-      if (serverSocket.existsSync()) serverSocket.deleteSync();
-
-      var server = worker.servers.unixStream(serverSocket.path, (client) {});
+      var server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345);
       time.start();
       await worker.clients
-          .unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(readTimeout: clientRead))
-          .then((value) => value.select().read())
+          .udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.udpClient().copyWith(readTimeout: clientRead))
+          .receiveSingleMessage()
           .then((_) {}, onError: _handleTimeout(time, clientRead, completer));
       await completer.future;
       await server.close();
 
+      server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345, configuration: TransportDefaults.udpServer().copyWith(readTimeout: serverRead));
       time.reset();
       completer = Completer();
-      server = worker.servers.unixStream(
-        serverSocket.path,
-        configuration: TransportDefaults.unixStreamServer().copyWith(readTimeout: serverRead),
-        (connection) => connection.read().then((_) {}, onError: _handleTimeout(time, serverRead, completer)),
-      );
-      await worker.clients.unixStream(serverSocket.path);
+      server.receiveSingleMessage().then((_) {}, onError: _handleTimeout(time, serverRead, completer));
       await completer.future;
       await server.close();
 
@@ -112,8 +105,6 @@ void testUnixStreamTimeoutSingle({
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
-
-void testDatagramTimeoutSingle() {}
 
 void testFileTimeoutSingle() {}
 

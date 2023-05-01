@@ -30,8 +30,8 @@ class TransportServersFactory {
   TransportServerCloser tcp(InternetAddress address, int port, void Function(TransportServerConnection connection) onAccept, {TransportTcpServerConfiguration? configuration}) =>
       _registry.createTcp(address.address, port, configuration: configuration)..accept(onAccept);
 
-  TransportServerDatagramReceiver udp(InternetAddress address, int port) {
-    final server = _registry.createUdp(address.address, port);
+  TransportServerDatagramReceiver udp(InternetAddress address, int port, {TransportUdpServerConfiguration? configuration}) {
+    final server = _registry.createUdp(address.address, port, configuration: configuration);
     return TransportServerDatagramReceiver(
       server,
       TransportChannel(
@@ -46,8 +46,8 @@ class TransportServersFactory {
   TransportServerCloser unixStream(String path, void Function(TransportServerConnection connection) onAccept, {TransportUnixStreamServerConfiguration? configuration}) =>
       _registry.createUnixStream(path, configuration: configuration)..accept(onAccept);
 
-  TransportServerDatagramReceiver unixDatagram(String path) {
-    final server = _registry.createUnixDatagram(path);
+  TransportServerDatagramReceiver unixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
+    final server = _registry.createUnixDatagram(path, configuration: configuration);
     return TransportServerDatagramReceiver(
       server,
       TransportChannel(
