@@ -41,9 +41,9 @@ void testBulk() {
       await serverCompleter.future.then((value) => Validators.request(value));
       await Future.wait(futures);
 
-      workerFile1.readSingle().then((value) => Validators.request(value.takeBytes()));
-      workerFile2.readSingle().then((value) => Validators.request(value.takeBytes()));
-      workerFile3.readSingle().then((value) => Validators.request(value.takeBytes()));
+      await workerFile1.readSingle().then((value) => Validators.request(value.takeBytes()));
+      await workerFile2.readSingle().then((value) => Validators.request(value.takeBytes()));
+      await workerFile3.readSingle().then((value) => Validators.request(value.takeBytes()));
 
       workerFile1.close().then((value) => workerFile1.delegate.delete());
       workerFile2.close().then((value) => workerFile2.delegate.delete());
