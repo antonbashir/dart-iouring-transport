@@ -10,6 +10,7 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'buffers.dart';
+import 'bulk.dart';
 import 'file.dart';
 import 'shutdown.dart';
 import 'tcp.dart';
@@ -124,6 +125,9 @@ void main() {
   });
   group("[shutdown]", skip: !shutdown, () {
     testShutdown(gracefulDuration: Duration(seconds: 10));
+  });
+  group("[bulk]", () {
+    testBulk();
   });
   group("[custom]", () {
     final testsCount = 10;
