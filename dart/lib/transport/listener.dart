@@ -22,12 +22,7 @@ class TransportListener {
     final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _fromTransport.close();
     final cqes = bindings.transport_allocate_cqes(ringSize);
-    while (true) {
-      if (!bindings.transport_listener_reap(listenerPointer, cqes)) {
-        malloc.free(cqes);
-        bindings.transport_listener_destroy(listenerPointer);
-        Isolate.exit();
-      }
+    while (bindings.transport_listener_reap(listenerPointer, cqes)) {
       for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
         if (listenerPointer.ref.ready_workers[workerIndex] != 0) {
           workerPorts[workerIndex].send(null);
@@ -35,5 +30,8 @@ class TransportListener {
         }
       }
     }
+    malloc.free(cqes);
+    bindings.transport_listener_destroy(listenerPointer);
+    Isolate.exit();
   }
 }
