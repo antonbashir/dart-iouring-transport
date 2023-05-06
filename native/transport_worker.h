@@ -99,8 +99,6 @@ extern "C"
 
   int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
 
-  int transport_worker_get_fd(transport_worker_t *worker);
-
   void transport_worker_initialize_listeners(transport_worker_t* worker, transport_listener_t *first);
   void transport_worker_add_listener(transport_worker_t* worker, transport_listener_t *listener);
 
