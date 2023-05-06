@@ -84,10 +84,10 @@ class TransportWorker {
       await _filesRegistry.close(gracefulDuration: gracefulDuration);
       await _clientRegistry.close(gracefulDuration: gracefulDuration);
       await _serverRegistry.close(gracefulDuration: gracefulDuration);
-      _bindings.transport_worker_destroy(_outboundWorkerPointer);
-      malloc.free(_outboundCqes);
       _bindings.transport_worker_destroy(_inboundWorkerPointer);
       malloc.free(_inboundCqes);
+      _bindings.transport_worker_destroy(_outboundWorkerPointer);
+      malloc.free(_outboundCqes);
       _listener.close();
       _closer.close();
       _jobRunner.close();
@@ -197,8 +197,10 @@ class TransportWorker {
     _activator.close();
   }
 
+  @pragma(preferInlinePragma)
   void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
 
+  @pragma(preferInlinePragma)
   void removeCallback(int id) => _callbacks.removeCustom(id);
 
   Future<void> job(FutureOr<void> Function() action, {String name = defaultJobName}) async {
@@ -208,12 +210,16 @@ class TransportWorker {
     current.add(completer);
     _jobsListener.send([name, id]);
     if (await completer.future) {
-      await action();
-      _jobCompletionsListener.send(name);
+      try {
+        await action();
+      } finally {
+        _jobCompletionsListener.send(name);
+      }
     }
     _jobs.remove(name);
   }
 
+  @pragma(preferInlinePragma)
   void submit({required bool inbound, required bool outbound}) {
     if (inbound) {
       _bindings.transport_worker_submit(_inboundWorkerPointer);
@@ -231,37 +237,35 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_inboundRing, 1);
       var event = data & 0xffff;
-      if (event & transportEventAll != 0) {
-        _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
-        //print("[inboud] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
-        final fd = (data >> 32) & 0xffffffff;
-        if (result < 0) {
-          _errorHandler.handle(result, data, fd, event);
+      _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
+      //print("[inboud] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      final fd = (data >> 32) & 0xffffffff;
+      if (result < 0) {
+        _errorHandler.handle(result, data, fd, event);
+        continue;
+      }
+      final bufferId = (data >> 16) & 0xffff;
+      if (event & transportEventLink != 0) {
+        event &= ~transportEventLink;
+        _inboundBuffers.setLength(bufferId, result);
+        if (bufferId != _links.getInbound(bufferId)) continue;
+      }
+      switch (event & ~transportEventServer) {
+        case transportEventRead:
+          _handleRead(bufferId, fd, result);
           continue;
-        }
-        final bufferId = (data >> 16) & 0xffff;
-        if (event & transportEventLink != 0) {
-          event &= ~transportEventLink;
-          _inboundBuffers.setLength(bufferId, result);
-          if (bufferId != _links.getInbound(bufferId)) continue;
-        }
-        switch (event & ~transportEventServer) {
-          case transportEventRead:
-            _handleRead(bufferId, fd, result);
-            continue;
-          case transportEventReceiveMessage:
-            _handleReceiveMessage(bufferId, fd, result);
-            continue;
-          case transportEventWrite:
-            _handleWrite(bufferId, fd, result);
-            continue;
-          case transportEventSendMessage:
-            _handleSendMessage(bufferId, fd, result);
-            continue;
-          case transportEventAccept:
-            _handleAccept(fd, result);
-            continue;
-        }
+        case transportEventReceiveMessage:
+          _handleReceiveMessage(bufferId, fd, result);
+          continue;
+        case transportEventWrite:
+          _handleWrite(bufferId, fd, result);
+          continue;
+        case transportEventSendMessage:
+          _handleSendMessage(bufferId, fd, result);
+          continue;
+        case transportEventAccept:
+          _handleAccept(fd, result);
+          continue;
       }
     }
   }
@@ -274,44 +278,42 @@ class TransportWorker {
       final result = cqe.ref.res;
       _bindings.transport_cqe_advance(_outboundRing, 1);
       var event = data & 0xffff;
-      if (event & transportEventAll != 0) {
-        _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
-        //print("[outbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
-        if (event == transportEventCustom) {
-          _callbacks.notifyCustom(result, (data >> 16) & 0xffffffff);
-          continue;
-        }
-        final fd = (data >> 32) & 0xffffffff;
-        if (result < 0) {
-          _errorHandler.handle(result, data, fd, event);
-          continue;
-        }
-        final bufferId = (data >> 16) & 0xffff;
-        if (event & transportEventLink != 0) {
-          event &= ~transportEventLink;
-          _outboundBuffers.setLength(bufferId, result);
-          if (bufferId != _links.getOutbound(bufferId)) continue;
-        }
-        if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-          _handleReadReceiveClientCallback(event, bufferId, result, fd);
-          continue;
-        }
-        if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-          _handleWriteSendClientCallback(event, bufferId, result, fd);
-          continue;
-        }
-        if (event == transportEventRead | transportEventFile) {
-          _handleReadFileCallback(event, bufferId, result, fd);
-          continue;
-        }
-        if (event == transportEventWrite | transportEventFile) {
-          _handleWriteFileCallback(event, bufferId, result, fd);
-          continue;
-        }
-        if (event == transportEventConnect) {
-          _handleConnect(fd);
-          continue;
-        }
+      _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
+      //print("[outbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      if (event == transportEventCustom) {
+        _callbacks.notifyCustom(result, (data >> 16) & 0xffffffff);
+        continue;
+      }
+      final fd = (data >> 32) & 0xffffffff;
+      if (result < 0) {
+        _errorHandler.handle(result, data, fd, event);
+        continue;
+      }
+      final bufferId = (data >> 16) & 0xffff;
+      if (event & transportEventLink != 0) {
+        event &= ~transportEventLink;
+        _outboundBuffers.setLength(bufferId, result);
+        if (bufferId != _links.getOutbound(bufferId)) continue;
+      }
+      if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
+        _handleReadReceiveClientCallback(event, bufferId, result, fd);
+        continue;
+      }
+      if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
+        _handleWriteSendClientCallback(event, bufferId, result, fd);
+        continue;
+      }
+      if (event == transportEventRead | transportEventFile) {
+        _handleReadFileCallback(event, bufferId, result, fd);
+        continue;
+      }
+      if (event == transportEventWrite | transportEventFile) {
+        _handleWriteFileCallback(event, bufferId, result, fd);
+        continue;
+      }
+      if (event == transportEventConnect) {
+        _handleConnect(fd);
+        continue;
       }
     }
   }
