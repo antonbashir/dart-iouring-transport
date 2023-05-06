@@ -29,10 +29,7 @@ void testBulk() {
       worker.servers.tcp(
           InternetAddress("0.0.0.0"),
           12345,
-          (connection) => connection.read().then((value) {
-                print(value.bytes.length);
-                serverCompleter.complete(value.takeBytes());
-              }));
+          (connection) => connection.read().then((value) => serverCompleter.complete(value.takeBytes())));
 
       final workerFile1 = worker.files.open(file1.path, create: true);
       final workerFile2 = worker.files.open(file2.path, create: true);
