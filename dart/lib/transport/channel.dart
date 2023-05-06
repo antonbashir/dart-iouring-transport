@@ -11,7 +11,7 @@ class TransportChannel {
   final TransportBindings _bindings;
   final TransportBuffers _buffers;
 
-  TransportChannel(this._workerPointer, this.fd, this._bindings, this._buffers);
+  const TransportChannel(this._workerPointer, this.fd, this._bindings, this._buffers);
 
   @pragma(preferInlinePragma)
   void read(int bufferId, int timeout, int event, {int listenerSqeFlags = 0, int offset = 0}) {
