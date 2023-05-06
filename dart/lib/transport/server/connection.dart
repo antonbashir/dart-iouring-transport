@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../channel.dart';
+import '../configuration.dart';
 import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';
@@ -16,10 +17,22 @@ class TransportServerConnection {
   Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);
 
   @pragma(preferInlinePragma)
-  Future<void> writeSingle(Uint8List bytes, {bool submit = true}) => _server.writeSingle(_channel, bytes, submit: submit);
+  Future<void> writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true}) => retry == null
+      ? _server.writeSingle(_channel, bytes, submit: submit)
+      : retry.options.retry(
+          () => _server.writeSingle(_channel, bytes, submit: submit),
+          onRetry: retry.onRetry,
+          retryIf: retry.predicate,
+        );
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) => _server.writeMany(_channel, bytes, submit: submit);
+  Future<void> writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true}) => retry == null
+      ? _server.writeMany(_channel, bytes, submit: submit)
+      : retry.options.retry(
+          () => _server.writeMany(_channel, bytes, submit: submit),
+          retryIf: retry.predicate,
+          onRetry: retry.onRetry,
+        );
 
   void listen(void Function(TransportPayload payload) listener, {void Function(dynamic error)? onError}) async {
     while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
