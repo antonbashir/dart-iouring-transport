@@ -234,11 +234,11 @@
 /** \cond public */
 
 /** System configuration dir (e.g /etc) */
-#define SYSCONF_DIR ""
+#define SYSCONF_DIR "etc"
 /** Install prefix (e.g. /usr) */
 #define INSTALL_PREFIX "/usr/local"
 /** Build type, e.g. Debug or Release */
-#define BUILD_TYPE "RelWithDebInfo"
+#define BUILD_TYPE "Debug"
 /** CMake build type signature, e.g. Linux-x86_64-Debug */
 #define BUILD_INFO ""
 /** Command line used to run CMake */

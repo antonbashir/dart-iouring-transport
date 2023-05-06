@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
@@ -36,12 +35,12 @@ Future<void> _benchTcp() async {
       time.start();
       while (true) {
         count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-        if (time.elapsed.inSeconds >= 60) break;
+        if (time.elapsed.inSeconds >= 5) break;
       }
       worker.transmitter!.send(count);
     },
   );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
-  print("RPS: ${count / 60}");
+  print("RPS: ${count / 5}");
   await transport.shutdown();
 }
