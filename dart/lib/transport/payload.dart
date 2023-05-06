@@ -1,6 +1,9 @@
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/configuration.dart';
+import 'package:retry/retry.dart';
+
 import 'bindings.dart';
 import 'buffers.dart';
 import 'channel.dart';
@@ -80,22 +83,46 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags}) => _server.respondSingleMessage(
-        _channel,
-        _destination,
-        bytes,
-        submit: submit,
-        flags: flags,
-      );
+  Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) => retry == null
+      ? _server.respondSingleMessage(
+          _channel,
+          _destination,
+          bytes,
+          submit: submit,
+          flags: flags,
+        )
+      : retry.options.retry(
+          () => _server.respondSingleMessage(
+            _channel,
+            _destination,
+            bytes,
+            submit: submit,
+            flags: flags,
+          ),
+          onRetry: retry.onRetry,
+          retryIf: retry.predicate,
+        );
 
   @pragma(preferInlinePragma)
-  Future<void> respondManyMessage(List<Uint8List> bytes, {bool submit = true, int? flags}) => _server.respondManyMessages(
-        _channel,
-        _destination,
-        bytes,
-        submit: submit,
-        flags: flags,
-      );
+  Future<void> respondManyMessage(List<Uint8List> bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) => retry == null
+      ? _server.respondManyMessages(
+          _channel,
+          _destination,
+          bytes,
+          submit: submit,
+          flags: flags,
+        )
+      : retry.options.retry(
+          () => _server.respondManyMessages(
+            _channel,
+            _destination,
+            bytes,
+            submit: submit,
+            flags: flags,
+          ),
+          onRetry: retry.onRetry,
+          retryIf: retry.predicate,
+        );
 
   @pragma(preferInlinePragma)
   void release() => _pool.release(_bufferId);

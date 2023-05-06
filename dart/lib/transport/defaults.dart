@@ -128,7 +128,7 @@ class TransportDefaults {
         maxAttempts: 5,
         predicate: (exception) {
           if (exception is TransportZeroDataException) return true;
-          if (exception is TransportInternalException && (transportRetryableErrorCodes.contains(exception.code))) return true;
+          if (exception is TransportInternalException && (transportRetryableErrorCodes.contains(-exception.code))) return true;
           return false;
         },
       );

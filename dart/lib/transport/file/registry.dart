@@ -13,12 +13,12 @@ import '../links.dart';
 import '../payload.dart';
 import 'file.dart';
 
-const _optionRdonly = 00;
-const _optionWronly = 01;
-const _optionRdwr = 02;
-const _optionCreat = 0100;
-const _optionTrunc = 01000;
-const _optionAppend = 02000;
+const _optionRdonly = 0;
+const _optionWronly = 1;
+const _optionRdwr = 2;
+const _optionCreat = 100;
+const _optionTrunc = 1000;
+const _optionAppend = 2000;
 
 class TransportFileRegistry {
   final TransportBindings _bindings;
@@ -36,7 +36,7 @@ class TransportFileRegistry {
   TransportFile? get(int fd) => _files[fd];
 
   TransportFile open(String path, {TransportFileMode mode = TransportFileMode.readWriteAppend, bool create = false, bool truncate = false, int permissions = 0}) {
-    int options = 0;
+    var options = 0;
     switch (mode) {
       case TransportFileMode.readOnly:
         options = _optionRdonly;

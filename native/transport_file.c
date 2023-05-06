@@ -9,5 +9,5 @@
 
 int transport_file_open(const char *path, int options, int mode)
 {
-  return open(path, options | O_NONBLOCK | O_CLOEXEC, mode);
+  return open(path, options | O_CLOEXEC, mode);
 }

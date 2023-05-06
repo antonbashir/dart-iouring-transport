@@ -138,7 +138,7 @@ void testUnixDgramSingle({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.servers.unixDatagram(serverSocket.path).listen((event) {
-        event.respondSingleMessage(Generators.response()).then((value) {
+        event.respondSingleMessage(Generators.response(), retry: TransportDefaults.retry()).then((value) {
           Validators.request(event.takeBytes());
         });
       });
@@ -182,7 +182,7 @@ void testUnixDgramMany({
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
       worker.servers.unixDatagram(serverSocket.path).listen((event) {
-        event.respondManyMessage(Generators.responsesUnordered(count)).then((value) => Validators.request(event.takeBytes()));
+        event.respondManyMessage(Generators.responsesUnordered(count), retry: TransportDefaults.retry()).then((value) => Validators.request(event.takeBytes()));
       });
       final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
       for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
@@ -190,7 +190,7 @@ void testUnixDgramMany({
         final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
         final clientResults = BytesBuilder();
         final completer = Completer();
-        client.sendManyMessages(Generators.requestsUnordered(count)).then(
+        client.sendManyMessages(Generators.requestsUnordered(count), retry: TransportDefaults.retry()).then(
               (_) => client.listenByMany(
                 count,
                 (event) {
