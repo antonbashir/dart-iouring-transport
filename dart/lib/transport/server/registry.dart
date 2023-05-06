@@ -343,7 +343,9 @@ class TransportServerRegistry {
     if (serverConfiguration.ipMulticastInterface != null) {
       flags |= transportSocketOptionIpMulticastIf;
       final interface = serverConfiguration.ipMulticastInterface!;
-      nativeServerConfiguration.ref.ip_multicast_interface = _bindings.transport_socket_multicast_create_request(
+      nativeServerConfiguration.ref.ip_multicast_interface = allocator<ip_mreqn>();
+      _bindings.transport_socket_initialize_multicast_request(
+        nativeServerConfiguration.ref.ip_multicast_interface,
         interface.groupAddress.toNativeUtf8(allocator: allocator).cast(),
         interface.localAddress.toNativeUtf8(allocator: allocator).cast(),
         interface.getMembershipIndex(_bindings),

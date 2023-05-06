@@ -19909,28 +19909,31 @@ class TransportBindings {
       _transport_socket_create_unix_dgramPtr
           .asFunction<int Function(int, int, int, int, int)>();
 
-  ffi.Pointer<ip_mreqn> transport_socket_multicast_create_request(
+  void transport_socket_initialize_multicast_request(
+    ffi.Pointer<ip_mreqn> request,
     ffi.Pointer<ffi.Char> group_address,
     ffi.Pointer<ffi.Char> local_address,
     int interface_index,
   ) {
-    return _transport_socket_multicast_create_request(
+    return _transport_socket_initialize_multicast_request(
+      request,
       group_address,
       local_address,
       interface_index,
     );
   }
 
-  late final _transport_socket_multicast_create_requestPtr = _lookup<
+  late final _transport_socket_initialize_multicast_requestPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ip_mreqn> Function(
+          ffi.Void Function(
+              ffi.Pointer<ip_mreqn>,
               ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Char>,
-              ffi.Int)>>('transport_socket_multicast_create_request');
-  late final _transport_socket_multicast_create_request =
-      _transport_socket_multicast_create_requestPtr.asFunction<
-          ffi.Pointer<ip_mreqn> Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+              ffi.Int)>>('transport_socket_initialize_multicast_request');
+  late final _transport_socket_initialize_multicast_request =
+      _transport_socket_initialize_multicast_requestPtr.asFunction<
+          void Function(ffi.Pointer<ip_mreqn>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>, int)>();
 
   int transport_socket_multicast_add_membership(
     int fd,
@@ -24077,11 +24080,13 @@ class _SymbolAddresses {
       get transport_socket_create_unix_dgram =>
           _library._transport_socket_create_unix_dgramPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ip_mreqn> Function(
-                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Int)>>
-      get transport_socket_multicast_create_request =>
-          _library._transport_socket_multicast_create_requestPtr;
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<ip_mreqn>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int)>> get transport_socket_initialize_multicast_request =>
+      _library._transport_socket_initialize_multicast_requestPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(

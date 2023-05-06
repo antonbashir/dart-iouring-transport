@@ -41,7 +41,7 @@ int64_t transport_socket_create_tcp(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
@@ -53,7 +53,7 @@ int64_t transport_socket_create_tcp(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
-    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
@@ -214,7 +214,7 @@ int64_t transport_socket_create_udp(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
@@ -226,7 +226,7 @@ int64_t transport_socket_create_udp(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
-    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
@@ -347,7 +347,7 @@ int64_t transport_socket_create_unix_stream(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
@@ -359,7 +359,7 @@ int64_t transport_socket_create_unix_stream(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
-    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
@@ -424,7 +424,7 @@ int64_t transport_socket_create_unix_dgram(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_NONBLOCK) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
     }
@@ -436,7 +436,7 @@ int64_t transport_socket_create_unix_dgram(uint64_t flags,
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
-    if (fcntl(fd, F_SETFL, flags | O_CLOEXEC) < 0)
+    if (fcntl(fd, F_SETFL, fcntl_flags | O_CLOEXEC) < 0)
     {
       return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
     }
@@ -514,15 +514,9 @@ int transport_socket_get_interface_index(const char *interface)
   return if_nametoindex(interface);
 }
 
-struct ip_mreqn *transport_socket_multicast_create_request(const char *group_address, const char *local_address, int interface_index)
+void transport_socket_initialize_multicast_request(struct ip_mreqn * request, const char *group_address, const char *local_address, int interface_index)
 {
-  struct ip_mreqn *request = malloc(sizeof(struct ip_mreqn));
-  if (!request)
-  {
-    return NULL;
-  }
   request->imr_multiaddr.s_addr = inet_addr(group_address);
   request->imr_address.s_addr = inet_addr(local_address);
   request->imr_ifindex = interface_index;
-  return request;
 }

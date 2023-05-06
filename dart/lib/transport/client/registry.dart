@@ -352,10 +352,13 @@ class TransportClientRegistry {
       flags |= transportSocketOptionIpMulticastTtl;
       nativeClientConfiguration.ref.ip_multicast_ttl = clientConfiguration.ipMulticastTtl!;
     }
+    nativeClientConfiguration.ref.ip_multicast_interface = nullptr;
     if (clientConfiguration.ipMulticastInterface != null) {
       flags |= transportSocketOptionIpMulticastIf;
       final interface = clientConfiguration.ipMulticastInterface!;
-      nativeClientConfiguration.ref.ip_multicast_interface = _bindings.transport_socket_multicast_create_request(
+      nativeClientConfiguration.ref.ip_multicast_interface = allocator<ip_mreqn>();
+      _bindings.transport_socket_initialize_multicast_request(
+        nativeClientConfiguration.ref.ip_multicast_interface,
         interface.groupAddress.toNativeUtf8(allocator: allocator).cast(),
         interface.localAddress.toNativeUtf8(allocator: allocator).cast(),
         interface.getMembershipIndex(_bindings),
