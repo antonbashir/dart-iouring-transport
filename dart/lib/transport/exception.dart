@@ -15,11 +15,7 @@ class TransportInternalException implements Exception {
 
   late final String message;
 
-  TransportInternalException({
-    required this.event,
-    required this.code,
-    required String message,
-  }) {
+  TransportInternalException({required this.event, required this.code, required String message}) {
     this.message = "[$event] code = $code, message = $message";
   }
 
@@ -59,9 +55,7 @@ class TransportZeroDataException implements Exception {
 
   late final String message;
 
-  TransportZeroDataException({
-    required this.event,
-  }) {
+  TransportZeroDataException({required this.event}) {
     message = "[$event] completed with zero result (no data)";
   }
 

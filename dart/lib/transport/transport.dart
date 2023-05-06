@@ -3,13 +3,11 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
-import 'package:iouring_transport/transport/defaults.dart';
-import 'constants.dart';
-import 'extensions.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
 import 'exception.dart';
+import 'extensions.dart';
 import 'listener.dart';
 import 'lookup.dart';
 
@@ -174,6 +172,12 @@ class Transport {
       });
       final listenerPointer = calloc<transport_listener_t>();
       if (listenerPointer == nullptr) {
+        for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
+          final inboundWorker = Pointer.fromAddress(inboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
+          final outboundWorker = Pointer.fromAddress(outboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
+          _bindings.transport_worker_destroy(inboundWorker);
+          _bindings.transport_worker_destroy(outboundWorker);
+        }
         listenerCompleter.completeError(TransportInitializationException("[listener] out of memory"));
         fromTransportToListener.close();
         return;

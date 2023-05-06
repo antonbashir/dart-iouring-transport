@@ -67,8 +67,10 @@ class TransportBuffers {
     return bufferIds;
   }
 
+  @pragma(preferInlinePragma)
   int available() => _bindings.transport_worker_available_buffers(_worker);
 
+  @pragma(preferInlinePragma)
   int used() => _bindings.transport_worker_used_buffers(_worker);
 
   @pragma(preferInlinePragma)
