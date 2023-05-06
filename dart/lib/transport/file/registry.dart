@@ -35,7 +35,7 @@ class TransportFileRegistry {
   @pragma(preferInlinePragma)
   TransportFile? get(int fd) => _files[fd];
 
-  TransportFile open(String path, {TransportFileMode mode = TransportFileMode.readWriteAppend, bool create = false, bool truncate = false, int permissions = 0}) {
+  TransportFile open(String path, {TransportFileMode mode = TransportFileMode.readWriteAppend, bool create = false, bool truncate = false, int permissions = 0644}) {
     var options = 0;
     switch (mode) {
       case TransportFileMode.readOnly:
