@@ -18,15 +18,16 @@ class TransportFilesFactory {
     TransportFileMode mode = TransportFileMode.readWriteAppend,
     bool create = false,
     bool truncate = false,
-    int permissions = 0,
-  }) =>
-      TransportFileProvider(
-          _registry.open(
-            path,
-            mode: mode,
-            create: create,
-            truncate: truncate,
-            permissions: permissions,
-          ),
-          File(path));
+  }) {
+    final delegate = File(path);
+    return TransportFileProvider(
+      _registry.open(
+        path,
+        mode: mode,
+        create: create && !delegate.existsSync(),
+        truncate: truncate,
+      ),
+      delegate,
+    );
+  }
 }

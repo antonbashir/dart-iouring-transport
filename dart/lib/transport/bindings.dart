@@ -19598,21 +19598,6 @@ class TransportBindings {
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
           ffi.Pointer<io_uring>)>();
 
-  int transport_worker_get_fd(
-    ffi.Pointer<transport_worker_t> worker,
-  ) {
-    return _transport_worker_get_fd(
-      worker,
-    );
-  }
-
-  late final _transport_worker_get_fdPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<transport_worker_t>)>>('transport_worker_get_fd');
-  late final _transport_worker_get_fd = _transport_worker_get_fdPtr
-      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
-
   void transport_worker_initialize_listeners(
     ffi.Pointer<transport_worker_t> worker,
     ffi.Pointer<transport_listener_t> first,
@@ -19759,22 +19744,24 @@ class TransportBindings {
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
-    int options,
-    int mode,
+    int flags,
+    bool trunace,
+    bool create,
   ) {
     return _transport_file_open(
       path,
-      options,
-      mode,
+      flags,
+      trunace,
+      create,
     );
   }
 
   late final _transport_file_openPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Int, ffi.Int)>>('transport_file_open');
+          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Bool,
+              ffi.Bool)>>('transport_file_open');
   late final _transport_file_open = _transport_file_openPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, int)>();
+      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, bool, bool)>();
 
   int transport_socket_create_tcp(
     int flags,
@@ -23999,9 +23986,6 @@ class _SymbolAddresses {
               ffi.Pointer<io_uring>)>> get transport_worker_peek =>
       _library._transport_worker_peekPtr;
   ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
-      get transport_worker_get_fd => _library._transport_worker_get_fdPtr;
-  ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>,
                   ffi.Pointer<transport_listener_t>)>>
@@ -24038,7 +24022,8 @@ class _SymbolAddresses {
       get transport_close_descritor => _library._transport_close_descritorPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Int)>>
+              ffi.Int Function(
+                  ffi.Pointer<ffi.Char>, ffi.Int, ffi.Bool, ffi.Bool)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -31274,6 +31259,16 @@ const int TRANSPORT_EVENT_SERVER = 256;
 const int TRANSPORT_EVENT_CUSTOM = 512;
 
 const int TRANSPORT_EVENT_LINK = 1024;
+
+const int TRANSPORT_READ_ONLY = 1;
+
+const int TRANSPORT_WRITE_ONLY = 2;
+
+const int TRANSPORT_READ_WRITE = 4;
+
+const int TRANSPORT_WRITE_ONLY_APPEND = 8;
+
+const int TRANSPORT_READ_WRITE_APPEND = 16;
 
 const int TRANSPORT_BUFFER_USED = -1;
 

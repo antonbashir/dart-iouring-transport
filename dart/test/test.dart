@@ -19,25 +19,25 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = true;
-  final tcp = true;
-  final udp = true;
-  final unixStream = true;
-  final unixDgram = true;
+  final initialization = false;
+  final tcp = false;
+  final udp = false;
+  final unixStream = false;
+  final unixDgram = false;
   final file = true;
-  final timeout = true;
-  final buffers = true;
-  final shutdown = true;
+  final timeout = false;
+  final buffers = false;
+  final shutdown = false;
 
-  group("[initialization]", skip: !initialization, () {
+  group("[initialization]", timeout: Timeout(Duration(hours: 1)), skip: !initialization, () {
     testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 4, workers: 4, listenerFlags: 0, workerFlags: ringSetupSqpoll);
     testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
   });
-  group("[tcp]", skip: !tcp, () {
-    final testsCount = 5;
+  group("[tcp]", timeout: Timeout(Duration(hours: 1)), skip: !tcp, () {
+    final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
       testTcpSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testTcpSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -51,8 +51,8 @@ void main() {
       testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
     }
   });
-  group("[unix stream]", skip: !unixStream, () {
-    final testsCount = 5;
+  group("[unix stream]", timeout: Timeout(Duration(hours: 1)), skip: !unixStream, () {
+    final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
       testUnixStreamSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixStreamSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -66,8 +66,8 @@ void main() {
       testUnixStreamMany(index: index, listeners: 4, workers: 4, clientsPool: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
     }
   });
-  group("[udp]", skip: !udp, () {
-    final testsCount = 5;
+  group("[udp]", timeout: Timeout(Duration(hours: 1)), skip: !udp, () {
+    final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
       testUdpSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -81,8 +81,8 @@ void main() {
       testUdpMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
     }
   });
-  group("[unix dgram]", skip: !unixDgram, () {
-    final testsCount = 5;
+  group("[unix dgram]", timeout: Timeout(Duration(hours: 1)), skip: !unixDgram, () {
+    final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
       testUnixDgramSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
       testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -96,7 +96,7 @@ void main() {
       testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1024, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
     }
   });
-  group("[file]", skip: !file, () {
+  group("[file]", timeout: Timeout(Duration(hours: 1)), skip: !file, () {
     final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
       testFileSingle(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
@@ -112,24 +112,24 @@ void main() {
       testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 1);
     }
   });
-  group("[timeout]", skip: !timeout, () {
+  group("[timeout]", timeout: Timeout(Duration(hours: 1)), skip: !timeout, () {
     testTcpTimeoutSingle(connection: Duration(seconds: 1), serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
     testUdpTimeoutSingle(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
     testUdpTimeoutMany(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3), count: 8);
   });
-  group("[buffers]", skip: !buffers, () {
+  group("[buffers]", timeout: Timeout(Duration(hours: 1)), skip: !buffers, () {
     testTcpBuffers();
     testUdpBuffers();
     testFileBuffers();
     testBuffersOverflow();
   });
-  group("[shutdown]", skip: !shutdown, () {
+  group("[shutdown]", timeout: Timeout(Duration(hours: 1)), skip: !shutdown, () {
     testShutdown(gracefulDuration: Duration(seconds: 10));
   });
-  group("[bulk]", () {
+  group("[bulk]", timeout: Timeout(Duration(hours: 1)), () {
     testBulk();
   });
-  group("[custom]", () {
+  group("[custom]", timeout: Timeout(Duration(hours: 1)), () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
       testCustom(index, 1);

@@ -134,6 +134,7 @@ class TransportDatagramResponder {
     return result.takeBytes();
   }
 
+  @pragma(preferInlinePragma)
   List<int> toBytes({bool release = true}) {
     final result = _bytes.toList();
     if (release) _pool.release(_bufferId);
