@@ -268,3 +268,11 @@ enum TransportEvent {
 }
 
 const transportRetryableErrorCodes = {EINTR, EAGAIN, ECANCELED};
+
+enum TransportFileMode {
+  readOnly,
+  writeOnly,
+  readWrite,
+  writeOnlyAppend,
+  readWriteAppend,
+}

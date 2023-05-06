@@ -6,7 +6,7 @@
 extern "C"
 {
 #endif
-  int transport_file_open(const char* path);
+  int transport_file_open(const char* path, int options, int mode);
 #if defined(__cplusplus)
 }
 #endif

@@ -30,12 +30,12 @@ class TransportFileProvider {
 
         Future<Uint8List> single(int blocksCount, int offset) => _file.readSingle().then(
               (payload) {
-                final payloadBites = payload.takeBytes();
-                if (payloadBites.isEmpty) return bytes.takeBytes();
-                bytes.add(payloadBites);
+                final payloadBytes = payload.takeBytes();
+                if (payloadBytes.isEmpty) return bytes.takeBytes();
+                bytes.add(payloadBytes);
                 final left = stat.size - bytes.length;
                 if (left == 0) return bytes.takeBytes();
-                return single(blocksCount, offset + payloadBites.length);
+                return single(blocksCount, offset + payloadBytes.length);
               },
             );
 

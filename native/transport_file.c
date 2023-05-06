@@ -7,16 +7,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-int transport_file_open(const char *path)
+int transport_file_open(const char *path, int options, int mode)
 {
-  int fd = open(path, O_RDWR | O_APPEND);
-  if (fd < 0)
-  {
-    fd = open(path, O_CREAT | O_RDWR | O_APPEND, 0666);
-    if (fd < 0)
-    {
-      return fd;
-    }
-  }
-  return fd;
+  return open(path, options | O_NONBLOCK, mode);
 }

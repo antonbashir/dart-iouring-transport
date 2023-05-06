@@ -2,13 +2,22 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
+
 import '../bindings.dart';
 import '../buffers.dart';
 import '../callbacks.dart';
 import '../channel.dart';
+import '../constants.dart';
 import '../links.dart';
 import '../payload.dart';
 import 'file.dart';
+
+const _optionRdonly = 00;
+const _optionWronly = 01;
+const _optionRdwr = 02;
+const _optionCreat = 0100;
+const _optionTrunc = 01000;
+const _optionAppend = 02000;
 
 class TransportFileRegistry {
   final TransportBindings _bindings;
@@ -27,8 +36,28 @@ class TransportFileRegistry {
 
   TransportFile? get(int fd) => _files[fd];
 
-  TransportFile open(String path) {
-    final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast()));
+  TransportFile open(String path, {TransportFileMode mode = TransportFileMode.readWriteAppend, bool create = false, bool truncate = false, int permissions = 0}) {
+    int options = 0;
+    switch (mode) {
+      case TransportFileMode.readOnly:
+        options = _optionRdonly;
+        break;
+      case TransportFileMode.writeOnly:
+        options = _optionWronly;
+        break;
+      case TransportFileMode.readWrite:
+        options = _optionRdwr;
+        break;
+      case TransportFileMode.writeOnlyAppend:
+        options = _optionWronly | _optionAppend;
+        break;
+      case TransportFileMode.readWriteAppend:
+        options = _optionRdwr | _optionAppend;
+        break;
+    }
+    if (truncate) options |= _optionTrunc;
+    if (create) options |= _optionCreat;
+    final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast(), options, permissions));
     final file = TransportFile(
       path,
       fd,

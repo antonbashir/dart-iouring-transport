@@ -19108,148 +19108,6 @@ class TransportBindings {
 
   set signgam(int value) => _signgam.value = value;
 
-  ffi.Pointer<mh_i32_t> mh_i32_new() {
-    return _mh_i32_new();
-  }
-
-  late final _mh_i32_newPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<mh_i32_t> Function()>>(
-          'mh_i32_new');
-  late final _mh_i32_new =
-      _mh_i32_newPtr.asFunction<ffi.Pointer<mh_i32_t> Function()>();
-
-  void mh_i32_clear(
-    ffi.Pointer<mh_i32_t> h,
-  ) {
-    return _mh_i32_clear(
-      h,
-    );
-  }
-
-  late final _mh_i32_clearPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>(
-          'mh_i32_clear');
-  late final _mh_i32_clear =
-      _mh_i32_clearPtr.asFunction<void Function(ffi.Pointer<mh_i32_t>)>();
-
-  void mh_i32_delete(
-    ffi.Pointer<mh_i32_t> h,
-  ) {
-    return _mh_i32_delete(
-      h,
-    );
-  }
-
-  late final _mh_i32_deletePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>(
-          'mh_i32_delete');
-  late final _mh_i32_delete =
-      _mh_i32_deletePtr.asFunction<void Function(ffi.Pointer<mh_i32_t>)>();
-
-  void mh_i32_resize(
-    ffi.Pointer<mh_i32_t> h,
-    int arg,
-  ) {
-    return _mh_i32_resize(
-      h,
-      arg,
-    );
-  }
-
-  late final _mh_i32_resizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<mh_i32_t>, ffi.Int32)>>('mh_i32_resize');
-  late final _mh_i32_resize =
-      _mh_i32_resizePtr.asFunction<void Function(ffi.Pointer<mh_i32_t>, int)>();
-
-  int mh_i32_start_resize(
-    ffi.Pointer<mh_i32_t> h,
-    int buckets,
-    int batch,
-    int arg,
-  ) {
-    return _mh_i32_start_resize(
-      h,
-      buckets,
-      batch,
-      arg,
-    );
-  }
-
-  late final _mh_i32_start_resizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<mh_i32_t>, mh_int_t, mh_int_t,
-              ffi.Int32)>>('mh_i32_start_resize');
-  late final _mh_i32_start_resize = _mh_i32_start_resizePtr
-      .asFunction<int Function(ffi.Pointer<mh_i32_t>, int, int, int)>();
-
-  int mh_i32_reserve(
-    ffi.Pointer<mh_i32_t> h,
-    int size,
-    int arg,
-  ) {
-    return _mh_i32_reserve(
-      h,
-      size,
-      arg,
-    );
-  }
-
-  late final _mh_i32_reservePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<mh_i32_t>, mh_int_t, ffi.Int32)>>('mh_i32_reserve');
-  late final _mh_i32_reserve = _mh_i32_reservePtr
-      .asFunction<int Function(ffi.Pointer<mh_i32_t>, int, int)>();
-
-  void mh_i32_del_resize(
-    ffi.Pointer<mh_i32_t> h,
-    int x,
-    int arg,
-  ) {
-    return _mh_i32_del_resize(
-      h,
-      x,
-      arg,
-    );
-  }
-
-  late final _mh_i32_del_resizePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<mh_i32_t>, mh_int_t,
-              ffi.Int32)>>('mh_i32_del_resize');
-  late final _mh_i32_del_resize = _mh_i32_del_resizePtr
-      .asFunction<void Function(ffi.Pointer<mh_i32_t>, int, int)>();
-
-  int mh_i32_memsize(
-    ffi.Pointer<mh_i32_t> h,
-  ) {
-    return _mh_i32_memsize(
-      h,
-    );
-  }
-
-  late final _mh_i32_memsizePtr =
-      _lookup<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<mh_i32_t>)>>(
-          'mh_i32_memsize');
-  late final _mh_i32_memsize =
-      _mh_i32_memsizePtr.asFunction<int Function(ffi.Pointer<mh_i32_t>)>();
-
-  void mh_i32_dump(
-    ffi.Pointer<mh_i32_t> h,
-  ) {
-    return _mh_i32_dump(
-      h,
-    );
-  }
-
-  late final _mh_i32_dumpPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>(
-          'mh_i32_dump');
-  late final _mh_i32_dump =
-      _mh_i32_dumpPtr.asFunction<void Function(ffi.Pointer<mh_i32_t>)>();
-
   ffi.Pointer<mh_events_t> mh_events_new() {
     return _mh_events_new();
   }
@@ -19913,17 +19771,22 @@ class TransportBindings {
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
+    int options,
+    int mode,
   ) {
     return _transport_file_open(
       path,
+      options,
+      mode,
     );
   }
 
-  late final _transport_file_openPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'transport_file_open');
-  late final _transport_file_open =
-      _transport_file_openPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+  late final _transport_file_openPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<ffi.Char>, ffi.Int, ffi.Int)>>('transport_file_open');
+  late final _transport_file_open = _transport_file_openPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, int)>();
 
   int transport_socket_create_tcp(
     int flags,
@@ -24011,33 +23874,6 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.NativeFunction<ffi.Float Function(ffi.Float, ffi.Float)>>
       get scalbf => _library._scalbfPtr;
   ffi.Pointer<ffi.Int> get signgam => _library._signgam;
-  ffi.Pointer<ffi.NativeFunction<ffi.Pointer<mh_i32_t> Function()>>
-      get mh_i32_new => _library._mh_i32_newPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>
-      get mh_i32_clear => _library._mh_i32_clearPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>
-      get mh_i32_delete => _library._mh_i32_deletePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<mh_i32_t>, ffi.Int32)>>
-      get mh_i32_resize => _library._mh_i32_resizePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<mh_i32_t>, mh_int_t, mh_int_t, ffi.Int32)>>
-      get mh_i32_start_resize => _library._mh_i32_start_resizePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(ffi.Pointer<mh_i32_t>, mh_int_t, ffi.Int32)>>
-      get mh_i32_reserve => _library._mh_i32_reservePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<mh_i32_t>, mh_int_t, ffi.Int32)>>
-      get mh_i32_del_resize => _library._mh_i32_del_resizePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Size Function(ffi.Pointer<mh_i32_t>)>>
-      get mh_i32_memsize => _library._mh_i32_memsizePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_i32_t>)>>
-      get mh_i32_dump => _library._mh_i32_dumpPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Pointer<mh_events_t> Function()>>
       get mh_events_new => _library._mh_events_newPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<mh_events_t>)>>
@@ -24213,7 +24049,9 @@ class _SymbolAddresses {
       get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Int)>>
       get transport_file_open => _library._transport_file_openPtr;
   ffi.Pointer<
       ffi.NativeFunction<
@@ -27436,48 +27274,6 @@ class transport_client extends ffi.Struct {
 typedef transport_client_t = transport_client;
 typedef transport_client_configuration_t = transport_client_configuration;
 
-class mh_i32_node_t extends ffi.Struct {
-  @ffi.Int32()
-  external int key;
-
-  @ffi.Int64()
-  external int value;
-}
-
-class mh_i32_t extends ffi.Struct {
-  external ffi.Pointer<mh_i32_node_t> p;
-
-  external ffi.Pointer<ffi.Uint32> b;
-
-  @mh_int_t()
-  external int n_buckets;
-
-  @mh_int_t()
-  external int n_dirty;
-
-  @mh_int_t()
-  external int size;
-
-  @mh_int_t()
-  external int upper_bound;
-
-  @mh_int_t()
-  external int prime;
-
-  @mh_int_t()
-  external int resize_cnt;
-
-  @mh_int_t()
-  external int resize_position;
-
-  @mh_int_t()
-  external int batch;
-
-  external ffi.Pointer<mh_i32_t> shadow;
-}
-
-typedef mh_int_t = ffi.Uint32;
-
 class mh_events_node_t extends ffi.Struct {
   @ffi.Uint64()
   external int data;
@@ -27523,6 +27319,8 @@ class mh_events_t extends ffi.Struct {
 
   external ffi.Pointer<mh_events_t> shadow;
 }
+
+typedef mh_int_t = ffi.Uint32;
 
 class transport_buffers_pool extends ffi.Struct {
   external ffi.Pointer<ffi.Int32> ids;
@@ -31503,8 +31301,6 @@ const int TRANSPORT_EVENT_LINK = 1024;
 const int TRANSPORT_BUFFER_USED = -1;
 
 const int TRANSPORT_TIMEOUT_INFINITY = -1;
-
-const int TRANSPORT_PARENT_RING_NONE = -1;
 
 const int TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK = 2;
 
