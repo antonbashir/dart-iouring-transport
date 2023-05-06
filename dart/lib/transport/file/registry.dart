@@ -30,11 +30,9 @@ class TransportFileRegistry {
 
   final _files = <int, TransportFile>{};
 
-  @visibleForTesting
-  Map<int, TransportFile> get files => _files;
-
   TransportFileRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
 
+  @pragma(preferInlinePragma)
   TransportFile? get(int fd) => _files[fd];
 
   TransportFile open(String path, {TransportFileMode mode = TransportFileMode.readWriteAppend, bool create = false, bool truncate = false, int permissions = 0}) {
@@ -76,7 +74,12 @@ class TransportFileRegistry {
     return file;
   }
 
+  @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => Future.wait(_files.values.toList().map((file) => file.close(gracefulDuration: gracefulDuration)));
 
+  @pragma(preferInlinePragma)
   void remove(int fd) => _files.remove(fd);
+
+  @visibleForTesting
+  Map<int, TransportFile> get files => _files;
 }

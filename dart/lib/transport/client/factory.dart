@@ -11,9 +11,6 @@ import 'package:meta/meta.dart';
 class TransportClientsFactory {
   final TransportClientRegistry _registry;
 
-  @visibleForTesting
-  TransportClientRegistry get registry => _registry;
-
   TransportClientsFactory(this._registry);
 
   Future<TransportClientStreamPool> tcp(
@@ -54,4 +51,7 @@ class TransportClientsFactory {
         destinationPath,
         configuration: configuration,
       );
+
+  @visibleForTesting
+  TransportClientRegistry get registry => _registry;
 }

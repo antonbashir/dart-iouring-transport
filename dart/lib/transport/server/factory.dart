@@ -17,9 +17,6 @@ class TransportServersFactory {
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
 
-  @visibleForTesting
-  TransportServerRegistry get registry => _registry;
-
   TransportServersFactory(
     this._bindings,
     this._registry,
@@ -58,4 +55,7 @@ class TransportServersFactory {
       ),
     );
   }
+
+  @visibleForTesting
+  TransportServerRegistry get registry => _registry;
 }

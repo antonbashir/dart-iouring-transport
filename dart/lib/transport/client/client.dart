@@ -30,9 +30,6 @@ class TransportClient {
 
   late final Pointer<sockaddr> _destination;
 
-  @visibleForTesting
-  TransportClientRegistry get registry => _registry;
-
   var _active = true;
   bool get active => _active;
   var _closing = false;
@@ -95,7 +92,7 @@ class TransportClient {
         bufferIds[index],
         _writeTimeout,
         transportEventWrite | transportEventClient | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer();
@@ -142,7 +139,7 @@ class TransportClient {
         _readTimeout,
         flags,
         transportEventReceiveMessage | transportEventClient | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer();
@@ -201,7 +198,7 @@ class TransportClient {
         _writeTimeout,
         flags,
         transportEventSendMessage | transportEventClient | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer();
@@ -221,6 +218,7 @@ class TransportClient {
     return completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
   }
 
+  @pragma(preferInlinePragma)
   Future<TransportClient> connect() {
     if (_closing) throw TransportClosedException.forClient();
     final completer = Completer<TransportClient>();
@@ -231,15 +229,7 @@ class TransportClient {
   }
 
   @pragma(preferInlinePragma)
-  bool notifyConnect() {
-    _pending--;
-    if (_active) return true;
-    if (_pending == 0) _closer.complete();
-    return false;
-  }
-
-  @pragma(preferInlinePragma)
-  bool notifyData(int bufferId) {
+  bool notify() {
     _pending--;
     if (_active) return true;
     if (_pending == 0) _closer.complete();
@@ -257,6 +247,9 @@ class TransportClient {
     _registry.remove(_pointer.ref.fd);
     _bindings.transport_client_destroy(_pointer);
   }
+
+  @visibleForTesting
+  TransportClientRegistry get registry => _registry;
 }
 
 class TransportClientStreamPool {
@@ -265,17 +258,22 @@ class TransportClientStreamPool {
 
   TransportClientStreamPool(this._providers);
 
+  @pragma(preferInlinePragma)
   TransportClientStreamProvider select() {
     final provider = _providers[_next];
     if (++_next == _providers.length) _next = 0;
     return provider;
   }
 
+  @pragma(preferInlinePragma)
   void forEach(FutureOr<void> Function(TransportClientStreamProvider provider) action) => _providers.forEach(action);
 
+  @pragma(preferInlinePragma)
   Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamProvider provider) mapper) => _providers.map(mapper);
 
+  @pragma(preferInlinePragma)
   int count() => _providers.length;
 
+  @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => Future.wait(_providers.map((provider) => provider.close(gracefulDuration: gracefulDuration)));
 }

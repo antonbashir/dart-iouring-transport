@@ -322,7 +322,7 @@ class TransportWorker {
   void _handleRead(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (server == null) return;
-    if (!server.notifyConnectionData(fd, bufferId)) {
+    if (!server.notifyConnection(fd)) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -339,7 +339,7 @@ class TransportWorker {
   void _handleWrite(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByConnection(fd);
     if (server == null) return;
-    if (!server.notifyConnectionData(fd, bufferId)) {
+    if (!server.notifyConnection(fd)) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -356,7 +356,7 @@ class TransportWorker {
   void _handleReceiveMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (server == null) return;
-    if (!server.notifyData(bufferId)) {
+    if (!server.notify()) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -372,7 +372,7 @@ class TransportWorker {
   void _handleSendMessage(int bufferId, int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (server == null) return;
-    if (!server.notifyData(bufferId)) {
+    if (!server.notify()) {
       _callbacks.notifyInboundError(bufferId, TransportClosedException.forServer());
       return;
     }
@@ -388,7 +388,7 @@ class TransportWorker {
   void _handleReadReceiveClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (client == null) return;
-    if (!client.notifyData(bufferId)) {
+    if (!client.notify()) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
     }
@@ -404,7 +404,7 @@ class TransportWorker {
   void _handleReadFileCallback(int event, int bufferId, int result, int fd) {
     final file = _filesRegistry.get(fd);
     if (file == null) return;
-    if (!file.notify(bufferId)) {
+    if (!file.notify()) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
       return;
     }
@@ -416,7 +416,7 @@ class TransportWorker {
   void _handleWriteSendClientCallback(int event, int bufferId, int result, int fd) {
     final client = _clientRegistry.get(fd);
     if (client == null) return;
-    if (!client.notifyData(bufferId)) {
+    if (!client.notify()) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forClient());
       return;
     }
@@ -432,7 +432,7 @@ class TransportWorker {
   void _handleWriteFileCallback(int event, int bufferId, int result, int fd) {
     final file = _filesRegistry.get(fd);
     if (file == null) return;
-    if (!file.notify(bufferId)) {
+    if (!file.notify()) {
       _callbacks.notifyOutboundError(bufferId, TransportClosedException.forFile());
       return;
     }
@@ -444,7 +444,7 @@ class TransportWorker {
   void _handleConnect(int fd) {
     final client = _clientRegistry.get(fd);
     if (client == null) return;
-    if (!client.notifyConnect()) {
+    if (!client.notify()) {
       _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
       return;
     }
@@ -455,7 +455,7 @@ class TransportWorker {
   void _handleAccept(int fd, int result) {
     final server = _serverRegistry.getByServer(fd);
     if (server == null) return;
-    if (!server.notifyAccept()) return;
+    if (!server.notify()) return;
     _serverRegistry.addConnection(fd, result);
     server.reaccept();
     _callbacks.notifyAccept(fd, TransportChannel(_inboundWorkerPointer, result, _bindings, _inboundBuffers));

@@ -119,7 +119,7 @@ class TransportServer implements TransportServerCloser {
         bufferId,
         _writeTimeout,
         transportEventWrite | transportEventServer | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer();
@@ -175,7 +175,7 @@ class TransportServer implements TransportServerCloser {
         _readTimeout,
         flags,
         transportEventReceiveMessage | transportEventServer | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer();
@@ -195,17 +195,18 @@ class TransportServer implements TransportServerCloser {
       throw error;
     });
     for (var bufferId in bufferIds)
-      responders.add(_payloadPool.getDatagramResponder(
-        bufferId,
-        _buffers.read(bufferId),
-        this,
-        channel,
-        _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
-      ));
+      responders.add(
+        _payloadPool.getDatagramResponder(
+          bufferId,
+          _buffers.read(bufferId),
+          this,
+          channel,
+          _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
+        ),
+      );
     return responders;
   }
 
-  @pragma(preferInlinePragma)
   Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
@@ -226,7 +227,6 @@ class TransportServer implements TransportServerCloser {
     return completer.future.whenComplete(() => _buffers.release(bufferId));
   }
 
-  @pragma(preferInlinePragma)
   Future<void> respondManyMessages(TransportChannel channel, Pointer<sockaddr> destination, List<Uint8List> bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(bytes.length);
@@ -243,7 +243,7 @@ class TransportServer implements TransportServerCloser {
         _writeTimeout,
         flags,
         transportEventSendMessage | transportEventServer | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer();
@@ -264,7 +264,7 @@ class TransportServer implements TransportServerCloser {
   }
 
   @pragma(preferInlinePragma)
-  bool notifyAccept() {
+  bool notify() {
     _pending--;
     if (_active) return true;
     if (_pending == 0 && _connections.isEmpty) _closer.complete();
@@ -272,20 +272,11 @@ class TransportServer implements TransportServerCloser {
   }
 
   @pragma(preferInlinePragma)
-  bool notifyData(int bufferId) {
-    _pending--;
-    if (_active) return true;
-    if (_pending == 0 && _connections.isEmpty) _closer.complete();
-    return false;
-  }
-
-  @pragma(preferInlinePragma)
-  bool notifyConnectionData(int fd, int bufferId) {
+  bool notifyConnection(int fd) {
     final connection = _connections[fd]!;
     connection.pending--;
     if (_active && connection.active) return true;
     if (!connection.active && connection.pending == 0) connection.closer.complete();
-    if (!_active && _pending == 0 && _connections.isEmpty) _closer.complete();
     return false;
   }
 
@@ -300,7 +291,7 @@ class TransportServer implements TransportServerCloser {
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
     await Future.wait(_connections.keys.toList().map(closeConnection));
-    if (_pending > 0 || _connections.isNotEmpty) await _closer.future;
+    if (_pending > 0) await _closer.future;
     _registry.removeServer(pointer.ref.fd);
     _bindings.transport_close_descritor(pointer.ref.fd);
     _bindings.transport_server_destroy(pointer);

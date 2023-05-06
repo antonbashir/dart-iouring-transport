@@ -32,8 +32,8 @@ class TransportClientRegistry {
   TransportClientRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
 
   Future<TransportClientStreamPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
-    final providers = <Future<TransportClientStreamProvider>>[];
     configuration = configuration ?? TransportDefaults.tcpClient();
+    final providers = <Future<TransportClientStreamProvider>>[];
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = calloc<transport_client_t>();
       if (clientPointer == nullptr) {
@@ -53,6 +53,7 @@ class TransportClientRegistry {
           calloc.free(clientPointer);
           throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
         }
+        calloc.free(clientPointer);
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
       }
       final client = TransportClient(
@@ -81,8 +82,8 @@ class TransportClientRegistry {
   }
 
   Future<TransportClientStreamPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
-    final clients = <Future<TransportClientStreamProvider>>[];
     configuration = configuration ?? TransportDefaults.unixStreamClient();
+    final clients = <Future<TransportClientStreamProvider>>[];
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = calloc<transport_client_t>();
       if (clientPointer == nullptr) {
@@ -101,6 +102,7 @@ class TransportClientRegistry {
           calloc.free(clientPointer);
           throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
         }
+        calloc.free(clientPointer);
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
       }
       final client = TransportClient(
@@ -149,6 +151,7 @@ class TransportClientRegistry {
           calloc.free(pointer);
           throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
         }
+        calloc.free(pointer);
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
       }
       if (configuration.multicastManager != null) {
@@ -231,6 +234,7 @@ class TransportClientRegistry {
         calloc.free(clientPointer);
         throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
       }
+      calloc.free(clientPointer);
       throw TransportInitializationException("[client] unable to set socket option: ${-result}");
     }
     final client = TransportClient(
@@ -255,15 +259,18 @@ class TransportClientRegistry {
     return TransportClientDatagramProvider(client);
   }
 
+  @pragma(preferInlinePragma)
   TransportClient? get(int fd) => _clients[fd];
 
+  @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.values.toList().map((client) => client.close(gracefulDuration: gracefulDuration)));
 
+  @pragma(preferInlinePragma)
   void remove(int fd) => _clients.remove(fd);
 
   Pointer<transport_client_configuration_t> _tcpConfiguration(TransportTcpClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (clientConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
@@ -319,7 +326,7 @@ class TransportClientRegistry {
 
   Pointer<transport_client_configuration_t> _udpConfiguration(TransportUdpClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (clientConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
@@ -352,7 +359,6 @@ class TransportClientRegistry {
       flags |= transportSocketOptionIpMulticastTtl;
       nativeClientConfiguration.ref.ip_multicast_ttl = clientConfiguration.ipMulticastTtl!;
     }
-    nativeClientConfiguration.ref.ip_multicast_interface = nullptr;
     if (clientConfiguration.ipMulticastInterface != null) {
       flags |= transportSocketOptionIpMulticastIf;
       final interface = clientConfiguration.ipMulticastInterface!;
@@ -370,7 +376,7 @@ class TransportClientRegistry {
 
   Pointer<transport_client_configuration_t> _unixStreamConfiguration(TransportUnixStreamClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (clientConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
@@ -396,7 +402,7 @@ class TransportClientRegistry {
 
   Pointer<transport_client_configuration_t> _unixDatagramConfiguration(TransportUnixDatagramClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (clientConfiguration.socketReceiveBufferSize != null) {

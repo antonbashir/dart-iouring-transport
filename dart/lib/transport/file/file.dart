@@ -25,9 +25,6 @@ class TransportFile {
   final TransportPayloadPool _payloadPool;
   final TransportFileRegistry _registry;
 
-  @visibleForTesting
-  TransportFileRegistry get registry => _registry;
-
   var _active = true;
   bool get active => _active;
   var _closing = false;
@@ -84,7 +81,7 @@ class TransportFile {
         bufferId,
         transportTimeoutInfinity,
         transportEventRead | transportEventFile | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
         offset: offset,
       );
       offset += buffers.bufferSize;
@@ -118,16 +115,16 @@ class TransportFile {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      offset += buffers.bufferSize;
       _links.setOutbound(bufferId, lastBufferId);
       _channel.write(
         bytes[index],
         bufferId,
         transportTimeoutInfinity,
         transportEventWrite | transportEventFile | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
+        listenerSqeFlags: transportIosqeIoLink,
         offset: offset,
       );
+      offset += buffers.bufferSize;
     }
     final completer = Completer();
     _links.setOutbound(lastBufferId, lastBufferId);
@@ -143,7 +140,8 @@ class TransportFile {
     await completer.future.whenComplete(() => buffers.releaseArray(bufferIds));
   }
 
-  bool notify(int bufferId) {
+  @pragma(preferInlinePragma)
+  bool notify() {
     _pending--;
     if (_active) return true;
     if (_pending == 0) _closer.complete();
@@ -160,4 +158,7 @@ class TransportFile {
     _channel.close();
     _registry.remove(_fd);
   }
+
+  @visibleForTesting
+  TransportFileRegistry get registry => _registry;
 }

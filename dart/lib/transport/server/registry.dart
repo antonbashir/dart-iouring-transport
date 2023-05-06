@@ -19,12 +19,6 @@ class TransportServerRegistry {
   final _servers = <int, TransportServer>{};
   final _serverConnections = <int, TransportServer>{};
 
-  @visibleForTesting
-  Map<int, TransportServer> get servers => _servers;
-
-  @visibleForTesting
-  Map<int, TransportServer> get serverConnections => _serverConnections;
-
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
   final TransportCallbacks _callbacks;
@@ -54,6 +48,7 @@ class TransportServerRegistry {
             calloc.free(pointer);
             throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
           }
+          calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
         }
         return TransportServer(
@@ -94,6 +89,7 @@ class TransportServerRegistry {
             calloc.free(pointer);
             throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
           }
+          calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
         }
         if (configuration.multicastManager != null) {
@@ -169,6 +165,7 @@ class TransportServerRegistry {
             calloc.free(pointer);
             throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
           }
+          calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
         }
         return TransportServer(
@@ -208,6 +205,7 @@ class TransportServerRegistry {
             calloc.free(pointer);
             throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
           }
+          calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
         }
         return TransportServer(
@@ -243,11 +241,12 @@ class TransportServerRegistry {
   @pragma(preferInlinePragma)
   void removeServer(int fd) => _servers.remove(fd);
 
+  @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => Future.wait(_servers.values.toList().map((server) => server.close(gracefulDuration: gracefulDuration)));
 
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
@@ -307,7 +306,7 @@ class TransportServerRegistry {
 
   Pointer<transport_server_configuration_t> _udpConfiguration(TransportUdpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
@@ -357,7 +356,7 @@ class TransportServerRegistry {
 
   Pointer<transport_server_configuration_t> _unixStreamConfiguration(TransportUnixStreamServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (serverConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
@@ -386,7 +385,7 @@ class TransportServerRegistry {
 
   Pointer<transport_server_configuration_t> _unixDatagramConfiguration(TransportUnixDatagramServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    int flags = 0;
+    var flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (serverConfiguration.socketReceiveBufferSize != null) {
@@ -408,4 +407,10 @@ class TransportServerRegistry {
     nativeServerConfiguration.ref.socket_configuration_flags = flags;
     return nativeServerConfiguration;
   }
+
+  @visibleForTesting
+  Map<int, TransportServer> get servers => _servers;
+
+  @visibleForTesting
+  Map<int, TransportServer> get serverConnections => _serverConnections;
 }
