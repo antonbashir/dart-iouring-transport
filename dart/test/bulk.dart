@@ -27,9 +27,9 @@ void testBulk() {
       final serverCompleter = Completer();
       worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.read().then((value) => serverCompleter.complete(value.takeBytes())));
 
-      final workerFile1 = worker.files.open(file1.path);
-      final workerFile2 = worker.files.open(file2.path);
-      final workerFile3 = worker.files.open(file3.path);
+      final workerFile1 = worker.files.open(file1.path, create: true);
+      final workerFile2 = worker.files.open(file2.path, create: true);
+      final workerFile3 = worker.files.open(file3.path, create: true);
 
       final futures = [
         workerFile1.writeSingle(Generators.request(), submit: false),

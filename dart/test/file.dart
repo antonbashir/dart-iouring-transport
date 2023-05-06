@@ -30,7 +30,7 @@ void testFileSingle({
       var nativeFile = File("file-${worker.id}");
       if (nativeFile.existsSync()) nativeFile.deleteSync();
       if (!nativeFile.existsSync()) nativeFile.createSync();
-      final file = worker.files.open(nativeFile.path);
+      final file = worker.files.open(nativeFile.path, create: true);
       final result = await file.writeSingle(Generators.request()).then((_) => file.readSingle());
       Validators.request(result.takeBytes());
       if (nativeFile.existsSync()) nativeFile.deleteSync();
@@ -64,7 +64,7 @@ void testFileLoad({
       var nativeFile = File("file-${worker.id}");
       if (nativeFile.existsSync()) nativeFile.deleteSync();
       if (!nativeFile.existsSync()) nativeFile.createSync();
-      final file = worker.files.open(nativeFile.path);
+      final file = worker.files.open(nativeFile.path, create: true);
       final data = Generators.requestsOrdered(count * count);
       final result = await file.writeMany(data).then((_) => file.load(blocksCount: count));
       Validators.requestsSumOrdered(result, count * count);

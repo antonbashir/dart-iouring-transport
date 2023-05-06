@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/exception.dart';
 import 'package:meta/meta.dart';
 
 import '../bindings.dart';
@@ -58,6 +59,7 @@ class TransportFileRegistry {
     if (truncate) options |= _optionTrunc;
     if (create) options |= _optionCreat;
     final fd = using((Arena arena) => _bindings.transport_file_open(path.toNativeUtf8(allocator: arena).cast(), options, permissions));
+    if (fd < 0) throw TransportInitializationException("[file] open file failed: $path");
     final file = TransportFile(
       path,
       fd,

@@ -46,7 +46,7 @@ int transport_listener_initialize(transport_listener_t *listener, transport_list
 static inline int transport_listener_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
   int count = 0;
-  if (!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count)))
+  if (unlikely(!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count))))
   {
     if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
     {

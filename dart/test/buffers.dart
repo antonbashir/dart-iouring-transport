@@ -118,7 +118,7 @@ void testFileBuffers() {
       final file = File("file");
       if (file.existsSync()) file.deleteSync();
 
-      var fileProvider = worker.files.open(file.path);
+      var fileProvider = worker.files.open(file.path, create: true);
       await fileProvider.writeSingle(Generators.request());
       await fileProvider.readSingle().then((value) => value.release());
 
@@ -131,7 +131,7 @@ void testFileBuffers() {
 
       if (file.existsSync()) file.deleteSync();
 
-      fileProvider = worker.files.open(file.path);
+      fileProvider = worker.files.open(file.path, create: true);
       await fileProvider.writeMany(Generators.requestsUnordered(8));
       await fileProvider.load(blocksCount: 8);
 

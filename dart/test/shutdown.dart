@@ -27,7 +27,7 @@ void testShutdown({
       final server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeSingle(Generators.request()).then((value) => serverCompleter.complete()));
       final clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
 
-      var fileProvider = worker.files.open(file.path);
+      var fileProvider = worker.files.open(file.path, create: true);
       fileProvider.writeSingle(Generators.request());
 
       fileProvider.readSingle().then((value) {
