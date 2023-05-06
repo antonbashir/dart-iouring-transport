@@ -61,6 +61,7 @@ void transport_listener_close(transport_listener_t *listener)
 {
   struct io_uring_sqe *sqe = provide_sqe(listener->ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, -1, 0, 0);
+  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
   io_uring_submit(listener->ring);
 }
 
