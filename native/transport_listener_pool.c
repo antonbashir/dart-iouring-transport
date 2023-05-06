@@ -3,27 +3,19 @@
 
 void transport_listener_pool_add(transport_listener_pool_t *pool, transport_listener_t *listener)
 {
-  rlist_add_entry(&pool->listeners, listener, listener_pool_link);
-  pool->count++;
+  rlist_add_entry(pool->listeners, listener, listener_pool_link);
 }
 
-void transport_listener_pool_remove(transport_listener_pool_t *pool, transport_listener_t *listener)
-{
-  rlist_del_entry(listener, listener_pool_link);
-  pool->count--;
-}
-
-transport_listener_pool_t *transport_listener_pool_initialize()
+transport_listener_pool_t *transport_listener_pool_initialize(transport_listener_t* first)
 {
   transport_listener_pool_t *listener_pool = malloc(sizeof(transport_listener_pool_t));
   if (!listener_pool)
   {
     return NULL;
   }
-  listener_pool->next_listener = NULL;
-  listener_pool->count = 0;
-  listener_pool->next_listener_index = 0;
-  rlist_create(&listener_pool->listeners);
+  listener_pool->listeners = &first->listener_pool_link;
+  rlist_create(listener_pool->listeners);
+  listener_pool->next_listener = listener_pool->listeners;
 
   return listener_pool;
 }

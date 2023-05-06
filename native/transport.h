@@ -36,6 +36,8 @@ extern "C"
   void transport_destroy(transport_t *transport);
 
   void transport_close_descritor(int fd);
+
+  void transport_test();
 #if defined(__cplusplus)
 }
 #endif

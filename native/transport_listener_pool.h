@@ -10,13 +10,11 @@ extern "C"
 
   typedef struct transport_listener_pool
   {
-    struct rlist listeners;
+    struct rlist* listeners;
     struct rlist *next_listener;
-    uint16_t next_listener_index;
-    size_t count;
   } transport_listener_pool_t;
 
-  transport_listener_pool_t *transport_listener_pool_initialize();
+  transport_listener_pool_t *transport_listener_pool_initialize(transport_listener_t* first);
   void transport_listener_pool_add(transport_listener_pool_t *pool, transport_listener_t *listener);
   void transport_listener_pool_remove(transport_listener_pool_t *pool, transport_listener_t *listener);
 

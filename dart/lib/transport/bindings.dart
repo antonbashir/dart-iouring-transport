@@ -17050,17 +17050,23 @@ class TransportBindings {
       ffi.Pointer<ffi.Char> Function(
           ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
-  ffi.Pointer<transport_listener_pool_t> transport_listener_pool_initialize() {
-    return _transport_listener_pool_initialize();
+  ffi.Pointer<transport_listener_pool_t> transport_listener_pool_initialize(
+    ffi.Pointer<transport_listener_t> first,
+  ) {
+    return _transport_listener_pool_initialize(
+      first,
+    );
   }
 
   late final _transport_listener_pool_initializePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<transport_listener_pool_t>
-              Function()>>('transport_listener_pool_initialize');
+          ffi.NativeFunction<
+              ffi.Pointer<transport_listener_pool_t> Function(
+                  ffi.Pointer<transport_listener_t>)>>(
+      'transport_listener_pool_initialize');
   late final _transport_listener_pool_initialize =
-      _transport_listener_pool_initializePtr
-          .asFunction<ffi.Pointer<transport_listener_pool_t> Function()>();
+      _transport_listener_pool_initializePtr.asFunction<
+          ffi.Pointer<transport_listener_pool_t> Function(
+              ffi.Pointer<transport_listener_t>)>();
 
   void transport_listener_pool_add(
     ffi.Pointer<transport_listener_pool_t> pool,
@@ -19768,6 +19774,14 @@ class TransportBindings {
           'transport_close_descritor');
   late final _transport_close_descritor =
       _transport_close_descritorPtr.asFunction<void Function(int)>();
+
+  void transport_test() {
+    return _transport_test();
+  }
+
+  late final _transport_testPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('transport_test');
+  late final _transport_test = _transport_testPtr.asFunction<void Function()>();
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
@@ -23513,7 +23527,9 @@ class _SymbolAddresses {
                   ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
       get getenv_safe => _library._getenv_safePtr;
   ffi.Pointer<
-          ffi.NativeFunction<ffi.Pointer<transport_listener_pool_t> Function()>>
+          ffi.NativeFunction<
+              ffi.Pointer<transport_listener_pool_t> Function(
+                  ffi.Pointer<transport_listener_t>)>>
       get transport_listener_pool_initialize =>
           _library._transport_listener_pool_initializePtr;
   ffi.Pointer<
@@ -24049,6 +24065,8 @@ class _SymbolAddresses {
       get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get transport_test =>
+      _library._transport_testPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Int)>>
@@ -27199,15 +27217,9 @@ class itimerval extends ffi.Struct {
 }
 
 class transport_listener_pool extends ffi.Struct {
-  external rlist listeners;
+  external ffi.Pointer<rlist> listeners;
 
   external ffi.Pointer<rlist> next_listener;
-
-  @ffi.Uint16()
-  external int next_listener_index;
-
-  @ffi.Size()
-  external int count;
 }
 
 typedef transport_listener_pool_t = transport_listener_pool;

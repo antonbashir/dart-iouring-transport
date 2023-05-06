@@ -7,11 +7,6 @@ int transport_worker_initialize(transport_worker_t *worker,
                                 uint8_t id)
 {
   worker->id = id;
-  worker->listeners = transport_listener_pool_initialize();
-  if (!worker->listeners)
-  {
-    return -ENOMEM;
-  }
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
@@ -113,20 +108,7 @@ void transport_worker_release_buffer(transport_worker_t *worker, uint16_t buffer
 
 static inline transport_listener_t *transport_listener_pool_next(transport_listener_pool_t *pool)
 {
-  if (unlikely(!pool->next_listener))
-  {
-    pool->next_listener = pool->listeners.next;
-    pool->next_listener_index = 0;
-    return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
-  }
-  if (pool->next_listener_index + 1 == pool->count)
-  {
-    pool->next_listener = pool->listeners.next;
-    pool->next_listener_index = 0;
-    return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
-  }
-  pool->next_listener = pool->next_listener->next;
-  pool->next_listener_index++;
+  pool->next_listener = rlist_next(pool->listeners);
   return rlist_entry(pool->next_listener, transport_listener_t, listener_pool_link);
 }
 

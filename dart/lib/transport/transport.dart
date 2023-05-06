@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:iouring_transport/transport/defaults.dart';
 import 'constants.dart';
 import 'extensions.dart';
 
@@ -193,8 +194,13 @@ class Transport {
       _listenerPointers.add(listenerPointer);
       for (var workerIndex = 0; workerIndex < transportConfiguration.workerInsolates; workerIndex++) {
         final inboundWorker = Pointer.fromAddress(inboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
-        _bindings.transport_listener_pool_add(inboundWorker.ref.listeners, listenerPointer);
         final outboundWorker = Pointer.fromAddress(outboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
+        if (_listenerPointers.length == 1) {
+          inboundWorker.ref.listeners = _bindings.transport_listener_pool_initialize(listenerPointer);
+          outboundWorker.ref.listeners = _bindings.transport_listener_pool_initialize(listenerPointer);
+          continue;
+        }
+        _bindings.transport_listener_pool_add(inboundWorker.ref.listeners, listenerPointer);
         _bindings.transport_listener_pool_add(outboundWorker.ref.listeners, listenerPointer);
       }
       (port as SendPort).send([
@@ -234,5 +240,9 @@ class Transport {
       rethrow;
     }
     workerActivators.forEach((port) => port.send(null));
+  }
+
+  void test() {
+    _bindings.transport_test();
   }
 }
