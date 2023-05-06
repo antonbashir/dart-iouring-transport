@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -17,7 +18,7 @@ void testBulk() {
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
       await worker.initialize();
-      final file1 = File("file");
+      final file1 = File("file1");
       final file2 = File("file2");
       final file3 = File("file3");
       if (file1.existsSync()) file1.deleteSync();
@@ -25,7 +26,13 @@ void testBulk() {
       if (file3.existsSync()) file3.deleteSync();
 
       final serverCompleter = Completer();
-      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.read().then((value) => serverCompleter.complete(value.takeBytes())));
+      worker.servers.tcp(
+          InternetAddress("0.0.0.0"),
+          12345,
+          (connection) => connection.read().then((value) {
+                print(value.bytes.length);
+                serverCompleter.complete(value.takeBytes());
+              }));
 
       final workerFile1 = worker.files.open(file1.path, create: true);
       final workerFile2 = worker.files.open(file2.path, create: true);
