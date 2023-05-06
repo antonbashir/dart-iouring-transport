@@ -26,10 +26,7 @@ void testBulk() {
       if (file3.existsSync()) file3.deleteSync();
 
       final serverCompleter = Completer();
-      worker.servers.tcp(
-          InternetAddress("0.0.0.0"),
-          12345,
-          (connection) => connection.read().then((value) => serverCompleter.complete(value.takeBytes())));
+      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.read().then((value) => serverCompleter.complete(value.takeBytes())));
 
       final workerFile1 = worker.files.open(file1.path, create: true);
       final workerFile2 = worker.files.open(file2.path, create: true);
