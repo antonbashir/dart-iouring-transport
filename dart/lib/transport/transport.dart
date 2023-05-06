@@ -196,12 +196,12 @@ class Transport {
         final inboundWorker = Pointer.fromAddress(inboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
         final outboundWorker = Pointer.fromAddress(outboundWorkerAddresses[workerIndex]).cast<transport_worker_t>();
         if (_listenerPointers.length == 1) {
-          inboundWorker.ref.listeners = _bindings.transport_listener_pool_initialize(listenerPointer);
-          outboundWorker.ref.listeners = _bindings.transport_listener_pool_initialize(listenerPointer);
+          _bindings.transport_worker_initialize_listeners(inboundWorker, listenerPointer);
+          _bindings.transport_worker_initialize_listeners(outboundWorker, listenerPointer);
           continue;
         }
-        _bindings.transport_listener_pool_add(inboundWorker.ref.listeners, listenerPointer);
-        _bindings.transport_listener_pool_add(outboundWorker.ref.listeners, listenerPointer);
+        _bindings.transport_worker_add_listener(inboundWorker, listenerPointer);
+        _bindings.transport_worker_add_listener(outboundWorker, listenerPointer);
       }
       (port as SendPort).send([
         _libraryPath,
@@ -240,9 +240,5 @@ class Transport {
       rethrow;
     }
     workerActivators.forEach((port) => port.send(null));
-  }
-
-  void test() {
-    _bindings.transport_test();
   }
 }

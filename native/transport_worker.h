@@ -4,11 +4,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "transport_common.h"
-#include "transport_listener_pool.h"
 #include "transport_client.h"
 #include "transport_server.h"
 #include "transport_collections.h"
 #include "transport_buffers_pool.h"
+#include "transport_listener.h"
 
 #if defined(__cplusplus)
 extern "C"
@@ -34,7 +34,6 @@ extern "C"
     uint8_t id;
     struct transport_buffers_pool free_buffers;
     struct io_uring *ring;
-    transport_listener_pool_t *listeners;
     struct iovec *buffers;
     uint32_t buffer_size;
     uint16_t buffers_count;
@@ -42,6 +41,8 @@ extern "C"
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
     struct mh_events_t *events;
+    struct rlist *listeners;
+    struct rlist *next_listener;
   } transport_worker_t;
 
   int transport_worker_initialize(transport_worker_t *worker,
@@ -97,8 +98,11 @@ extern "C"
   struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id);
 
   int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
-  
-  int transport_worker_get_fd(transport_worker_t* worker);
+
+  int transport_worker_get_fd(transport_worker_t *worker);
+
+  void transport_worker_initialize_listeners(transport_worker_t* worker, transport_listener_t *first);
+  void transport_worker_add_listener(transport_worker_t* worker, transport_listener_t *listener);
 
   void transport_worker_destroy(transport_worker_t *worker);
 

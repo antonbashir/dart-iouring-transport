@@ -23,10 +23,8 @@ ffigen:
       - "../native/transport_constants.h"
       - "../native/transport_listener.h"
       - "../native/transport_server.h"
-      - "../native/transport_event_loop.h"
       - "../native/transport_file.h"
       - "../native/transport_socket.h"
-      - "../native/transport_logger.h"
   globals:
     exclude:
       - "_(.*)"

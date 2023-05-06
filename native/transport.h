@@ -9,7 +9,6 @@
 #include "transport_server.h"
 #include "transport_worker.h"
 #include "transport_client.h"
-#include "transport_listener_pool.h"
 #include "dart/dart_api.h"
 
 #if defined(__cplusplus)
@@ -36,8 +35,6 @@ extern "C"
   void transport_destroy(transport_t *transport);
 
   void transport_close_descritor(int fd);
-
-  void transport_test();
 #if defined(__cplusplus)
 }
 #endif

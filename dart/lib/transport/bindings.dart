@@ -17050,64 +17050,6 @@ class TransportBindings {
       ffi.Pointer<ffi.Char> Function(
           ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
-  ffi.Pointer<transport_listener_pool_t> transport_listener_pool_initialize(
-    ffi.Pointer<transport_listener_t> first,
-  ) {
-    return _transport_listener_pool_initialize(
-      first,
-    );
-  }
-
-  late final _transport_listener_pool_initializePtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_listener_pool_t> Function(
-                  ffi.Pointer<transport_listener_t>)>>(
-      'transport_listener_pool_initialize');
-  late final _transport_listener_pool_initialize =
-      _transport_listener_pool_initializePtr.asFunction<
-          ffi.Pointer<transport_listener_pool_t> Function(
-              ffi.Pointer<transport_listener_t>)>();
-
-  void transport_listener_pool_add(
-    ffi.Pointer<transport_listener_pool_t> pool,
-    ffi.Pointer<transport_listener_t> listener,
-  ) {
-    return _transport_listener_pool_add(
-      pool,
-      listener,
-    );
-  }
-
-  late final _transport_listener_pool_addPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_pool_t>,
-                  ffi.Pointer<transport_listener_t>)>>(
-      'transport_listener_pool_add');
-  late final _transport_listener_pool_add =
-      _transport_listener_pool_addPtr.asFunction<
-          void Function(ffi.Pointer<transport_listener_pool_t>,
-              ffi.Pointer<transport_listener_t>)>();
-
-  void transport_listener_pool_remove(
-    ffi.Pointer<transport_listener_pool_t> pool,
-    ffi.Pointer<transport_listener_t> listener,
-  ) {
-    return _transport_listener_pool_remove(
-      pool,
-      listener,
-    );
-  }
-
-  late final _transport_listener_pool_removePtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_pool_t>,
-                  ffi.Pointer<transport_listener_t>)>>(
-      'transport_listener_pool_remove');
-  late final _transport_listener_pool_remove =
-      _transport_listener_pool_removePtr.asFunction<
-          void Function(ffi.Pointer<transport_listener_pool_t>,
-              ffi.Pointer<transport_listener_t>)>();
-
   int transport_client_initialize_tcp(
     ffi.Pointer<transport_client_t> client,
     ffi.Pointer<transport_client_configuration_t> configuration,
@@ -19671,6 +19613,46 @@ class TransportBindings {
   late final _transport_worker_get_fd = _transport_worker_get_fdPtr
       .asFunction<int Function(ffi.Pointer<transport_worker_t>)>();
 
+  void transport_worker_initialize_listeners(
+    ffi.Pointer<transport_worker_t> worker,
+    ffi.Pointer<transport_listener_t> first,
+  ) {
+    return _transport_worker_initialize_listeners(
+      worker,
+      first,
+    );
+  }
+
+  late final _transport_worker_initialize_listenersPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>,
+                  ffi.Pointer<transport_listener_t>)>>(
+      'transport_worker_initialize_listeners');
+  late final _transport_worker_initialize_listeners =
+      _transport_worker_initialize_listenersPtr.asFunction<
+          void Function(ffi.Pointer<transport_worker_t>,
+              ffi.Pointer<transport_listener_t>)>();
+
+  void transport_worker_add_listener(
+    ffi.Pointer<transport_worker_t> worker,
+    ffi.Pointer<transport_listener_t> listener,
+  ) {
+    return _transport_worker_add_listener(
+      worker,
+      listener,
+    );
+  }
+
+  late final _transport_worker_add_listenerPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>,
+                  ffi.Pointer<transport_listener_t>)>>(
+      'transport_worker_add_listener');
+  late final _transport_worker_add_listener =
+      _transport_worker_add_listenerPtr.asFunction<
+          void Function(ffi.Pointer<transport_worker_t>,
+              ffi.Pointer<transport_listener_t>)>();
+
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
   ) {
@@ -19774,14 +19756,6 @@ class TransportBindings {
           'transport_close_descritor');
   late final _transport_close_descritor =
       _transport_close_descritorPtr.asFunction<void Function(int)>();
-
-  void transport_test() {
-    return _transport_test();
-  }
-
-  late final _transport_testPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('transport_test');
-  late final _transport_test = _transport_testPtr.asFunction<void Function()>();
 
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
@@ -23527,24 +23501,6 @@ class _SymbolAddresses {
                   ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
       get getenv_safe => _library._getenv_safePtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<transport_listener_pool_t> Function(
-                  ffi.Pointer<transport_listener_t>)>>
-      get transport_listener_pool_initialize =>
-          _library._transport_listener_pool_initializePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_pool_t>,
-                  ffi.Pointer<transport_listener_t>)>>
-      get transport_listener_pool_add =>
-          _library._transport_listener_pool_addPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_listener_pool_t>,
-                  ffi.Pointer<transport_listener_t>)>>
-      get transport_listener_pool_remove =>
-          _library._transport_listener_pool_removePtr;
-  ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
               ffi.Pointer<transport_client_t>,
@@ -24044,6 +24000,18 @@ class _SymbolAddresses {
       get transport_worker_get_fd => _library._transport_worker_get_fdPtr;
   ffi.Pointer<
           ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>,
+                  ffi.Pointer<transport_listener_t>)>>
+      get transport_worker_initialize_listeners =>
+          _library._transport_worker_initialize_listenersPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Pointer<transport_worker_t>,
+                  ffi.Pointer<transport_listener_t>)>>
+      get transport_worker_add_listener =>
+          _library._transport_worker_add_listenerPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
       get transport_worker_destroy => _library._transport_worker_destroyPtr;
   ffi.Pointer<
@@ -24065,8 +24033,6 @@ class _SymbolAddresses {
       get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get transport_test =>
-      _library._transport_testPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Int)>>
@@ -27216,14 +27182,6 @@ class itimerval extends ffi.Struct {
   external timeval it_value;
 }
 
-class transport_listener_pool extends ffi.Struct {
-  external ffi.Pointer<rlist> listeners;
-
-  external ffi.Pointer<rlist> next_listener;
-}
-
-typedef transport_listener_pool_t = transport_listener_pool;
-
 class transport_client_configuration extends ffi.Struct {
   @ffi.Uint64()
   external int socket_configuration_flags;
@@ -27376,8 +27334,6 @@ class transport_worker extends ffi.Struct {
 
   external ffi.Pointer<io_uring> ring;
 
-  external ffi.Pointer<transport_listener_pool_t> listeners;
-
   external ffi.Pointer<iovec> buffers;
 
   @ffi.Uint32()
@@ -27394,6 +27350,10 @@ class transport_worker extends ffi.Struct {
   external ffi.Pointer<msghdr> unix_used_messages;
 
   external ffi.Pointer<mh_events_t> events;
+
+  external ffi.Pointer<rlist> listeners;
+
+  external ffi.Pointer<rlist> next_listener;
 }
 
 typedef transport_worker_t = transport_worker;
@@ -31380,7 +31340,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 
