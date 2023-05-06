@@ -97,7 +97,7 @@ class TransportServer implements TransportServerCloser {
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    final completer = Completer<void>();
+    final completer = Completer();
     _callbacks.setInbound(bufferId, completer);
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending++;

@@ -18,6 +18,7 @@ int transport_worker_initialize(transport_worker_t *worker,
   }
 
   worker->events = mh_events_new();
+  mh_events_reserve(worker->events, worker->buffers_count, 0);
   if (!worker->events)
   {
     return -ENOMEM;

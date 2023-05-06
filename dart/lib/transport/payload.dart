@@ -1,8 +1,7 @@
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/configuration.dart';
-import 'package:retry/retry.dart';
+import 'configuration.dart';
 
 import 'bindings.dart';
 import 'buffers.dart';
@@ -57,15 +56,15 @@ class TransportPayload {
 
   @pragma(preferInlinePragma)
   Uint8List takeBytes({bool release = true}) {
-    final result = BytesBuilder()..add(_bytes);
-    if (release) _pool.release(_bufferId);
-    return result.takeBytes();
+    final result = Uint8List.fromList(bytes);
+    if (release) this.release();
+    return result;
   }
 
   @pragma(preferInlinePragma)
   List<int> toBytes({bool release = true}) {
     final result = _bytes.toList();
-    if (release) _pool.release(_bufferId);
+    if (release) this.release();
     return result;
   }
 }
@@ -129,15 +128,15 @@ class TransportDatagramResponder {
 
   @pragma(preferInlinePragma)
   Uint8List takeBytes({bool release = true}) {
-    final result = BytesBuilder()..add(_bytes);
-    if (release) _pool.release(_bufferId);
-    return result.takeBytes();
+    final result = Uint8List.fromList(_bytes);
+    if (release) this.release();
+    return result;
   }
 
   @pragma(preferInlinePragma)
   List<int> toBytes({bool release = true}) {
     final result = _bytes.toList();
-    if (release) _pool.release(_bufferId);
+    if (release) this.release();
     return result;
   }
 }

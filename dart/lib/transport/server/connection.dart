@@ -21,8 +21,8 @@ class TransportServerConnection {
       ? _server.writeSingle(_channel, bytes, submit: submit)
       : retry.options.retry(
           () => _server.writeSingle(_channel, bytes, submit: submit),
-          onRetry: retry.onRetry,
           retryIf: retry.predicate,
+          onRetry: retry.onRetry,
         );
 
   @pragma(preferInlinePragma)
