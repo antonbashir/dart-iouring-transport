@@ -38,7 +38,7 @@ class TransportCancelledException implements Exception {
 class TransportClosedException implements Exception {
   final String message;
 
-  TransportClosedException._(this.message);
+  const TransportClosedException._(this.message);
 
   factory TransportClosedException.forServer() => TransportClosedException._("Server closed");
 
