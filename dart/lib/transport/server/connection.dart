@@ -11,7 +11,7 @@ class TransportServerConnection {
   final TransportServer _server;
   final TransportChannel _channel;
 
-  TransportServerConnection(this._server, this._channel);
+  const TransportServerConnection(this._server, this._channel);
 
   @pragma(preferInlinePragma)
   Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);

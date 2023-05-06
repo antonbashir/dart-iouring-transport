@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:iouring_transport/transport/file/registry.dart';
-
+import 'file/registry.dart';
 import 'links.dart';
 import 'bindings.dart';
 import 'callbacks.dart';
