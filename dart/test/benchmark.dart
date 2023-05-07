@@ -8,8 +8,8 @@ import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 
 Future<void> main(List<String> args) async {
-  await _benchUnixStream();
-  //await _benchTcp();
+  //await _benchUnixStream();
+  await _benchTcp();
   //await _benchFile();
 }
 
@@ -39,7 +39,6 @@ Future<void> _benchTcp() async {
         count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
         if (time.elapsed.inSeconds >= 360) break;
       }
-      await Future.delayed(Duration(seconds: 5));
       print("after end: ${ProcessInfo.currentRss}");
       worker.transmitter!.send(count);
     },
