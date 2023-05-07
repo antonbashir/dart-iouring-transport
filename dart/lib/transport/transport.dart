@@ -74,6 +74,8 @@ class Transport {
     _workerExit.close();
     _jobListener.close();
     _jobCompletionListener.close();
+    _jobs.clear();
+    _jobRunners.clear();
 
     _listenerPointers.forEach((listener) => _bindings.transport_listener_close(listener));
     await _listenerExit.take(transportConfiguration.listenerIsolates).toList();

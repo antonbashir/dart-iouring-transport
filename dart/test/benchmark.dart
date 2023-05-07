@@ -65,7 +65,7 @@ Future<void> _benchUnixStream() async {
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.unixStream("benchmark-${worker.id}.sock", (connection) => connection.listen((payload) => payload.release()));
+      final server = worker.servers.unixStream("benchmark-${worker.id}.sock", (connection) => connection.listen((payload) => payload.release()));
       final connector = await worker.clients.unixStream("benchmark-${worker.id}.sock", configuration: TransportDefaults.unixStreamClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();
@@ -78,12 +78,17 @@ Future<void> _benchUnixStream() async {
         if (time.elapsed.inSeconds >= 30) break;
       }
       print("after end: ${ProcessInfo.currentRss}");
+      await connector.close();
+      await server.close();
+      print("after close: ${ProcessInfo.currentRss}");
       worker.transmitter!.send(count);
     },
   );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
   print("RPS: ${count / 30}");
   await transport.shutdown();
+  await Future.delayed(Duration(seconds: 5));
+  print("after shutdown: ${ProcessInfo.currentRss}");
 }
 
 Future<void> _benchFile() async {
