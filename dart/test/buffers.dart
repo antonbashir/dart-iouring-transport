@@ -18,9 +18,11 @@ void testTcpBuffers() {
       final worker = TransportWorker(input);
       await worker.initialize();
 
-      var server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeSingle(Generators.request()));
+      var serverCompleter = Completer();
+      var server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeSingle(Generators.request()).then((value) => serverCompleter.complete()));
       var clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
       await clients.select().read().then((value) => value.release());
+      await serverCompleter.future;
 
       if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
@@ -32,9 +34,11 @@ void testTcpBuffers() {
       if (worker.servers.registry.servers.isNotEmpty) throw TestFailure("servers isNotEmpty");
       if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
-      server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeMany(Generators.requestsUnordered(8)));
+      serverCompleter = Completer();
+      server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeMany(Generators.requestsUnordered(8)).then((value) => serverCompleter.complete()));
       clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
       await clients.select().read().then((value) => value.release());
+      await serverCompleter.future;
 
       if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
@@ -62,14 +66,16 @@ void testUdpBuffers() {
       final worker = TransportWorker(input);
       await worker.initialize();
 
+      var serverCompleter = Completer();
       var server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345);
       server.receiveSingleMessage().then((value) {
         value.release();
-        value.respondSingleMessage(Generators.request());
+        value.respondSingleMessage(Generators.request()).then((value) => serverCompleter.complete());
       });
       var clients = await worker.clients.udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345);
       await clients.sendSingleMessage(Generators.request());
       await clients.receiveSingleMessage().then((value) => value.release());
+      await serverCompleter.future;
 
       if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
@@ -81,14 +87,16 @@ void testUdpBuffers() {
       if (worker.servers.registry.servers.isNotEmpty) throw TestFailure("servers isNotEmpty");
       if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
+      serverCompleter = Completer();
       server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345);
       server.receiveSingleMessage().then((value) {
         value.release();
-        value.respondManyMessage(Generators.requestsUnordered(8));
+        value.respondManyMessage(Generators.requestsUnordered(8)).then((value) => serverCompleter.complete());
       });
       clients = await worker.clients.udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345);
       await clients.sendSingleMessage(Generators.request());
       await clients.receiveManyMessages(8).then((value) => value.forEach((element) => element.release()));
+      await serverCompleter.future;
 
       if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
