@@ -40,11 +40,11 @@ class TransportClosedException implements Exception {
 
   const TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer() => TransportClosedException._("Server closed");
+  factory TransportClosedException.forServer() => const TransportClosedException._("Server closed");
 
-  factory TransportClosedException.forClient() => TransportClosedException._("Client closed");
+  factory TransportClosedException.forClient() => const TransportClosedException._("Client closed");
 
-  factory TransportClosedException.forFile() => TransportClosedException._("File closed");
+  factory TransportClosedException.forFile() => const TransportClosedException._("File closed");
 
   @override
   String toString() => message;
