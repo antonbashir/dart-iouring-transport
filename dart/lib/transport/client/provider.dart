@@ -54,10 +54,22 @@ class TransportClientDatagramProvider {
   TransportClientDatagramProvider(this._client);
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> receiveSingleMessage({bool submit = true, int? flags}) => _client.receiveSingleMessage(flags: flags, submit: submit);
+  Future<TransportPayload> receiveSingleMessage({TransportRetryConfiguration? retry, bool submit = true, int? flags}) => retry == null
+      ? _client.receiveSingleMessage(flags: flags, submit: submit)
+      : retry.options.retry(
+          () => _client.receiveSingleMessage(flags: flags, submit: submit),
+          retryIf: retry.predicate,
+          onRetry: retry.onRetry,
+        );
 
   @pragma(preferInlinePragma)
-  Future<List<TransportPayload>> receiveManyMessages(int count, {bool submit = true, int? flags}) => _client.receiveManyMessage(count, flags: flags, submit: submit);
+  Future<List<TransportPayload>> receiveManyMessages(int count, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => retry == null
+      ? _client.receiveManyMessage(count, flags: flags, submit: submit)
+      : retry.options.retry(
+          () => _client.receiveManyMessage(count, flags: flags, submit: submit),
+          retryIf: retry.predicate,
+          onRetry: retry.onRetry,
+        );
 
   void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
     while (!_client.closing) {
