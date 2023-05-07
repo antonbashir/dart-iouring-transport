@@ -13,6 +13,8 @@ class TransportServerConnection {
 
   const TransportServerConnection(this._server, this._channel);
 
+  bool get active => !_server.closing;
+
   @pragma(preferInlinePragma)
   Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);
 

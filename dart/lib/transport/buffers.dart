@@ -53,6 +53,12 @@ class TransportBuffers {
   Future<int> allocate() async {
     var bufferId = _bindings.transport_worker_get_buffer(_worker);
     while (bufferId == transportBufferUsed) {
+      if (_finalizers.isNotEmpty) {
+        print("await buffer");
+        await _finalizers.last.future;
+        bufferId = _bindings.transport_worker_get_buffer(_worker);
+        continue;
+      }
       final completer = Completer();
       _finalizers.add(completer);
       await completer.future;

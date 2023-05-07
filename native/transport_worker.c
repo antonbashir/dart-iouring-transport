@@ -148,7 +148,7 @@ void transport_worker_write(transport_worker_t *worker,
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct iovec * buffer = &worker->buffers[buffer_id];
+  struct iovec *buffer = &worker->buffers[buffer_id];
   io_uring_prep_write_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
@@ -170,7 +170,7 @@ void transport_worker_read(transport_worker_t *worker,
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
-  struct iovec * buffer = &worker->buffers[buffer_id];
+  struct iovec *buffer = &worker->buffers[buffer_id];
   io_uring_prep_read_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
@@ -379,14 +379,14 @@ struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worke
   return socket_family == INET ? (struct sockaddr *)worker->inet_used_messages[buffer_id].msg_name : (struct sockaddr *)worker->unix_used_messages[buffer_id].msg_name;
 }
 
-void transport_worker_initialize_listeners(transport_worker_t* worker, transport_listener_t *first)
+void transport_worker_initialize_listeners(transport_worker_t *worker, transport_listener_t *first)
 {
   worker->listeners = &first->listener_pool_link;
   rlist_create(worker->listeners);
   worker->next_listener = worker->listeners;
 }
 
-void transport_worker_add_listener(transport_worker_t* worker, transport_listener_t *listener)
+void transport_worker_add_listener(transport_worker_t *worker, transport_listener_t *listener)
 {
   rlist_add_entry(worker->listeners, listener, listener_pool_link);
 }
