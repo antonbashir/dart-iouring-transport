@@ -10,7 +10,7 @@ import 'client.dart';
 class TransportClientStreamProvider {
   final TransportClient _client;
 
-  TransportClientStreamProvider(this._client);
+  const TransportClientStreamProvider(this._client);
 
   @pragma(preferInlinePragma)
   Future<TransportPayload> read({bool submit = true}) => _client.read(submit: submit);
@@ -51,7 +51,7 @@ class TransportClientStreamProvider {
 class TransportClientDatagramProvider {
   final TransportClient _client;
 
-  TransportClientDatagramProvider(this._client);
+  const TransportClientDatagramProvider(this._client);
 
   @pragma(preferInlinePragma)
   Future<TransportPayload> receiveSingleMessage({TransportRetryConfiguration? retry, bool submit = true, int? flags}) => retry == null

@@ -10,7 +10,7 @@ class TransportFileProvider {
   final TransportFile _file;
   final File delegate;
 
-  TransportFileProvider(this._file, this.delegate);
+  const TransportFileProvider(this._file, this.delegate);
 
   @pragma(preferInlinePragma)
   Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) => _file.readSingle(submit: submit, offset: offset);

@@ -8,7 +8,7 @@ class TransportServerDatagramReceiver {
   final TransportServer _server;
   final TransportChannel _channel;
 
-  TransportServerDatagramReceiver(this._server, this._channel);
+  const TransportServerDatagramReceiver(this._server, this._channel);
 
   @pragma(preferInlinePragma)
   Future<TransportDatagramResponder> receiveSingleMessage({bool submit = true, int? flags}) => _server.receiveSingleMessage(_channel, flags: flags, submit: submit);
