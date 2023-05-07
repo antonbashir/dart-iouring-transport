@@ -54,7 +54,6 @@ class TransportBuffers {
     var bufferId = _bindings.transport_worker_get_buffer(_worker);
     while (bufferId == transportBufferUsed) {
       if (_finalizers.isNotEmpty) {
-        print("await buffer");
         await _finalizers.last.future;
         bufferId = _bindings.transport_worker_get_buffer(_worker);
         continue;
