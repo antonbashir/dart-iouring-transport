@@ -1,7 +1,6 @@
-library iouring_transport;
-
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -24,6 +23,7 @@ Future<void> _benchTcp() async {
   transport.run(
     transmitter: receiver.sendPort,
     (input) async {
+      print("before start: ${ProcessInfo.currentRss}");
       final encoder = Utf8Encoder();
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
@@ -33,14 +33,18 @@ Future<void> _benchTcp() async {
       var count = 0;
       final time = Stopwatch();
       time.start();
+      print("after start: ${ProcessInfo.currentRss}");
       while (true) {
         count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-        if (time.elapsed.inSeconds >= 30) break;
+        if (time.elapsed.inSeconds >= 360) break;
       }
+      await Future.delayed(Duration(seconds: 5));
+      print("after end: ${ProcessInfo.currentRss}");
+      NativeRuntime.writeHeapSnapshotToFile("snapshot");
       worker.transmitter!.send(count);
     },
   );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
-  print("RPS: ${count / 30}");
+  print("RPS: ${count / 360}");
   await transport.shutdown();
 }

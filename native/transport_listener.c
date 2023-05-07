@@ -59,7 +59,7 @@ static inline int transport_listener_wait(uint32_t cqe_count, struct io_uring_cq
 
 void transport_listener_close(transport_listener_t *listener)
 {
-  struct io_uring_sqe *sqe = provide_sqe(listener->ring);
+  struct io_uring_sqe *sqe = transport_provide_sqe(listener->ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, -1, 0, 0);
   sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
   io_uring_submit(listener->ring);

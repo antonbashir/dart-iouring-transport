@@ -10,7 +10,7 @@ extern "C"
 #include "trivia/util.h"
 #include "pthread.h"
 
-  static inline struct io_uring_sqe *provide_sqe(struct io_uring *ring)
+  static inline struct io_uring_sqe *transport_provide_sqe(struct io_uring *ring)
   {
     struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
     while (unlikely(sqe == NULL))
