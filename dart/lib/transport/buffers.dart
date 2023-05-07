@@ -28,19 +28,19 @@ class TransportBuffers {
 
   @pragma(preferInlinePragma)
   Uint8List read(int bufferId) {
-    final buffer = buffers[bufferId];
-    final bufferBytes = buffer.iov_base.cast<Uint8>();
-    return bufferBytes.asTypedList(buffer.iov_len);
+    final buffer = buffers.elementAt(bufferId);
+    final bufferBytes = buffer.ref.iov_base.cast<Uint8>();
+    return bufferBytes.asTypedList(buffer.ref.iov_len);
   }
 
   @pragma(preferInlinePragma)
-  void setLength(int bufferId, int length) => buffers[bufferId].iov_len = length;
+  void setLength(int bufferId, int length) => buffers.elementAt(bufferId).ref.iov_len = length;
 
   @pragma(preferInlinePragma)
   void write(int bufferId, Uint8List bytes) {
-    final buffer = buffers[bufferId];
-    buffer.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
-    buffer.iov_len = bytes.length;
+    final buffer = buffers.elementAt(bufferId);
+    buffer.ref.iov_base.cast<Uint8>().asTypedList(bytes.length).setAll(0, bytes);
+    buffer.ref.iov_len = bytes.length;
   }
 
   @pragma(preferInlinePragma)

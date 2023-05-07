@@ -53,7 +53,7 @@ class TransportFile {
     _callbacks.setOutbound(bufferId, completer);
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((length) => _payloadPool.getPayload(bufferId, buffers.read(bufferId)), onError: (error) {
+    return completer.future.then((_) => _payloadPool.getPayload(bufferId, buffers.read(bufferId)), onError: (error) {
       buffers.release(bufferId);
       throw error;
     });
