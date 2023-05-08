@@ -32,7 +32,13 @@ class TransportPayloadPool {
   void release(int bufferId) => _buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
-  TransportDatagramResponder getDatagramResponder(int bufferId, Uint8List bytes, TransportServer server, TransportChannel channel, Pointer<sockaddr> destination) {
+  TransportDatagramResponder getDatagramResponder(
+    int bufferId,
+    Uint8List bytes,
+    TransportServer server,
+    TransportChannel channel,
+    Pointer<sockaddr> destination,
+  ) {
     final payload = _datagramResponders[bufferId];
     payload._bytes = bytes;
     payload._server = server;

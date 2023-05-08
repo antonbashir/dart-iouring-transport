@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' as io;
+import 'dart:typed_data';
 import 'dart:isolate';
 
 import 'package:iouring_transport/transport/defaults.dart';
@@ -30,7 +31,7 @@ void testTcpSingle({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.tcp(
-        InternetAddress("0.0.0.0"),
+        io.InternetAddress("0.0.0.0"),
         12345,
         (connection) => connection.listen(
           (event) {
@@ -39,7 +40,7 @@ void testTcpSingle({
           },
         ),
       );
-      final clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
+      final clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
       final responses = await Future.wait(
         clients.map((client) => client.writeSingle(Generators.request()).then((_) => client.read().then((value) => value.takeBytes()))).toList(),
       );
@@ -73,7 +74,7 @@ void testTcpMany({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.tcp(
-        InternetAddress("0.0.0.0"),
+        io.InternetAddress("0.0.0.0"),
         12345,
         (connection) {
           final serverRequests = BytesBuilder();
@@ -89,7 +90,7 @@ void testTcpMany({
         },
       );
       final clients = await worker.clients.tcp(
-        InternetAddress("127.0.0.1"),
+        io.InternetAddress("127.0.0.1"),
         12345,
         configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool),
       );

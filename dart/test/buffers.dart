@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
+import 'dart:io' as io;
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
@@ -19,8 +20,8 @@ void testTcpBuffers() {
       await worker.initialize();
 
       var serverCompleter = Completer();
-      var server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeSingle(Generators.request()).then((value) => serverCompleter.complete()));
-      var clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
+      var server = worker.servers.tcp(io.InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeSingle(Generators.request()).then((value) => serverCompleter.complete()));
+      var clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345);
       await clients.select().read().then((value) => value.release());
       await serverCompleter.future;
 
@@ -35,8 +36,8 @@ void testTcpBuffers() {
       if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
       serverCompleter = Completer();
-      server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeMany(Generators.requestsUnordered(8)).then((value) => serverCompleter.complete()));
-      clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
+      server = worker.servers.tcp(io.InternetAddress("0.0.0.0"), 12345, (connection) => connection.writeMany(Generators.requestsUnordered(8)).then((value) => serverCompleter.complete()));
+      clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345);
       await clients.select().read().then((value) => value.release());
       await serverCompleter.future;
 
@@ -67,12 +68,12 @@ void testUdpBuffers() {
       await worker.initialize();
 
       var serverCompleter = Completer();
-      var server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345);
+      var server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
       server.receiveSingleMessage().then((value) {
         value.release();
         value.respondSingleMessage(Generators.request()).then((value) => serverCompleter.complete());
       });
-      var clients = await worker.clients.udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345);
+      var clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
       await clients.sendSingleMessage(Generators.request());
       await clients.receiveSingleMessage().then((value) => value.release());
       await serverCompleter.future;
@@ -88,12 +89,12 @@ void testUdpBuffers() {
       if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
       serverCompleter = Completer();
-      server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345);
+      server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
       server.receiveSingleMessage().then((value) {
         value.release();
         value.respondManyMessage(Generators.requestsUnordered(8)).then((value) => serverCompleter.complete());
       });
-      clients = await worker.clients.udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345);
+      clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
       await clients.sendSingleMessage(Generators.request());
       await clients.receiveManyMessages(8).then((value) => value.forEach((element) => element.release()));
       await serverCompleter.future;
@@ -123,7 +124,7 @@ void testFileBuffers() {
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
       await worker.initialize();
-      final file = File("file");
+      final file = io.File("file");
       if (file.existsSync()) file.deleteSync();
 
       var fileProvider = worker.files.open(file.path, create: true);
@@ -173,7 +174,7 @@ void testBuffersOverflow() {
       final worker = TransportWorker(input);
       await worker.initialize();
 
-      var server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) {
+      worker.servers.tcp(io.InternetAddress("0.0.0.0"), 12345, (connection) {
         connection.read().then((value) {
           value.release();
           connection.writeSingle(Generators.response());
@@ -184,7 +185,7 @@ void testBuffersOverflow() {
           connection.writeSingle(Generators.response());
         });
       });
-      var clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
+      var clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345);
       await clients.select().writeSingle(Generators.request());
       final bytes = BytesBuilder();
       final completer = Completer();
