@@ -151,7 +151,7 @@ void transport_worker_write(transport_worker_t *worker,
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct iovec *buffer = &worker->buffers[buffer_id];
-  io_uring_prep_write_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset);
+  io_uring_prep_write_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset, buffer_id);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   transport_worker_add_event(worker, fd, data, timeout);
