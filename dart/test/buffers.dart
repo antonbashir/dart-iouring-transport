@@ -189,7 +189,7 @@ void testBuffersOverflow() {
       await clients.select().writeSingle(Generators.request());
       final bytes = BytesBuilder();
       final completer = Completer();
-      clients.select().listen((value) {
+      clients.select().listen((value, _) {
         bytes.add(value.takeBytes());
         if (bytes.length == Generators.responsesSumUnordered(6).length) {
           completer.complete();

@@ -74,9 +74,10 @@ class TransportClientDatagramProvider {
           onRetry: retry.onRetry,
         );
 
-  void listenBySingle(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
-    while (!_client.closing) {
-      await receiveSingleMessage().then(listener, onError: (error, stackTrace) {
+  void listenBySingle(void Function(TransportPayload paylad, void Function() canceler) listener, {void Function(Object error)? onError}) async {
+    var canceled = false;
+    while (!_client.closing && !canceled) {
+      await receiveSingleMessage().then((value) => listener(value, () => canceled = true), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
@@ -85,9 +86,10 @@ class TransportClientDatagramProvider {
     }
   }
 
-  void listenByMany(int count, void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
-    while (!_client.closing) {
-      await receiveManyMessages(count).then((fragments) => fragments.forEach(listener), onError: (error, stackTrace) {
+  void listenByMany(int count, void Function(TransportPayload paylad, void Function() canceler) listener, {void Function(Object error)? onError}) async {
+    var canceled = false;
+    while (!_client.closing && !canceled) {
+      await receiveManyMessages(count).then((fragments) => fragments.forEach((element) => listener(element, () => canceled = true)), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;

@@ -29,7 +29,7 @@ Future<void> _benchTcp() async {
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.listen((payload) => connection.writeSingle(payload.takeBytes())));
+      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.listen((payload, _) => connection.writeSingle(payload.takeBytes())));
       final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();
@@ -64,7 +64,7 @@ Future<void> _benchUnixStream() async {
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      final server = worker.servers.unixStream("benchmark-${worker.id}.sock", (connection) => connection.listen((payload) => payload.release()));
+      final server = worker.servers.unixStream("benchmark-${worker.id}.sock", (connection) => connection.listen((payload, _) => payload.release()));
       final connector = await worker.clients.unixStream("benchmark-${worker.id}.sock", configuration: TransportDefaults.unixStreamClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();
