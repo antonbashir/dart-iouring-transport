@@ -31,7 +31,13 @@ class Transport {
   late final RawReceivePort _jobListener;
   late final RawReceivePort _jobCompletionListener;
 
-  Transport(this.transportConfiguration, this.listenerConfiguration, this.inboundWorkerConfiguration, this.outboundWrkerConfiguration, {String? libraryPath}) {
+  Transport(
+    this.transportConfiguration,
+    this.listenerConfiguration,
+    this.inboundWorkerConfiguration,
+    this.outboundWrkerConfiguration, {
+    String? libraryPath,
+  }) {
     this._libraryPath = libraryPath;
 
     _library = TransportLibrary.load(libraryPath: libraryPath);

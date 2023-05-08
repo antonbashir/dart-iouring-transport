@@ -13,10 +13,19 @@ class TransportServerDatagramReceiver {
   bool get active => !_server.closing;
 
   @pragma(preferInlinePragma)
-  Future<TransportDatagramResponder> receiveSingleMessage({bool submit = true, int? flags}) => _server.receiveSingleMessage(_channel, flags: flags, submit: submit);
+  Future<TransportDatagramResponder> receiveSingleMessage({
+    bool submit = true,
+    int? flags,
+  }) =>
+      _server.receiveSingleMessage(_channel, flags: flags, submit: submit);
 
   @pragma(preferInlinePragma)
-  Future<List<TransportDatagramResponder>> receiveManyMessages(int count, {bool submit = true, int? flags}) => _server.receiveManyMessages(_channel, count, flags: flags, submit: submit);
+  Future<List<TransportDatagramResponder>> receiveManyMessages(
+    int count, {
+    bool submit = true,
+    int? flags,
+  }) =>
+      _server.receiveManyMessages(_channel, count, flags: flags, submit: submit);
 
   void listen(
     void Function(TransportDatagramResponder payload, void Function() canceler) listener, {

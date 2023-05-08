@@ -24,10 +24,19 @@ class TransportServersFactory {
     this._buffers,
   );
 
-  TransportServerCloser tcp(InternetAddress address, int port, void Function(TransportServerConnection connection) onAccept, {TransportTcpServerConfiguration? configuration}) =>
+  TransportServerCloser tcp(
+    InternetAddress address,
+    int port,
+    void Function(TransportServerConnection connection) onAccept, {
+    TransportTcpServerConfiguration? configuration,
+  }) =>
       _registry.createTcp(address.address, port, configuration: configuration)..accept(onAccept);
 
-  TransportServerDatagramReceiver udp(InternetAddress address, int port, {TransportUdpServerConfiguration? configuration}) {
+  TransportServerDatagramReceiver udp(
+    InternetAddress address,
+    int port, {
+    TransportUdpServerConfiguration? configuration,
+  }) {
     final server = _registry.createUdp(address.address, port, configuration: configuration);
     return TransportServerDatagramReceiver(
       server,
@@ -40,7 +49,11 @@ class TransportServersFactory {
     );
   }
 
-  TransportServerCloser unixStream(String path, void Function(TransportServerConnection connection) onAccept, {TransportUnixStreamServerConfiguration? configuration}) =>
+  TransportServerCloser unixStream(
+    String path,
+    void Function(TransportServerConnection connection) onAccept, {
+    TransportUnixStreamServerConfiguration? configuration,
+  }) =>
       _registry.createUnixStream(path, configuration: configuration)..accept(onAccept);
 
   TransportServerDatagramReceiver unixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {

@@ -130,7 +130,13 @@ class TransportClientRegistry {
     return TransportClientStreamPool(await Future.wait(clients));
   }
 
-  TransportClientDatagramProvider createUdp(String sourceHost, int sourcePort, String destinationHost, int destinationPort, {TransportUdpClientConfiguration? configuration}) {
+  TransportClientDatagramProvider createUdp(
+    String sourceHost,
+    int sourcePort,
+    String destinationHost,
+    int destinationPort, {
+    TransportUdpClientConfiguration? configuration,
+  }) {
     configuration = configuration ?? TransportDefaults.udpClient();
     final clientPointer = using((arena) {
       final pointer = calloc<transport_client_t>();

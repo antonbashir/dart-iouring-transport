@@ -89,12 +89,15 @@ class TransportClientDatagramProvider {
   void listenByMany(int count, void Function(TransportPayload paylad, void Function() canceler) listener, {void Function(Object error)? onError}) async {
     var canceled = false;
     while (!_client.closing && !canceled) {
-      await receiveManyMessages(count).then((fragments) => fragments.forEach((element) => listener(element, () => canceled = true)), onError: (error, stackTrace) {
-        if (error is TransportClosedException) return;
-        if (error is TransportZeroDataException) return;
-        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
-        onError?.call(error);
-      });
+      await receiveManyMessages(count).then(
+        (fragments) => fragments.forEach((element) => listener(element, () => canceled = true)),
+        onError: (error, stackTrace) {
+          if (error is TransportClosedException) return;
+          if (error is TransportZeroDataException) return;
+          if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
+          onError?.call(error);
+        },
+      );
     }
   }
 
