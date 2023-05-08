@@ -72,7 +72,7 @@ class Transport {
     _workerClosers.forEach((worker) => worker.send(gracefulDuration));
     await _workerExit.take(transportConfiguration.workerInsolates).toList();
     _workerExit.close();
-    
+
     _jobListener.close();
     _jobCompletionListener.close();
     _jobs.clear();

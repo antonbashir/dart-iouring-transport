@@ -36,7 +36,7 @@ class TransportErrorHandler {
     }
     unawaited(server.closeConnection(fd));
     if (result == -ECANCELED) {
-      _callbacks.notifyInboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyInboundError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyInboundError(
@@ -58,7 +58,7 @@ class TransportErrorHandler {
     }
     unawaited(server.closeConnection(fd));
     if (result == -ECANCELED) {
-      _callbacks.notifyInboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyInboundError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyInboundError(
@@ -79,7 +79,7 @@ class TransportErrorHandler {
       return;
     }
     if (result == -ECANCELED) {
-      _callbacks.notifyInboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyInboundError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyInboundError(
@@ -102,7 +102,7 @@ class TransportErrorHandler {
     if (result == -ECANCELED) {
       _callbacks.notifyInboundError(
         bufferId,
-        TransportCancelledException(
+        TransportCanceledException(
           event: TransportEvent.ofEvent(event),
         ),
       );
@@ -134,7 +134,7 @@ class TransportErrorHandler {
     }
     unawaited(client.close());
     if (result == -ECANCELED) {
-      _callbacks.notifyConnectError(fd, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyConnectError(fd, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyConnectError(
@@ -155,7 +155,7 @@ class TransportErrorHandler {
       return;
     }
     if (result == -ECANCELED) {
-      _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyOutboundError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundError(
@@ -176,7 +176,7 @@ class TransportErrorHandler {
       return;
     }
     if (result == -ECANCELED) {
-      _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyOutboundError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundError(
@@ -197,7 +197,7 @@ class TransportErrorHandler {
       return;
     }
     if (result == -ECANCELED) {
-      _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyOutboundError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundError(
@@ -218,7 +218,7 @@ class TransportErrorHandler {
       return;
     }
     if (result == -ECANCELED) {
-      _callbacks.notifyOutboundError(bufferId, TransportCancelledException(event: TransportEvent.ofEvent(event)));
+      _callbacks.notifyOutboundError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyOutboundError(

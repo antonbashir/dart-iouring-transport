@@ -9,7 +9,7 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 Function _handleTimeout(Stopwatch actual, Duration expected, Completer completer) => (error) {
-      if (!(error is TransportCancelledException)) throw TestFailure("actual: $error");
+      if (!(error is TransportCanceledException)) throw TestFailure("actual: $error");
       if (actual.elapsed.inSeconds < expected.inSeconds) throw TestFailure("actual: ${actual.elapsed.inSeconds}");
       completer.complete();
       return null;

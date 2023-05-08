@@ -31,7 +31,7 @@ void testUdpSingle({
       final worker = TransportWorker(input);
       await worker.initialize();
       worker.servers.udp(InternetAddress("0.0.0.0"), 12345).listen(
-        (event) {
+        (event, _) {
           event.respondSingleMessage(Generators.response()).then((value) {
             Validators.request(event.takeBytes());
           });
@@ -72,7 +72,7 @@ void testUdpMany({
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.udp(InternetAddress("0.0.0.0"), 12345).listen((event) {
+      worker.servers.udp(InternetAddress("0.0.0.0"), 12345).listen((event, _) {
         event.respondManyMessage(Generators.responsesUnordered(count)).then((value) => Validators.request(event.takeBytes()));
       });
       final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
@@ -83,7 +83,7 @@ void testUdpMany({
         client.sendManyMessages(Generators.requestsUnordered(count)).then(
               (_) => client.listenByMany(
                 count,
-                (event) {
+                (event, _) {
                   clientResults.add(event.takeBytes());
                   if (clientResults.length == responsesSumLength) completer.complete();
                 },

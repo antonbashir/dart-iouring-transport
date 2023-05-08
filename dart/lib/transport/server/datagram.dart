@@ -19,12 +19,13 @@ class TransportServerDatagramReceiver {
   Future<List<TransportDatagramResponder>> receiveManyMessages(int count, {bool submit = true, int? flags}) => _server.receiveManyMessages(_channel, count, flags: flags, submit: submit);
 
   void listen(
-    void Function(TransportDatagramResponder payload) listener, {
+    void Function(TransportDatagramResponder payload, void Function() canceler) listener, {
     void Function(dynamic error)? onError,
     int? flags,
   }) async {
-    while (!_server.closing) {
-      await receiveSingleMessage(flags: flags).then(listener, onError: (error, stackTrace) {
+    var canceled = false;
+    while (!_server.closing && !canceled) {
+      await receiveSingleMessage(flags: flags).then((value) => listener(value, () => canceled = true), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;

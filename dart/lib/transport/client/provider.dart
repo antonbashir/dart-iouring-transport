@@ -17,9 +17,10 @@ class TransportClientStreamProvider {
   @pragma(preferInlinePragma)
   Future<TransportPayload> read({bool submit = true}) => _client.read(submit: submit);
 
-  void listen(void Function(TransportPayload paylad) listener, {void Function(Object error)? onError}) async {
-    while (!_client.closing) {
-      await read().then(listener, onError: (error, stackTrace) {
+  void listen(void Function(TransportPayload paylad, void Function() canceler) listener, {void Function(Object error)? onError}) async {
+    var canceled = false;
+    while (!_client.closing && !canceled) {
+      await read().then((value) => listener(value, () => canceled = true), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;

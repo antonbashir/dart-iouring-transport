@@ -23,12 +23,12 @@ class TransportInternalException implements Exception {
   String toString() => message;
 }
 
-class TransportCancelledException implements Exception {
+class TransportCanceledException implements Exception {
   late final String message;
   final TransportEvent event;
 
-  TransportCancelledException({required this.event}) {
-    this.message = "[$event] cancelled";
+  TransportCanceledException({required this.event}) {
+    this.message = "[$event] canceled";
   }
 
   @override

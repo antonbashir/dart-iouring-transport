@@ -18,9 +18,10 @@ class TransportServerConnection {
   @pragma(preferInlinePragma)
   Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);
 
-  void listen(void Function(TransportPayload payload) listener, {void Function(dynamic error)? onError}) async {
-    while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
-      await read().then(listener, onError: (error, stackTrace) {
+  void listen(void Function(TransportPayload payload, void Function() canceler) listener, {void Function(dynamic error)? onError}) async {
+    var cacneled = false;
+    while (!_server.closing && _server.connectionIsActive(_channel.fd) && !cacneled) {
+      await read().then((value) => listener(value, () => cacneled = true), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
@@ -28,7 +29,7 @@ class TransportServerConnection {
       });
     }
   }
-  
+
   @pragma(preferInlinePragma)
   Future<void> writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true}) => retry == null
       ? _server.writeSingle(_channel, bytes, submit: submit)

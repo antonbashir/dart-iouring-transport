@@ -35,7 +35,7 @@ void testUnixStreamSingle({
       worker.servers.unixStream(
         serverSocket.path,
         (connection) => connection.listen(
-          (event) {
+          (event, _) {
             Validators.request(event.takeBytes());
             connection.writeSingle(Generators.response());
           },
@@ -81,7 +81,7 @@ void testUnixStreamMany({
         (connection) {
           final serverResults = BytesBuilder();
           connection.listen(
-            (event) {
+            (event, _) {
               serverResults.add(event.takeBytes());
               if (serverResults.length == Generators.requestsSumOrdered(count).length) {
                 Validators.requestsSumOrdered(serverResults.takeBytes(), count);
@@ -98,7 +98,7 @@ void testUnixStreamMany({
           final completer = Completer();
           client.writeMany(Generators.requestsOrdered(count)).then(
                 (_) => client.listen(
-                  (event) {
+                  (event, _) {
                     clientResults.add(event.takeBytes());
                     if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();
                   },
@@ -137,7 +137,7 @@ void testUnixDgramSingle({
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
-      worker.servers.unixDatagram(serverSocket.path).listen((event) {
+      worker.servers.unixDatagram(serverSocket.path).listen((event, _) {
         event.respondSingleMessage(Generators.response(), retry: TransportDefaults.retry()).then((value) {
           Validators.request(event.takeBytes());
         });
@@ -181,7 +181,7 @@ void testUnixDgramMany({
       final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
       final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
       if (serverSocket.existsSync()) serverSocket.deleteSync();
-      worker.servers.unixDatagram(serverSocket.path).listen((event) {
+      worker.servers.unixDatagram(serverSocket.path).listen((event, _) {
         event.respondManyMessage(Generators.responsesUnordered(count), retry: TransportDefaults.retry()).then((value) => Validators.request(event.takeBytes()));
       });
       final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
@@ -193,7 +193,7 @@ void testUnixDgramMany({
         client.sendManyMessages(Generators.requestsUnordered(count), retry: TransportDefaults.retry()).then(
               (_) => client.listenByMany(
                 count,
-                (event) {
+                (event, _) {
                   clientResults.add(event.takeBytes());
                   if (clientResults.length == responsesSumLength) completer.complete();
                 },

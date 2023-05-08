@@ -34,7 +34,7 @@ void testTcpSingle({
         io.InternetAddress("0.0.0.0"),
         12345,
         (connection) => connection.listen(
-          (event) {
+          (event, _) {
             Validators.request(event.takeBytes());
             connection.writeSingle(Generators.response());
           },
@@ -79,7 +79,7 @@ void testTcpMany({
         (connection) {
           final serverRequests = BytesBuilder();
           connection.listen(
-            (event) {
+            (event, _) {
               serverRequests.add(event.takeBytes());
               if (serverRequests.length == Generators.requestsSumOrdered(count).length) {
                 Validators.requestsSumOrdered(serverRequests.takeBytes(), count);
@@ -100,7 +100,7 @@ void testTcpMany({
           final completer = Completer();
           client.writeMany(Generators.requestsOrdered(count)).then(
                 (_) => client.listen(
-                  (event) {
+                  (event, _) {
                     clientResults.add(event.takeBytes());
                     if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();
                   },
