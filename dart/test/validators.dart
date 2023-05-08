@@ -12,32 +12,32 @@ class Validators {
 
   static void request(Uint8List actual) {
     final expected = Generators.request();
-    if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
+    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
   static void response(Uint8List actual) {
     final expected = Generators.response();
-    if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
+    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
   static void requestsOrdered(Iterable<Uint8List> actual) {
     final expected = Generators.requestsOrdered(actual.length);
-    if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convertMany(actual)}\nexpected = ${_decoder.convertMany(expected)}");
+    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convertMany(actual)}\nexpected = ${_decoder.convertMany(expected)}");
   }
 
   static void requestsSumOrdered(Uint8List actual, int count) {
     final expected = Generators.requestsSumOrdered(count);
-    if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
+    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
   static void responsesSumOrdered(Uint8List actual, int count) {
     final expected = Generators.responsesSumOrdered(count);
-    if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
+    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
   static void responsesUnorderedSum(Uint8List actual, int count) {
     final expected = Generators.responsesSumUnordered(count);
-    if (!actual.equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
+    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 }
 
@@ -46,7 +46,7 @@ extension on Utf8Decoder {
 }
 
 extension on Uint8List {
-  bool equals(Uint8List bytes) {
+  bool _equals(Uint8List bytes) {
     if (length != bytes.length) {
       return false;
     }
@@ -60,10 +60,10 @@ extension on Uint8List {
 }
 
 extension on Iterable<Uint8List> {
-  bool equals(Iterable<Uint8List> bytes) {
+  bool _equals(Iterable<Uint8List> bytes) {
     if (length != bytes.length) return false;
     for (var i = 0; i < length; i++) {
-      if (!this.toList()[i].equals(bytes.toList()[i])) return false;
+      if (!this.toList()[i]._equals(bytes.toList()[i])) return false;
     }
     return true;
   }
