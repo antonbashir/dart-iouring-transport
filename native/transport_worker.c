@@ -151,7 +151,7 @@ void transport_worker_write(transport_worker_t *worker,
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct iovec *buffer = &worker->buffers[buffer_id];
-  io_uring_prep_write_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset, buffer_id);
+  io_uring_prep_write_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   transport_worker_add_event(worker, fd, data, timeout);
@@ -268,7 +268,10 @@ void transport_worker_connect(transport_worker_t *worker, transport_client_t *cl
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
   transport_listener_t *listener = transport_worker_next_listener(worker);
   uint64_t data = ((uint64_t)(client->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
-  io_uring_prep_connect(sqe, client->fd, client->family == INET ? (struct sockaddr *)&client->inet_destination_address : (struct sockaddr *)&client->unix_destination_address, client->client_address_length);
+  struct sockaddr *address = client->family == INET
+                                 ? (struct sockaddr *)&client->inet_destination_address
+                                 : (struct sockaddr *)&client->unix_destination_address;
+  io_uring_prep_connect(sqe, client->fd, address, client->client_address_length);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = transport_provide_sqe(ring);
@@ -284,7 +287,10 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
   transport_listener_t *listener = transport_worker_next_listener(worker);
   uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
-  io_uring_prep_accept(sqe, server->fd, server->family == INET ? (struct sockaddr *)&server->inet_server_address : (struct sockaddr *)&server->unix_server_address, &server->server_address_length, 0);
+  struct sockaddr *address = server->family == INET
+                                   ? (struct sockaddr *)&server->inet_server_address
+                                   : (struct sockaddr *)&server->unix_server_address;
+  io_uring_prep_accept(sqe, server->fd, address, &server->server_address_length, 0);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   sqe = transport_provide_sqe(ring);
@@ -378,7 +384,8 @@ void transport_worker_remove_event(transport_worker_t *worker, uint64_t data)
 
 struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id)
 {
-  return socket_family == INET ? (struct sockaddr *)worker->inet_used_messages[buffer_id].msg_name : (struct sockaddr *)worker->unix_used_messages[buffer_id].msg_name;
+  return socket_family == INET ? (struct sockaddr *)worker->inet_used_messages[buffer_id].msg_name
+                               : (struct sockaddr *)worker->unix_used_messages[buffer_id].msg_name;
 }
 
 void transport_worker_initialize_listeners(transport_worker_t *worker, transport_listener_t *first)
