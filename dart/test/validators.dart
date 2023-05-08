@@ -62,8 +62,10 @@ extension on Uint8List {
 extension on Iterable<Uint8List> {
   bool _equals(Iterable<Uint8List> bytes) {
     if (length != bytes.length) return false;
+    final thisAsList = this.toList();
+    final bytesAsList = bytes.toList();
     for (var i = 0; i < length; i++) {
-      if (!this.toList()[i]._equals(bytes.toList()[i])) return false;
+      if (!thisAsList[i]._equals(bytesAsList[i])) return false;
     }
     return true;
   }
