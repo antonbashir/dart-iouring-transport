@@ -44,6 +44,7 @@ int transport_worker_initialize(transport_worker_t *worker,
     {
       return -ENOMEM;
     }
+    memset(worker->buffers[index].iov_base, 0, configuration->buffer_size);
     worker->buffers[index].iov_len = configuration->buffer_size;
 
     memset(&worker->inet_used_messages[index], 0, sizeof(struct msghdr));

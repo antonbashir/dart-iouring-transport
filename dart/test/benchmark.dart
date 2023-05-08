@@ -29,7 +29,6 @@ Future<void> _benchTcp() async {
       final fromServer = encoder.convert("from server\n");
       final worker = TransportWorker(input);
       await worker.initialize();
-      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.listen((payload) => connection.writeSingle(payload.takeBytes())));
       final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 256));
       var count = 0;
       final time = Stopwatch();
@@ -37,14 +36,14 @@ Future<void> _benchTcp() async {
       print("after start: ${ProcessInfo.currentRss}");
       while (true) {
         count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-        if (time.elapsed.inHours >= 4) break;
+        if (time.elapsed.inSeconds >= 10) break;
       }
       print("after end: ${ProcessInfo.currentRss}");
       worker.transmitter!.send(count);
     },
   );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
-  print("RPS: ${count / 4 * 60 * 60}");
+  print("RPS: ${count / 10}");
   await transport.shutdown();
 }
 
