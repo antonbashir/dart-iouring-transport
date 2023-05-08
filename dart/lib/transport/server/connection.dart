@@ -19,9 +19,9 @@ class TransportServerConnection {
   Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);
 
   void listen(void Function(TransportPayload payload, void Function() canceler) listener, {void Function(dynamic error)? onError}) async {
-    var cacneled = false;
-    while (!_server.closing && _server.connectionIsActive(_channel.fd) && !cacneled) {
-      await read().then((value) => listener(value, () => cacneled = true), onError: (error, stackTrace) {
+    var canceled = false;
+    while (!_server.closing && _server.connectionIsActive(_channel.fd) && !canceled) {
+      await read().then((value) => listener(value, () => canceled = true), onError: (error, stackTrace) {
         if (error is TransportClosedException) return;
         if (error is TransportZeroDataException) return;
         if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
