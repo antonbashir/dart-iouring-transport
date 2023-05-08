@@ -16,7 +16,6 @@
 #include "transport_listener.h"
 #include "transport_server.h"
 #include "small/include/small/rlist.h"
-#include <mcheck.h>
 
 void transport_initialize(transport_t *transport,
                           transport_listener_configuration_t *listener_configuration,
@@ -26,7 +25,6 @@ void transport_initialize(transport_t *transport,
   transport->listener_configuration = listener_configuration;
   transport->inbound_worker_configuration = inbound_worker_configuration;
   transport->outbound_worker_configuration = outbound_worker_configuration;
-  mtrace();
 }
 
 void transport_destroy(transport_t *transport)
