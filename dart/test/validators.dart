@@ -22,7 +22,7 @@ class Validators {
 
   static void requestsOrdered(Iterable<Uint8List> actual) {
     final expected = Generators.requestsOrdered(actual.length);
-    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convertMany(actual)}\nexpected = ${_decoder.convertMany(expected)}");
+    if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder._convertMany(actual)}\nexpected = ${_decoder._convertMany(expected)}");
   }
 
   static void requestsSumOrdered(Uint8List actual, int count) {
@@ -42,7 +42,7 @@ class Validators {
 }
 
 extension on Utf8Decoder {
-  List<String> convertMany(Iterable<Uint8List> bytes) => bytes.map(convert).toList();
+  List<String> _convertMany(Iterable<Uint8List> bytes) => bytes.map(convert).toList();
 }
 
 extension on Uint8List {
