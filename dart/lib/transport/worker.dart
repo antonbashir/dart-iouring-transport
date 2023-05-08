@@ -64,6 +64,8 @@ class TransportWorker {
   late final SendPort? transmitter;
 
   int get id => _inboundWorkerPointer.ref.id;
+  int get inboundDescriptor => _inboundRing.ref.ring_fd;
+  int get outboundDescriptor => _outboundRing.ref.ring_fd;
   TransportServersFactory get servers => _serversFactory;
   TransportClientsFactory get clients => _clientsFactory;
   TransportFilesFactory get files => _filesFactory;
