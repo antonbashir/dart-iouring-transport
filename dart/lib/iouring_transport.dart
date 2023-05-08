@@ -8,7 +8,8 @@ export 'package:iouring_transport/transport/configuration.dart'
         TransportRetryConfiguration,
         TransportUdpMulticastConfiguration,
         TransportUdpMulticastManager,
-        TransportUdpMulticastSourceConfiguration;
+        TransportUdpMulticastSourceConfiguration,
+        TransportWorkerConfiguration;
 export 'package:iouring_transport/transport/defaults.dart' show TransportDefaults;
 export 'package:iouring_transport/transport/worker.dart' show TransportWorker;
 
