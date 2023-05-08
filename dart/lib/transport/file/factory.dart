@@ -8,10 +8,7 @@ import 'package:meta/meta.dart';
 class TransportFilesFactory {
   final TransportFileRegistry _registry;
 
-  @visibleForTesting
-  TransportFileRegistry get registry => _registry;
-
-  TransportFilesFactory(this._registry);
+  const TransportFilesFactory(this._registry);
 
   TransportFileProvider open(
     String path, {
@@ -30,4 +27,7 @@ class TransportFilesFactory {
       delegate,
     );
   }
+
+  @visibleForTesting
+  TransportFileRegistry get registry => _registry;
 }

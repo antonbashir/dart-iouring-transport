@@ -10,6 +10,8 @@ class TransportServerDatagramReceiver {
 
   const TransportServerDatagramReceiver(this._server, this._channel);
 
+  bool get active => !_server.closing;
+
   @pragma(preferInlinePragma)
   Future<TransportDatagramResponder> receiveSingleMessage({bool submit = true, int? flags}) => _server.receiveSingleMessage(_channel, flags: flags, submit: submit);
 

@@ -81,6 +81,8 @@ class TransportDatagramResponder {
 
   TransportDatagramResponder(this._bufferId, this._pool);
 
+  bool get active => !_server.closing;
+
   @pragma(preferInlinePragma)
   Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) => retry == null
       ? _server.respondSingleMessage(

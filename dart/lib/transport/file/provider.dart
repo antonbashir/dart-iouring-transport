@@ -12,6 +12,8 @@ class TransportFileProvider {
 
   const TransportFileProvider(this._file, this.delegate);
 
+  bool get active => !_file.closing;
+
   @pragma(preferInlinePragma)
   Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) => _file.readSingle(submit: submit, offset: offset);
 

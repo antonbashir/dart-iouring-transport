@@ -115,11 +115,12 @@ static inline transport_listener_t *transport_worker_next_listener(transport_wor
 
 static inline void transport_worker_add_event(transport_worker_t *worker, int fd, uint64_t data, int64_t timeout)
 {
-  struct mh_events_node_t node;
-  node.data = data;
-  node.timeout = timeout;
-  node.timestamp = time(NULL);
-  node.fd = fd;
+  struct mh_events_node_t node = {
+      .data = data,
+      .timeout = timeout,
+      .timestamp = time(NULL),
+      .fd = fd,
+  };
   mh_events_put(worker->events, &node, NULL, 0);
 }
 

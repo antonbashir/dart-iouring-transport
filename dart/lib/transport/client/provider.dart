@@ -12,6 +12,8 @@ class TransportClientStreamProvider {
 
   const TransportClientStreamProvider(this._client);
 
+  bool get active => !_client.closing;
+
   @pragma(preferInlinePragma)
   Future<TransportPayload> read({bool submit = true}) => _client.read(submit: submit);
 

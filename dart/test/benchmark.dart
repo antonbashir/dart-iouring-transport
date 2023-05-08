@@ -37,14 +37,14 @@ Future<void> _benchTcp() async {
       print("after start: ${ProcessInfo.currentRss}");
       while (true) {
         count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-        if (time.elapsed.inSeconds >= 360) break;
+        if (time.elapsed.inHours >= 4) break;
       }
       print("after end: ${ProcessInfo.currentRss}");
       worker.transmitter!.send(count);
     },
   );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
-  print("RPS: ${count / 360}");
+  print("RPS: ${count / 4 * 60 * 60}");
   await transport.shutdown();
 }
 
