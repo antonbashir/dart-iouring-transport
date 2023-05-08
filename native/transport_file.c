@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-int transport_file_open(const char *path, int mode, bool trunace, bool create)
+int transport_file_open(const char *path, int mode, bool truncate, bool create)
 {
   int options = 0;
   if (mode == TRANSPORT_READ_ONLY)

@@ -1,0 +1,21 @@
+break malloc
+commands
+  silent
+  bt 4
+  up
+  break
+  commands
+    silent
+    clear
+    print $rax
+    cont
+  end
+  cont
+end
+break free
+commands
+  silent
+  bt 1
+  cont
+end
+cont
