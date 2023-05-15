@@ -12,12 +12,14 @@ class TransportCallbacks {
   final _outboundBuffers = <Completer<void>>[];
 
   TransportCallbacks(int inboundBuffersCount, int outboundBuffersCount) {
+    final stub = Completer();
+
     for (var index = 0; index < inboundBuffersCount; index++) {
-      _inboundBuffers.add(Completer());
+      _inboundBuffers.add(stub);
     }
 
     for (var index = 0; index < outboundBuffersCount; index++) {
-      _outboundBuffers.add(Completer());
+      _outboundBuffers.add(stub);
     }
   }
 

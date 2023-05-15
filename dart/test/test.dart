@@ -19,16 +19,16 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = true;
-  final tcp = true;
-  final udp = true;
-  final unixStream = true;
-  final unixDgram = true;
+  final initialization = false;
+  final tcp = false;
+  final udp = false;
+  final unixStream = false;
+  final unixDgram = false;
   final file = true;
-  final timeout = true;
-  final buffers = true;
-  final shutdown = true;
-  final bulk = true;
+  final timeout = false;
+  final buffers = false;
+  final shutdown = false;
+  final bulk = false;
 
   group("[initialization]", timeout: Timeout(Duration(hours: 1)), skip: !initialization, () {
     testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);

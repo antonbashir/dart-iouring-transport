@@ -14,7 +14,7 @@ class TransportDefaults {
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
         ringSize: 16384,
-        ringFlags: 0,
+        ringFlags: ringSetupSqpoll,
       );
 
   static TransportWorkerConfiguration inbound() => TransportWorkerConfiguration(
