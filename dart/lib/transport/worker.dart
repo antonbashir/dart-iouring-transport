@@ -233,7 +233,6 @@ class TransportWorker {
 
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
-    print("inbound: $cqeCount");
     if (cqeCount < 0) return;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _inboundCqes[cqeIndex];
@@ -276,7 +275,6 @@ class TransportWorker {
 
   void _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
-    print("outbound: $cqeCount");
     if (cqeCount < 0) return;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _outboundCqes[cqeIndex];

@@ -9,7 +9,7 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         listenerIsolates: 1,
-        workerInsolates: 1,
+        workerInsolates: 4,
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
