@@ -42,7 +42,9 @@ void transport_cqe_advance(struct io_uring *ring, int count)
 
 struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count)
 {
-  return malloc(sizeof(struct io_uring_cqe) * cqe_count);
+  struct io_uring_cqe ** cqes = malloc(sizeof(struct io_uring_cqe) * cqe_count);
+  memset(cqes, 0, sizeof(struct io_uring_cqe) * cqe_count);
+  return cqes;
 }
 
 void transport_close_descritor(int fd)

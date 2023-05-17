@@ -75,7 +75,7 @@ bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
       int result = cqes[cqeIndex]->res;
       if (unlikely(result == -1))
       {
-        io_uring_cq_advance(listener->ring, cqeCount);
+        io_uring_cq_advance(listener->ring, cqeIndex + 1);
         return false;
       }
       listener->ready_workers[result] = 1;

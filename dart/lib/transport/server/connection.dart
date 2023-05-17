@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import '../channel.dart';
@@ -18,7 +19,7 @@ class TransportServerConnection {
   @pragma(preferInlinePragma)
   Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);
 
-  void listen(void Function(TransportPayload payload, void Function() canceler) listener, {void Function(dynamic error)? onError}) async {
+  void listen(FutureOr<void> Function(TransportPayload payload, void Function() canceler) listener, {void Function(dynamic error)? onError}) async {
     var canceled = false;
     while (!_server.closing && _server.connectionIsActive(_channel.fd) && !canceled) {
       await read().then((value) => listener(value, () => canceled = true), onError: (error, stackTrace) {

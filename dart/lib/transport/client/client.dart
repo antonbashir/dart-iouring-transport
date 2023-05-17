@@ -253,27 +253,29 @@ class TransportClient {
 }
 
 class TransportClientStreamPool {
-  final List<TransportClientStreamProvider> _providers;
+  final List<TransportClientStreamProvider> _clients;
   var _next = 0;
 
-  TransportClientStreamPool(this._providers);
+  List<TransportClientStreamProvider> get clients => _clients;
+
+  TransportClientStreamPool(this._clients);
 
   @pragma(preferInlinePragma)
   TransportClientStreamProvider select() {
-    final provider = _providers[_next];
-    if (++_next == _providers.length) _next = 0;
+    final provider = _clients[_next];
+    if (++_next == _clients.length) _next = 0;
     return provider;
   }
 
   @pragma(preferInlinePragma)
-  void forEach(FutureOr<void> Function(TransportClientStreamProvider provider) action) => _providers.forEach(action);
+  void forEach(FutureOr<void> Function(TransportClientStreamProvider provider) action) => _clients.forEach(action);
 
   @pragma(preferInlinePragma)
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamProvider provider) mapper) => _providers.map(mapper);
+  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientStreamProvider provider) mapper) => _clients.map(mapper);
 
   @pragma(preferInlinePragma)
-  int count() => _providers.length;
+  int count() => _clients.length;
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => Future.wait(_providers.map((provider) => provider.close(gracefulDuration: gracefulDuration)));
+  Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.map((provider) => provider.close(gracefulDuration: gracefulDuration)));
 }

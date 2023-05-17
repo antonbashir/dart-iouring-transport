@@ -107,6 +107,7 @@
     "barrier.h": "c",
     "time_types.h": "c",
     "transport_buffers_pool.h": "c",
-    "typeinfo": "c"
+    "typeinfo": "c",
+    "regex": "c"
   },
 }

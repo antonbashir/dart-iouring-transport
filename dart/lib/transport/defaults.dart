@@ -9,19 +9,19 @@ class TransportDefaults {
 
   static TransportConfiguration transport() => TransportConfiguration(
         listenerIsolates: 1,
-        workerInsolates: 1,
+        workerInsolates: 7,
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
-        ringSize: 16384,
-        ringFlags: ringSetupSqpoll,
+        ringSize: 8192,
+        ringFlags: 0,
       );
 
   static TransportWorkerConfiguration inbound() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 8192,
-        ringFlags: ringSetupSqpoll,
+        ringFlags: 0,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
       );
 
@@ -29,7 +29,7 @@ class TransportDefaults {
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 8192,
-        ringFlags: ringSetupSqpoll,
+        ringFlags: 0,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
       );
 

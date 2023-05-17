@@ -18,11 +18,11 @@ int transport_worker_initialize(transport_worker_t *worker,
   }
 
   worker->events = mh_events_new();
-  mh_events_reserve(worker->events, worker->buffers_count, 0);
   if (!worker->events)
   {
     return -ENOMEM;
   }
+  mh_events_reserve(worker->events, worker->buffers_count, 0);
 
   int result = transport_buffers_pool_create(&worker->free_buffers, configuration->buffers_count);
   if (result == -1)

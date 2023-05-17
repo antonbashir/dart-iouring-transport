@@ -241,7 +241,7 @@ class TransportWorker {
       var event = data & 0xffff;
       _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
       final fd = (data >> 32) & 0xffffffff;
-      print("[inbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      //print("[inbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (result < 0) {
         _errorHandler.handle(result, data, fd, event);
         continue;
@@ -286,7 +286,7 @@ class TransportWorker {
         continue;
       }
       final fd = (data >> 32) & 0xffffffff;
-      print("[outbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      //print("[outbound] ${TransportEvent.ofEvent(event)} worker = ${_inboundWorkerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       if (result < 0) {
         _errorHandler.handle(result, data, fd, event);
         continue;

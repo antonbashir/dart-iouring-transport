@@ -16,6 +16,7 @@ static inline int transport_buffers_pool_create(struct transport_buffers_pool *p
   pool->size = size;
   pool->count = 0;
   pool->ids = (int32_t *)malloc(size * sizeof(int32_t));
+  memset(pool->ids, 0, size * sizeof(int32_t));
   return (pool->ids == NULL ? -1 : 0);
 }
 
