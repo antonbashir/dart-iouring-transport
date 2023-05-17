@@ -277,8 +277,8 @@ void transport_worker_connect(transport_worker_t *worker, transport_client_t *cl
   sqe = transport_provide_sqe(ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
-  io_uring_submit(ring);
   transport_worker_add_event(worker, client->fd, data, timeout);
+  io_uring_submit(ring);
 }
 
 void transport_worker_accept(transport_worker_t *worker, transport_server_t *server)
@@ -296,8 +296,8 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
   sqe = transport_provide_sqe(ring);
   io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
   sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
-  io_uring_submit(ring);
   transport_worker_add_event(worker, server->fd, data, TRANSPORT_TIMEOUT_INFINITY);
+  io_uring_submit(ring);
 }
 
 void transport_worker_submit(transport_worker_t *worker)
