@@ -233,11 +233,12 @@ class TransportWorker {
 
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
+    print("inbound: $cqeCount");
+    if (cqeCount < 0) return;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _inboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
-      _bindings.transport_cqe_advance(_inboundRing, 1);
       var event = data & 0xffff;
       _bindings.transport_worker_remove_event(_inboundWorkerPointer, data);
       final fd = (data >> 32) & 0xffffffff;
@@ -270,15 +271,17 @@ class TransportWorker {
           continue;
       }
     }
+    _bindings.transport_cqe_advance(_inboundRing, cqeCount);
   }
 
   void _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
+    print("outbound: $cqeCount");
+    if (cqeCount < 0) return;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _outboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
       final result = cqe.ref.res;
-      _bindings.transport_cqe_advance(_outboundRing, 1);
       var event = data & 0xffff;
       _bindings.transport_worker_remove_event(_outboundWorkerPointer, data);
       if (event == transportEventCustom) {
@@ -318,6 +321,7 @@ class TransportWorker {
         continue;
       }
     }
+    _bindings.transport_cqe_advance(_outboundRing, cqeCount);
   }
 
   @pragma(preferInlinePragma)

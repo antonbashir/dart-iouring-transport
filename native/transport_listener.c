@@ -70,6 +70,7 @@ bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
   int32_t cqeCount = 0;
   if (likely(cqeCount = transport_listener_wait(listener->ring_size, cqes, listener->ring) != -1))
   {
+    printf("listener cqe = %d\n", cqeCount);
     for (size_t cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++)
     {
       int result = cqes[cqeIndex]->res;
