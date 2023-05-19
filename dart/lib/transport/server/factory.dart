@@ -38,15 +38,7 @@ class TransportServersFactory {
     TransportUdpServerConfiguration? configuration,
   }) {
     final server = _registry.createUdp(address.address, port, configuration: configuration);
-    return TransportServerDatagramReceiver(
-      server,
-      TransportChannel(
-        _workerPointer,
-        server.pointer.ref.fd,
-        _bindings,
-        _buffers,
-      ),
-    );
+    return TransportServerDatagramReceiver(server);
   }
 
   TransportServerCloser unixStream(
@@ -58,15 +50,7 @@ class TransportServersFactory {
 
   TransportServerDatagramReceiver unixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
     final server = _registry.createUnixDatagram(path, configuration: configuration);
-    return TransportServerDatagramReceiver(
-      server,
-      TransportChannel(
-        _workerPointer,
-        server.pointer.ref.fd,
-        _bindings,
-        _buffers,
-      ),
-    );
+    return TransportServerDatagramReceiver(server);
   }
 
   @visibleForTesting

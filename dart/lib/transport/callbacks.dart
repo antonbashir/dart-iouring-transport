@@ -8,11 +8,11 @@ class TransportCallbacks {
   final _connect = <int, Completer<TransportClient>>{};
   final _accept = <int, void Function(TransportChannel channel)>{};
   final _custom = <int, Completer<int>>{};
-  final _inboundBuffers = <Completer<void>>[];
-  final _outboundBuffers = <Completer<void>>[];
+  final _inboundBuffers = <Completer<int>>[];
+  final _outboundBuffers = <Completer<int>>[];
 
   TransportCallbacks(int inboundBuffersCount, int outboundBuffersCount) {
-    final stub = Completer();
+    final stub = Completer<int>();
 
     for (var index = 0; index < inboundBuffersCount; index++) {
       _inboundBuffers.add(stub);
@@ -30,10 +30,10 @@ class TransportCallbacks {
   void setAccept(int fd, void Function(TransportChannel channel) onAccept) => _accept[fd] = onAccept;
 
   @pragma(preferInlinePragma)
-  void setOutbound(int bufferId, Completer<void> completer) => _outboundBuffers[bufferId] = completer;
+  void setOutbound(int bufferId, Completer<int> completer) => _outboundBuffers[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void setInbound(int bufferId, Completer<void> completer) => _inboundBuffers[bufferId] = completer;
+  void setInbound(int bufferId, Completer<int> completer) => _inboundBuffers[bufferId] = completer;
 
   @pragma(preferInlinePragma)
   void setCustom(int id, Completer<int> completer) => _custom[id] = completer;
@@ -45,7 +45,7 @@ class TransportCallbacks {
   void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!(channel);
 
   @pragma(preferInlinePragma)
-  void notifyInbound(int bufferId) => _inboundBuffers[bufferId].complete();
+  void notifyInbound(int bufferId) => _inboundBuffers[bufferId].complete(bufferId);
 
   @pragma(preferInlinePragma)
   void notifyInboundError(int bufferId, Exception error) {
@@ -60,7 +60,7 @@ class TransportCallbacks {
   void notifyConnectError(int fd, Exception error) => _connect.remove(fd)!.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyOutbound(int bufferId) => _outboundBuffers[bufferId].complete();
+  void notifyOutbound(int bufferId) => _outboundBuffers[bufferId].complete(bufferId);
 
   @pragma(preferInlinePragma)
   void notifyOutboundError(int bufferId, Exception error) {

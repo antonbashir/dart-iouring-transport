@@ -90,46 +90,29 @@ class TransportDatagramResponder {
   bool get active => !_server.closing;
 
   @pragma(preferInlinePragma)
-  Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) => retry == null
-      ? _server.respondSingleMessage(
+  Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) {
+    Future<void> respond() => _server.respondSingleMessage(
           _channel,
           _destination,
           bytes,
           submit: submit,
           flags: flags,
-        )
-      : retry.options.retry(
-          () => _server.respondSingleMessage(
-            _channel,
-            _destination,
-            bytes,
-            submit: submit,
-            flags: flags,
-          ),
-          onRetry: retry.onRetry,
-          retryIf: retry.predicate,
         );
+    return retry == null ? respond() : retry.options.retry(respond, onRetry: retry.onRetry, retryIf: retry.predicate);
+  }
 
   @pragma(preferInlinePragma)
-  Future<void> respondManyMessage(List<Uint8List> bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) => retry == null
-      ? _server.respondManyMessages(
+  Future<void> respondManyMessage(List<Uint8List> bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) {
+    Future<void> respond() => _server.respondManyMessages(
           _channel,
           _destination,
           bytes,
           submit: submit,
           flags: flags,
-        )
-      : retry.options.retry(
-          () => _server.respondManyMessages(
-            _channel,
-            _destination,
-            bytes,
-            submit: submit,
-            flags: flags,
-          ),
-          onRetry: retry.onRetry,
-          retryIf: retry.predicate,
         );
+
+    return retry == null ? respond() : retry.options.retry(respond, onRetry: retry.onRetry, retryIf: retry.predicate);
+  }
 
   @pragma(preferInlinePragma)
   void release() => _pool.release(_bufferId);

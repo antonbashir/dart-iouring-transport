@@ -36,15 +36,23 @@ Future<void> _benchTcp() async {
       time.start();
       print("after start: ${ProcessInfo.currentRss}");
       while (true) {
-        count += (await Future.wait(connector.map((client) => client.writeSingle(fromServer).then((value) => client.read()).then((value) => value.release())))).length;
-        if (time.elapsed.inSeconds >= 120) break;
+        List<Future>? futures = <Future>[];
+        for (var client in connector.clients) {
+          futures.add(client.writeSingle(fromServer).then((_) => client.read()).then((value) => value.release()));
+        }
+        List? results = await Future.wait(futures);
+        count += results.length;
+        results.clear();
+        futures = null;
+        results = null;
+        if (time.elapsed.inSeconds >= 360) break;
       }
       print("after end: ${ProcessInfo.currentRss}");
       worker.transmitter!.send(count);
     },
   );
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
-  print("RPS: ${count / 120}");
+  print("RPS: ${count / 360}");
   await transport.shutdown();
 }
 

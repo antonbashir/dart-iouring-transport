@@ -21,8 +21,14 @@ class TransportLinks {
   int setInbound(int bufferId, int lastBufferId) => _inboundLinks[bufferId] = lastBufferId;
 
   @pragma(preferInlinePragma)
+  Iterable<int> selectInbound(int lastBufferId) => _inboundLinks.where((element) => element == lastBufferId);
+
+  @pragma(preferInlinePragma)
   int getOutbound(int bufferId) => _outboundLinks[bufferId];
 
   @pragma(preferInlinePragma)
   int setOutbound(int bufferId, int lastBufferId) => _outboundLinks[bufferId] = lastBufferId;
+
+  @pragma(preferInlinePragma)
+  Iterable<int> selectOutbound(int lastBufferId) => _outboundLinks.where((element) => element == lastBufferId);
 }

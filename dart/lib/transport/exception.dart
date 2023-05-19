@@ -9,13 +9,24 @@ class TransportInitializationException implements Exception {
   String toString() => message;
 }
 
-class TransportInternalException implements Exception {
+abstract class TransportExecutionException implements Exception {
+  final int? bufferId;
+
+  TransportExecutionException(this.bufferId);
+}
+
+class TransportInternalException extends TransportExecutionException {
   final TransportEvent event;
   final int code;
 
   late final String message;
 
-  TransportInternalException({required this.event, required this.code, required String message}) {
+  TransportInternalException({
+    required this.event,
+    required this.code,
+    required String message,
+    int? bufferId,
+  }) : super(bufferId) {
     this.message = "[$event] code = $code, message = $message";
   }
 
@@ -23,11 +34,11 @@ class TransportInternalException implements Exception {
   String toString() => message;
 }
 
-class TransportCanceledException implements Exception {
+class TransportCanceledException extends TransportExecutionException {
   late final String message;
   final TransportEvent event;
 
-  TransportCanceledException({required this.event}) {
+  TransportCanceledException({required this.event, int? bufferId}) : super(bufferId) {
     this.message = "[$event] canceled";
   }
 
@@ -35,16 +46,16 @@ class TransportCanceledException implements Exception {
   String toString() => message;
 }
 
-class TransportClosedException implements Exception {
+class TransportClosedException extends TransportExecutionException {
   final String message;
 
-  const TransportClosedException._(this.message);
+  TransportClosedException._(this.message, {int? bufferId}) : super(bufferId);
 
-  factory TransportClosedException.forServer() => const TransportClosedException._("Server closed");
+  factory TransportClosedException.forServer({int? bufferId}) => TransportClosedException._("Server closed", bufferId: bufferId);
 
-  factory TransportClosedException.forClient() => const TransportClosedException._("Client closed");
+  factory TransportClosedException.forClient({int? bufferId}) => TransportClosedException._("Client closed", bufferId: bufferId);
 
-  factory TransportClosedException.forFile() => const TransportClosedException._("File closed");
+  factory TransportClosedException.forFile({int? bufferId}) => TransportClosedException._("File closed", bufferId: bufferId);
 
   @override
   String toString() => message;

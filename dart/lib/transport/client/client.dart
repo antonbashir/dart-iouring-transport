@@ -58,26 +58,23 @@ class TransportClient {
   Future<TransportPayload> read({bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    final completer = Completer();
+    final completer = Completer<int>();
     _callbacks.setOutbound(bufferId, completer);
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)), onError: (error) {
-      _buffers.release(bufferId);
-      throw error;
-    });
+    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    final completer = Completer();
+    final completer = Completer<int>();
     _callbacks.setOutbound(bufferId, completer);
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.whenComplete(() => _buffers.release(bufferId));
+    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) async {
@@ -95,7 +92,7 @@ class TransportClient {
         listenerSqeFlags: transportIosqeIoLink,
       );
     }
-    final completer = Completer();
+    final completer = Completer<int>();
     _callbacks.setOutbound(lastBufferId, completer);
     _links.setOutbound(lastBufferId, lastBufferId);
     _channel.write(
@@ -106,27 +103,23 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
+    return completer.future.then(_handleManyWrite, onError: _handleManyWrite);
   }
 
   Future<TransportPayload> receiveSingleMessage({bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    final completer = Completer();
+    final completer = Completer<int>();
     _callbacks.setOutbound(bufferId, completer);
     _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((_) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId)), onError: (error) {
-      _buffers.release(bufferId);
-      throw error;
-    });
+    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
   }
 
   Future<List<TransportPayload>> receiveManyMessage(int count, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final payloads = <TransportPayload>[];
     final bufferIds = await _buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forClient();
     final lastBufferId = bufferIds.last;
@@ -142,7 +135,7 @@ class TransportClient {
         listenerSqeFlags: transportIosqeIoLink,
       );
     }
-    final completer = Completer();
+    final completer = Completer<int>();
     _callbacks.setOutbound(lastBufferId, completer);
     _links.setOutbound(lastBufferId, lastBufferId);
     _channel.receiveMessage(
@@ -154,19 +147,14 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.onError<Exception>((error, _) {
-      _buffers.releaseArray(bufferIds);
-      throw error;
-    });
-    for (var bufferId in bufferIds) payloads.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
-    return payloads;
+    return completer.future.then(_handleManyReceive, onError: _handleManyError);
   }
 
   Future<void> sendSingleMessage(Uint8List bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    final completer = Completer();
+    final completer = Completer<int>();
     _callbacks.setOutbound(bufferId, completer);
     _channel.sendMessage(
       bytes,
@@ -179,7 +167,7 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.whenComplete((() => _buffers.release(bufferId)));
+    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
   }
 
   Future<void> sendManyMessages(List<Uint8List> bytes, {bool submit = true, int? flags}) async {
@@ -201,7 +189,7 @@ class TransportClient {
         listenerSqeFlags: transportIosqeIoLink,
       );
     }
-    final completer = Completer();
+    final completer = Completer<int>();
     _links.setOutbound(lastBufferId, lastBufferId);
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.sendMessage(
@@ -215,7 +203,7 @@ class TransportClient {
     );
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.whenComplete(() => _buffers.releaseArray(bufferIds));
+    return completer.future.then(_handleManyWrite, onError: _handleManyError);
   }
 
   @pragma(preferInlinePragma)
@@ -246,6 +234,34 @@ class TransportClient {
     _channel.close();
     _registry.remove(_pointer.ref.fd);
     _bindings.transport_client_destroy(_pointer);
+  }
+
+  @pragma(preferInlinePragma)
+  TransportPayload _handleSingleRead(int bufferId) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId));
+
+  @pragma(preferInlinePragma)
+  List<TransportPayload> _handleManyReceive(int lastBufferId) => _links.selectOutbound(lastBufferId).map((bufferId) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId))).toList();
+
+  @pragma(preferInlinePragma)
+  void _handleSingleWrite(int bufferId) => _buffers.release(bufferId);
+
+  @pragma(preferInlinePragma)
+  void _handleManyWrite(int lastBufferId) => _buffers.releaseArray(_links.selectOutbound(lastBufferId).toList());
+
+  @pragma(preferInlinePragma)
+  void _handleSingleError(error) {
+    if (error is TransportExecutionException && error.bufferId != null) {
+      _buffers.release(error.bufferId!);
+    }
+    throw error;
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleManyError(error) {
+    if (error is TransportExecutionException && error.bufferId != null) {
+      _buffers.releaseArray(_links.selectOutbound(error.bufferId!).toList());
+    }
+    throw error;
   }
 
   @visibleForTesting

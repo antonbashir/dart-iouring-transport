@@ -6,9 +6,8 @@ import 'server.dart';
 
 class TransportServerDatagramReceiver {
   final TransportServer _server;
-  final TransportChannel _channel;
 
-  const TransportServerDatagramReceiver(this._server, this._channel);
+  const TransportServerDatagramReceiver(this._server);
 
   bool get active => !_server.closing;
 
@@ -17,7 +16,7 @@ class TransportServerDatagramReceiver {
     bool submit = true,
     int? flags,
   }) =>
-      _server.receiveSingleMessage(_channel, flags: flags, submit: submit);
+      _server.receiveSingleMessage(flags: flags, submit: submit);
 
   @pragma(preferInlinePragma)
   Future<List<TransportDatagramResponder>> receiveManyMessages(
@@ -25,7 +24,7 @@ class TransportServerDatagramReceiver {
     bool submit = true,
     int? flags,
   }) =>
-      _server.receiveManyMessages(_channel, count, flags: flags, submit: submit);
+      _server.receiveManyMessages(count, flags: flags, submit: submit);
 
   void listen(
     void Function(TransportDatagramResponder payload, void Function() canceler) listener, {

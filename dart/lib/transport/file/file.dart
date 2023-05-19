@@ -47,30 +47,26 @@ class TransportFile {
   );
 
   Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) async {
-    final completer = Completer();
+    final completer = Completer<int>();
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
     _callbacks.setOutbound(bufferId, completer);
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then((_) => _payloadPool.getPayload(bufferId, buffers.read(bufferId)), onError: (error) {
-      buffers.release(bufferId);
-      throw error;
-    });
+    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true, int offset = 0}) async {
-    final completer = Completer();
+    final completer = Completer<int>();
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
     _callbacks.setOutbound(bufferId, completer);
     _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.whenComplete(() => buffers.release(bufferId));
+    await completer.future.then(_handleSingleWrite, onError: _handleSingleError);
   }
 
   Future<Uint8List> readMany(int count, {bool submit = true, int offset = 0}) async {
-    final bytes = BytesBuilder();
     final bufferIds = await buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forFile();
     final lastBufferId = bufferIds.last;
@@ -86,7 +82,7 @@ class TransportFile {
       );
       offset += buffers.bufferSize;
     }
-    final completer = Completer();
+    final completer = Completer<int>();
     _links.setOutbound(lastBufferId, lastBufferId);
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.read(
@@ -96,17 +92,7 @@ class TransportFile {
       offset: offset,
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.onError<Exception>((error, _) {
-      buffers.releaseArray(bufferIds);
-      throw error;
-    });
-    for (var bufferId in bufferIds) {
-      final payload = buffers.read(bufferId);
-      if (payload.isEmpty) break;
-      bytes.add(payload);
-    }
-    buffers.releaseArray(bufferIds);
-    return bytes.takeBytes();
+    return completer.future.then(_handleManyRead, onError: _handleManyError);
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true, int offset = 0}) async {
@@ -126,7 +112,7 @@ class TransportFile {
       );
       offset += buffers.bufferSize;
     }
-    final completer = Completer();
+    final completer = Completer<int>();
     _links.setOutbound(lastBufferId, lastBufferId);
     _callbacks.setOutbound(lastBufferId, completer);
     _channel.write(
@@ -137,7 +123,7 @@ class TransportFile {
       offset: offset,
     );
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.whenComplete(() => buffers.releaseArray(bufferIds));
+    await completer.future.then(_handleManyWrite, onError: _handleManyError);
   }
 
   @pragma(preferInlinePragma)
@@ -157,6 +143,43 @@ class TransportFile {
     if (_pending > 0) await _closer.future;
     _channel.close();
     _registry.remove(_fd);
+  }
+
+  @pragma(preferInlinePragma)
+  TransportPayload _handleSingleRead(int bufferId) => _payloadPool.getPayload(bufferId, buffers.read(bufferId));
+
+  @pragma(preferInlinePragma)
+  Uint8List _handleManyRead(int lastBufferId) {
+    final bytes = BytesBuilder();
+    for (var bufferId in _links.selectOutbound(lastBufferId)) {
+      final payload = buffers.read(bufferId);
+      if (payload.isEmpty) break;
+      bytes.add(payload);
+      buffers.release(bufferId);
+    }
+    return bytes.takeBytes();
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleSingleWrite(int bufferId) => buffers.release(bufferId);
+
+  @pragma(preferInlinePragma)
+  void _handleManyWrite(int lastBufferId) => buffers.releaseArray(_links.selectOutbound(lastBufferId).toList());
+
+  @pragma(preferInlinePragma)
+  void _handleSingleError(error) {
+    if (error is TransportExecutionException && error.bufferId != null) {
+      buffers.release(error.bufferId!);
+    }
+    throw error;
+  }
+
+  @pragma(preferInlinePragma)
+  void _handleManyError(error) {
+    if (error is TransportExecutionException && error.bufferId != null) {
+      buffers.releaseArray(_links.selectOutbound(error.bufferId!).toList());
+    }
+    throw error;
   }
 
   @visibleForTesting

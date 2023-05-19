@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
+import '../channel.dart';
 import '../links.dart';
 import '../payload.dart';
 import '../bindings.dart';
@@ -62,6 +63,7 @@ class TransportServerRegistry {
           this,
           _payloadPool,
           _links,
+          null,
         );
       },
     );
@@ -139,6 +141,12 @@ class TransportServerRegistry {
           this,
           _payloadPool,
           _links,
+          TransportChannel(
+            _workerPointer,
+            pointer.ref.fd,
+            _bindings,
+            _buffers,
+          ),
         );
       },
     );
@@ -179,6 +187,7 @@ class TransportServerRegistry {
           this,
           _payloadPool,
           _links,
+          null,
         );
       },
     );
@@ -219,6 +228,12 @@ class TransportServerRegistry {
           this,
           _payloadPool,
           _links,
+          TransportChannel(
+            _workerPointer,
+            pointer.ref.fd,
+            _bindings,
+            _buffers,
+          ),
         );
       },
     );
