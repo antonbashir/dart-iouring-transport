@@ -48,7 +48,7 @@ Future<void> _benchTcp() async {
         futures.add(client.writeSingle(fromServer).then((client) => client.read().then((value) => value.release())));
       }
       count += (await Future.wait(futures)).length;
-      if (time.elapsed.inSeconds >= 10) break;
+      if (time.elapsed.inDays >= 10) break;
     }
     print("after end: ${ProcessInfo.currentRss}");
     worker.transmitter!.send(count);

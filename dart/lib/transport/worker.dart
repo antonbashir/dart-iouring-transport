@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:developer';
 import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:math';
@@ -226,14 +227,20 @@ class TransportWorker {
   Future<void> _listen() async {
     final delayFactor = 1;
     final randomizationFactor = 0.25;
-    final maxDelay = Duration(seconds: 30).inMicroseconds;
+    final maxDelay = Duration(seconds: 1).inMicroseconds;
+    final maxActiveTime = Duration(seconds: 5).inMicroseconds;
     final random = Random();
     var attempt = 0;
+    var delayTimestamp = Timeline.now;
     while (true) {
       attempt++;
       if (_handleInboundCqes() || _handleOutboundCqes()) {
         attempt = 0;
-        await Future.delayed(Duration(microseconds: delayFactor));
+        if (Timeline.now - delayTimestamp > maxActiveTime) {
+          _bindings.transport_notify_idle(Timeline.now + delayFactor);
+          await Future.delayed(Duration(microseconds: delayFactor));
+          delayTimestamp = Timeline.now;
+        }
         continue;
       }
       final randomization = (randomizationFactor * (random.nextDouble() * 2 - 1) + 1);
@@ -243,7 +250,6 @@ class TransportWorker {
     }
   }
 
-  @pragma(preferInlinePragma)
   bool _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
     if (cqeCount <= 0) return false;
@@ -287,7 +293,6 @@ class TransportWorker {
     return true;
   }
 
-  @pragma(preferInlinePragma)
   bool _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
     if (cqeCount <= 0) return false;
