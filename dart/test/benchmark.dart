@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:iouring_transport/transport/defaults.dart';
+import 'package:iouring_transport/transport/payload.dart';
+import 'package:iouring_transport/transport/server/connection.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 
@@ -21,36 +23,39 @@ Future<void> _benchTcp() async {
     TransportDefaults.inbound(),
     TransportDefaults.outbound(),
   );
-  transport.run(
-    transmitter: receiver.sendPort,
-    (input) async {
-      print("before start: ${ProcessInfo.currentRss}");
-      final encoder = Utf8Encoder();
-      final fromServer = encoder.convert("from server\n");
-      final worker = TransportWorker(input);
-      await worker.initialize();
-      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.listen((payload, _) => connection.writeSingle(fromServer).then((value) => payload.release())));
-      final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 512));
-      var count = 0;
-      final time = Stopwatch();
-      time.start();
-      print("after start: ${ProcessInfo.currentRss}");
-      while (true) {
-        List<Future>? futures = <Future>[];
-        for (var client in connector.clients) {
-          futures.add(client.writeSingle(fromServer).then((_) => client.read()).then((value) => value.release()));
-        }
-        List? results = await Future.wait(futures);
-        count += results.length;
-        results.clear();
-        futures = null;
-        results = null;
-        if (time.elapsed.inSeconds >= 360) break;
+  Future<void> work(SendPort input) async {
+    print("before start: ${ProcessInfo.currentRss}");
+    final encoder = Utf8Encoder();
+    final fromServer = encoder.convert("from server\n");
+    final worker = TransportWorker(input);
+    await worker.initialize();
+    void onConnect(TransportServerConnection connection) {
+      Future<void> onListen(TransportPayload payload, TransportServerConnection connection) async {
+        await connection.writeSingle(fromServer).then((value) => payload.release());
       }
-      print("after end: ${ProcessInfo.currentRss}");
-      worker.transmitter!.send(count);
-    },
-  );
+
+      connection.listen(onListen);
+    }
+
+    worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, onConnect);
+    final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 512));
+    var count = 0;
+    final time = Stopwatch();
+    time.start();
+    print("after start: ${ProcessInfo.currentRss}");
+    while (true) {
+      for (var client in connector.clients) {
+        await client.writeSingle(fromServer);
+        await client.read().then((value) => value.release());
+        count++;
+      }
+      if (time.elapsed.inDays >= 1) break;
+    }
+    print("after end: ${ProcessInfo.currentRss}");
+    worker.transmitter!.send(count);
+  }
+
+  transport.run(transmitter: receiver.sendPort, work);
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
   print("RPS: ${count / 360}");
   await transport.shutdown();

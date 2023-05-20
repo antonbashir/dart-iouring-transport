@@ -75,10 +75,7 @@ class TransportWorker {
       final queue = _jobs[input[0]];
       if (queue?.isNotEmpty == true) queue!.removeFirst().complete(input[1]);
     });
-    _listener = RawReceivePort((_) {
-      _handleInboundCqes();
-      _handleOutboundCqes();
-    });
+    _listener = RawReceivePort(_handle);
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((gracefulDuration) async {
       _inboundTimeoutChecker.stop();
@@ -153,10 +150,7 @@ class TransportWorker {
       _links,
     );
     _serversFactory = TransportServersFactory(
-      _bindings,
       _serverRegistry,
-      _inboundWorkerPointer,
-      _inboundBuffers,
     );
     _clientsFactory = TransportClientsFactory(
       _clientRegistry,
@@ -231,9 +225,16 @@ class TransportWorker {
     }
   }
 
+  void _handle(_) {
+    scheduleMicrotask(() => _handleInboundCqes());
+    scheduleMicrotask(() => _handleOutboundCqes());
+  }
+
   void _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
-    if (cqeCount < 0) return;
+    if (cqeCount <= 0) {
+      return;
+    }
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _inboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
@@ -275,7 +276,9 @@ class TransportWorker {
 
   void _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
-    if (cqeCount < 0) return;
+    if (cqeCount <= 0) {
+      return;
+    }
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _outboundCqes[cqeIndex];
       final data = cqe.ref.user_data;

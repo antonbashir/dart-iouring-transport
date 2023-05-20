@@ -58,23 +58,27 @@ class TransportClient {
   Future<TransportPayload> read({bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    final completer = Completer<int>();
+    Completer<int>? completer = Completer<int>();
     _callbacks.setOutbound(bufferId, completer);
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
+    final result = await completer.future.then(_handleSingleRead, onError: _handleSingleError);
+    completer = null;
+    return result;
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    final completer = Completer<int>();
+    Completer<int>? completer = Completer<int>();
     _callbacks.setOutbound(bufferId, completer);
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
+    final result = await completer.future.then(_handleSingleWrite, onError: _handleSingleError);
+    completer = null;
+    return result;
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) async {
@@ -207,13 +211,15 @@ class TransportClient {
   }
 
   @pragma(preferInlinePragma)
-  Future<TransportClient> connect() {
+  Future<TransportClient> connect() async {
     if (_closing) throw TransportClosedException.forClient();
-    final completer = Completer<TransportClient>();
+    Completer<TransportClient>? completer = Completer<TransportClient>();
     _callbacks.setConnect(_pointer.ref.fd, completer);
     _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
     _pending++;
-    return completer.future;
+    final client = await completer.future;
+    completer = null;
+    return client;
   }
 
   @pragma(preferInlinePragma)

@@ -83,12 +83,14 @@ class TransportServer implements TransportServerCloser {
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    final completer = Completer<int>();
+    Completer<int>? completer = Completer<int>();
     _callbacks.setInbound(bufferId, completer);
     channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
+    final result = await completer.future.then(_handleSingleRead, onError: _handleSingleError);
+    completer = null;
+    return result;
   }
 
   Future<void> writeSingle(TransportChannel channel, Uint8List bytes, {bool submit = true}) async {
@@ -96,12 +98,14 @@ class TransportServer implements TransportServerCloser {
     if (_closing) throw TransportClosedException.forServer();
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    final completer = Completer<int>();
+    Completer<int>? completer = Completer<int>();
     _callbacks.setInbound(bufferId, completer);
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
+    final result = await completer.future.then(_handleSingleWrite, onError: _handleSingleError);
+    completer = null;
+    return result;
   }
 
   Future<void> writeMany(TransportChannel channel, List<Uint8List> bytes, {bool submit = true}) async {

@@ -13,23 +13,23 @@ class TransportDefaults {
       );
 
   static TransportListenerConfiguration listener() => TransportListenerConfiguration(
-        ringSize: 8192,
+        ringSize: 16384,
         ringFlags: 0,
       );
 
   static TransportWorkerConfiguration inbound() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
-        ringSize: 8192,
-        ringFlags: 0,
+        ringSize: 16384,
+        ringFlags: ringSetupSqpoll,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
       );
 
   static TransportWorkerConfiguration outbound() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
-        ringSize: 8192,
-        ringFlags: 0,
+        ringSize: 16384,
+        ringFlags: ringSetupSqpoll,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
       );
 

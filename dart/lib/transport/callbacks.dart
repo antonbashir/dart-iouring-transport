@@ -10,16 +10,15 @@ class TransportCallbacks {
   final _custom = <int, Completer<int>>{};
   final _inboundBuffers = <Completer<int>>[];
   final _outboundBuffers = <Completer<int>>[];
+  final _stub = Completer<int>();
 
   TransportCallbacks(int inboundBuffersCount, int outboundBuffersCount) {
-    final stub = Completer<int>();
-
     for (var index = 0; index < inboundBuffersCount; index++) {
-      _inboundBuffers.add(stub);
+      _inboundBuffers.add(_stub);
     }
 
     for (var index = 0; index < outboundBuffersCount; index++) {
-      _outboundBuffers.add(stub);
+      _outboundBuffers.add(_stub);
     }
   }
 
@@ -45,7 +44,11 @@ class TransportCallbacks {
   void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!(channel);
 
   @pragma(preferInlinePragma)
-  void notifyInbound(int bufferId) => _inboundBuffers[bufferId].complete(bufferId);
+  void notifyInbound(int bufferId) {
+    final callback = _inboundBuffers[bufferId];
+    callback.complete(bufferId);
+    _inboundBuffers[bufferId] = _stub;
+  }
 
   @pragma(preferInlinePragma)
   void notifyInboundError(int bufferId, Exception error) {
@@ -60,7 +63,11 @@ class TransportCallbacks {
   void notifyConnectError(int fd, Exception error) => _connect.remove(fd)!.completeError(error);
 
   @pragma(preferInlinePragma)
-  void notifyOutbound(int bufferId) => _outboundBuffers[bufferId].complete(bufferId);
+  void notifyOutbound(int bufferId) {
+    final callback = _outboundBuffers[bufferId];
+    callback.complete(bufferId);
+    _outboundBuffers[bufferId] = _stub;
+  }
 
   @pragma(preferInlinePragma)
   void notifyOutboundError(int bufferId, Exception error) {

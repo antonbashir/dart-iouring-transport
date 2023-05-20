@@ -30,13 +30,10 @@ class TransportClientStreamProvider {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true}) => retry == null
-      ? _client.writeSingle(bytes, submit: submit)
-      : retry.options.retry(
-          () => _client.writeSingle(bytes, submit: submit),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
+  Future<TransportClientStreamProvider> writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true}) {
+    Future<void> write() => _client.writeSingle(bytes, submit: submit);
+    return retry == null ? write().then((value) => this) : retry.options.retry(write, retryIf: retry.predicate, onRetry: retry.onRetry).then((value) => this);
+  }
 
   @pragma(preferInlinePragma)
   Future<void> writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true}) => retry == null

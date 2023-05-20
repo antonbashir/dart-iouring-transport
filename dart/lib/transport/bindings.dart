@@ -9610,6 +9610,15 @@ class TransportBindings {
   late final _Dart_NotifyDetach =
       _Dart_NotifyDetachPtr.asFunction<void Function()>();
 
+  void Dart_NotifyDestroyed() {
+    return _Dart_NotifyDestroyed();
+  }
+
+  late final _Dart_NotifyDestroyedPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('Dart_NotifyDestroyed');
+  late final _Dart_NotifyDestroyed =
+      _Dart_NotifyDestroyedPtr.asFunction<void Function()>();
+
   /// Notifies the VM that the system is running low on memory.
   ///
   /// Does not require a current isolate. Only valid after calling Dart_Initialize.
@@ -14903,6 +14912,30 @@ class TransportBindings {
       'transport_listener_destroy');
   late final _transport_listener_destroy = _transport_listener_destroyPtr
       .asFunction<void Function(ffi.Pointer<transport_listener_t>)>();
+
+  void transport_listener_notify_idle(
+    int deadline,
+  ) {
+    return _transport_listener_notify_idle(
+      deadline,
+    );
+  }
+
+  late final _transport_listener_notify_idlePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'transport_listener_notify_idle');
+  late final _transport_listener_notify_idle =
+      _transport_listener_notify_idlePtr.asFunction<void Function(int)>();
+
+  void transport_listener_notify_detach() {
+    return _transport_listener_notify_detach();
+  }
+
+  late final _transport_listener_notify_detachPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>(
+          'transport_listener_notify_detach');
+  late final _transport_listener_notify_detach =
+      _transport_listener_notify_detachPtr.asFunction<void Function()>();
 
   int transport_server_initialize_tcp(
     ffi.Pointer<transport_server_t> server,
@@ -22179,6 +22212,8 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get Dart_NotifyDetach =>
       _library._Dart_NotifyDetachPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>
+      get Dart_NotifyDestroyed => _library._Dart_NotifyDestroyedPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>
       get Dart_NotifyLowMemory => _library._Dart_NotifyLowMemoryPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Int32)>>
       get Dart_SetPerformanceMode => _library._Dart_SetPerformanceModePtr;
@@ -23034,6 +23069,12 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_listener_t>)>>
       get transport_listener_destroy => _library._transport_listener_destroyPtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>
+      get transport_listener_notify_idle =>
+          _library._transport_listener_notify_idlePtr;
+  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>
+      get transport_listener_notify_detach =>
+          _library._transport_listener_notify_detachPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -27344,6 +27385,9 @@ class transport_worker extends ffi.Struct {
   external ffi.Pointer<rlist> listeners;
 
   external ffi.Pointer<rlist> next_listener;
+
+  @ffi.Int64()
+  external int pending;
 }
 
 typedef transport_worker_t = transport_worker;
@@ -31344,7 +31388,7 @@ const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'Debug';
+const String BUILD_TYPE = 'RelWithDebInfo';
 
 const String BUILD_INFO = '';
 

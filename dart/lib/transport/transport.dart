@@ -103,7 +103,7 @@ class Transport {
       }
       _jobRunners[index].send([job, current == index]);
     });
-    _jobCompletionListener = RawReceivePort((job) => _jobs.remove(job));
+    _jobCompletionListener = RawReceivePort(_jobs.remove);
     final fromTransportToListener = ReceivePort();
     final fromTransportToWorker = ReceivePort();
     var listeners = 0;
@@ -238,8 +238,12 @@ class Transport {
     }
 
     for (var isolate = 0; isolate < transportConfiguration.listenerIsolates; isolate++) {
+      void initialize(SendPort toTransport) {
+        TransportListener(toTransport).initialize();
+      }
+
       Isolate.spawn<SendPort>(
-        (toTransport) => TransportListener(toTransport).initialize(),
+        initialize,
         fromTransportToListener.sendPort,
         onExit: _listenerExit.sendPort,
         debugName: "listener-$isolate",

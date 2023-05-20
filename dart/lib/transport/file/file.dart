@@ -47,13 +47,13 @@ class TransportFile {
   );
 
   Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) async {
-    final completer = Completer<int>();
+    Completer<int>? completer = Completer<int>();
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
     _callbacks.setOutbound(bufferId, completer);
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
+    return completer.future.then(_handleSingleRead, onError: _handleSingleError).whenComplete(() => completer = null);
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true, int offset = 0}) async {

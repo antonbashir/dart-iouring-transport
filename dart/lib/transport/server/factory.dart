@@ -1,27 +1,18 @@
-import 'dart:ffi';
 import 'dart:io';
 
-import '../bindings.dart';
-import '../buffers.dart';
-import '../channel.dart';
+import 'package:meta/meta.dart';
+
 import 'configuration.dart';
 import 'connection.dart';
 import 'datagram.dart';
 import 'registry.dart';
 import 'server.dart';
-import 'package:meta/meta.dart';
 
 class TransportServersFactory {
-  final TransportBindings _bindings;
   final TransportServerRegistry _registry;
-  final Pointer<transport_worker_t> _workerPointer;
-  final TransportBuffers _buffers;
 
   TransportServersFactory(
-    this._bindings,
     this._registry,
-    this._workerPointer,
-    this._buffers,
   );
 
   TransportServerCloser tcp(

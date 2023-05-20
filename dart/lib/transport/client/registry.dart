@@ -76,7 +76,7 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      providers.add(client.connect().then((client) => TransportClientStreamProvider(client)));
+      providers.add(client.connect().then(TransportClientStreamProvider.new));
     }
     return TransportClientStreamPool(await Future.wait(providers));
   }
@@ -125,7 +125,7 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      clients.add(client.connect().then((client) => TransportClientStreamProvider(client)));
+      clients.add(client.connect().then(TransportClientStreamProvider.new));
     }
     return TransportClientStreamPool(await Future.wait(clients));
   }

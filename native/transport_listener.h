@@ -37,6 +37,8 @@ extern "C"
   void transport_listener_close(transport_listener_t *listener);
   bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes);
   void transport_listener_destroy(transport_listener_t *listener);
+  void transport_listener_notify_idle(int64_t deadline);
+  void transport_listener_notify_detach();
 #if defined(__cplusplus)
 }
 #endif

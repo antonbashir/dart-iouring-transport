@@ -43,6 +43,7 @@ extern "C"
     struct mh_events_t *events;
     struct rlist *listeners;
     struct rlist *next_listener;
+    int64_t pending;
   } transport_worker_t;
 
   int transport_worker_initialize(transport_worker_t *worker,

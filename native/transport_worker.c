@@ -7,6 +7,7 @@ int transport_worker_initialize(transport_worker_t *worker,
                                 uint8_t id)
 {
   worker->id = id;
+  worker->pending = 0;
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
@@ -288,8 +289,8 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
   transport_listener_t *listener = transport_worker_next_listener(worker);
   uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
   struct sockaddr *address = server->family == INET
-                                   ? (struct sockaddr *)&server->inet_server_address
-                                   : (struct sockaddr *)&server->unix_server_address;
+                                 ? (struct sockaddr *)&server->inet_server_address
+                                 : (struct sockaddr *)&server->unix_server_address;
   io_uring_prep_accept(sqe, server->fd, address, &server->server_address_length, 0);
   sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
@@ -302,7 +303,7 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
 
 void transport_worker_submit(transport_worker_t *worker)
 {
-  io_uring_submit(worker->ring);
+  worker->pending += io_uring_submit(worker->ring) / 2;
 }
 
 void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)

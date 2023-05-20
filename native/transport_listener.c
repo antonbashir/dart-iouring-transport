@@ -20,6 +20,7 @@ int transport_listener_initialize(transport_listener_t *listener, transport_list
 {
   listener->id = id;
   listener->ready_workers = malloc(sizeof(int) * configuration->workers_count);
+  listener->ring_size = configuration->ring_size;
   if (!listener->ready_workers)
   {
     return -ENOMEM;
@@ -48,9 +49,17 @@ static inline int transport_listener_wait(uint32_t cqe_count, struct io_uring_cq
   int count = 0;
   if (unlikely(!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count))))
   {
-    if (likely(io_uring_wait_cqe(ring, &cqes[0]) == 0))
+    struct __kernel_timespec timeout = {
+        .tv_nsec = 1000000,
+        .tv_sec = 0,
+    };
+
+    if (likely(count = io_uring_wait_cqes(ring, &cqes[0], cqe_count, &timeout, 0) >= 0))
     {
-      return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+     // printf("listener wait: %d\n", count);
+      count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+     // printf("listener batch: %d\n", count);
+      return count;
     }
     return -1;
   }
@@ -83,6 +92,16 @@ bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe
     io_uring_cq_advance(listener->ring, cqeCount);
   }
   return true;
+}
+
+void transport_listener_notify_idle(int64_t deadline)
+{
+  Dart_NotifyIdle(deadline);
+}
+
+void transport_listener_notify_detach()
+{
+  Dart_NotifyLowMemory();
 }
 
 void transport_listener_destroy(transport_listener_t *listener)
