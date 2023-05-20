@@ -134,8 +134,7 @@ void testInitialization({
 }) {
   test("[listeners = $listeners, workers = $workers]", () async {
     final transport = Transport(
-      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
@@ -155,7 +154,6 @@ void testCustom(int index, int workers) {
   test("callback", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.listener(),
       TransportDefaults.inbound(),
       TransportDefaults.outbound(),
     );
@@ -180,7 +178,6 @@ void testDomain() {
   test("[domain]", () async {
     final transport = Transport(
       TransportDefaults.transport(),
-      TransportDefaults.listener(),
       TransportDefaults.inbound(),
       TransportDefaults.outbound(),
     );
@@ -193,7 +190,7 @@ void testDomain() {
       await clients.select().writeSingle(Utf8Encoder().convert("GET"));
       worker.transmitter!.send(null);
     });
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });

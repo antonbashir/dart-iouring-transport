@@ -77,7 +77,7 @@ class TransportFile {
         bufferId,
         transportTimeoutInfinity,
         transportEventRead | transportEventFile | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
         offset: offset,
       );
       offset += buffers.bufferSize;
@@ -107,7 +107,7 @@ class TransportFile {
         bufferId,
         transportTimeoutInfinity,
         transportEventWrite | transportEventFile | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
         offset: offset,
       );
       offset += buffers.bufferSize;

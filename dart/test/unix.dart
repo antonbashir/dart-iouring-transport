@@ -19,10 +19,9 @@ void testUnixStreamSingle({
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("(single) [index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool]", () async {
+  test("(single) [index = $index, workers = $workers, clients = $clientsPool]", () async {
     final transport = Transport(
-      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
@@ -63,10 +62,9 @@ void testUnixStreamMany({
   required int workerFlags,
   required int count,
 }) {
-  test("(many) [index = $index, listeners = $listeners, workers = $workers, clients = $clientsPool, count = $count]", () async {
+  test("(many) [index = $index, workers = $workers, clients = $clientsPool, count = $count]", () async {
     final transport = Transport(
-      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
@@ -123,10 +121,9 @@ void testUnixDgramSingle({
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("(single) [index = $index, listeners = $listeners, workers = $workers, clients = $clients]", () async {
+  test("(single) [index = $index, workers = $workers, clients = $clients]", () async {
     final transport = Transport(
-      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
@@ -167,10 +164,9 @@ void testUnixDgramMany({
   required int workerFlags,
   required int count,
 }) {
-  test("(many) [index = $index, listeners = $listeners, workers = $workers, clients = $clients, count = $count]", () async {
+  test("(many) [index = $index, workers = $workers, clients = $clients, count = $count]", () async {
     final transport = Transport(
-      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );

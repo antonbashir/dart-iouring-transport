@@ -21,7 +21,7 @@ void testTcpTimeoutSingle({
   required Duration clientRead,
 }) {
   test("(timeout tcp single) [connection = ${connection.inSeconds}, serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -62,7 +62,7 @@ void testTcpTimeoutSingle({
       worker.transmitter!.send(null);
     });
 
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
@@ -73,7 +73,7 @@ void testUdpTimeoutSingle({
   required Duration clientRead,
 }) {
   test("(timeout udp single) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -100,7 +100,7 @@ void testUdpTimeoutSingle({
       worker.transmitter!.send(null);
     });
 
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
@@ -112,7 +112,7 @@ void testUdpTimeoutMany({
   required int count,
 }) {
   test("(udp many) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     await transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -139,7 +139,7 @@ void testUdpTimeoutMany({
       worker.transmitter!.send(null);
     });
 
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });

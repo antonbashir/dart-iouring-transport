@@ -13,7 +13,7 @@ void testShutdown({
   required Duration gracefulDuration,
 }) {
   test("[gracefulDuration = ${gracefulDuration.inSeconds}]", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -60,7 +60,7 @@ void testShutdown({
 
       worker.transmitter!.send(null);
     });
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown();
   });

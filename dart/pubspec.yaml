@@ -20,8 +20,8 @@ ffigen:
   headers:
     entry-points:
       - "../native/transport.h"
+      - "../native/transport_worker.h"
       - "../native/transport_constants.h"
-      - "../native/transport_listener.h"
       - "../native/transport_server.h"
       - "../native/transport_file.h"
       - "../native/transport_socket.h"
@@ -30,6 +30,9 @@ ffigen:
       - "_(.*)"
       - "ck(.*)"
   functions:
+    leaf:
+      include:
+        - "transport_worker_.*"
     symbol-address:
       include:
         - ".*"

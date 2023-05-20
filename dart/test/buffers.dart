@@ -13,7 +13,7 @@ import 'validators.dart';
 
 void testTcpBuffers() {
   test("(tcp)", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -53,7 +53,7 @@ void testTcpBuffers() {
 
       worker.transmitter!.send(null);
     });
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown();
   });
@@ -61,7 +61,7 @@ void testTcpBuffers() {
 
 void testUdpBuffers() {
   test("(udp)", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -111,7 +111,7 @@ void testUdpBuffers() {
 
       worker.transmitter!.send(null);
     });
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown();
   });
@@ -119,7 +119,7 @@ void testUdpBuffers() {
 
 void testFileBuffers() {
   test("(file)", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.listener(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -155,7 +155,7 @@ void testFileBuffers() {
 
       worker.transmitter!.send(null);
     });
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown();
   });
@@ -165,7 +165,6 @@ void testBuffersOverflow() {
   test("(overflow)", () async {
     final transport = Transport(
       TransportDefaults.transport(),
-      TransportDefaults.listener(),
       TransportDefaults.inbound().copyWith(buffersCount: 1),
       TransportDefaults.outbound().copyWith(buffersCount: 1),
     );
@@ -203,7 +202,7 @@ void testBuffersOverflow() {
 
       worker.transmitter!.send(null);
     });
-    await done.take(TransportDefaults.transport().workerInsolates).toList();
+    await done.take(TransportDefaults.transport().workerIsolates).toList();
     done.close();
     await transport.shutdown();
   });

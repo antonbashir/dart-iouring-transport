@@ -16,10 +16,9 @@ void testFileSingle({
   required int listenerFlags,
   required int workerFlags,
 }) {
-  test("(single) [index = $index, listeners = $listeners, workers = $workers]", () async {
+  test("(single) [index = $index, workers = $workers]", () async {
     final transport = Transport(
-      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
@@ -50,10 +49,9 @@ void testFileLoad({
   required int workerFlags,
   required int count,
 }) {
-  test("(load) [index = $index, listeners = $listeners, workers = $workers]", () async {
+  test("(load) [index = $index, workers = $workers]", () async {
     final transport = Transport(
-      TransportDefaults.transport().copyWith(listenerIsolates: listeners, workerInsolates: workers),
-      TransportDefaults.listener().copyWith(ringFlags: listenerFlags),
+      TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );

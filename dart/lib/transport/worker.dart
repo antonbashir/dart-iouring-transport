@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:developer';
 import 'dart:ffi';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
@@ -38,7 +38,6 @@ class TransportWorker {
   late final Pointer<io_uring> _outboundRing;
   late final Pointer<Pointer<io_uring_cqe>> _inboundCqes;
   late final Pointer<Pointer<io_uring_cqe>> _outboundCqes;
-  late final RawReceivePort _listener;
   late final RawReceivePort _activator;
   late final RawReceivePort _closer;
   late final RawReceivePort _jobRunner;
@@ -76,7 +75,6 @@ class TransportWorker {
       final queue = _jobs[input[0]];
       if (queue?.isNotEmpty == true) queue!.removeFirst().complete(input[1]);
     });
-    _listener = RawReceivePort((_) {});
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((gracefulDuration) async {
       _inboundTimeoutChecker.stop();
@@ -88,14 +86,12 @@ class TransportWorker {
       malloc.free(_inboundCqes);
       _bindings.transport_worker_destroy(_outboundWorkerPointer);
       malloc.free(_outboundCqes);
-      _listener.close();
       _closer.close();
       _jobRunner.close();
       Isolate.exit();
     });
     toTransport.send([
       _fromTransport.sendPort,
-      _listener.sendPort,
       _activator.sendPort,
       _closer.sendPort,
       _jobRunner.sendPort,
@@ -192,7 +188,7 @@ class TransportWorker {
     _inboundTimeoutChecker.start();
     _outboundTimeoutChecker.start();
     _activator.close();
-    _receive();
+    _listen();
   }
 
   @pragma(preferInlinePragma)
@@ -227,20 +223,25 @@ class TransportWorker {
     }
   }
 
-  Future<void> _receive() async {
+  Future<void> _listen() async {
+    final delayFactor = 10;
+    final randomizationFactor = 0.25;
+    final maxDelay = Duration(seconds: 30).inMicroseconds;
+    final random = Random();
+    var attempt = 0;
     while (true) {
-      _handleInboundCqes();
-      _handleOutboundCqes();
-      await Future.delayed(Duration(microseconds: 10));
+      attempt++;
+      if (_handleInboundCqes() || _handleOutboundCqes()) attempt = 0;
+      final randomization = (randomizationFactor * (random.nextDouble() * 2 - 1) + 1);
+      final exponent = min(attempt, 31);
+      final delay = (delayFactor * pow(2.0, exponent) * randomization).toInt();
+      await Future.delayed(Duration(microseconds: delay < maxDelay ? delay : maxDelay));
     }
   }
 
-  void _handleInboundCqes() {
+  bool _handleInboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_inboundRingSize, _inboundCqes, _inboundRing);
-    if (cqeCount <= 0) {
-      return;
-    }
-    //print("i: ${_inboundWorkerPointer.ref.pending -= cqeCount}");
+    if (cqeCount <= 0) return false;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _inboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
@@ -278,14 +279,12 @@ class TransportWorker {
       }
     }
     _bindings.transport_cqe_advance(_inboundRing, cqeCount);
+    return true;
   }
 
-  void _handleOutboundCqes() {
+  bool _handleOutboundCqes() {
     final cqeCount = _bindings.transport_worker_peek(_outboundRingSize, _outboundCqes, _outboundRing);
-    if (cqeCount <= 0) {
-      return;
-    }
-    //print("o: ${_outboundWorkerPointer.ref.pending -= cqeCount}");
+    if (cqeCount <= 0) return false;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _outboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
@@ -330,6 +329,7 @@ class TransportWorker {
       }
     }
     _bindings.transport_cqe_advance(_outboundRing, cqeCount);
+    return true;
   }
 
   @pragma(preferInlinePragma)

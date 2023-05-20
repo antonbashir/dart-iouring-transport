@@ -19,7 +19,6 @@ Future<void> _benchTcp() async {
   final ReceivePort receiver = ReceivePort();
   final transport = Transport(
     TransportDefaults.transport(),
-    TransportDefaults.listener(),
     TransportDefaults.inbound(),
     TransportDefaults.outbound(),
   );
@@ -56,7 +55,7 @@ Future<void> _benchTcp() async {
   }
 
   transport.run(transmitter: receiver.sendPort, work);
-  final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
+  final count = await receiver.take(TransportDefaults.transport().workerIsolates).reduce((previous, element) => previous + element);
   print("RPS: ${count / 10}");
   await transport.shutdown();
 }
@@ -65,7 +64,6 @@ Future<void> _benchUnixStream() async {
   final ReceivePort receiver = ReceivePort();
   final transport = Transport(
     TransportDefaults.transport(),
-    TransportDefaults.listener(),
     TransportDefaults.inbound(),
     TransportDefaults.outbound(),
   );
@@ -96,7 +94,7 @@ Future<void> _benchUnixStream() async {
       worker.transmitter!.send(count);
     },
   );
-  final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
+  final count = await receiver.take(TransportDefaults.transport().workerIsolates).reduce((previous, element) => previous + element);
   print("RPS: ${count / 30}");
   await transport.shutdown();
   await Future.delayed(Duration(seconds: 5));
@@ -107,7 +105,6 @@ Future<void> _benchFile() async {
   final ReceivePort receiver = ReceivePort();
   final transport = Transport(
     TransportDefaults.transport(),
-    TransportDefaults.listener(),
     TransportDefaults.inbound(),
     TransportDefaults.outbound(),
   );
@@ -138,7 +135,7 @@ Future<void> _benchFile() async {
       worker.transmitter!.send(count);
     },
   );
-  final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
+  final count = await receiver.take(TransportDefaults.transport().workerIsolates).reduce((previous, element) => previous + element);
   print("RPS: ${count / 360}");
   await transport.shutdown();
 }

@@ -234,7 +234,7 @@
 /** \cond public */
 
 /** System configuration dir (e.g /etc) */
-#define SYSCONF_DIR "etc"
+#define SYSCONF_DIR ""
 /** Install prefix (e.g. /usr) */
 #define INSTALL_PREFIX "/usr/local"
 /** Build type, e.g. Debug or Release */

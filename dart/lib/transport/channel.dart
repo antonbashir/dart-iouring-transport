@@ -18,7 +18,7 @@ class TransportChannel {
     int bufferId,
     int timeout,
     int event, {
-    int listenerSqeFlags = 0,
+    int sqeFlags = 0,
     int offset = 0,
   }) {
     _bindings.transport_worker_read(
@@ -28,7 +28,7 @@ class TransportChannel {
       offset,
       timeout,
       event,
-      listenerSqeFlags,
+      sqeFlags,
     );
   }
 
@@ -38,7 +38,7 @@ class TransportChannel {
     int bufferId,
     int timeout,
     int event, {
-    int listenerSqeFlags = 0,
+    int sqeFlags = 0,
     int offset = 0,
   }) {
     _buffers.write(bufferId, bytes);
@@ -49,7 +49,7 @@ class TransportChannel {
       offset,
       timeout,
       event,
-      listenerSqeFlags,
+      sqeFlags,
     );
   }
 
@@ -60,7 +60,7 @@ class TransportChannel {
     int timeout,
     int flags,
     int event, {
-    int listenerSqeFlags = 0,
+    int sqeFlags = 0,
   }) {
     _bindings.transport_worker_receive_message(
       _workerPointer,
@@ -70,7 +70,7 @@ class TransportChannel {
       flags,
       timeout,
       event,
-      listenerSqeFlags,
+      sqeFlags,
     );
   }
 
@@ -83,7 +83,7 @@ class TransportChannel {
     int timeout,
     int flags,
     int event, {
-    int listenerSqeFlags = 0,
+    int sqeFlags = 0,
   }) {
     _buffers.write(bufferId, bytes);
     _bindings.transport_worker_send_message(
@@ -95,7 +95,7 @@ class TransportChannel {
       flags,
       timeout,
       event,
-      listenerSqeFlags,
+      sqeFlags,
     );
   }
 

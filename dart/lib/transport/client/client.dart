@@ -93,7 +93,7 @@ class TransportClient {
         bufferIds[index],
         _writeTimeout,
         transportEventWrite | transportEventClient | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer<int>();
@@ -136,7 +136,7 @@ class TransportClient {
         _readTimeout,
         flags,
         transportEventReceiveMessage | transportEventClient | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer<int>();
@@ -190,7 +190,7 @@ class TransportClient {
         _writeTimeout,
         flags,
         transportEventSendMessage | transportEventClient | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer<int>();

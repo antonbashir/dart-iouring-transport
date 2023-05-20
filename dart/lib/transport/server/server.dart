@@ -122,7 +122,7 @@ class TransportServer implements TransportServerCloser {
         bufferId,
         _writeTimeout,
         transportEventWrite | transportEventServer | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer<int>();
@@ -165,7 +165,7 @@ class TransportServer implements TransportServerCloser {
         _readTimeout,
         flags,
         transportEventReceiveMessage | transportEventServer | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer<int>();
@@ -219,7 +219,7 @@ class TransportServer implements TransportServerCloser {
         _writeTimeout,
         flags,
         transportEventSendMessage | transportEventServer | transportEventLink,
-        listenerSqeFlags: transportIosqeIoLink,
+        sqeFlags: transportIosqeIoLink,
       );
     }
     final completer = Completer<int>();

@@ -1,40 +1,17 @@
 import 'package:retry/retry.dart';
 
 class TransportConfiguration {
-  final int listenerIsolates;
-  final int workerInsolates;
+  final int workerIsolates;
 
   TransportConfiguration({
-    required this.listenerIsolates,
-    required this.workerInsolates,
+    required this.workerIsolates,
   });
 
   TransportConfiguration copyWith({
-    int? listenerIsolates,
     int? workerInsolates,
   }) =>
       TransportConfiguration(
-        listenerIsolates: listenerIsolates ?? this.listenerIsolates,
-        workerInsolates: workerInsolates ?? this.workerInsolates,
-      );
-}
-
-class TransportListenerConfiguration {
-  final int ringSize;
-  final int ringFlags;
-
-  TransportListenerConfiguration({
-    required this.ringSize,
-    required this.ringFlags,
-  });
-
-  TransportListenerConfiguration copyWith({
-    int? ringSize,
-    int? ringFlags,
-  }) =>
-      TransportListenerConfiguration(
-        ringSize: ringSize ?? this.ringSize,
-        ringFlags: ringFlags ?? this.ringFlags,
+        workerIsolates: workerInsolates ?? this.workerIsolates,
       );
 }
 

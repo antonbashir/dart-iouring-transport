@@ -8,13 +8,7 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportConfiguration transport() => TransportConfiguration(
-        listenerIsolates: 1,
-        workerInsolates: 2,
-      );
-
-  static TransportListenerConfiguration listener() => TransportListenerConfiguration(
-        ringSize: 16384,
-        ringFlags: 0,
+        workerIsolates: 2,
       );
 
   static TransportWorkerConfiguration inbound() => TransportWorkerConfiguration(
