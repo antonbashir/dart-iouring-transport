@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -24,20 +23,20 @@ class TransportListener {
     final bindings = TransportBindings(TransportLibrary.load(libraryPath: libraryPath).library);
     _fromTransport.close();
     final cqes = bindings.transport_allocate_cqes(ringSize);
-    var done = Completer();
-    Timer.periodic(Duration(microseconds: 10), (timer) {
-      if (bindings.transport_listener_reap(listenerPointer, cqes)) {
-        for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
-          if (listenerPointer.ref.ready_workers[workerIndex] != 0) {
-            workerPorts[workerIndex].send(null);
-            listenerPointer.ref.ready_workers[workerIndex] = 0;
-          }
-        }
-        return;
-      }
-      done.complete();
-    });
-    await done.future;
+    final completer = Completer();
+    // Timer.periodic(Duration(microseconds: 10), (timer) {
+    //   if (bindings.transport_listener_reap(listenerPointer, cqes)) {
+    //     for (var workerIndex = 0; workerIndex < workerPorts.length; workerIndex++) {
+    //       if (listenerPointer.ref.ready_workers[workerIndex] != 0) {
+    //         workerPorts[workerIndex].send(null);
+    //         listenerPointer.ref.ready_workers[workerIndex] = 0;
+    //       }
+    //     }
+    //     return;
+    //   }
+    //   completer.complete();
+    // });
+    await completer.future;
     malloc.free(cqes);
     bindings.transport_listener_destroy(listenerPointer);
     Isolate.exit();

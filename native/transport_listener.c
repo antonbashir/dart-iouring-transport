@@ -46,24 +46,17 @@ int transport_listener_initialize(transport_listener_t *listener, transport_list
 
 static inline int transport_listener_wait(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
 {
-  int count = 0;
-  if (unlikely(!(count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count))))
+  int count = count = io_uring_wait_cqe(ring, &cqes[0]);
+  // printf("lcqe ready before wait: %d\n", io_uring_cq_ready(ring));
+  if (likely(count >= 0))
   {
-    struct __kernel_timespec timeout = {
-        .tv_nsec = 1000000,
-        .tv_sec = 0,
-    };
-
-    if (likely(count = io_uring_wait_cqes(ring, &cqes[0], cqe_count, &timeout, 0) >= 0))
-    {
-     // printf("listener wait: %d\n", count);
-      count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
-     // printf("listener batch: %d\n", count);
-      return count;
-    }
-    return -1;
+    // printf("lcqe ready after wait: %d\n", io_uring_cq_ready(ring));
+    // printf("listener wait: %d\n", count);
+    count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+    // printf("listener batch: %d\n", count);
+    return count;
   }
-  return count;
+  return -1;
 }
 
 void transport_listener_close(transport_listener_t *listener)
@@ -76,8 +69,8 @@ void transport_listener_close(transport_listener_t *listener)
 
 bool transport_listener_reap(transport_listener_t *listener, struct io_uring_cqe **cqes)
 {
-  int32_t cqeCount = 0;
-  if (likely(cqeCount = transport_listener_wait(listener->ring_size, cqes, listener->ring) != -1))
+  int32_t cqeCount = transport_listener_wait(listener->ring_size, cqes, listener->ring);
+  if (likely(cqeCount != -1))
   {
     for (size_t cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++)
     {

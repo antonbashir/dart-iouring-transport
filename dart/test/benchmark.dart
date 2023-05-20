@@ -44,12 +44,12 @@ Future<void> _benchTcp() async {
     time.start();
     print("after start: ${ProcessInfo.currentRss}");
     while (true) {
+      final futures = <Future>[];
       for (var client in connector.clients) {
-        await client.writeSingle(fromServer);
-        await client.read().then((value) => value.release());
-        count++;
+        futures.add(client.writeSingle(fromServer).then((client) => client.read().then((value) => value.release())));
       }
-      if (time.elapsed.inDays >= 1) break;
+      count += (await Future.wait(futures)).length;
+      if (time.elapsed.inSeconds >= 10) break;
     }
     print("after end: ${ProcessInfo.currentRss}");
     worker.transmitter!.send(count);
@@ -57,7 +57,7 @@ Future<void> _benchTcp() async {
 
   transport.run(transmitter: receiver.sendPort, work);
   final count = await receiver.take(TransportDefaults.transport().workerInsolates).reduce((previous, element) => previous + element);
-  print("RPS: ${count / 360}");
+  print("RPS: ${count / 10}");
   await transport.shutdown();
 }
 

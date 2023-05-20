@@ -153,13 +153,12 @@ void transport_worker_write(transport_worker_t *worker,
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct iovec *buffer = &worker->buffers[buffer_id];
   io_uring_prep_write_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset, buffer_id);
-  sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   transport_worker_add_event(worker, fd, data, timeout);
-  sqe = transport_provide_sqe(ring);
-  transport_listener_t *listener = transport_worker_next_listener(worker);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-  sqe->flags |= listener_sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
+  // sqe = transport_provide_sqe(ring);
+  // transport_listener_t *listener = transport_worker_next_listener(worker);
+  // io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  // sqe->flags |= listener_sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 
 void transport_worker_read(transport_worker_t *worker,
@@ -175,13 +174,12 @@ void transport_worker_read(transport_worker_t *worker,
   uint64_t data = (((uint64_t)(fd) << 32) | (uint64_t)(buffer_id) << 16) | ((uint64_t)event);
   struct iovec *buffer = &worker->buffers[buffer_id];
   io_uring_prep_read_fixed(sqe, fd, buffer->iov_base, buffer->iov_len, offset, buffer_id);
-  sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
   transport_worker_add_event(worker, fd, data, timeout);
-  sqe = transport_provide_sqe(ring);
-  transport_listener_t *listener = transport_worker_next_listener(worker);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-  sqe->flags |= listener_sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
+  // sqe = transport_provide_sqe(ring);
+  // transport_listener_t *listener = transport_worker_next_listener(worker);
+  // io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
+  // sqe->flags |= listener_sqe_flags | IOSQE_CQE_SKIP_SUCCESS;
 }
 
 void transport_worker_send_message(transport_worker_t *worker,
@@ -273,11 +271,7 @@ void transport_worker_connect(transport_worker_t *worker, transport_client_t *cl
                                  ? (struct sockaddr *)&client->inet_destination_address
                                  : (struct sockaddr *)&client->unix_destination_address;
   io_uring_prep_connect(sqe, client->fd, address, client->client_address_length);
-  sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
-  sqe = transport_provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
   transport_worker_add_event(worker, client->fd, data, timeout);
   io_uring_submit(ring);
 }
@@ -292,11 +286,7 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
                                  ? (struct sockaddr *)&server->inet_server_address
                                  : (struct sockaddr *)&server->unix_server_address;
   io_uring_prep_accept(sqe, server->fd, address, &server->server_address_length, 0);
-  sqe->flags |= IOSQE_IO_HARDLINK;
   io_uring_sqe_set_data64(sqe, data);
-  sqe = transport_provide_sqe(ring);
-  io_uring_prep_msg_ring(sqe, listener->ring->ring_fd, (int32_t)worker->id, 0, 0);
-  sqe->flags |= IOSQE_CQE_SKIP_SUCCESS;
   transport_worker_add_event(worker, server->fd, data, TRANSPORT_TIMEOUT_INFINITY);
   io_uring_submit(ring);
 }

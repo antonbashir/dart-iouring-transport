@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:developer';
 import 'dart:ffi';
 import 'dart:isolate';
 
@@ -75,7 +76,7 @@ class TransportWorker {
       final queue = _jobs[input[0]];
       if (queue?.isNotEmpty == true) queue!.removeFirst().complete(input[1]);
     });
-    _listener = RawReceivePort(_handle);
+    _listener = RawReceivePort((_) {});
     _activator = RawReceivePort((_) => _initializer.complete());
     _closer = RawReceivePort((gracefulDuration) async {
       _inboundTimeoutChecker.stop();
@@ -191,6 +192,7 @@ class TransportWorker {
     _inboundTimeoutChecker.start();
     _outboundTimeoutChecker.start();
     _activator.close();
+    _receive();
   }
 
   @pragma(preferInlinePragma)
@@ -225,9 +227,12 @@ class TransportWorker {
     }
   }
 
-  void _handle(_) {
-    scheduleMicrotask(() => _handleInboundCqes());
-    scheduleMicrotask(() => _handleOutboundCqes());
+  Future<void> _receive() async {
+    while (true) {
+      _handleInboundCqes();
+      _handleOutboundCqes();
+      await Future.delayed(Duration(microseconds: 10));
+    }
   }
 
   void _handleInboundCqes() {
@@ -235,6 +240,7 @@ class TransportWorker {
     if (cqeCount <= 0) {
       return;
     }
+    //print("i: ${_inboundWorkerPointer.ref.pending -= cqeCount}");
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _inboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
@@ -279,6 +285,7 @@ class TransportWorker {
     if (cqeCount <= 0) {
       return;
     }
+    //print("o: ${_outboundWorkerPointer.ref.pending -= cqeCount}");
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _outboundCqes[cqeIndex];
       final data = cqe.ref.user_data;
