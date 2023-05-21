@@ -93,7 +93,7 @@ class TransportClient {
     _pending += bytes.length;
   }
 
-  Future<void> receiveSingleMessage({bool submit = true, int? flags}) async {
+  Future<void> receiveSingleMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
@@ -101,7 +101,7 @@ class TransportClient {
     _pending++;
   }
 
-  Future<void> receiveManyMessages(int count, {bool submit = true, int? flags}) async {
+  Future<void> receiveManyMessages(int count, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forClient();

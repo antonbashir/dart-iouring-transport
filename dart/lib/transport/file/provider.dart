@@ -17,7 +17,7 @@ class TransportFileProvider {
   Future<void> writeSingle(Uint8List bytes, {int offset = 0}) => _file.writeSingle(bytes, offset: offset);
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes, {bool submit = true, int offset = 0}) => _file.writeMany(bytes, offset: offset);
+  Future<void> writeMany(List<Uint8List> bytes, {int offset = 0}) => _file.writeMany(bytes, offset: offset);
 
   @pragma(preferInlinePragma)
   Future<Uint8List> load({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {

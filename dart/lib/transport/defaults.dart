@@ -16,7 +16,7 @@ class TransportDefaults {
         baseDelay: Duration(microseconds: 10),
         maxDelay: Duration(seconds: 1),
         delayRandomizationFactor: 0.25,
-        cqePeekCount: 512,
+        cqePeekCount: 1024,
         cqeWaitCount: 1,
         cqeWaitTimeout: Duration(milliseconds: 1),
       );

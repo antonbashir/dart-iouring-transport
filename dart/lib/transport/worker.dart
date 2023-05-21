@@ -139,14 +139,15 @@ class TransportWorker {
     final cqeCount = _bindings.transport_worker_peek(_workerPointer);
     if (cqeCount <= 0) return false;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
-      final cqe = _cqes[cqeIndex];
+      final cqe = _cqes.elementAt(cqeIndex).value;
       final data = cqe.ref.user_data;
+      _bindings.transport_worker_remove_event(_workerPointer, data);
       final result = cqe.ref.res;
       var event = data & 0xffff;
-      _bindings.transport_worker_remove_event(_workerPointer, data);
       final fd = (data >> 32) & 0xffffffff;
-      //print("${TransportEvent.ofEvent(event)} worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd");
       final bufferId = (data >> 16) & 0xffff;
+      //print("${TransportEvent.ofEvent(event)} worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd");
+
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;
         if (event == transportEventConnect) {
@@ -156,22 +157,26 @@ class TransportWorker {
         _clientRegistry.get(fd)?.notifyData(bufferId, result, event);
         continue;
       }
+
       if (event & transportEventServer != 0) {
         event &= ~transportEventServer;
-        if (event == transportEventAccept) {
-          _serverRegistry.getByServer(fd)?.notifyAccept(result);
-          continue;
-        }
         if (event == transportEventRead || event == transportEventWrite) {
           _serverRegistry.getConnection(fd)?.notify(bufferId, result, event);
           continue;
         }
-        _serverRegistry.getByServer(fd)?.notifyDatagram(bufferId, result, event);
+        if (event == transportEventReceiveMessage || event == transportEventSendMessage) {
+          _serverRegistry.getServer(fd)?.notifyDatagram(bufferId, result, event);
+          continue;
+        }
+        _serverRegistry.getServer(fd)?.notifyAccept(result);
+        continue;
       }
+
       if (event & transportEventFile != 0) {
         _filesRegistry.get(fd)?.notify(bufferId, result, fd);
         continue;
       }
+
       if (event & transportEventCustom != 0) {
         _customCallbacks.remove(result)?.complete(data & ~transportEventCustom);
       }

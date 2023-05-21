@@ -64,10 +64,10 @@ class TransportClientDatagramProvider {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendSingleMessage(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => _client.sendSingleMessage(bytes, flags: flags);
+  Future<void> sendSingleMessage(Uint8List bytes, {TransportRetryConfiguration? retry, int? flags}) => _client.sendSingleMessage(bytes, flags: flags);
 
   @pragma(preferInlinePragma)
-  Future<void> sendManyMessages(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => _client.sendManyMessages(bytes, flags: flags);
+  Future<void> sendManyMessages(List<Uint8List> bytes, {TransportRetryConfiguration? retry, int? flags}) => _client.sendManyMessages(bytes, flags: flags);
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);

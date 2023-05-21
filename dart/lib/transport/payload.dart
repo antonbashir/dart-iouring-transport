@@ -90,24 +90,22 @@ class TransportDatagramResponder {
   bool get active => !_server.closing;
 
   @pragma(preferInlinePragma)
-  Future<void> respondSingleMessage(Uint8List bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) {
+  Future<void> respondSingleMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry}) {
     Future<void> respond() => _server.respondSingleMessage(
           _channel,
           _destination,
           bytes,
-          submit: submit,
           flags: flags,
         );
     return retry == null ? respond() : retry.options.retry(respond, onRetry: retry.onRetry, retryIf: retry.predicate);
   }
 
   @pragma(preferInlinePragma)
-  Future<void> respondManyMessage(List<Uint8List> bytes, {bool submit = true, int? flags, TransportRetryConfiguration? retry}) {
+  Future<void> respondManyMessage(List<Uint8List> bytes, {int? flags, TransportRetryConfiguration? retry}) {
     Future<void> respond() => _server.respondManyMessages(
           _channel,
           _destination,
           bytes,
-          submit: submit,
           flags: flags,
         );
 

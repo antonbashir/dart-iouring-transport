@@ -28,7 +28,7 @@ Future<void> _benchTcp() async {
   await Future.delayed(Duration(seconds: 1));
   final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
   await worker.initialize();
-  final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 512));
+  final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 1000));
   var count = 0;
   final time = Stopwatch();
   time.start();

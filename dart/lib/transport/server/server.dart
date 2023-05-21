@@ -171,7 +171,7 @@ class TransportServer implements TransportServerCloser {
     _pending++;
   }
 
-  Future<void> receiveSingleMessage({bool submit = true, int? flags}) async {
+  Future<void> receiveSingleMessage({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
@@ -179,7 +179,7 @@ class TransportServer implements TransportServerCloser {
     _pending++;
   }
 
-  Future<void> receiveManyMessages(int count, {bool submit = true, int? flags}) async {
+  Future<void> receiveManyMessages(int count, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forServer();
@@ -205,7 +205,7 @@ class TransportServer implements TransportServerCloser {
     _pending++;
   }
 
-  Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {bool submit = true, int? flags}) async {
+  Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
@@ -221,7 +221,7 @@ class TransportServer implements TransportServerCloser {
     _pending++;
   }
 
-  Future<void> respondManyMessages(TransportChannel channel, Pointer<sockaddr> destination, List<Uint8List> bytes, {bool submit = true, int? flags}) async {
+  Future<void> respondManyMessages(TransportChannel channel, Pointer<sockaddr> destination, List<Uint8List> bytes, {int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forServer();
