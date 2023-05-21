@@ -3,11 +3,9 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
 import '../channel.dart';
-import '../links.dart';
 import '../payload.dart';
 import '../bindings.dart';
 import '../buffers.dart';
-import '../callbacks.dart';
 import '../constants.dart';
 import '../defaults.dart';
 import '../exception.dart';
@@ -22,12 +20,10 @@ class TransportServerRegistry {
 
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
-  final TransportCallbacks _callbacks;
   final TransportBuffers _buffers;
-  final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
 
-  TransportServerRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
+  TransportServerRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool);
 
   TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
@@ -56,13 +52,11 @@ class TransportServerRegistry {
           pointer,
           _workerPointer,
           _bindings,
-          _callbacks,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
           _buffers,
           this,
           _payloadPool,
-          _links,
           null,
         );
       },
@@ -134,13 +128,11 @@ class TransportServerRegistry {
           pointer,
           _workerPointer,
           _bindings,
-          _callbacks,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
           _buffers,
           this,
           _payloadPool,
-          _links,
           TransportChannel(
             _workerPointer,
             pointer.ref.fd,
@@ -180,13 +172,11 @@ class TransportServerRegistry {
           pointer,
           _workerPointer,
           _bindings,
-          _callbacks,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
           _buffers,
           this,
           _payloadPool,
-          _links,
           null,
         );
       },
@@ -221,13 +211,11 @@ class TransportServerRegistry {
           pointer,
           _workerPointer,
           _bindings,
-          _callbacks,
           configuration.readTimeout.inSeconds,
           configuration.writeTimeout.inSeconds,
           _buffers,
           this,
           _payloadPool,
-          _links,
           TransportChannel(
             _workerPointer,
             pointer.ref.fd,

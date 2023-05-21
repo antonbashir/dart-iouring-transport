@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:math';
@@ -9,13 +8,11 @@ import 'package:meta/meta.dart';
 
 import 'bindings.dart';
 import 'buffers.dart';
-import 'callbacks.dart';
 import 'client/factory.dart';
 import 'client/registry.dart';
 import 'constants.dart';
 import 'file/factory.dart';
 import 'file/registry.dart';
-import 'links.dart';
 import 'lookup.dart';
 import 'payload.dart';
 import 'server/factory.dart';
@@ -24,6 +21,7 @@ import 'timeout.dart';
 
 class TransportWorker {
   final _fromTransport = ReceivePort();
+  final _customCallbacks = <int, Completer<int>>{};
 
   late final TransportBindings _bindings;
   late final Pointer<transport_worker_t> _workerPointer;
@@ -37,8 +35,6 @@ class TransportWorker {
   late final TransportServersFactory _serversFactory;
   late final TransportFileRegistry _filesRegistry;
   late final TransportFilesFactory _filesFactory;
-  late final TransportCallbacks _callbacks;
-  late final TransportLinks _links;
   late final int _ringSize;
   late final TransportBuffers _buffers;
   late final TransportTimeoutChecker _timeoutChecker;
@@ -76,28 +72,18 @@ class TransportWorker {
       _workerPointer.ref.buffers,
       _workerPointer,
     );
-    _callbacks = TransportCallbacks(
-      _workerPointer.ref.buffers_count,
-    );
-    _links = TransportLinks(
-      _workerPointer.ref.buffers_count,
-    );
     _payloadPool = TransportPayloadPool(_workerPointer.ref.buffers_count, _buffers);
     _clientRegistry = TransportClientRegistry(
       _bindings,
-      _callbacks,
       _workerPointer,
       _buffers,
       _payloadPool,
-      _links,
     );
     _serverRegistry = TransportServerRegistry(
       _bindings,
-      _callbacks,
       _workerPointer,
       _buffers,
       _payloadPool,
-      _links,
     );
     _serversFactory = TransportServersFactory(
       _serverRegistry,
@@ -107,11 +93,9 @@ class TransportWorker {
     );
     _filesRegistry = TransportFileRegistry(
       _bindings,
-      _callbacks,
       _workerPointer,
       _buffers,
       _payloadPool,
-      _links,
     );
     _filesFactory = TransportFilesFactory(_filesRegistry);
     _ring = _workerPointer.ref.ring;
@@ -127,10 +111,10 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void registerCallback(int id, Completer<int> completer) => _callbacks.setCustom(id, completer);
+  void registerCallback(int id, Completer<int> completer) => _customCallbacks[id] = completer;
 
   @pragma(preferInlinePragma)
-  void removeCallback(int id) => _callbacks.removeCustom(id);
+  void removeCallback(int id) => _customCallbacks.remove(id);
 
   @pragma(preferInlinePragma)
   void submit() => _bindings.transport_worker_submit(_workerPointer);
@@ -139,20 +123,14 @@ class TransportWorker {
     final delayFactor = _workerPointer.ref.delay_factor;
     final randomizationFactor = _workerPointer.ref.randomization_factor;
     final maxDelay = _workerPointer.ref.max_delay;
-    final maxActiveTime = _workerPointer.ref.max_active_time;
     final random = Random();
     var attempt = 0;
-    var delayTimestamp = Timeline.now;
     final regularDelayDuration = Duration(microseconds: delayFactor);
     while (true) {
       attempt++;
       if (_handleCqes()) {
         attempt = 0;
-        if (Timeline.now - delayTimestamp > maxActiveTime) {
-          _bindings.transport_notify_idle(Timeline.now + delayFactor);
-          await Future.delayed(regularDelayDuration);
-          delayTimestamp = Timeline.now;
-        }
+        await Future.delayed(regularDelayDuration);
         continue;
       }
       final randomization = (randomizationFactor * (random.nextDouble() * 2 - 1) + 1);
@@ -174,58 +152,38 @@ class TransportWorker {
       final fd = (data >> 32) & 0xffffffff;
       //print("${TransportEvent.ofEvent(event)} worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
       final bufferId = (data >> 16) & 0xffff;
-      if (event & transportEventLink != 0) {
-        event &= ~transportEventLink;
-        _buffers.setLength(bufferId, result);
-        if (bufferId != _links.get(bufferId)) continue;
-      }
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;
         if (event == transportEventConnect) {
-          _handleConnect(fd, result);
+          _clientRegistry.get(fd)?.notifyConnect(fd, result);
           continue;
         }
-        _handleClientData(event, bufferId, result, fd);
-        continue;
-      }
-      if (event & transportEventFile != 0) {
-        _handleFile(event = event & ~transportEventFile, bufferId, result, fd);
+        _clientRegistry.get(fd)?.notifyData(bufferId, result, event);
         continue;
       }
       if (event & transportEventServer != 0) {
         event &= ~transportEventServer;
         if (event == transportEventAccept) {
-          _handleAccept(fd, result);
+          _serverRegistry.getByServer(fd)?.notifyAccept(result);
           continue;
         }
         if (event == transportEventRead || event == transportEventWrite) {
-          _handleServerConnection(bufferId, fd, result, event);
+          _serverRegistry.getConnection(fd)?.notify(bufferId, result, event);
           continue;
         }
-        _handleServerDatagram(bufferId, fd, result, event);
+        _serverRegistry.getByServer(fd)?.notifyDatagram(bufferId, result, event);
+      }
+      if (event & transportEventFile != 0) {
+        _filesRegistry.get(fd)?.notify(bufferId, result, fd);
+        continue;
+      }
+      if (event & transportEventCustom != 0) {
+        _customCallbacks.remove(result)?.complete(data & ~transportEventCustom);
       }
     }
     _bindings.transport_cqe_advance(_ring, cqeCount);
     return true;
   }
-
-  @pragma(preferInlinePragma)
-  void _handleServerConnection(int bufferId, int fd, int result, int event) => _serverRegistry.getConnection(fd)?.notify(bufferId, result, event);
-
-  @pragma(preferInlinePragma)
-  void _handleServerDatagram(int bufferId, int fd, int result, int event) => _serverRegistry.getByServer(fd)?.notifyDatagram(bufferId, result, event);
-
-  @pragma(preferInlinePragma)
-  void _handleClientData(int event, int bufferId, int result, int fd) => _clientRegistry.get(fd)?.notifyData(bufferId, result, event);
-
-  @pragma(preferInlinePragma)
-  void _handleFile(int event, int bufferId, int result, int fd) => _filesRegistry.get(fd)?.notify(bufferId, result, fd);
-
-  @pragma(preferInlinePragma)
-  void _handleConnect(int fd, int result) => _clientRegistry.get(fd)?.notifyConnect(fd, result);
-
-  @pragma(preferInlinePragma)
-  void _handleAccept(int fd, int result) => _serverRegistry.getByServer(fd)?.notifyAccept(result);
 
   @visibleForTesting
   void notifyCustom(int id, int data) => _bindings.transport_worker_custom(_workerPointer, id, data);

@@ -6,24 +6,20 @@ import 'package:meta/meta.dart';
 
 import '../bindings.dart';
 import '../buffers.dart';
-import '../callbacks.dart';
 import '../channel.dart';
 import '../constants.dart';
-import '../links.dart';
 import '../payload.dart';
 import 'file.dart';
 
 class TransportFileRegistry {
   final TransportBindings _bindings;
-  final TransportCallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
-  final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
 
   final _files = <int, TransportFile>{};
 
-  TransportFileRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
+  TransportFileRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool);
 
   @pragma(preferInlinePragma)
   TransportFile? get(int fd) => _files[fd];
@@ -36,10 +32,8 @@ class TransportFileRegistry {
       fd,
       _bindings,
       _workerPointer,
-      _callbacks,
       TransportChannel(_workerPointer, fd, _bindings, _buffers),
       _buffers,
-      _links,
       _payloadPool,
       this,
     );

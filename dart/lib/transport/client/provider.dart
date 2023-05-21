@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import '../configuration.dart';
 import '../constants.dart';
-import '../exception.dart';
 import '../payload.dart';
 import 'client.dart';
 
@@ -14,35 +13,24 @@ class TransportClientStreamProvider {
 
   bool get active => !_client.closing;
 
-  @pragma(preferInlinePragma)
-  Future<TransportPayload> read({bool submit = true}) => _client.read(submit: submit);
+  Stream<TransportPayload> get inbound => _client.inbound;
 
-  void listen(void Function(TransportPayload paylad, void Function() canceler) listener, {void Function(Object error)? onError}) async {
-    var canceled = false;
-    while (!_client.closing && !canceled) {
-      await read().then((value) => listener(value, () => canceled = true), onError: (error, stackTrace) {
-        if (error is TransportClosedException) return;
-        if (error is TransportZeroDataException) return;
-        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
-        onError?.call(error);
-      });
-    }
+  Stream<void> get outbound => _client.outbound;
+
+  @pragma(preferInlinePragma)
+  Stream<TransportPayload> read() {
+    unawaited(_client.read());
+    return _client.inbound.map((event) {
+      unawaited(_client.read());
+      return event;
+    });
   }
 
   @pragma(preferInlinePragma)
-  Future<TransportClientStreamProvider> writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true}) {
-    Future<void> write() => _client.writeSingle(bytes, submit: submit);
-    return retry == null ? write().then((value) => this) : retry.options.retry(write, retryIf: retry.predicate, onRetry: retry.onRetry).then((value) => this);
-  }
+  Future<void> writeSingle(Uint8List bytes) => _client.writeSingle(bytes);
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true}) => retry == null
-      ? _client.writeMany(bytes, submit: submit)
-      : retry.options.retry(
-          () => _client.writeMany(bytes, submit: submit),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
+  Future<void> writeMany(List<Uint8List> bytes) => _client.writeMany(bytes);
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
@@ -53,68 +41,33 @@ class TransportClientDatagramProvider {
 
   const TransportClientDatagramProvider(this._client);
 
-  @pragma(preferInlinePragma)
-  Future<TransportPayload> receiveSingleMessage({TransportRetryConfiguration? retry, bool submit = true, int? flags}) => retry == null
-      ? _client.receiveSingleMessage(flags: flags, submit: submit)
-      : retry.options.retry(
-          () => _client.receiveSingleMessage(flags: flags, submit: submit),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
+  Stream<TransportPayload> get inbound => _client.inbound;
+
+  Stream<void> get outbound => _client.outbound;
 
   @pragma(preferInlinePragma)
-  Future<List<TransportPayload>> receiveManyMessages(int count, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => retry == null
-      ? _client.receiveManyMessage(count, flags: flags, submit: submit)
-      : retry.options.retry(
-          () => _client.receiveManyMessage(count, flags: flags, submit: submit),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
-
-  void listenBySingle(void Function(TransportPayload paylad, void Function() canceler) listener, {void Function(Object error)? onError}) async {
-    var canceled = false;
-    while (!_client.closing && !canceled) {
-      await receiveSingleMessage().then((value) => listener(value, () => canceled = true), onError: (error, stackTrace) {
-        if (error is TransportClosedException) return;
-        if (error is TransportZeroDataException) return;
-        if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
-        onError?.call(error);
-      });
-    }
-  }
-
-  void listenByMany(int count, void Function(TransportPayload paylad, void Function() canceler) listener, {void Function(Object error)? onError}) async {
-    var canceled = false;
-    while (!_client.closing && !canceled) {
-      await receiveManyMessages(count).then(
-        (fragments) => fragments.forEach((element) => listener(element, () => canceled = true)),
-        onError: (error, stackTrace) {
-          if (error is TransportClosedException) return;
-          if (error is TransportZeroDataException) return;
-          if (error is TransportInternalException && (transportRetryableErrorCodes.contains(error.code))) return;
-          onError?.call(error);
-        },
-      );
-    }
+  Stream<TransportPayload> receiveBySingle() {
+    unawaited(_client.receiveSingleMessage());
+    return _client.inbound.map((event) {
+      unawaited(_client.receiveSingleMessage());
+      return event;
+    });
   }
 
   @pragma(preferInlinePragma)
-  Future<void> sendSingleMessage(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => retry == null
-      ? _client.sendSingleMessage(bytes, flags: flags, submit: submit)
-      : retry.options.retry(
-          () => _client.sendSingleMessage(bytes, flags: flags, submit: submit),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
+  Stream<TransportPayload> receiveByMany(int count) {
+    unawaited(_client.receiveManyMessages(count));
+    return _client.inbound.map((event) {
+      unawaited(_client.receiveManyMessages(count));
+      return event;
+    });
+  }
 
   @pragma(preferInlinePragma)
-  Future<void> sendManyMessages(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => retry == null
-      ? _client.sendManyMessages(bytes, flags: flags, submit: submit)
-      : retry.options.retry(
-          () => _client.sendManyMessages(bytes, flags: flags, submit: submit),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
+  Future<void> sendSingleMessage(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => _client.sendSingleMessage(bytes, flags: flags);
+
+  @pragma(preferInlinePragma)
+  Future<void> sendManyMessages(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true, int? flags}) => _client.sendManyMessages(bytes, flags: flags);
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);

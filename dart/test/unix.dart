@@ -95,7 +95,7 @@ void testUnixStreamMany({
           final clientResults = BytesBuilder();
           final completer = Completer();
           client.writeMany(Generators.requestsOrdered(count)).then(
-                (_) => client.listen(
+                (_) => client.read(
                   (event, _) {
                     clientResults.add(event.takeBytes());
                     if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();
@@ -187,7 +187,7 @@ void testUnixDgramMany({
         final clientResults = BytesBuilder();
         final completer = Completer();
         client.sendManyMessages(Generators.requestsUnordered(count), retry: TransportDefaults.retry()).then(
-              (_) => client.listenByMany(
+              (_) => client.receiveByMany(
                 count,
                 (event, _) {
                   clientResults.add(event.takeBytes());

@@ -1,13 +1,11 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
-import '../links.dart';
 import '../payload.dart';
 import '../exception.dart';
 import '../extensions.dart';
 import '../bindings.dart';
 import '../buffers.dart';
-import '../callbacks.dart';
 import '../channel.dart';
 import '../constants.dart';
 import '../defaults.dart';
@@ -18,10 +16,8 @@ import 'package:meta/meta.dart';
 
 class TransportClientRegistry {
   final TransportBindings _bindings;
-  final TransportCallbacks _callbacks;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBuffers _buffers;
-  final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
 
   final _clients = <int, TransportClient>{};
@@ -29,7 +25,7 @@ class TransportClientRegistry {
   @visibleForTesting
   Map<int, TransportClient> get clients => _clients;
 
-  TransportClientRegistry(this._bindings, this._callbacks, this._workerPointer, this._buffers, this._payloadPool, this._links);
+  TransportClientRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool);
 
   Future<TransportClientStreamPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     configuration = configuration ?? TransportDefaults.tcpClient();
@@ -57,8 +53,6 @@ class TransportClientRegistry {
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
       }
       final client = TransportClient(
-        _callbacks,
-        _links,
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -106,8 +100,6 @@ class TransportClientRegistry {
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
       }
       final client = TransportClient(
-        _callbacks,
-        _links,
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -199,8 +191,6 @@ class TransportClientRegistry {
       return pointer;
     });
     final client = TransportClient(
-      _callbacks,
-      _links,
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
@@ -244,8 +234,6 @@ class TransportClientRegistry {
       throw TransportInitializationException("[client] unable to set socket option: ${-result}");
     }
     final client = TransportClient(
-      _callbacks,
-      _links,
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,

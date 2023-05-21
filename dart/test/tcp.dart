@@ -97,7 +97,7 @@ void testTcpMany({
           final clientResults = BytesBuilder();
           final completer = Completer();
           client.writeMany(Generators.requestsOrdered(count)).then(
-                (_) => client.listen(
+                (_) => client.read(
                   (event, _) {
                     clientResults.add(event.takeBytes());
                     if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();

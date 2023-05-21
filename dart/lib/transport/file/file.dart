@@ -2,28 +2,26 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/extensions.dart';
-
+import '../extensions.dart';
 import '../bindings.dart';
 import '../buffers.dart';
-import '../callbacks.dart';
 import '../channel.dart';
 import '../constants.dart';
 import '../exception.dart';
-import '../links.dart';
 import '../payload.dart';
 import 'registry.dart';
 import 'package:meta/meta.dart';
 
 class TransportFile {
+  final StreamController<TransportPayload> _inboundEvents = StreamController();
+  final StreamController<void> _outboundEvents = StreamController();
+
   final String path;
   final int _fd;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
   final TransportChannel _channel;
-  final TransportCallbacks _callbacks;
   final TransportBuffers buffers;
-  final TransportLinks _links;
   final TransportPayloadPool _payloadPool;
   final TransportFileRegistry _registry;
 
@@ -40,41 +38,35 @@ class TransportFile {
     this._fd,
     this._bindings,
     this._workerPointer,
-    this._callbacks,
     this._channel,
     this.buffers,
-    this._links,
     this._payloadPool,
     this._registry,
   );
 
-  Future<TransportPayload> readSingle({bool submit = true, int offset = 0}) async {
-    Completer<int>? completer = Completer<int>();
+  Stream<TransportPayload> get inbound => _inboundEvents.stream;
+  Stream<void> get outbound => _outboundEvents.stream;
+
+  Future<void> readSingle({int offset = 0}) async {
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
-    _callbacks.setData(bufferId, completer);
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleRead, onError: _handleSingleError).whenComplete(() => completer = null);
+    _pending++;
   }
 
-  Future<void> writeSingle(Uint8List bytes, {bool submit = true, int offset = 0}) async {
-    final completer = Completer<int>();
+  Future<void> writeSingle(Uint8List bytes, {int offset = 0}) async {
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
-    _callbacks.setData(bufferId, completer);
     _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.then(_handleSingleWrite, onError: _handleSingleError);
+    _pending++;
   }
 
-  Future<Uint8List> readMany(int count, {bool submit = true, int offset = 0}) async {
+  Future<void> readMany(int count, {int offset = 0}) async {
     final bufferIds = await buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forFile();
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.set(bufferId, lastBufferId);
       _channel.read(
         bufferId,
         transportTimeoutInfinity,
@@ -84,26 +76,21 @@ class TransportFile {
       );
       offset += buffers.bufferSize;
     }
-    final completer = Completer<int>();
-    _links.set(lastBufferId, lastBufferId);
-    _callbacks.setData(lastBufferId, completer);
     _channel.read(
       lastBufferId,
       transportTimeoutInfinity,
       transportEventRead | transportEventFile | transportEventLink,
       offset: offset,
     );
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleManyRead, onError: _handleManyError);
+    _pending += count;
   }
 
-  Future<void> writeMany(List<Uint8List> bytes, {bool submit = true, int offset = 0}) async {
+  Future<void> writeMany(List<Uint8List> bytes, {int offset = 0}) async {
     final bufferIds = await buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forFile();
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.set(bufferId, lastBufferId);
       _channel.write(
         bytes[index],
         bufferId,
@@ -114,9 +101,6 @@ class TransportFile {
       );
       offset += buffers.bufferSize;
     }
-    final completer = Completer<int>();
-    _links.set(lastBufferId, lastBufferId);
-    _callbacks.setData(lastBufferId, completer);
     _channel.write(
       bytes.last,
       lastBufferId,
@@ -124,38 +108,37 @@ class TransportFile {
       transportEventWrite | transportEventFile | transportEventLink,
       offset: offset,
     );
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    await completer.future.then(_handleManyWrite, onError: _handleManyError);
+    _pending += bytes.length;
   }
 
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (result > 0) {
-        buffers.setLength(bufferId, result);
-        _callbacks.notifyData(bufferId);
-        return;
-      }
-      if (result < 0) {
-        if (result == -ECANCELED) {
-          _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
+      if (event.isReadEvent()) {
+        if (result >= 0) {
+          buffers.setLength(bufferId, result);
+          _inboundEvents.add(_payloadPool.getPayload(bufferId, buffers.read(bufferId)));
           return;
         }
-        _callbacks.notifyDataError(
-          bufferId,
-          TransportInternalException(
-            event: TransportEvent.ofEvent(event),
-            code: result,
-            message: result.kernelErrorToString(_bindings),
-            bufferId: bufferId,
-          ),
-        );
+        buffers.release(bufferId);
+        _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
         return;
       }
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+      if (result >= 0) {
+        buffers.release(bufferId);
+        _outboundEvents.add(null);
+        return;
+      }
+      _outboundEvents.addError(createTransportException(
+        TransportEvent.ofEvent(event),
+        result,
+        _bindings,
+        payload: _payloadPool.getPayload(bufferId, buffers.read(bufferId)),
+      ));
       return;
     }
-    _callbacks.notifyDataError(bufferId, TransportClosedException.forFile());
+    buffers.release(bufferId);
+    event.isReadEvent() ? _inboundEvents.addError(TransportClosedException.forFile()) : _outboundEvents.addError(TransportClosedException.forFile());
     if (_pending == 0) _closer.complete();
   }
 
@@ -168,43 +151,6 @@ class TransportFile {
     if (_pending > 0) await _closer.future;
     _channel.close();
     _registry.remove(_fd);
-  }
-
-  @pragma(preferInlinePragma)
-  TransportPayload _handleSingleRead(int bufferId) => _payloadPool.getPayload(bufferId, buffers.read(bufferId));
-
-  @pragma(preferInlinePragma)
-  Uint8List _handleManyRead(int lastBufferId) {
-    final bytes = BytesBuilder();
-    for (var bufferId in _links.select(lastBufferId)) {
-      final payload = buffers.read(bufferId);
-      if (payload.isEmpty) break;
-      bytes.add(payload);
-      buffers.release(bufferId);
-    }
-    return bytes.takeBytes();
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleSingleWrite(int bufferId) => buffers.release(bufferId);
-
-  @pragma(preferInlinePragma)
-  void _handleManyWrite(int lastBufferId) => buffers.releaseArray(_links.select(lastBufferId).toList());
-
-  @pragma(preferInlinePragma)
-  void _handleSingleError(error) {
-    if (error is TransportExecutionException && error.bufferId != null) {
-      buffers.release(error.bufferId!);
-    }
-    throw error;
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleManyError(error) {
-    if (error is TransportExecutionException && error.bufferId != null) {
-      buffers.releaseArray(_links.select(error.bufferId!).toList());
-    }
-    throw error;
   }
 
   @visibleForTesting

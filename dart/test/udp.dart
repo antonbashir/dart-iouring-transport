@@ -79,7 +79,7 @@ void testUdpMany({
         final clientResults = BytesBuilder();
         final completer = Completer();
         client.sendManyMessages(Generators.requestsUnordered(count)).then(
-              (_) => client.listenByMany(
+              (_) => client.receiveByMany(
                 count,
                 (event, _) {
                   clientResults.add(event.takeBytes());

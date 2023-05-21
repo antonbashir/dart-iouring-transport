@@ -2,66 +2,123 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/extensions.dart';
-
-import '../links.dart';
 import 'connection.dart';
 import 'registry.dart';
+import '../extensions.dart';
 import '../bindings.dart';
 import '../buffers.dart';
-import '../callbacks.dart';
 import '../channel.dart';
 import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';
 
 class TransportServerInternalConnection {
-  var active = true;
-  var closing = false;
-  var pending = 0;
-  Completer<void> closer = Completer();
+  final _closer = Completer();
+  final StreamController<TransportPayload> _inboundEvents = StreamController();
+  final StreamController<void> _outboundEvents = StreamController();
+  final int _readTimeout;
+  final int _writeTimeout;
+  final TransportChannel channel;
+
+  var _active = true;
+  var _closing = false;
+  var _pending = 0;
 
   final TransportBindings _bindings;
   final TransportServer _server;
-  final TransportCallbacks _callbacks;
   final TransportBuffers _buffers;
+  final TransportPayloadPool _payloadPool;
   final int _fd;
 
-  TransportServerInternalConnection(this._server, this._callbacks, this._buffers, this._bindings, this._fd);
+  TransportServerInternalConnection(
+    this._server,
+    this._buffers,
+    this._bindings,
+    this._fd,
+    this._payloadPool,
+    this._readTimeout,
+    this._writeTimeout,
+    this.channel,
+  );
+
+  Stream<TransportPayload> get inbound => _inboundEvents.stream;
+  Stream<void> get outbound => _outboundEvents.stream;
+  bool get closing => _closing;
+
+  Future<void> read() async {
+    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    if (_closing || _server._closing) throw TransportClosedException.forServer();
+    channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
+    _pending++;
+  }
+
+  Future<void> writeSingle(Uint8List bytes) async {
+    final bufferId = _buffers.get() ?? await _buffers.allocate();
+    if (_closing || _server._closing) throw TransportClosedException.forServer();
+    channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
+    _pending++;
+  }
+
+  Future<void> writeMany(List<Uint8List> bytes) async {
+    final bufferIds = await _buffers.allocateArray(bytes.length);
+    if (_closing || _server._closing) throw TransportClosedException.forServer();
+    final lastBufferId = bufferIds.last;
+    for (var index = 0; index < bytes.length - 1; index++) {
+      final bufferId = bufferIds[index];
+      channel.write(
+        bytes[index],
+        bufferId,
+        _writeTimeout,
+        transportEventWrite | transportEventServer | transportEventLink,
+        sqeFlags: transportIosqeIoLink,
+      );
+    }
+    channel.write(
+      bytes.last,
+      lastBufferId,
+      _writeTimeout,
+      transportEventWrite | transportEventServer | transportEventLink,
+    );
+    _pending++;
+  }
 
   @pragma(preferInlinePragma)
   void notify(int bufferId, int result, int event) {
-    pending--;
-    if (active && _server.active) {
-      if (result > 0) {
-        _buffers.setLength(bufferId, result);
-        _callbacks.notifyData(bufferId);
-        return;
-      }
-      if (result < 0) {
-        unawaited(_server.closeConnection(_fd));
-        if (result == -ECANCELED) {
-          _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
+    _pending--;
+    if (_active && _server.active) {
+      if (event.isReadEvent()) {
+        if (result > 0) {
+          _buffers.setLength(bufferId, result);
+          _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
           return;
         }
-        _callbacks.notifyDataError(
-          bufferId,
-          TransportInternalException(
-            event: TransportEvent.ofEvent(event),
-            code: result,
-            message: result.kernelErrorToString(_bindings),
-            bufferId: bufferId,
-          ),
-        );
+        unawaited(_server.closeConnection(_fd));
+        _buffers.release(bufferId);
+        _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
+        return;
+      }
+      if (result > 0) {
+        _buffers.release(bufferId);
+        _outboundEvents.add(null);
         return;
       }
       unawaited(_server.closeConnection(_fd));
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+      _outboundEvents.addError(createTransportException(
+        TransportEvent.ofEvent(event),
+        result,
+        _bindings,
+        payload: _payloadPool.getPayload(bufferId, _buffers.read(bufferId)),
+      ));
       return;
     }
-    _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
-    if (!active && pending == 0) closer.complete();
+    _buffers.release(bufferId);
+    event.isReadEvent() ? _inboundEvents.addError(TransportClosedException.forServer()) : _outboundEvents.addError(TransportClosedException.forServer());
+    if (!_active && _pending == 0) _closer.complete();
   }
+
+  Future<void> close({Duration? gracefulDuration}) => _server.closeConnection(_fd, gracefulDuration: gracefulDuration);
+
+  Future<void> closeServer({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
 }
 
 abstract class TransportServerCloser {
@@ -71,6 +128,8 @@ abstract class TransportServerCloser {
 class TransportServer implements TransportServerCloser {
   final _closer = Completer();
   final _connections = <int, TransportServerInternalConnection>{};
+  final StreamController<TransportPayload> _inboundEvents = StreamController();
+  final StreamController<void> _outboundEvents = StreamController();
 
   final TransportChannel? _datagramChannel;
   final Pointer<transport_server_t> pointer;
@@ -78,8 +137,6 @@ class TransportServer implements TransportServerCloser {
   final TransportBindings _bindings;
   final int _readTimeout;
   final int _writeTimeout;
-  final TransportCallbacks _callbacks;
-  final TransportLinks _links;
   final TransportBuffers _buffers;
   final TransportServerRegistry _registry;
   final TransportPayloadPool _payloadPool;
@@ -97,15 +154,16 @@ class TransportServer implements TransportServerCloser {
     this.pointer,
     this._workerPointer,
     this._bindings,
-    this._callbacks,
     this._readTimeout,
     this._writeTimeout,
     this._buffers,
     this._registry,
     this._payloadPool,
-    this._links,
     this._datagramChannel,
   );
+
+  Stream<TransportPayload> get inbound => _inboundEvents.stream;
+  Stream<void> get outbound => _outboundEvents.stream;
 
   @pragma(preferInlinePragma)
   void accept(void Function(TransportServerConnection connection) onAccept) {
@@ -115,83 +173,21 @@ class TransportServer implements TransportServerCloser {
     _pending++;
   }
 
-  Future<TransportPayload> read(TransportChannel channel, {bool submit = true}) async {
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forServer();
-    final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    Completer<int>? completer = Completer<int>();
-    _callbacks.setData(bufferId, completer);
-    channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
-    connection.pending++;
-    //if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
-  }
-
-  Future<void> writeSingle(TransportChannel channel, Uint8List bytes, {bool submit = true}) async {
-    final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forServer();
-    final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    Completer<int>? completer = Completer<int>();
-    _callbacks.setData(bufferId, completer);
-    channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
-    connection.pending++;
-    //if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
-  }
-
-  Future<void> writeMany(TransportChannel channel, List<Uint8List> bytes, {bool submit = true}) async {
-    final bufferIds = await _buffers.allocateArray(bytes.length);
-    if (_closing) throw TransportClosedException.forServer();
-    final connection = _connections[channel.fd];
-    if (connection == null || connection.closing) throw TransportClosedException.forServer();
-    final lastBufferId = bufferIds.last;
-    for (var index = 0; index < bytes.length - 1; index++) {
-      final bufferId = bufferIds[index];
-      _links.set(bufferId, lastBufferId);
-      channel.write(
-        bytes[index],
-        bufferId,
-        _writeTimeout,
-        transportEventWrite | transportEventServer | transportEventLink,
-        sqeFlags: transportIosqeIoLink,
-      );
-    }
-    final completer = Completer<int>();
-    _links.set(lastBufferId, lastBufferId);
-    _callbacks.setData(lastBufferId, completer);
-    channel.write(
-      bytes.last,
-      lastBufferId,
-      _writeTimeout,
-      transportEventWrite | transportEventServer | transportEventLink,
-    );
-    connection.pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleManyWrite, onError: _handleManyError);
-  }
-
-  Future<TransportDatagramResponder> receiveSingleMessage({bool submit = true, int? flags}) async {
+  Future<void> receiveSingleMessage({bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
-    final completer = Completer<int>();
-    _callbacks.setData(bufferId, completer);
     _datagramChannel!.receiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     _pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleReceive, onError: _handleSingleError);
   }
 
-  Future<List<TransportDatagramResponder>> receiveManyMessages(int count, {bool submit = true, int? flags}) async {
+  Future<void> receiveManyMessages(int count, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(count);
     if (_closing) throw TransportClosedException.forServer();
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.set(bufferId, lastBufferId);
       _datagramChannel!.receiveMessage(
         bufferId,
         pointer.ref.family,
@@ -201,9 +197,6 @@ class TransportServer implements TransportServerCloser {
         sqeFlags: transportIosqeIoLink,
       );
     }
-    final completer = Completer<int>();
-    _links.set(lastBufferId, lastBufferId);
-    _callbacks.setData(lastBufferId, completer);
     _datagramChannel!.receiveMessage(
       lastBufferId,
       pointer.ref.family,
@@ -212,16 +205,12 @@ class TransportServer implements TransportServerCloser {
       transportEventReceiveMessage | transportEventServer | transportEventLink,
     );
     _pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleManyReceive, onError: _handleManyError);
   }
 
   Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {bool submit = true, int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
-    final completer = Completer<int>();
-    _callbacks.setData(bufferId, completer);
     channel.sendMessage(
       bytes,
       bufferId,
@@ -232,8 +221,6 @@ class TransportServer implements TransportServerCloser {
       transportEventSendMessage | transportEventServer,
     );
     _pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
   }
 
   Future<void> respondManyMessages(TransportChannel channel, Pointer<sockaddr> destination, List<Uint8List> bytes, {bool submit = true, int? flags}) async {
@@ -243,7 +230,6 @@ class TransportServer implements TransportServerCloser {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.set(bufferId, lastBufferId);
       channel.sendMessage(
         bytes[index],
         bufferId,
@@ -255,9 +241,6 @@ class TransportServer implements TransportServerCloser {
         sqeFlags: transportIosqeIoLink,
       );
     }
-    final completer = Completer<int>();
-    _links.set(lastBufferId, lastBufferId);
-    _callbacks.setData(lastBufferId, completer);
     channel.sendMessage(
       bytes.last,
       lastBufferId,
@@ -268,55 +251,63 @@ class TransportServer implements TransportServerCloser {
       transportEventSendMessage | transportEventServer | transportEventLink,
     );
     _pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
-    return completer.future.then(_handleManyWrite, onError: _handleManyError);
   }
 
   void notifyDatagram(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (result > 0) {
-        _buffers.setLength(bufferId, result);
-        _callbacks.notifyData(bufferId);
-        return;
-      }
-      if (result < 0) {
-        if (result == -ECANCELED) {
-          _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
+      if (event.isReadEvent()) {
+        if (result > 0) {
+          _buffers.setLength(bufferId, result);
+          _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
           return;
         }
-        _callbacks.notifyDataError(
-          bufferId,
-          TransportInternalException(
-            event: TransportEvent.ofEvent(event),
-            code: result,
-            message: result.kernelErrorToString(_bindings),
-            bufferId: bufferId,
-          ),
-        );
+        _buffers.release(bufferId);
+        _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
         return;
       }
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+      if (result > 0) {
+        _buffers.release(bufferId);
+        _outboundEvents.add(null);
+        return;
+      }
+      _outboundEvents.addError(createTransportException(
+        TransportEvent.ofEvent(event),
+        result,
+        _bindings,
+        payload: _payloadPool.getPayload(bufferId, _buffers.read(bufferId)),
+      ));
       return;
     }
-    _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
-    if (_pending == 0 && _connections.isEmpty) _closer.complete();
+    _buffers.release(bufferId);
+    event.isReadEvent() ? _inboundEvents.addError(TransportClosedException.forServer()) : _outboundEvents.addError(TransportClosedException.forServer());
+    if (_pending == 0) _closer.complete();
   }
 
   @pragma(preferInlinePragma)
   void notifyAccept(int fd) {
     if (fd > 0) {
-      final connection = TransportServerInternalConnection(this, _callbacks, _buffers, _bindings, fd);
+      final channel = TransportChannel(_workerPointer, fd, _bindings, _buffers);
+      final connection = TransportServerInternalConnection(
+        this,
+        _buffers,
+        _bindings,
+        fd,
+        _payloadPool,
+        _readTimeout,
+        _writeTimeout,
+        channel,
+      );
       _registry.addConnection(fd, connection);
       _connections[fd] = connection;
-      _acceptor(TransportServerConnection(this, TransportChannel(_workerPointer, fd, _bindings, _buffers)));
+      _acceptor(TransportServerConnection(connection));
     }
     _bindings.transport_worker_accept(_workerPointer, pointer);
     _pending++;
   }
 
   @pragma(preferInlinePragma)
-  bool connectionIsActive(int fd) => _connections[fd]?.closing == false;
+  bool connectionIsActive(int fd) => _connections[fd]?._closing == false;
 
   @override
   Future<void> close({Duration? gracefulDuration}) async {
@@ -334,59 +325,13 @@ class TransportServer implements TransportServerCloser {
 
   Future<void> closeConnection(int fd, {Duration? gracefulDuration}) async {
     final connection = _connections[fd];
-    if (connection == null || connection.closing) return;
-    connection.closing = false;
+    if (connection == null || connection._closing) return;
+    connection._closing = false;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
-    connection.active = false;
+    connection._active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
-    if (connection.pending > 0) await connection.closer.future;
+    if (connection._pending > 0) await connection._closer.future;
     _registry.removeConnection(fd);
     _connections.remove(fd);
-  }
-
-  @pragma(preferInlinePragma)
-  TransportPayload _handleSingleRead(int bufferId) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId));
-
-  @pragma(preferInlinePragma)
-  TransportDatagramResponder _handleSingleReceive(int bufferId) => _payloadPool.getDatagramResponder(
-        bufferId,
-        _buffers.read(bufferId),
-        this,
-        _datagramChannel!,
-        _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
-      );
-
-  @pragma(preferInlinePragma)
-  List<TransportDatagramResponder> _handleManyReceive(int lastBufferId) => _links
-      .select(lastBufferId)
-      .map((bufferId) => _payloadPool.getDatagramResponder(
-            bufferId,
-            _buffers.read(bufferId),
-            this,
-            _datagramChannel!,
-            _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
-          ))
-      .toList();
-
-  @pragma(preferInlinePragma)
-  void _handleSingleWrite(int bufferId) => _buffers.release(bufferId);
-
-  @pragma(preferInlinePragma)
-  void _handleManyWrite(int lastBufferId) => _buffers.releaseArray(_links.select(lastBufferId).toList());
-
-  @pragma(preferInlinePragma)
-  void _handleSingleError(error) {
-    if (error is TransportExecutionException && error.bufferId != null) {
-      _buffers.release(error.bufferId!);
-    }
-    throw error;
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleManyError(error) {
-    if (error is TransportExecutionException && error.bufferId != null) {
-      _buffers.releaseArray(_links.select(error.bufferId!).toList());
-    }
-    throw error;
   }
 }

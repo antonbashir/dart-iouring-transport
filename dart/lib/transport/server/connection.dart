@@ -1,44 +1,35 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import '../channel.dart';
-import '../configuration.dart';
 import '../constants.dart';
 import '../payload.dart';
 import 'server.dart';
 
 class TransportServerConnection {
-  final TransportServer _server;
-  final TransportChannel _channel;
+  final TransportServerInternalConnection _connection;
 
-  const TransportServerConnection(this._server, this._channel);
+  const TransportServerConnection(this._connection);
 
-  bool get active => !_server.closing;
+  bool get active => !_connection.closing;
 
   @pragma(preferInlinePragma)
-  Future<TransportPayload> read({bool submit = true}) => _server.read(_channel, submit: submit);
-
-  void listen(FutureOr<void> Function(TransportPayload payload, TransportServerConnection connection) listener, {void Function(dynamic error)? onError}) async {
-    while (!_server.closing && _server.connectionIsActive(_channel.fd)) {
-      await read().then((value) => listener(value, this));
-    }
+  Stream<TransportPayload> read() {
+    unawaited(_connection.read());
+    return _connection.inbound.map((event) {
+      unawaited(_connection.read());
+      return event;
+    });
   }
 
   @pragma(preferInlinePragma)
-  Future<void> writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, bool submit = true}) {
-    Future<void> write() => _server.writeSingle(_channel, bytes, submit: submit);
-    return retry == null ? write() : retry.options.retry(write, retryIf: retry.predicate, onRetry: retry.onRetry);
-  }
+  Future<void> writeSingle(Uint8List bytes) => _connection.writeSingle(bytes);
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true}) {
-    Future<void> write() => _server.writeMany(_channel, bytes, submit: submit);
-    return retry == null ? write() : retry.options.retry(write, retryIf: retry.predicate, onRetry: retry.onRetry);
-  }
+  Future<void> writeMany(List<Uint8List> bytes) => _connection.writeMany(bytes);
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => _server.closeConnection(_channel.fd, gracefulDuration: gracefulDuration);
+  Future<void> close({Duration? gracefulDuration}) => _connection.close(gracefulDuration: gracefulDuration);
 
   @pragma(preferInlinePragma)
-  Future<void> closeServer({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
+  Future<void> closeServer({Duration? gracefulDuration}) => _connection.closeServer(gracefulDuration: gracefulDuration);
 }

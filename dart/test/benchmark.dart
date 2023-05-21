@@ -18,19 +18,20 @@ Future<void> _benchTcp() async {
   final fromServer = encoder.convert("from server\n");
   final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
   await worker.initialize();
-  worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.listen((payload, connection) => connection.writeSingle(fromServer).then((value) => payload.release())));
+  worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.read().listen((payload) => connection.writeSingle(fromServer).then((value) => payload.release())));
   final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 1024));
   var count = 0;
   final time = Stopwatch();
   time.start();
-  while (true) {
-    final futures = <Future>[];
-    for (var client in connector.clients) {
-      futures.add(client.writeSingle(fromServer).then((client) => client.read().then((value) => value.release())));
-    }
-    count += (await Future.wait(futures)).length;
-    if (time.elapsed.inSeconds >= 10) break;
+  for (var client in connector.clients) {
+    client.read().listen((element) {
+      count++;
+      element.release();
+      client.writeSingle(fromServer);
+    });
+    client.writeSingle(fromServer);
   }
+  await Future.delayed(Duration(seconds: 10));
   print("RPS: ${count / 10}");
   await transport.shutdown();
 }

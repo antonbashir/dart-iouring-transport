@@ -1,3 +1,7 @@
+import 'package:iouring_transport/transport/extensions.dart';
+import 'package:iouring_transport/transport/payload.dart';
+
+import 'bindings.dart';
 import 'constants.dart';
 
 class TransportInitializationException implements Exception {
@@ -9,24 +13,20 @@ class TransportInitializationException implements Exception {
   String toString() => message;
 }
 
-abstract class TransportExecutionException implements Exception {
-  final int? bufferId;
-
-  TransportExecutionException(this.bufferId);
-}
-
-class TransportInternalException extends TransportExecutionException {
+class TransportInternalException implements Exception {
   final TransportEvent event;
   final int code;
+  final TransportPayload? payload;
 
   late final String message;
 
   TransportInternalException({
     required this.event,
     required this.code,
+    this.payload,
     required String message,
     int? bufferId,
-  }) : super(bufferId) {
+  }) {
     this.message = "[$event] code = $code, message = $message";
   }
 
@@ -34,11 +34,13 @@ class TransportInternalException extends TransportExecutionException {
   String toString() => message;
 }
 
-class TransportCanceledException extends TransportExecutionException {
-  late final String message;
+class TransportCanceledException implements Exception {
   final TransportEvent event;
+  final TransportPayload? payload;
 
-  TransportCanceledException({required this.event, int? bufferId}) : super(bufferId) {
+  late final String message;
+
+  TransportCanceledException({required this.event, this.payload}) {
     this.message = "[$event] canceled";
   }
 
@@ -46,16 +48,16 @@ class TransportCanceledException extends TransportExecutionException {
   String toString() => message;
 }
 
-class TransportClosedException extends TransportExecutionException {
+class TransportClosedException implements Exception {
   final String message;
 
-  TransportClosedException._(this.message, {int? bufferId}) : super(bufferId);
+  TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer({int? bufferId}) => TransportClosedException._("Server closed", bufferId: bufferId);
+  factory TransportClosedException.forServer({TransportPayload? payload}) => TransportClosedException._("Server closed");
 
-  factory TransportClosedException.forClient({int? bufferId}) => TransportClosedException._("Client closed", bufferId: bufferId);
+  factory TransportClosedException.forClient({TransportPayload? payload}) => TransportClosedException._("Client closed");
 
-  factory TransportClosedException.forFile({int? bufferId}) => TransportClosedException._("File closed", bufferId: bufferId);
+  factory TransportClosedException.forFile({TransportPayload? payload}) => TransportClosedException._("File closed");
 
   @override
   String toString() => message;
@@ -63,13 +65,30 @@ class TransportClosedException extends TransportExecutionException {
 
 class TransportZeroDataException implements Exception {
   final TransportEvent event;
+  final TransportPayload payload;
 
   late final String message;
 
-  TransportZeroDataException({required this.event}) {
+  TransportZeroDataException({required this.event, required this.payload}) {
     message = "[$event] completed with zero result (no data)";
   }
 
   @override
   String toString() => message;
+}
+
+@pragma(preferInlinePragma)
+Exception createTransportException(TransportEvent event, int result, TransportBindings bindings, {TransportPayload? payload}) {
+  if (result < 0) {
+    if (result == -ECANCELED) {
+      return TransportCanceledException(event: event, payload: payload);
+    }
+    return TransportInternalException(
+      event: event,
+      code: result,
+      message: result.kernelErrorToString(bindings),
+      payload: payload,
+    );
+  }
+  return TransportZeroDataException(event: event, payload: payload!);
 }
