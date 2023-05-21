@@ -13,10 +13,11 @@ class TransportDefaults {
         ringSize: 16384,
         ringFlags: 0,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
-        delayFactor: Duration(microseconds: 10),
-        maxActiveTime: Duration(seconds: 30),
+        baseDelay: Duration(microseconds: 10),
         maxDelay: Duration(seconds: 1),
-        randomizationFactor: 0.25,
+        delayRandomizationFactor: 0.25,
+        cqePeekCount: 512,
+        cqeWaitCount: 1,
         cqeWaitTimeout: Duration(milliseconds: 1),
       );
 

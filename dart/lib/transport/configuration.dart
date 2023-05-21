@@ -6,11 +6,12 @@ class TransportWorkerConfiguration {
   final int ringSize;
   final int ringFlags;
   final Duration timeoutCheckerPeriod;
-  final double randomizationFactor;
-  final Duration delayFactor;
-  final Duration maxDelay;
-  final Duration maxActiveTime;
+  final double delayRandomizationFactor;
+  final int cqePeekCount;
+  final int cqeWaitCount;
   final Duration cqeWaitTimeout;
+  final Duration baseDelay;
+  final Duration maxDelay;
 
   TransportWorkerConfiguration({
     required this.buffersCount,
@@ -18,10 +19,11 @@ class TransportWorkerConfiguration {
     required this.ringSize,
     required this.ringFlags,
     required this.timeoutCheckerPeriod,
-    required this.randomizationFactor,
-    required this.delayFactor,
+    required this.delayRandomizationFactor,
+    required this.baseDelay,
     required this.maxDelay,
-    required this.maxActiveTime,
+    required this.cqePeekCount,
+    required this.cqeWaitCount,
     required this.cqeWaitTimeout,
   });
 
@@ -31,10 +33,11 @@ class TransportWorkerConfiguration {
     int? ringSize,
     int? ringFlags,
     Duration? timeoutCheckerPeriod,
-    double? randomizationFactor,
-    Duration? delayFactor,
+    double? delayRandomizationFactor,
+    Duration? baseDelay,
     Duration? maxDelay,
-    Duration? maxActiveTime,
+    int? cqePeekCount,
+    int? cqeWaitCount,
     Duration? cqeWaitTimeout,
   }) =>
       TransportWorkerConfiguration(
@@ -43,10 +46,11 @@ class TransportWorkerConfiguration {
         ringSize: ringSize ?? this.ringSize,
         ringFlags: ringFlags ?? this.ringFlags,
         timeoutCheckerPeriod: timeoutCheckerPeriod ?? this.timeoutCheckerPeriod,
-        randomizationFactor: randomizationFactor ?? this.randomizationFactor,
-        delayFactor: delayFactor ?? this.delayFactor,
+        delayRandomizationFactor: delayRandomizationFactor ?? this.delayRandomizationFactor,
+        baseDelay: baseDelay ?? this.baseDelay,
         maxDelay: maxDelay ?? this.maxDelay,
-        maxActiveTime: maxActiveTime ?? this.maxActiveTime,
+        cqePeekCount: cqePeekCount ?? this.cqePeekCount,
+        cqeWaitCount: cqeWaitCount ?? this.cqeWaitCount,
         cqeWaitTimeout: cqeWaitTimeout ?? this.cqeWaitTimeout,
       );
 }

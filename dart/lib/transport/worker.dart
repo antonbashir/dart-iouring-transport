@@ -19,8 +19,6 @@ import 'server/factory.dart';
 import 'server/registry.dart';
 import 'timeout.dart';
 
-final cqeWaitCount = List.generate(16, (index) => 128 * (index + 1));
-
 class TransportWorker {
   final _fromTransport = ReceivePort();
   final _customCallbacks = <int, Completer<int>>{};
@@ -37,7 +35,6 @@ class TransportWorker {
   late final TransportServersFactory _serversFactory;
   late final TransportFileRegistry _filesRegistry;
   late final TransportFilesFactory _filesFactory;
-  late final int _ringSize;
   late final TransportBuffers _buffers;
   late final TransportTimeoutChecker _timeoutChecker;
   late final TransportPayloadPool _payloadPool;
@@ -101,8 +98,7 @@ class TransportWorker {
     );
     _filesFactory = TransportFilesFactory(_filesRegistry);
     _ring = _workerPointer.ref.ring;
-    _cqes = _bindings.transport_allocate_cqes(_workerPointer.ref.ring_size);
-    _ringSize = _workerPointer.ref.ring_size;
+    _cqes = _workerPointer.ref.cqes;
     _timeoutChecker = TransportTimeoutChecker(
       _bindings,
       _workerPointer,
@@ -118,32 +114,29 @@ class TransportWorker {
   @pragma(preferInlinePragma)
   void removeCallback(int id) => _customCallbacks.remove(id);
 
-  @pragma(preferInlinePragma)
-  void submit() => _bindings.transport_worker_submit(_workerPointer);
-
   Future<void> _listen() async {
-    final delayFactor = _workerPointer.ref.delay_factor;
-    final randomizationFactor = _workerPointer.ref.randomization_factor;
+    final baseDelay = _workerPointer.ref.base_delay;
+    final delayRandomizationFactor = _workerPointer.ref.delay_randomization_factor;
     final maxDelay = _workerPointer.ref.max_delay;
     final random = Random();
     var attempt = 0;
-    final regularDelayDuration = Duration(microseconds: delayFactor);
+    final regularDelayDuration = Duration(microseconds: baseDelay);
     while (true) {
-      attempt = min(attempt++, cqeWaitCount.length);
-      if (_handleCqes(attempt)) {
+      attempt++;
+      if (_handleCqes()) {
         attempt = 0;
         await Future.delayed(regularDelayDuration);
         continue;
       }
-      final randomization = (randomizationFactor * (random.nextDouble() * 2 - 1) + 1);
+      final randomization = (delayRandomizationFactor * (random.nextDouble() * 2 - 1) + 1);
       final exponent = min(attempt, 31);
-      final delay = (delayFactor * pow(2.0, exponent) * randomization).toInt();
+      final delay = (baseDelay * pow(2.0, exponent) * randomization).toInt();
       await Future.delayed(Duration(microseconds: delay < maxDelay ? delay : maxDelay));
     }
   }
 
-  bool _handleCqes(int attempt) {
-    final cqeCount = _bindings.transport_worker_peek(cqeWaitCount[attempt], _cqes, _workerPointer);
+  bool _handleCqes() {
+    final cqeCount = _bindings.transport_worker_peek(_workerPointer);
     if (cqeCount <= 0) return false;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _cqes[cqeIndex];
@@ -152,7 +145,7 @@ class TransportWorker {
       var event = data & 0xffff;
       _bindings.transport_worker_remove_event(_workerPointer, data);
       final fd = (data >> 32) & 0xffffffff;
-      //print("${TransportEvent.ofEvent(event)} worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
+      //print("${TransportEvent.ofEvent(event)} worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd");
       final bufferId = (data >> 16) & 0xffff;
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;

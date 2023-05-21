@@ -14,8 +14,6 @@
 extern "C"
 {
 #endif
-  struct io_uring_cqe **transport_allocate_cqes(uint32_t cqe_count);
-
   void transport_cqe_advance(struct io_uring *ring, int count);
 
   void transport_close_descritor(int fd);

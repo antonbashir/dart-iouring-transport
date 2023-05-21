@@ -8,16 +8,17 @@ int transport_worker_initialize(transport_worker_t *worker,
 {
   worker->id = id;
   worker->ring_size = configuration->ring_size;
-  worker->randomization_factor = configuration->randomization_factor;
-  worker->delay_factor = configuration->delay_factor;
-  worker->max_active_time = configuration->max_active_time;
+  worker->delay_randomization_factor = configuration->delay_randomization_factor;
+  worker->base_delay = configuration->base_delay;
   worker->max_delay = configuration->max_delay;
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
-  worker->cqe_timeout_millis = configuration->cqe_timeout_millis;
-
+  worker->cqes = malloc(sizeof(struct io_uring_cqe) * worker->ring_size);
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
+  worker->cqe_wait_timeout_millis = configuration->cqe_wait_timeout_millis;
+  worker->cqe_wait_count = configuration->cqe_wait_count;
+  worker->cqe_peek_count = configuration->cqe_peek_count;
   if (!worker->buffers)
   {
     return -ENOMEM;
@@ -253,7 +254,6 @@ void transport_worker_connect(transport_worker_t *worker, transport_client_t *cl
   io_uring_prep_connect(sqe, client->fd, address, client->client_address_length);
   io_uring_sqe_set_data64(sqe, data);
   transport_worker_add_event(worker, client->fd, data, timeout);
-  io_uring_submit(ring);
 }
 
 void transport_worker_accept(transport_worker_t *worker, transport_server_t *server)
@@ -267,12 +267,6 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
   io_uring_prep_accept(sqe, server->fd, address, &server->server_address_length, 0);
   io_uring_sqe_set_data64(sqe, data);
   transport_worker_add_event(worker, server->fd, data, TRANSPORT_TIMEOUT_INFINITY);
-  io_uring_submit(ring);
-}
-
-void transport_worker_submit(transport_worker_t *worker)
-{
-  io_uring_submit(worker->ring);
 }
 
 void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
@@ -299,13 +293,14 @@ void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
   io_uring_submit(worker->ring);
 }
 
-int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, transport_worker_t *worker)
+int transport_worker_peek(transport_worker_t *worker)
 {
-  struct __kernel_timespec timeout;
-  timeout.tv_sec = 0;
-  timeout.tv_nsec = worker->cqe_timeout_millis * 1e+6;
-  io_uring_submit_and_wait_timeout(worker->ring, &cqes[0], cqe_count, &timeout, 0);
-  return io_uring_peek_batch_cqe(worker->ring, &cqes[0], cqe_count);
+  struct __kernel_timespec timeout = {
+      .tv_nsec = worker->cqe_wait_timeout_millis * 1e+6,
+      .tv_sec = 0,
+  };
+  io_uring_submit_and_wait_timeout(worker->ring, &worker->cqes[0], worker->cqe_wait_count, &timeout, 0);
+  return io_uring_peek_batch_cqe(worker->ring, &worker->cqes[0], worker->cqe_peek_count);
 }
 
 void transport_worker_check_event_timeouts(transport_worker_t *worker)
@@ -366,6 +361,7 @@ void transport_worker_destroy(transport_worker_t *worker)
   }
   transport_buffers_pool_destroy(&worker->free_buffers);
   mh_events_delete(worker->events);
+  free(worker->cqes);
   free(worker->buffers);
   free(worker->inet_used_messages);
   free(worker->unix_used_messages);

@@ -12147,24 +12147,19 @@ class TransportBindings {
               ffi.Pointer<transport_worker_t>, int, int)>(isLeaf: true);
 
   int transport_worker_peek(
-    int cqe_count,
-    ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
     ffi.Pointer<transport_worker_t> worker,
   ) {
     return _transport_worker_peek(
-      cqe_count,
-      cqes,
       worker,
     );
   }
 
   late final _transport_worker_peekPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
+          ffi.Int Function(
               ffi.Pointer<transport_worker_t>)>>('transport_worker_peek');
-  late final _transport_worker_peek = _transport_worker_peekPtr.asFunction<
-      int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-          ffi.Pointer<transport_worker_t>)>(isLeaf: true);
+  late final _transport_worker_peek = _transport_worker_peekPtr
+      .asFunction<int Function(ffi.Pointer<transport_worker_t>)>(isLeaf: true);
 
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
@@ -18054,21 +18049,6 @@ class TransportBindings {
   late final _Dart_PrepareToAbort =
       _Dart_PrepareToAbortPtr.asFunction<void Function()>();
 
-  ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
-    int cqe_count,
-  ) {
-    return _transport_allocate_cqes(
-      cqe_count,
-    );
-  }
-
-  late final _transport_allocate_cqesPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(
-              ffi.Uint32)>>('transport_allocate_cqes');
-  late final _transport_allocate_cqes = _transport_allocate_cqesPtr
-      .asFunction<ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(int)>();
-
   void transport_cqe_advance(
     ffi.Pointer<io_uring> ring,
     int count,
@@ -21111,10 +21091,8 @@ class _SymbolAddresses {
       get transport_worker_get_datagram_address =>
           _library._transport_worker_get_datagram_addressPtr;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<transport_worker_t>)>> get transport_worker_peek =>
-      _library._transport_worker_peekPtr;
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<transport_worker_t>)>>
+      get transport_worker_peek => _library._transport_worker_peekPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
@@ -22020,10 +21998,6 @@ class _SymbolAddresses {
       get Dart_DumpNativeStackTrace => _library._Dart_DumpNativeStackTracePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>>
       get Dart_PrepareToAbort => _library._Dart_PrepareToAbortPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(ffi.Uint32)>>
-      get transport_allocate_cqes => _library._transport_allocate_cqesPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Void Function(ffi.Pointer<io_uring>, ffi.Int)>>
       get transport_cqe_advance => _library._transport_cqe_advancePtr;
@@ -23950,19 +23924,22 @@ class transport_worker_configuration extends ffi.Struct {
   external int timeout_checker_period_millis;
 
   @ffi.Uint32()
-  external int delay_factor;
+  external int base_delay;
 
   @ffi.Double()
-  external double randomization_factor;
+  external double delay_randomization_factor;
 
   @ffi.Uint64()
   external int max_delay;
 
   @ffi.Uint64()
-  external int max_active_time;
+  external int cqe_wait_timeout_millis;
 
-  @ffi.Uint64()
-  external int cqe_timeout_millis;
+  @ffi.Uint32()
+  external int cqe_wait_count;
+
+  @ffi.Uint32()
+  external int cqe_peek_count;
 }
 
 class transport_worker extends ffi.Struct {
@@ -23985,19 +23962,13 @@ class transport_worker extends ffi.Struct {
   external int timeout_checker_period_millis;
 
   @ffi.Uint32()
-  external int delay_factor;
+  external int base_delay;
 
   @ffi.Double()
-  external double randomization_factor;
+  external double delay_randomization_factor;
 
   @ffi.Uint64()
   external int max_delay;
-
-  @ffi.Uint64()
-  external int max_active_time;
-
-  @ffi.Uint64()
-  external int cqe_timeout_millis;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 
@@ -24010,6 +23981,17 @@ class transport_worker extends ffi.Struct {
 
   @ffi.Int()
   external int ring_flags;
+
+  external ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes;
+
+  @ffi.Uint64()
+  external int cqe_wait_timeout_millis;
+
+  @ffi.Uint32()
+  external int cqe_wait_count;
+
+  @ffi.Uint32()
+  external int cqe_peek_count;
 }
 
 typedef transport_worker_t = transport_worker;

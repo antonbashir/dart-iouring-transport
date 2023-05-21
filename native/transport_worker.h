@@ -20,11 +20,12 @@ extern "C"
     size_t ring_size;
     int ring_flags;
     uint64_t timeout_checker_period_millis;
-    uint32_t delay_factor;
-    double randomization_factor;
+    uint32_t base_delay;
+    double delay_randomization_factor;
     uint64_t max_delay;
-    uint64_t max_active_time;
-    uint64_t cqe_timeout_millis;
+    uint64_t cqe_wait_timeout_millis;
+    uint32_t cqe_wait_count;
+    uint32_t cqe_peek_count;
   } transport_worker_configuration_t;
 
   typedef struct transport_worker
@@ -36,16 +37,18 @@ extern "C"
     uint32_t buffer_size;
     uint16_t buffers_count;
     uint64_t timeout_checker_period_millis;
-    uint32_t delay_factor;
-    double randomization_factor;
+    uint32_t base_delay;
+    double delay_randomization_factor;
     uint64_t max_delay;
-    uint64_t max_active_time;
-    uint64_t cqe_timeout_millis;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
     struct mh_events_t *events;
     size_t ring_size;
     int ring_flags;
+    struct io_uring_cqe **cqes;
+    uint64_t cqe_wait_timeout_millis;
+    uint32_t cqe_wait_count;
+    uint32_t cqe_peek_count;
   } transport_worker_t;
 
   int transport_worker_initialize(transport_worker_t *worker,
@@ -86,7 +89,6 @@ extern "C"
                                         uint8_t sqe_flags);
   void transport_worker_connect(transport_worker_t *worker, transport_client_t *client, int64_t timeout);
   void transport_worker_accept(transport_worker_t *worker, transport_server_t *server);
-  void transport_worker_submit(transport_worker_t *worker);
 
   void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd);
 
@@ -100,7 +102,7 @@ extern "C"
 
   struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id);
 
-  int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, transport_worker_t* worker);
+  int transport_worker_peek(transport_worker_t *worker);
 
   void transport_worker_destroy(transport_worker_t *worker);
 
