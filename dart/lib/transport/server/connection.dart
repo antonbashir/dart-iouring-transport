@@ -31,13 +31,10 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true}) => retry == null
-      ? _server.writeMany(_channel, bytes, submit: submit)
-      : retry.options.retry(
-          () => _server.writeMany(_channel, bytes, submit: submit),
-          retryIf: retry.predicate,
-          onRetry: retry.onRetry,
-        );
+  Future<void> writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool submit = true}) {
+    Future<void> write() => _server.writeMany(_channel, bytes, submit: submit);
+    return retry == null ? write() : retry.options.retry(write, retryIf: retry.predicate, onRetry: retry.onRetry);
+  }
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _server.closeConnection(_channel.fd, gracefulDuration: gracefulDuration);

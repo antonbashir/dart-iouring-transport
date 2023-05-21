@@ -221,6 +221,11 @@ class TransportClient {
   void notifyData(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
+      if (result > 0) {
+        _buffers.setLength(bufferId, result);
+        _callbacks.notifyData(bufferId);
+        return;
+      }
       if (result < 0) {
         if (result == -ECANCELED) {
           _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
@@ -237,13 +242,7 @@ class TransportClient {
         );
         return;
       }
-      if (result == 0) {
-        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
-        return;
-      }
-      _buffers.setLength(bufferId, result);
-      _callbacks.notifyData(bufferId);
-      return;
+      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
     }
     _callbacks.notifyDataError(bufferId, TransportClosedException.forClient());
     if (_pending == 0) _closer.complete();
@@ -252,22 +251,22 @@ class TransportClient {
   void notifyConnect(int fd, int result) {
     _pending--;
     if (_active) {
-      if (result < 0) {
-        if (result == -ECANCELED) {
-          _callbacks.notifyConnectError(fd, TransportCanceledException(event: TransportEvent.connect));
-          return;
-        }
-        _callbacks.notifyConnectError(
-          fd,
-          TransportInternalException(
-            event: TransportEvent.connect,
-            code: result,
-            message: result.kernelErrorToString(_bindings),
-          ),
-        );
+      if (result > 0) {
+        _callbacks.notifyConnect(fd, this);
         return;
       }
-      _callbacks.notifyConnect(fd, this);
+      if (result == -ECANCELED) {
+        _callbacks.notifyConnectError(fd, TransportCanceledException(event: TransportEvent.connect));
+        return;
+      }
+      _callbacks.notifyConnectError(
+        fd,
+        TransportInternalException(
+          event: TransportEvent.connect,
+          code: result,
+          message: result.kernelErrorToString(_bindings),
+        ),
+      );
       return;
     }
     _callbacks.notifyConnectError(fd, TransportClosedException.forClient());

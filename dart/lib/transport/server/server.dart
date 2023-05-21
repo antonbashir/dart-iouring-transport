@@ -32,6 +32,11 @@ class TransportServerInternalConnection {
   void notify(int bufferId, int result, int event) {
     pending--;
     if (active && _server.active) {
+      if (result > 0) {
+        _buffers.setLength(bufferId, result);
+        _callbacks.notifyData(bufferId);
+        return;
+      }
       if (result < 0) {
         unawaited(_server.closeConnection(_fd));
         if (result == -ECANCELED) {
@@ -49,13 +54,8 @@ class TransportServerInternalConnection {
         );
         return;
       }
-      if (result == 0) {
-        unawaited(_server.closeConnection(_fd));
-        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
-        return;
-      }
-      _buffers.setLength(bufferId, result);
-      _callbacks.notifyData(bufferId);
+      unawaited(_server.closeConnection(_fd));
+      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
@@ -274,6 +274,11 @@ class TransportServer implements TransportServerCloser {
   void notifyDatagram(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
+      if (result > 0) {
+        _buffers.setLength(bufferId, result);
+        _callbacks.notifyData(bufferId);
+        return;
+      }
       if (result < 0) {
         if (result == -ECANCELED) {
           _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
@@ -290,12 +295,7 @@ class TransportServer implements TransportServerCloser {
         );
         return;
       }
-      if (result == 0) {
-        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
-        return;
-      }
-      _buffers.setLength(bufferId, result);
-      _callbacks.notifyData(bufferId);
+      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());

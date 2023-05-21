@@ -228,9 +228,7 @@ class TransportWorker {
   void _handleAccept(int fd, int result) => _serverRegistry.getByServer(fd)?.notifyAccept(result);
 
   @visibleForTesting
-  void notifyCustom(int id, int data) {
-    _bindings.transport_worker_custom(_workerPointer, id, data);
-  }
+  void notifyCustom(int id, int data) => _bindings.transport_worker_custom(_workerPointer, id, data);
 
   @visibleForTesting
   TransportBuffers get buffers => _buffers;

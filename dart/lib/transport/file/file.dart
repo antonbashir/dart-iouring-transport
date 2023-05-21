@@ -131,6 +131,11 @@ class TransportFile {
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
+      if (result > 0) {
+        buffers.setLength(bufferId, result);
+        _callbacks.notifyData(bufferId);
+        return;
+      }
       if (result < 0) {
         if (result == -ECANCELED) {
           _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
@@ -147,12 +152,7 @@ class TransportFile {
         );
         return;
       }
-      if (result == 0) {
-        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
-        return;
-      }
-      buffers.setLength(bufferId, result);
-      _callbacks.notifyData(bufferId);
+      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
       return;
     }
     _callbacks.notifyDataError(bufferId, TransportClosedException.forFile());
