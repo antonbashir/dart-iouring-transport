@@ -82,7 +82,6 @@ class TransportServerInternalConnection {
     _pending++;
   }
 
-  @pragma(preferInlinePragma)
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active && _server.active) {
@@ -99,7 +98,6 @@ class TransportServerInternalConnection {
       }
       if (result > 0) {
         _buffers.release(bufferId);
-        _outboundEvents.add(null);
         return;
       }
       unawaited(_server.closeConnection(_fd));
@@ -268,7 +266,6 @@ class TransportServer implements TransportServerCloser {
       }
       if (result > 0) {
         _buffers.release(bufferId);
-        _outboundEvents.add(null);
         return;
       }
       _outboundEvents.addError(createTransportException(

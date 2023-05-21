@@ -19,6 +19,8 @@ import 'server/factory.dart';
 import 'server/registry.dart';
 import 'timeout.dart';
 
+final cqeWaitCount = List.generate(16, (index) => 128 * (index + 1));
+
 class TransportWorker {
   final _fromTransport = ReceivePort();
   final _customCallbacks = <int, Completer<int>>{};
@@ -127,8 +129,8 @@ class TransportWorker {
     var attempt = 0;
     final regularDelayDuration = Duration(microseconds: delayFactor);
     while (true) {
-      attempt++;
-      if (_handleCqes()) {
+      attempt = min(attempt++, cqeWaitCount.length);
+      if (_handleCqes(attempt)) {
         attempt = 0;
         await Future.delayed(regularDelayDuration);
         continue;
@@ -140,8 +142,8 @@ class TransportWorker {
     }
   }
 
-  bool _handleCqes() {
-    final cqeCount = _bindings.transport_worker_peek(_ringSize, _cqes, _workerPointer);
+  bool _handleCqes(int attempt) {
+    final cqeCount = _bindings.transport_worker_peek(cqeWaitCount[attempt], _cqes, _workerPointer);
     if (cqeCount <= 0) return false;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _cqes[cqeIndex];

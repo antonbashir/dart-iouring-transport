@@ -23962,7 +23962,7 @@ class transport_worker_configuration extends ffi.Struct {
   external int max_active_time;
 
   @ffi.Uint64()
-  external int cqe_timeout_nanos;
+  external int cqe_timeout_millis;
 }
 
 class transport_worker extends ffi.Struct {
@@ -23997,7 +23997,7 @@ class transport_worker extends ffi.Struct {
   external int max_active_time;
 
   @ffi.Uint64()
-  external int cqe_timeout_nanos;
+  external int cqe_timeout_millis;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 
@@ -28347,7 +28347,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

@@ -204,7 +204,6 @@ class TransportClient {
     if (_pending == 0) _closer.complete();
   }
 
-  @pragma(preferInlinePragma)
   void notifyData(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
@@ -220,7 +219,6 @@ class TransportClient {
       }
       if (result > 0) {
         _buffers.release(bufferId);
-        _outboundEvents.add(null);
         return;
       }
       _outboundEvents.addError(createTransportException(

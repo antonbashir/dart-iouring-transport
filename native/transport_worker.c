@@ -15,7 +15,7 @@ int transport_worker_initialize(transport_worker_t *worker,
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
-  worker->cqe_timeout_nanos = configuration->cqe_timeout_nanos;
+  worker->cqe_timeout_millis = configuration->cqe_timeout_millis;
 
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   if (!worker->buffers)
@@ -301,10 +301,9 @@ void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
 
 int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, transport_worker_t *worker)
 {
-  struct __kernel_timespec timeout = {
-      .tv_nsec = worker->cqe_timeout_nanos,
-      .tv_sec = 0,
-  };
+  struct __kernel_timespec timeout;
+  timeout.tv_sec = 0;
+  timeout.tv_nsec = worker->cqe_timeout_millis * 1e+6;
   io_uring_submit_and_wait_timeout(worker->ring, &cqes[0], cqe_count, &timeout, 0);
   return io_uring_peek_batch_cqe(worker->ring, &cqes[0], cqe_count);
 }

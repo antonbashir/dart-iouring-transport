@@ -126,7 +126,6 @@ class TransportFile {
       }
       if (result >= 0) {
         buffers.release(bufferId);
-        _outboundEvents.add(null);
         return;
       }
       _outboundEvents.addError(createTransportException(

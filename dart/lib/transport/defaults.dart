@@ -13,11 +13,11 @@ class TransportDefaults {
         ringSize: 16384,
         ringFlags: 0,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
-        delayFactor: Duration(microseconds: 1),
+        delayFactor: Duration(microseconds: 10),
         maxActiveTime: Duration(seconds: 30),
         maxDelay: Duration(seconds: 1),
         randomizationFactor: 0.25,
-        cqeWaitTimeout: Duration(microseconds: 1),
+        cqeWaitTimeout: Duration(milliseconds: 1),
       );
 
   static TransportTcpClientConfiguration tcpClient() => TransportTcpClientConfiguration(

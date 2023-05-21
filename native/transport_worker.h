@@ -24,7 +24,7 @@ extern "C"
     double randomization_factor;
     uint64_t max_delay;
     uint64_t max_active_time;
-    uint64_t cqe_timeout_nanos;
+    uint64_t cqe_timeout_millis;
   } transport_worker_configuration_t;
 
   typedef struct transport_worker
@@ -40,7 +40,7 @@ extern "C"
     double randomization_factor;
     uint64_t max_delay;
     uint64_t max_active_time;
-    uint64_t cqe_timeout_nanos;
+    uint64_t cqe_timeout_millis;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
     struct mh_events_t *events;
