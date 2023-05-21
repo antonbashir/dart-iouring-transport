@@ -246,7 +246,7 @@ void transport_worker_connect(transport_worker_t *worker, transport_client_t *cl
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
-  uint64_t data = ((uint64_t)(client->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_CONNECT);
+  uint64_t data = ((uint64_t)(client->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_CONNECT | (uint64_t)TRANSPORT_EVENT_CLIENT);
   struct sockaddr *address = client->family == INET
                                  ? (struct sockaddr *)&client->inet_destination_address
                                  : (struct sockaddr *)&client->unix_destination_address;
@@ -260,7 +260,7 @@ void transport_worker_accept(transport_worker_t *worker, transport_server_t *ser
 {
   struct io_uring *ring = worker->ring;
   struct io_uring_sqe *sqe = transport_provide_sqe(ring);
-  uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT);
+  uint64_t data = ((uint64_t)(server->fd) << 32) | ((uint64_t)TRANSPORT_EVENT_ACCEPT | (uint64_t)TRANSPORT_EVENT_SERVER);
   struct sockaddr *address = server->family == INET
                                  ? (struct sockaddr *)&server->inet_server_address
                                  : (struct sockaddr *)&server->unix_server_address;

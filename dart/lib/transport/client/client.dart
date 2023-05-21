@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/extensions.dart';
+
 import '../links.dart';
 import '../bindings.dart';
 import '../buffers.dart';
@@ -222,12 +224,60 @@ class TransportClient {
     return client;
   }
 
-  @pragma(preferInlinePragma)
-  bool notify() {
+  void notifyData(int bufferId, int result, int event) {
     _pending--;
-    if (_active) return true;
+    if (_active) {
+      if (result < 0) {
+        if (result == -ECANCELED) {
+          _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
+          return;
+        }
+        _callbacks.notifyDataError(
+          bufferId,
+          TransportInternalException(
+            event: TransportEvent.ofEvent(event),
+            code: result,
+            message: result.kernelErrorToString(_bindings),
+            bufferId: bufferId,
+          ),
+        );
+        return;
+      }
+      if (result == 0) {
+        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+        return;
+      }
+      _buffers.setLength(bufferId, result);
+      _callbacks.notifyData(bufferId);
+      return;
+    }
+    _callbacks.notifyDataError(bufferId, TransportClosedException.forClient());
     if (_pending == 0) _closer.complete();
-    return false;
+  }
+
+  void notifyConnect(int fd, int result) {
+    _pending--;
+    if (_active) {
+      if (result < 0) {
+        if (result == -ECANCELED) {
+          _callbacks.notifyConnectError(fd, TransportCanceledException(event: TransportEvent.connect));
+          return;
+        }
+        _callbacks.notifyConnectError(
+          fd,
+          TransportInternalException(
+            event: TransportEvent.connect,
+            code: result,
+            message: result.kernelErrorToString(_bindings),
+          ),
+        );
+        return;
+      }
+      _callbacks.notifyConnect(fd, this);
+      return;
+    }
+    _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
+    if (_pending == 0) _closer.complete();
   }
 
   Future<void> close({Duration? gracefulDuration}) async {

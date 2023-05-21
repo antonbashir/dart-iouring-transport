@@ -10,11 +10,9 @@ import 'package:meta/meta.dart';
 import 'bindings.dart';
 import 'buffers.dart';
 import 'callbacks.dart';
-import 'channel.dart';
 import 'client/factory.dart';
 import 'client/registry.dart';
 import 'constants.dart';
-import 'error.dart';
 import 'exception.dart';
 import 'file/factory.dart';
 import 'file/registry.dart';
@@ -43,7 +41,6 @@ class TransportWorker {
   late final TransportCallbacks _callbacks;
   late final TransportLinks _links;
   late final int _ringSize;
-  late final TransportErrorHandler _errorHandler;
   late final TransportBuffers _buffers;
   late final TransportTimeoutChecker _timeoutChecker;
   late final TransportPayloadPool _payloadPool;
@@ -121,14 +118,6 @@ class TransportWorker {
     _ring = _workerPointer.ref.ring;
     _cqes = _bindings.transport_allocate_cqes(_workerPointer.ref.ring_size);
     _ringSize = _workerPointer.ref.ring_size;
-    _errorHandler = TransportErrorHandler(
-      _serverRegistry,
-      _clientRegistry,
-      _filesRegistry,
-      _bindings,
-      _callbacks,
-      _links,
-    );
     _timeoutChecker = TransportTimeoutChecker(
       _bindings,
       _workerPointer,
@@ -145,9 +134,7 @@ class TransportWorker {
   void removeCallback(int id) => _callbacks.removeCustom(id);
 
   @pragma(preferInlinePragma)
-  void submit() {
-    _bindings.transport_worker_submit(_workerPointer);
-  }
+  void submit() => _bindings.transport_worker_submit(_workerPointer);
 
   Future<void> _listen() async {
     final delayFactor = _workerPointer.ref.delay_factor;
@@ -187,52 +174,35 @@ class TransportWorker {
       _bindings.transport_worker_remove_event(_workerPointer, data);
       final fd = (data >> 32) & 0xffffffff;
       //print("${TransportEvent.ofEvent(event)} worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}");
-      if (result < 0) {
-        _errorHandler.handle(result, data, fd, event);
-        continue;
-      }
       final bufferId = (data >> 16) & 0xffff;
       if (event & transportEventLink != 0) {
         event &= ~transportEventLink;
         _buffers.setLength(bufferId, result);
         if (bufferId != _links.get(bufferId)) continue;
       }
-      if (event == transportEventRead | transportEventClient || event == transportEventReceiveMessage | transportEventClient) {
-        _handleReadReceiveClientCallback(event, bufferId, result, fd);
-        continue;
-      }
-      if (event == transportEventWrite | transportEventClient || event == transportEventSendMessage | transportEventClient) {
-        _handleWriteSendClientCallback(event, bufferId, result, fd);
-        continue;
-      }
-      if (event == transportEventRead | transportEventFile) {
-        _handleReadFileCallback(event, bufferId, result, fd);
-        continue;
-      }
-      if (event == transportEventWrite | transportEventFile) {
-        _handleWriteFileCallback(event, bufferId, result, fd);
-        continue;
-      }
-      if (event == transportEventConnect) {
-        _handleConnect(fd);
-        continue;
-      }
-      switch (event & ~transportEventServer) {
-        case transportEventRead:
-          _handleRead(bufferId, fd, result);
+      if (event & transportEventClient != 0) {
+        event &= ~transportEventClient;
+        if (event == transportEventConnect) {
+          _handleConnect(fd, result);
           continue;
-        case transportEventReceiveMessage:
-          _handleReceiveMessage(bufferId, fd, result);
-          continue;
-        case transportEventWrite:
-          _handleWrite(bufferId, fd, result);
-          continue;
-        case transportEventSendMessage:
-          _handleSendMessage(bufferId, fd, result);
-          continue;
-        case transportEventAccept:
+        }
+        _handleClientData(event, bufferId, result, fd);
+      }
+      if (event & transportEventFile != 0) {
+        _handleFile(event = event & ~transportEventFile, bufferId, result, fd);
+        continue;
+      }
+      if (event & transportEventServer != 0) {
+        event &= ~transportEventServer;
+        if (event == transportEventAccept) {
           _handleAccept(fd, result);
           continue;
+        }
+        if (event == transportEventRead || event == transportEventWrite) {
+          _handleServerConnection(bufferId, fd, result, event);
+          continue;
+        }
+        _handleServerDatagram(bufferId, fd, result, event);
       }
     }
     _bindings.transport_cqe_advance(_ring, cqeCount);
@@ -240,147 +210,22 @@ class TransportWorker {
   }
 
   @pragma(preferInlinePragma)
-  void _handleRead(int bufferId, int fd, int result) {
-    final server = _serverRegistry.getByConnection(fd);
-    if (server == null) return;
-    if (!server.notifyConnection(fd)) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
-      return;
-    }
-    if (result == 0) {
-      unawaited(server.closeConnection(fd));
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.serverRead));
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
+  void _handleServerConnection(int bufferId, int fd, int result, int event) => _serverRegistry.getConnection(fd)?.notify(bufferId, result, event);
 
   @pragma(preferInlinePragma)
-  void _handleWrite(int bufferId, int fd, int result) {
-    final server = _serverRegistry.getByConnection(fd);
-    if (server == null) return;
-    if (!server.notifyConnection(fd)) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
-      return;
-    }
-    if (result == 0) {
-      unawaited(server.closeConnection(fd));
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.serverWrite));
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
+  void _handleServerDatagram(int bufferId, int fd, int result, int event) => _serverRegistry.getByServer(fd)?.notifyDatagram(bufferId, result, event);
 
   @pragma(preferInlinePragma)
-  void _handleReceiveMessage(int bufferId, int fd, int result) {
-    final server = _serverRegistry.getByServer(fd);
-    if (server == null) return;
-    if (!server.notify()) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
-      return;
-    }
-    if (result == 0) {
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.serverReceive));
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
+  void _handleClientData(int event, int bufferId, int result, int fd) => _clientRegistry.get(fd)?.notifyData(bufferId, result, event);
 
   @pragma(preferInlinePragma)
-  void _handleSendMessage(int bufferId, int fd, int result) {
-    final server = _serverRegistry.getByServer(fd);
-    if (server == null) return;
-    if (!server.notify()) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
-      return;
-    }
-    if (result == 0) {
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.serverSend));
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
+  void _handleFile(int event, int bufferId, int result, int fd) => _filesRegistry.get(fd)?.notify(bufferId, result, fd);
 
   @pragma(preferInlinePragma)
-  void _handleReadReceiveClientCallback(int event, int bufferId, int result, int fd) {
-    final client = _clientRegistry.get(fd);
-    if (client == null) return;
-    if (!client.notify()) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forClient());
-      return;
-    }
-    if (result == 0) {
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
+  void _handleConnect(int fd, int result) => _clientRegistry.get(fd)?.notifyConnect(fd, result);
 
   @pragma(preferInlinePragma)
-  void _handleReadFileCallback(int event, int bufferId, int result, int fd) {
-    final file = _filesRegistry.get(fd);
-    if (file == null) return;
-    if (!file.notify()) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forFile());
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleWriteSendClientCallback(int event, int bufferId, int result, int fd) {
-    final client = _clientRegistry.get(fd);
-    if (client == null) return;
-    if (!client.notify()) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forClient());
-      return;
-    }
-    if (result == 0) {
-      _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleWriteFileCallback(int event, int bufferId, int result, int fd) {
-    final file = _filesRegistry.get(fd);
-    if (file == null) return;
-    if (!file.notify()) {
-      _callbacks.notifyDataError(bufferId, TransportClosedException.forFile());
-      return;
-    }
-    _buffers.setLength(bufferId, result);
-    _callbacks.notifyData(bufferId);
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleConnect(int fd) {
-    final client = _clientRegistry.get(fd);
-    if (client == null) return;
-    if (!client.notify()) {
-      _callbacks.notifyConnectError(fd, TransportClosedException.forClient());
-      return;
-    }
-    _callbacks.notifyConnect(fd, client);
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleAccept(int fd, int result) {
-    final server = _serverRegistry.getByServer(fd);
-    if (server == null) return;
-    if (!server.notify()) return;
-    _serverRegistry.addConnection(fd, result);
-    server.reaccept();
-    _callbacks.notifyAccept(fd, TransportChannel(_workerPointer, result, _bindings, _buffers));
-  }
+  void _handleAccept(int fd, int result) => _serverRegistry.getByServer(fd)?.notifyAccept(result);
 
   @visibleForTesting
   void notifyCustom(int id, int data) {

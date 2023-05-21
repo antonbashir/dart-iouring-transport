@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/extensions.dart';
+
 import '../bindings.dart';
 import '../buffers.dart';
 import '../callbacks.dart';
@@ -126,12 +128,35 @@ class TransportFile {
     await completer.future.then(_handleManyWrite, onError: _handleManyError);
   }
 
-  @pragma(preferInlinePragma)
-  bool notify() {
+  void notify(int bufferId, int result, int event) {
     _pending--;
-    if (_active) return true;
+    if (_active) {
+      if (result < 0) {
+        if (result == -ECANCELED) {
+          _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
+          return;
+        }
+        _callbacks.notifyDataError(
+          bufferId,
+          TransportInternalException(
+            event: TransportEvent.ofEvent(event),
+            code: result,
+            message: result.kernelErrorToString(_bindings),
+            bufferId: bufferId,
+          ),
+        );
+        return;
+      }
+      if (result == 0) {
+        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+        return;
+      }
+      buffers.setLength(bufferId, result);
+      _callbacks.notifyData(bufferId);
+      return;
+    }
+    _callbacks.notifyDataError(bufferId, TransportClosedException.forFile());
     if (_pending == 0) _closer.complete();
-    return false;
   }
 
   Future<void> close({Duration? gracefulDuration}) async {

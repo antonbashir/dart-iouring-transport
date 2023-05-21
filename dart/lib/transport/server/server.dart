@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/extensions.dart';
+
 import '../links.dart';
 import 'connection.dart';
 import 'registry.dart';
@@ -13,11 +15,52 @@ import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';
 
-class _TransportConnectionState {
+class TransportServerInternalConnection {
   var active = true;
   var closing = false;
   var pending = 0;
   Completer<void> closer = Completer();
+
+  final TransportBindings _bindings;
+  final TransportServer _server;
+  final TransportCallbacks _callbacks;
+  final TransportBuffers _buffers;
+  final int _fd;
+
+  TransportServerInternalConnection(this._server, this._callbacks, this._buffers, this._bindings, this._fd);
+
+  void notify(int bufferId, int result, int event) {
+    pending--;
+    if (active && _server.active) {
+      if (result < 0) {
+        unawaited(_server.closeConnection(_fd));
+        if (result == -ECANCELED) {
+          _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
+          return;
+        }
+        _callbacks.notifyDataError(
+          bufferId,
+          TransportInternalException(
+            event: TransportEvent.ofEvent(event),
+            code: result,
+            message: result.kernelErrorToString(_bindings),
+            bufferId: bufferId,
+          ),
+        );
+        return;
+      }
+      if (result == 0) {
+        unawaited(_server.closeConnection(_fd));
+        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+        return;
+      }
+      _buffers.setLength(bufferId, result);
+      _callbacks.notifyData(bufferId);
+      return;
+    }
+    _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
+    if (!active && pending == 0) closer.complete();
+  }
 }
 
 abstract class TransportServerCloser {
@@ -26,7 +69,7 @@ abstract class TransportServerCloser {
 
 class TransportServer implements TransportServerCloser {
   final _closer = Completer();
-  final _connections = <int, _TransportConnectionState>{};
+  final _connections = <int, TransportServerInternalConnection>{};
 
   final TransportChannel? _datagramChannel;
   final Pointer<transport_server_t> pointer;
@@ -67,13 +110,6 @@ class TransportServer implements TransportServerCloser {
   void accept(void Function(TransportServerConnection connection) onAccept) {
     if (_closing) throw TransportClosedException.forServer();
     _acceptor = onAccept;
-    _callbacks.setAccept(pointer.ref.fd, _handleAccept);
-    _bindings.transport_worker_accept(_workerPointer, pointer);
-    _pending++;
-  }
-
-  @pragma(preferInlinePragma)
-  void reaccept() {
     _bindings.transport_worker_accept(_workerPointer, pointer);
     _pending++;
   }
@@ -239,21 +275,47 @@ class TransportServer implements TransportServerCloser {
     return completer.future.then(_handleManyWrite, onError: _handleManyError);
   }
 
-  @pragma(preferInlinePragma)
-  bool notify() {
+  void notifyDatagram(int bufferId, int result, int event) {
     _pending--;
-    if (_active) return true;
+    if (_active) {
+      if (result < 0) {
+        if (result == -ECANCELED) {
+          _callbacks.notifyDataError(bufferId, TransportCanceledException(event: TransportEvent.ofEvent(event), bufferId: bufferId));
+          return;
+        }
+        _callbacks.notifyDataError(
+          bufferId,
+          TransportInternalException(
+            event: TransportEvent.ofEvent(event),
+            code: result,
+            message: result.kernelErrorToString(_bindings),
+            bufferId: bufferId,
+          ),
+        );
+        return;
+      }
+      if (result == 0) {
+        _callbacks.notifyDataError(bufferId, TransportZeroDataException(event: TransportEvent.ofEvent(event)));
+        return;
+      }
+      _buffers.setLength(bufferId, result);
+      _callbacks.notifyData(bufferId);
+      return;
+    }
+    _callbacks.notifyDataError(bufferId, TransportClosedException.forServer());
     if (_pending == 0 && _connections.isEmpty) _closer.complete();
-    return false;
   }
 
   @pragma(preferInlinePragma)
-  bool notifyConnection(int fd) {
-    final connection = _connections[fd]!;
-    connection.pending--;
-    if (_active && connection.active) return true;
-    if (!connection.active && connection.pending == 0) connection.closer.complete();
-    return false;
+  void notifyAccept(int fd) {
+    if (fd > 0) {
+      final connection = TransportServerInternalConnection(this, _callbacks, _buffers, _bindings, fd);
+      _registry.addConnection(fd, connection);
+      _connections[fd] = connection;
+      _acceptor(TransportServerConnection(this, TransportChannel(_workerPointer, fd, _bindings, _buffers)));
+    }
+    _bindings.transport_worker_accept(_workerPointer, pointer);
+    _pending++;
   }
 
   @pragma(preferInlinePragma)
@@ -283,12 +345,6 @@ class TransportServer implements TransportServerCloser {
     if (connection.pending > 0) await connection.closer.future;
     _registry.removeConnection(fd);
     _connections.remove(fd);
-  }
-
-  @pragma(preferInlinePragma)
-  void _handleAccept(TransportChannel channel) {
-    _connections[channel.fd] = _TransportConnectionState();
-    _acceptor(TransportServerConnection(this, channel));
   }
 
   @pragma(preferInlinePragma)

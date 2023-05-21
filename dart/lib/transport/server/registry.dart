@@ -18,7 +18,7 @@ import 'package:meta/meta.dart';
 
 class TransportServerRegistry {
   final _servers = <int, TransportServer>{};
-  final _serverConnections = <int, TransportServer>{};
+  final _serverConnections = <int, TransportServerInternalConnection>{};
 
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
@@ -245,10 +245,10 @@ class TransportServerRegistry {
   TransportServer? getByServer(int fd) => _servers[fd];
 
   @pragma(preferInlinePragma)
-  TransportServer? getByConnection(int fd) => _serverConnections[fd];
+  TransportServerInternalConnection? getConnection(int fd) => _serverConnections[fd];
 
   @pragma(preferInlinePragma)
-  void addConnection(int serverFd, int connectionFd) => _serverConnections[connectionFd] = _servers[serverFd]!;
+  void addConnection(int connectionFd, TransportServerInternalConnection connection) => _serverConnections[connectionFd] = connection;
 
   @pragma(preferInlinePragma)
   void removeConnection(int fd) => _serverConnections.remove(fd);
@@ -427,5 +427,5 @@ class TransportServerRegistry {
   Map<int, TransportServer> get servers => _servers;
 
   @visibleForTesting
-  Map<int, TransportServer> get serverConnections => _serverConnections;
+  Map<int, TransportServerInternalConnection> get serverConnections => _serverConnections;
 }
