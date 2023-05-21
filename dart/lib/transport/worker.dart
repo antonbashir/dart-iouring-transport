@@ -186,6 +186,7 @@ class TransportWorker {
           continue;
         }
         _handleClientData(event, bufferId, result, fd);
+        continue;
       }
       if (event & transportEventFile != 0) {
         _handleFile(event = event & ~transportEventFile, bufferId, result, fd);
