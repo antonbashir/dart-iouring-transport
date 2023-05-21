@@ -15,21 +15,6 @@
 #include "transport_server.h"
 #include "small/include/small/rlist.h"
 
-void transport_initialize(transport_t *transport,
-                          transport_worker_configuration_t *inbound_worker_configuration,
-                          transport_worker_configuration_t *outbound_worker_configuration)
-{
-  transport->inbound_worker_configuration = inbound_worker_configuration;
-  transport->outbound_worker_configuration = outbound_worker_configuration;
-}
-
-void transport_destroy(transport_t *transport)
-{
-  free(transport->inbound_worker_configuration);
-  free(transport->outbound_worker_configuration);
-  free(transport);
-}
-
 void transport_notify_idle(int64_t deadline)
 {
   Dart_NotifyIdle(deadline);

@@ -1,26 +1,15 @@
 import 'package:retry/retry.dart';
 
-class TransportConfiguration {
-  final int workerIsolates;
-
-  TransportConfiguration({
-    required this.workerIsolates,
-  });
-
-  TransportConfiguration copyWith({
-    int? workerInsolates,
-  }) =>
-      TransportConfiguration(
-        workerIsolates: workerInsolates ?? this.workerIsolates,
-      );
-}
-
 class TransportWorkerConfiguration {
   final int buffersCount;
   final int bufferSize;
   final int ringSize;
   final int ringFlags;
   final Duration timeoutCheckerPeriod;
+  final double randomizationFactor;
+  final Duration delayFactor;
+  final Duration maxDelay;
+  final Duration maxActiveTime;
 
   TransportWorkerConfiguration({
     required this.buffersCount,
@@ -28,6 +17,10 @@ class TransportWorkerConfiguration {
     required this.ringSize,
     required this.ringFlags,
     required this.timeoutCheckerPeriod,
+    required this.randomizationFactor,
+    required this.delayFactor,
+    required this.maxDelay,
+    required this.maxActiveTime,
   });
 
   TransportWorkerConfiguration copyWith({
@@ -36,6 +29,10 @@ class TransportWorkerConfiguration {
     int? ringSize,
     int? ringFlags,
     Duration? timeoutCheckerPeriod,
+    double? randomizationFactor,
+    Duration? delayFactor,
+    Duration? maxDelay,
+    Duration? maxActiveTime,
   }) =>
       TransportWorkerConfiguration(
         buffersCount: buffersCount ?? this.buffersCount,
@@ -43,6 +40,10 @@ class TransportWorkerConfiguration {
         ringSize: ringSize ?? this.ringSize,
         ringFlags: ringFlags ?? this.ringFlags,
         timeoutCheckerPeriod: timeoutCheckerPeriod ?? this.timeoutCheckerPeriod,
+        randomizationFactor: randomizationFactor ?? this.randomizationFactor,
+        delayFactor: delayFactor ?? this.delayFactor,
+        maxDelay: maxDelay ?? this.maxDelay,
+        maxActiveTime: maxActiveTime ?? this.maxActiveTime,
       );
 }
 

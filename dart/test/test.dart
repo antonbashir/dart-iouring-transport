@@ -135,7 +135,7 @@ void testInitialization({
   test("[listeners = $listeners, workers = $workers]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
@@ -154,7 +154,7 @@ void testCustom(int index, int workers) {
   test("callback", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound(),
+      TransportDefaults.worker(),
       TransportDefaults.outbound(),
     );
     final done = ReceivePort();
@@ -178,7 +178,7 @@ void testDomain() {
   test("[domain]", () async {
     final transport = Transport(
       TransportDefaults.transport(),
-      TransportDefaults.inbound(),
+      TransportDefaults.worker(),
       TransportDefaults.outbound(),
     );
     final done = ReceivePort();

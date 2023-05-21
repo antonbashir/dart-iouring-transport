@@ -19,7 +19,7 @@ void testFileSingle({
   test("(single) [index = $index, workers = $workers]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
@@ -52,7 +52,7 @@ void testFileLoad({
   test("(load) [index = $index, workers = $workers]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();

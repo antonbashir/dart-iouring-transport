@@ -18054,31 +18054,6 @@ class TransportBindings {
   late final _Dart_PrepareToAbort =
       _Dart_PrepareToAbortPtr.asFunction<void Function()>();
 
-  void transport_initialize(
-    ffi.Pointer<transport_t> transport,
-    ffi.Pointer<transport_worker_configuration_t> inbound_worker_configuration,
-    ffi.Pointer<transport_worker_configuration_t> outbound_worker_configuration,
-  ) {
-    return _transport_initialize(
-      transport,
-      inbound_worker_configuration,
-      outbound_worker_configuration,
-    );
-  }
-
-  late final _transport_initializePtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_t>,
-                  ffi.Pointer<transport_worker_configuration_t>,
-                  ffi.Pointer<transport_worker_configuration_t>)>>(
-      'transport_initialize');
-  late final _transport_initialize = _transport_initializePtr.asFunction<
-      void Function(
-          ffi.Pointer<transport_t>,
-          ffi.Pointer<transport_worker_configuration_t>,
-          ffi.Pointer<transport_worker_configuration_t>)>();
-
   ffi.Pointer<ffi.Pointer<io_uring_cqe>> transport_allocate_cqes(
     int cqe_count,
   ) {
@@ -18110,20 +18085,6 @@ class TransportBindings {
               ffi.Pointer<io_uring>, ffi.Int)>>('transport_cqe_advance');
   late final _transport_cqe_advance = _transport_cqe_advancePtr
       .asFunction<void Function(ffi.Pointer<io_uring>, int)>();
-
-  void transport_destroy(
-    ffi.Pointer<transport_t> transport,
-  ) {
-    return _transport_destroy(
-      transport,
-    );
-  }
-
-  late final _transport_destroyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>(
-          'transport_destroy');
-  late final _transport_destroy = _transport_destroyPtr
-      .asFunction<void Function(ffi.Pointer<transport_t>)>();
 
   void transport_close_descritor(
     int fd,
@@ -22061,20 +22022,11 @@ class _SymbolAddresses {
       get Dart_PrepareToAbort => _library._Dart_PrepareToAbortPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_t>,
-                  ffi.Pointer<transport_worker_configuration_t>,
-                  ffi.Pointer<transport_worker_configuration_t>)>>
-      get transport_initialize => _library._transport_initializePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
               ffi.Pointer<ffi.Pointer<io_uring_cqe>> Function(ffi.Uint32)>>
       get transport_allocate_cqes => _library._transport_allocate_cqesPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.Void Function(ffi.Pointer<io_uring>, ffi.Int)>>
       get transport_cqe_advance => _library._transport_cqe_advancePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<transport_t>)>>
-      get transport_destroy => _library._transport_destroyPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>
@@ -23996,6 +23948,18 @@ class transport_worker_configuration extends ffi.Struct {
 
   @ffi.Uint64()
   external int timeout_checker_period_millis;
+
+  @ffi.Uint32()
+  external int delay_factor;
+
+  @ffi.Double()
+  external double randomization_factor;
+
+  @ffi.Uint64()
+  external int max_delay;
+
+  @ffi.Uint64()
+  external int max_active_time;
 }
 
 class transport_worker extends ffi.Struct {
@@ -24017,11 +23981,29 @@ class transport_worker extends ffi.Struct {
   @ffi.Uint64()
   external int timeout_checker_period_millis;
 
+  @ffi.Uint32()
+  external int delay_factor;
+
+  @ffi.Double()
+  external double randomization_factor;
+
+  @ffi.Uint64()
+  external int max_delay;
+
+  @ffi.Uint64()
+  external int max_active_time;
+
   external ffi.Pointer<msghdr> inet_used_messages;
 
   external ffi.Pointer<msghdr> unix_used_messages;
 
   external ffi.Pointer<mh_events_t> events;
+
+  @ffi.Size()
+  external int ring_size;
+
+  @ffi.Int()
+  external int ring_flags;
 }
 
 typedef transport_worker_t = transport_worker;
@@ -24696,16 +24678,6 @@ typedef Dart_CreateLoadingUnitCallback = ffi.Pointer<
             ffi.Pointer<ffi.Pointer<ffi.Void>>)>>;
 typedef Dart_StreamingCloseCallback
     = ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>;
-
-class transport extends ffi.Struct {
-  external ffi.Pointer<transport_worker_configuration_t>
-      inbound_worker_configuration;
-
-  external ffi.Pointer<transport_worker_configuration_t>
-      outbound_worker_configuration;
-}
-
-typedef transport_t = transport;
 
 const int MSG_OOB = 1;
 

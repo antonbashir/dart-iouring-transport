@@ -7,24 +7,16 @@ import 'server/configuration.dart';
 class TransportDefaults {
   TransportDefaults._();
 
-  static TransportConfiguration transport() => TransportConfiguration(
-        workerIsolates: 2,
-      );
-
-  static TransportWorkerConfiguration inbound() => TransportWorkerConfiguration(
+  static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 16384,
         ringFlags: ringSetupSqpoll,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
-      );
-
-  static TransportWorkerConfiguration outbound() => TransportWorkerConfiguration(
-        buffersCount: 4096,
-        bufferSize: 4096,
-        ringSize: 16384,
-        ringFlags: ringSetupSqpoll,
-        timeoutCheckerPeriod: Duration(milliseconds: 500),
+        delayFactor: Duration(microseconds: 1),
+        maxActiveTime: Duration(seconds: 30),
+        maxDelay: Duration(seconds: 1),
+        randomizationFactor: 0.25,
       );
 
   static TransportTcpClientConfiguration tcpClient() => TransportTcpClientConfiguration(

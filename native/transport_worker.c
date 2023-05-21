@@ -7,6 +7,11 @@ int transport_worker_initialize(transport_worker_t *worker,
                                 uint8_t id)
 {
   worker->id = id;
+  worker->ring_size = configuration->ring_size;
+  worker->randomization_factor = configuration->randomization_factor;
+  worker->delay_factor = configuration->delay_factor;
+  worker->max_active_time = configuration->max_active_time;
+  worker->max_delay = configuration->max_delay;
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;

@@ -22,7 +22,7 @@ void testUdpSingle({
   test("(single) [index = $index, workers = $workers, clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
@@ -63,7 +63,7 @@ void testUdpMany({
   test("(many) [index = $index, workers = $workers, clients = $clients, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();

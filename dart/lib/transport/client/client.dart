@@ -59,7 +59,7 @@ class TransportClient {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
     Completer<int>? completer = Completer<int>();
-    _callbacks.setOutbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
@@ -72,7 +72,7 @@ class TransportClient {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
     Completer<int>? completer = Completer<int>();
-    _callbacks.setOutbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
@@ -87,7 +87,7 @@ class TransportClient {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setOutbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       _channel.write(
         bytes[index],
         bufferIds[index],
@@ -97,8 +97,8 @@ class TransportClient {
       );
     }
     final completer = Completer<int>();
-    _callbacks.setOutbound(lastBufferId, completer);
-    _links.setOutbound(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
     _channel.write(
       bytes.last,
       lastBufferId,
@@ -115,7 +115,7 @@ class TransportClient {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
     final completer = Completer<int>();
-    _callbacks.setOutbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
@@ -129,7 +129,7 @@ class TransportClient {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setOutbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       _channel.receiveMessage(
         bufferId,
         _pointer.ref.family,
@@ -140,8 +140,8 @@ class TransportClient {
       );
     }
     final completer = Completer<int>();
-    _callbacks.setOutbound(lastBufferId, completer);
-    _links.setOutbound(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
     _channel.receiveMessage(
       lastBufferId,
       _pointer.ref.family,
@@ -159,7 +159,7 @@ class TransportClient {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
     final completer = Completer<int>();
-    _callbacks.setOutbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     _channel.sendMessage(
       bytes,
       bufferId,
@@ -181,7 +181,7 @@ class TransportClient {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setOutbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       _channel.sendMessage(
         bytes[index],
         bufferId,
@@ -194,8 +194,8 @@ class TransportClient {
       );
     }
     final completer = Completer<int>();
-    _links.setOutbound(lastBufferId, lastBufferId);
-    _callbacks.setOutbound(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
     _channel.sendMessage(
       bytes.last,
       lastBufferId,
@@ -246,13 +246,13 @@ class TransportClient {
   TransportPayload _handleSingleRead(int bufferId) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId));
 
   @pragma(preferInlinePragma)
-  List<TransportPayload> _handleManyReceive(int lastBufferId) => _links.selectOutbound(lastBufferId).map((bufferId) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId))).toList();
+  List<TransportPayload> _handleManyReceive(int lastBufferId) => _links.select(lastBufferId).map((bufferId) => _payloadPool.getPayload(bufferId, _buffers.read(bufferId))).toList();
 
   @pragma(preferInlinePragma)
   void _handleSingleWrite(int bufferId) => _buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
-  void _handleManyWrite(int lastBufferId) => _buffers.releaseArray(_links.selectOutbound(lastBufferId).toList());
+  void _handleManyWrite(int lastBufferId) => _buffers.releaseArray(_links.select(lastBufferId).toList());
 
   @pragma(preferInlinePragma)
   void _handleSingleError(error) {
@@ -265,7 +265,7 @@ class TransportClient {
   @pragma(preferInlinePragma)
   void _handleManyError(error) {
     if (error is TransportExecutionException && error.bufferId != null) {
-      _buffers.releaseArray(_links.selectOutbound(error.bufferId!).toList());
+      _buffers.releaseArray(_links.select(error.bufferId!).toList());
     }
     throw error;
   }

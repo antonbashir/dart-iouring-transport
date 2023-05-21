@@ -22,7 +22,7 @@ void testUnixStreamSingle({
   test("(single) [index = $index, workers = $workers, clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
@@ -65,7 +65,7 @@ void testUnixStreamMany({
   test("(many) [index = $index, workers = $workers, clients = $clientsPool, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
@@ -124,7 +124,7 @@ void testUnixDgramSingle({
   test("(single) [index = $index, workers = $workers, clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();
@@ -167,7 +167,7 @@ void testUnixDgramMany({
   test("(many) [index = $index, workers = $workers, clients = $clients, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.inbound().copyWith(ringFlags: workerFlags),
+      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
       TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
     );
     final done = ReceivePort();

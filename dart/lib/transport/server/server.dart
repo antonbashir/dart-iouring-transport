@@ -84,7 +84,7 @@ class TransportServer implements TransportServerCloser {
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
     Completer<int>? completer = Completer<int>();
-    _callbacks.setInbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
@@ -99,7 +99,7 @@ class TransportServer implements TransportServerCloser {
     final connection = _connections[channel.fd];
     if (connection == null || connection.closing) throw TransportClosedException.forServer();
     Completer<int>? completer = Completer<int>();
-    _callbacks.setInbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
@@ -116,7 +116,7 @@ class TransportServer implements TransportServerCloser {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setInbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       channel.write(
         bytes[index],
         bufferId,
@@ -126,8 +126,8 @@ class TransportServer implements TransportServerCloser {
       );
     }
     final completer = Completer<int>();
-    _links.setInbound(lastBufferId, lastBufferId);
-    _callbacks.setInbound(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
     channel.write(
       bytes.last,
       lastBufferId,
@@ -144,7 +144,7 @@ class TransportServer implements TransportServerCloser {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
-    _callbacks.setInbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     _datagramChannel!.receiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
@@ -158,7 +158,7 @@ class TransportServer implements TransportServerCloser {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setInbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       _datagramChannel!.receiveMessage(
         bufferId,
         pointer.ref.family,
@@ -169,8 +169,8 @@ class TransportServer implements TransportServerCloser {
       );
     }
     final completer = Completer<int>();
-    _links.setInbound(lastBufferId, lastBufferId);
-    _callbacks.setInbound(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
     _datagramChannel!.receiveMessage(
       lastBufferId,
       pointer.ref.family,
@@ -188,7 +188,7 @@ class TransportServer implements TransportServerCloser {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
     final completer = Completer<int>();
-    _callbacks.setInbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     channel.sendMessage(
       bytes,
       bufferId,
@@ -210,7 +210,7 @@ class TransportServer implements TransportServerCloser {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setInbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       channel.sendMessage(
         bytes[index],
         bufferId,
@@ -223,8 +223,8 @@ class TransportServer implements TransportServerCloser {
       );
     }
     final completer = Completer<int>();
-    _links.setInbound(lastBufferId, lastBufferId);
-    _callbacks.setInbound(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
     channel.sendMessage(
       bytes.last,
       lastBufferId,
@@ -305,7 +305,7 @@ class TransportServer implements TransportServerCloser {
 
   @pragma(preferInlinePragma)
   List<TransportDatagramResponder> _handleManyReceive(int lastBufferId) => _links
-      .selectInbound(lastBufferId)
+      .select(lastBufferId)
       .map((bufferId) => _payloadPool.getDatagramResponder(
             bufferId,
             _buffers.read(bufferId),
@@ -319,7 +319,7 @@ class TransportServer implements TransportServerCloser {
   void _handleSingleWrite(int bufferId) => _buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
-  void _handleManyWrite(int lastBufferId) => _buffers.releaseArray(_links.selectInbound(lastBufferId).toList());
+  void _handleManyWrite(int lastBufferId) => _buffers.releaseArray(_links.select(lastBufferId).toList());
 
   @pragma(preferInlinePragma)
   void _handleSingleError(error) {
@@ -332,7 +332,7 @@ class TransportServer implements TransportServerCloser {
   @pragma(preferInlinePragma)
   void _handleManyError(error) {
     if (error is TransportExecutionException && error.bufferId != null) {
-      _buffers.releaseArray(_links.selectInbound(error.bufferId!).toList());
+      _buffers.releaseArray(_links.select(error.bufferId!).toList());
     }
     throw error;
   }

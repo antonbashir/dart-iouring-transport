@@ -20,6 +20,10 @@ extern "C"
     size_t ring_size;
     int ring_flags;
     uint64_t timeout_checker_period_millis;
+    uint32_t delay_factor;
+    double randomization_factor;
+    uint64_t max_delay;
+    uint64_t max_active_time;
   } transport_worker_configuration_t;
 
   typedef struct transport_worker
@@ -31,9 +35,15 @@ extern "C"
     uint32_t buffer_size;
     uint16_t buffers_count;
     uint64_t timeout_checker_period_millis;
+    uint32_t delay_factor;
+    double randomization_factor;
+    uint64_t max_delay;
+    uint64_t max_active_time;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
     struct mh_events_t *events;
+    size_t ring_size;
+    int ring_flags;
   } transport_worker_t;
 
   int transport_worker_initialize(transport_worker_t *worker,

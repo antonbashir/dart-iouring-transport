@@ -13,7 +13,7 @@ void testShutdown({
   required Duration gracefulDuration,
 }) {
   test("[gracefulDuration = ${gracefulDuration.inSeconds}]", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -49,7 +49,7 @@ void testShutdown({
       await fileCompleter.future;
       await clientCompleter.future;
 
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
       if (worker.servers.registry.serverConnections.isNotEmpty) throw TestFailure("serverConnections isNotEmpty");
       if (worker.servers.registry.servers.isNotEmpty) throw TestFailure("servers isNotEmpty");

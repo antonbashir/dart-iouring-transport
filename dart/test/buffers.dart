@@ -13,7 +13,7 @@ import 'validators.dart';
 
 void testTcpBuffers() {
   test("(tcp)", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -25,7 +25,7 @@ void testTcpBuffers() {
       await clients.select().read().then((value) => value.release());
       await serverCompleter.future;
 
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
 
       await server.close();
@@ -41,7 +41,7 @@ void testTcpBuffers() {
       await clients.select().read().then((value) => value.release());
       await serverCompleter.future;
 
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
 
       await server.close();
@@ -61,7 +61,7 @@ void testTcpBuffers() {
 
 void testUdpBuffers() {
   test("(udp)", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -78,7 +78,7 @@ void testUdpBuffers() {
       await clients.receiveSingleMessage().then((value) => value.release());
       await serverCompleter.future;
 
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
 
       await server.close();
@@ -99,7 +99,7 @@ void testUdpBuffers() {
       await clients.receiveManyMessages(8).then((value) => value.forEach((element) => element.release()));
       await serverCompleter.future;
 
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
 
       await server.close();
@@ -119,7 +119,7 @@ void testUdpBuffers() {
 
 void testFileBuffers() {
   test("(file)", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);
@@ -131,7 +131,7 @@ void testFileBuffers() {
       await fileProvider.writeSingle(Generators.request());
       await fileProvider.readSingle().then((value) => value.release());
 
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
 
       await fileProvider.close();
@@ -144,7 +144,7 @@ void testFileBuffers() {
       await fileProvider.writeMany(Generators.requestsUnordered(8));
       await fileProvider.load(blocksCount: 8);
 
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
 
       await fileProvider.close();
@@ -165,7 +165,7 @@ void testBuffersOverflow() {
   test("(overflow)", () async {
     final transport = Transport(
       TransportDefaults.transport(),
-      TransportDefaults.inbound().copyWith(buffersCount: 1),
+      TransportDefaults.worker().copyWith(buffersCount: 1),
       TransportDefaults.outbound().copyWith(buffersCount: 1),
     );
     final done = ReceivePort();
@@ -197,7 +197,7 @@ void testBuffersOverflow() {
       });
       await completer.future;
       Validators.responsesUnorderedSum(bytes.takeBytes(), 6);
-      if (worker.inboundBuffers.used() != 0) throw TestFailure("actual: ${worker.inboundBuffers.used()}");
+      if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");
 
       worker.transmitter!.send(null);

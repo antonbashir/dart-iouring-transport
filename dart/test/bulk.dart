@@ -12,7 +12,7 @@ import 'validators.dart';
 
 void testBulk() {
   test("bulk", () async {
-    final transport = Transport(TransportDefaults.transport(), TransportDefaults.inbound(), TransportDefaults.outbound());
+    final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();
     transport.run(transmitter: done.sendPort, (input) async {
       final worker = TransportWorker(input);

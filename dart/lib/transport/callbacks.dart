@@ -8,17 +8,12 @@ class TransportCallbacks {
   final _connect = <int, Completer<TransportClient>>{};
   final _accept = <int, void Function(TransportChannel channel)>{};
   final _custom = <int, Completer<int>>{};
-  final _inboundBuffers = <Completer<int>>[];
-  final _outboundBuffers = <Completer<int>>[];
+  final _buffers = <Completer<int>>[];
   final _stub = Completer<int>();
 
-  TransportCallbacks(int inboundBuffersCount, int outboundBuffersCount) {
-    for (var index = 0; index < inboundBuffersCount; index++) {
-      _inboundBuffers.add(_stub);
-    }
-
-    for (var index = 0; index < outboundBuffersCount; index++) {
-      _outboundBuffers.add(_stub);
+  TransportCallbacks(int buffersCount) {
+    for (var index = 0; index < buffersCount; index++) {
+      _buffers.add(_stub);
     }
   }
 
@@ -29,10 +24,10 @@ class TransportCallbacks {
   void setAccept(int fd, void Function(TransportChannel channel) onAccept) => _accept[fd] = onAccept;
 
   @pragma(preferInlinePragma)
-  void setOutbound(int bufferId, Completer<int> completer) => _outboundBuffers[bufferId] = completer;
+  void setOutbound(int bufferId, Completer<int> completer) => _buffers[bufferId] = completer;
 
   @pragma(preferInlinePragma)
-  void setInbound(int bufferId, Completer<int> completer) => _inboundBuffers[bufferId] = completer;
+  void setData(int bufferId, Completer<int> completer) => _buffers[bufferId] = completer;
 
   @pragma(preferInlinePragma)
   void setCustom(int id, Completer<int> completer) => _custom[id] = completer;
@@ -44,15 +39,15 @@ class TransportCallbacks {
   void notifyAccept(int fd, TransportChannel channel) => _accept[fd]!(channel);
 
   @pragma(preferInlinePragma)
-  void notifyInbound(int bufferId) {
-    final callback = _inboundBuffers[bufferId];
+  void notifyData(int bufferId) {
+    final callback = _buffers[bufferId];
     callback.complete(bufferId);
-    _inboundBuffers[bufferId] = _stub;
+    _buffers[bufferId] = _stub;
   }
 
   @pragma(preferInlinePragma)
-  void notifyInboundError(int bufferId, Exception error) {
-    final callback = _inboundBuffers[bufferId];
+  void notifyDataError(int bufferId, Exception error) {
+    final callback = _buffers[bufferId];
     if (!callback.isCompleted) callback.completeError(error);
   }
 
@@ -61,19 +56,6 @@ class TransportCallbacks {
 
   @pragma(preferInlinePragma)
   void notifyConnectError(int fd, Exception error) => _connect.remove(fd)!.completeError(error);
-
-  @pragma(preferInlinePragma)
-  void notifyOutbound(int bufferId) {
-    final callback = _outboundBuffers[bufferId];
-    callback.complete(bufferId);
-    _outboundBuffers[bufferId] = _stub;
-  }
-
-  @pragma(preferInlinePragma)
-  void notifyOutboundError(int bufferId, Exception error) {
-    final callback = _outboundBuffers[bufferId];
-    if (!callback.isCompleted) callback.completeError(error);
-  }
 
   @pragma(preferInlinePragma)
   void removeCustom(int id) => _custom.remove(id);

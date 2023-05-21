@@ -50,7 +50,7 @@ class TransportFile {
     Completer<int>? completer = Completer<int>();
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
-    _callbacks.setOutbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future.then(_handleSingleRead, onError: _handleSingleError).whenComplete(() => completer = null);
@@ -60,7 +60,7 @@ class TransportFile {
     final completer = Completer<int>();
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
-    _callbacks.setOutbound(bufferId, completer);
+    _callbacks.setData(bufferId, completer);
     _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     if (submit) _bindings.transport_worker_submit(_workerPointer);
     await completer.future.then(_handleSingleWrite, onError: _handleSingleError);
@@ -72,7 +72,7 @@ class TransportFile {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setOutbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       _channel.read(
         bufferId,
         transportTimeoutInfinity,
@@ -83,8 +83,8 @@ class TransportFile {
       offset += buffers.bufferSize;
     }
     final completer = Completer<int>();
-    _links.setOutbound(lastBufferId, lastBufferId);
-    _callbacks.setOutbound(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
     _channel.read(
       lastBufferId,
       transportTimeoutInfinity,
@@ -101,7 +101,7 @@ class TransportFile {
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
-      _links.setOutbound(bufferId, lastBufferId);
+      _links.set(bufferId, lastBufferId);
       _channel.write(
         bytes[index],
         bufferId,
@@ -113,8 +113,8 @@ class TransportFile {
       offset += buffers.bufferSize;
     }
     final completer = Completer<int>();
-    _links.setOutbound(lastBufferId, lastBufferId);
-    _callbacks.setOutbound(lastBufferId, completer);
+    _links.set(lastBufferId, lastBufferId);
+    _callbacks.setData(lastBufferId, completer);
     _channel.write(
       bytes.last,
       lastBufferId,
@@ -151,7 +151,7 @@ class TransportFile {
   @pragma(preferInlinePragma)
   Uint8List _handleManyRead(int lastBufferId) {
     final bytes = BytesBuilder();
-    for (var bufferId in _links.selectOutbound(lastBufferId)) {
+    for (var bufferId in _links.select(lastBufferId)) {
       final payload = buffers.read(bufferId);
       if (payload.isEmpty) break;
       bytes.add(payload);
@@ -164,7 +164,7 @@ class TransportFile {
   void _handleSingleWrite(int bufferId) => buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
-  void _handleManyWrite(int lastBufferId) => buffers.releaseArray(_links.selectOutbound(lastBufferId).toList());
+  void _handleManyWrite(int lastBufferId) => buffers.releaseArray(_links.select(lastBufferId).toList());
 
   @pragma(preferInlinePragma)
   void _handleSingleError(error) {
@@ -177,7 +177,7 @@ class TransportFile {
   @pragma(preferInlinePragma)
   void _handleManyError(error) {
     if (error is TransportExecutionException && error.bufferId != null) {
-      buffers.releaseArray(_links.selectOutbound(error.bufferId!).toList());
+      buffers.releaseArray(_links.select(error.bufferId!).toList());
     }
     throw error;
   }
