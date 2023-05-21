@@ -299,19 +299,14 @@ void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
   io_uring_submit(worker->ring);
 }
 
-int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, transport_worker_t* worker)
+int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, transport_worker_t *worker)
 {
-  int count = io_uring_peek_batch_cqe(worker->ring, &cqes[0], cqe_count);
   struct __kernel_timespec timeout = {
       .tv_nsec = worker->cqe_timeout_nanos,
       .tv_sec = 0,
   };
-  if (unlikely(!count))
-  {
-    io_uring_wait_cqes(worker->ring, &cqes[0], cqe_count, &timeout, 0);
-    return io_uring_peek_batch_cqe(worker->ring, &cqes[0], cqe_count);
-  }
-  return count;
+  io_uring_submit_and_wait_timeout(worker->ring, &cqes[0], cqe_count, &timeout, 0);
+  return io_uring_peek_batch_cqe(worker->ring, &cqes[0], cqe_count);
 }
 
 void transport_worker_check_event_timeouts(transport_worker_t *worker)
