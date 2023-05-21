@@ -64,7 +64,7 @@ class TransportClient {
     _callbacks.setData(bufferId, completer);
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
+    //if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future.then(_handleSingleRead, onError: _handleSingleError);
   }
 
@@ -75,7 +75,7 @@ class TransportClient {
     _callbacks.setData(bufferId, completer);
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
-    if (submit) _bindings.transport_worker_submit(_workerPointer);
+    //if (submit) _bindings.transport_worker_submit(_workerPointer);
     return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
   }
 

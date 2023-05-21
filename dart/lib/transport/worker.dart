@@ -146,6 +146,7 @@ class TransportWorker {
     final regularDelayDuration = Duration(microseconds: delayFactor);
     while (true) {
       attempt++;
+      submit();
       if (_handleCqes()) {
         attempt = 0;
         if (Timeline.now - delayTimestamp > maxActiveTime) {
