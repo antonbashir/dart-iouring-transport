@@ -124,9 +124,7 @@ class TransportServer implements TransportServerCloser {
     channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    final result = await completer.future.then(_handleSingleRead, onError: _handleSingleError);
-    completer = null;
-    return result;
+    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
   }
 
   Future<void> writeSingle(TransportChannel channel, Uint8List bytes, {bool submit = true}) async {
@@ -139,9 +137,7 @@ class TransportServer implements TransportServerCloser {
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     connection.pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    final result = await completer.future.then(_handleSingleWrite, onError: _handleSingleError);
-    completer = null;
-    return result;
+    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
   }
 
   Future<void> writeMany(TransportChannel channel, List<Uint8List> bytes, {bool submit = true}) async {

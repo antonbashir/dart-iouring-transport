@@ -65,9 +65,7 @@ class TransportClient {
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    final result = await completer.future.then(_handleSingleRead, onError: _handleSingleError);
-    completer = null;
-    return result;
+    return completer.future.then(_handleSingleRead, onError: _handleSingleError);
   }
 
   Future<void> writeSingle(Uint8List bytes, {bool submit = true}) async {
@@ -78,9 +76,7 @@ class TransportClient {
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
     if (submit) _bindings.transport_worker_submit(_workerPointer);
-    final result = await completer.future.then(_handleSingleWrite, onError: _handleSingleError);
-    completer = null;
-    return result;
+    return completer.future.then(_handleSingleWrite, onError: _handleSingleError);
   }
 
   Future<void> writeMany(List<Uint8List> bytes, {bool submit = true}) async {
@@ -219,9 +215,7 @@ class TransportClient {
     _callbacks.setConnect(_pointer.ref.fd, completer);
     _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
     _pending++;
-    final client = await completer.future;
-    completer = null;
-    return client;
+    return completer.future;
   }
 
   void notifyData(int bufferId, int result, int event) {

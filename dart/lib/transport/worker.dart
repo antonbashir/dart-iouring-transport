@@ -13,7 +13,6 @@ import 'callbacks.dart';
 import 'client/factory.dart';
 import 'client/registry.dart';
 import 'constants.dart';
-import 'exception.dart';
 import 'file/factory.dart';
 import 'file/registry.dart';
 import 'links.dart';
