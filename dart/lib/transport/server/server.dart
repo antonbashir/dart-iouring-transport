@@ -29,6 +29,7 @@ class TransportServerInternalConnection {
 
   TransportServerInternalConnection(this._server, this._callbacks, this._buffers, this._bindings, this._fd);
 
+  @pragma(preferInlinePragma)
   void notify(int bufferId, int result, int event) {
     pending--;
     if (active && _server.active) {

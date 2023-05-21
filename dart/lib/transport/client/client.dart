@@ -218,6 +218,7 @@ class TransportClient {
     return completer.future;
   }
 
+  @pragma(preferInlinePragma)
   void notifyData(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
@@ -251,7 +252,7 @@ class TransportClient {
   void notifyConnect(int fd, int result) {
     _pending--;
     if (_active) {
-      if (result > 0) {
+      if (result == 0) {
         _callbacks.notifyConnect(fd, this);
         return;
       }
