@@ -1,12 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
-import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
-import 'package:iouring_transport/transport/payload.dart';
-import 'package:iouring_transport/transport/server/connection.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
 
@@ -18,36 +14,24 @@ Future<void> main(List<String> args) async {
 
 Future<void> _benchTcp() async {
   final transport = Transport();
-
-  final isolates = 1;
-  final port = ReceivePort();
-
-  for (var i = 0; i < isolates; i++) {
-    Isolate.spawn((List<SendPort> input) async {
-      final encoder = Utf8Encoder();
-      final fromServer = encoder.convert("from server\n");
-      final worker = TransportWorker(input[1]);
-      await worker.initialize();
-      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.listen((payload, connection) => connection.writeSingle(fromServer).then((value) => payload.release())));
-      final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 512));
-      var count = 0;
-      final time = Stopwatch();
-      time.start();
-      while (true) {
-        final futures = <Future>[];
-        for (var client in connector.clients) {
-          futures.add(client.writeSingle(fromServer).then((client) => client.read().then((value) => value.release())));
-        }
-        count += (await Future.wait(futures)).length;
-        if (time.elapsed.inSeconds >= 10) break;
-      }
-      input[0].send(count);
-    }, [port.sendPort, transport.worker(TransportDefaults.worker().copyWith(ringFlags: ringSetupSqpoll))]);
+  final encoder = Utf8Encoder();
+  final fromServer = encoder.convert("from server\n");
+  final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
+  await worker.initialize();
+  worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.listen((payload, connection) => connection.writeSingle(fromServer).then((value) => payload.release())));
+  final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 1024));
+  var count = 0;
+  final time = Stopwatch();
+  time.start();
+  while (true) {
+    final futures = <Future>[];
+    for (var client in connector.clients) {
+      futures.add(client.writeSingle(fromServer).then((client) => client.read().then((value) => value.release())));
+    }
+    count += (await Future.wait(futures)).length;
+    if (time.elapsed.inSeconds >= 10) break;
   }
-
-  final count = await port.take(isolates).reduce((previous, element) => previous + element);
   print("RPS: ${count / 10}");
-  port.close();
   await transport.shutdown();
 }
 

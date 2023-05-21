@@ -10,6 +10,7 @@ class TransportWorkerConfiguration {
   final Duration delayFactor;
   final Duration maxDelay;
   final Duration maxActiveTime;
+  final Duration cqeWaitTimeout;
 
   TransportWorkerConfiguration({
     required this.buffersCount,
@@ -21,6 +22,7 @@ class TransportWorkerConfiguration {
     required this.delayFactor,
     required this.maxDelay,
     required this.maxActiveTime,
+    required this.cqeWaitTimeout,
   });
 
   TransportWorkerConfiguration copyWith({
@@ -33,6 +35,7 @@ class TransportWorkerConfiguration {
     Duration? delayFactor,
     Duration? maxDelay,
     Duration? maxActiveTime,
+    Duration? cqeWaitTimeout,
   }) =>
       TransportWorkerConfiguration(
         buffersCount: buffersCount ?? this.buffersCount,
@@ -44,6 +47,7 @@ class TransportWorkerConfiguration {
         delayFactor: delayFactor ?? this.delayFactor,
         maxDelay: maxDelay ?? this.maxDelay,
         maxActiveTime: maxActiveTime ?? this.maxActiveTime,
+        cqeWaitTimeout: cqeWaitTimeout ?? this.cqeWaitTimeout,
       );
 }
 

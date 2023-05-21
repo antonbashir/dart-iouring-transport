@@ -11,12 +11,13 @@ class TransportDefaults {
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 16384,
-        ringFlags: ringSetupSqpoll,
+        ringFlags: 0,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
         delayFactor: Duration(microseconds: 1),
         maxActiveTime: Duration(seconds: 30),
         maxDelay: Duration(seconds: 1),
         randomizationFactor: 0.25,
+        cqeWaitTimeout: Duration(microseconds: 1),
       );
 
   static TransportTcpClientConfiguration tcpClient() => TransportTcpClientConfiguration(

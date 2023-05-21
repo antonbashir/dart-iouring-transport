@@ -177,7 +177,7 @@ class TransportWorker {
   }
 
   bool _handleCqes() {
-    final cqeCount = _bindings.transport_worker_peek(_ringSize, _cqes, _ring);
+    final cqeCount = _bindings.transport_worker_peek(_ringSize, _cqes, _workerPointer);
     if (cqeCount <= 0) return false;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _cqes[cqeIndex];

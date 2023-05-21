@@ -24,6 +24,7 @@ extern "C"
     double randomization_factor;
     uint64_t max_delay;
     uint64_t max_active_time;
+    uint64_t cqe_timeout_nanos;
   } transport_worker_configuration_t;
 
   typedef struct transport_worker
@@ -39,6 +40,7 @@ extern "C"
     double randomization_factor;
     uint64_t max_delay;
     uint64_t max_active_time;
+    uint64_t cqe_timeout_nanos;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
     struct mh_events_t *events;
@@ -98,7 +100,7 @@ extern "C"
 
   struct sockaddr *transport_worker_get_datagram_address(transport_worker_t *worker, transport_socket_family_t socket_family, int buffer_id);
 
-  int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring);
+  int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, transport_worker_t* worker);
 
   void transport_worker_destroy(transport_worker_t *worker);
 

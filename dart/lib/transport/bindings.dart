@@ -12149,22 +12149,22 @@ class TransportBindings {
   int transport_worker_peek(
     int cqe_count,
     ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes,
-    ffi.Pointer<io_uring> ring,
+    ffi.Pointer<transport_worker_t> worker,
   ) {
     return _transport_worker_peek(
       cqe_count,
       cqes,
-      ring,
+      worker,
     );
   }
 
   late final _transport_worker_peekPtr = _lookup<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>>('transport_worker_peek');
+              ffi.Pointer<transport_worker_t>)>>('transport_worker_peek');
   late final _transport_worker_peek = _transport_worker_peekPtr.asFunction<
       int Function(int, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-          ffi.Pointer<io_uring>)>(isLeaf: true);
+          ffi.Pointer<transport_worker_t>)>(isLeaf: true);
 
   void transport_worker_destroy(
     ffi.Pointer<transport_worker_t> worker,
@@ -21113,7 +21113,7 @@ class _SymbolAddresses {
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(ffi.Uint32, ffi.Pointer<ffi.Pointer<io_uring_cqe>>,
-              ffi.Pointer<io_uring>)>> get transport_worker_peek =>
+              ffi.Pointer<transport_worker_t>)>> get transport_worker_peek =>
       _library._transport_worker_peekPtr;
   ffi.Pointer<
           ffi.NativeFunction<
@@ -23960,6 +23960,9 @@ class transport_worker_configuration extends ffi.Struct {
 
   @ffi.Uint64()
   external int max_active_time;
+
+  @ffi.Uint64()
+  external int cqe_timeout_nanos;
 }
 
 class transport_worker extends ffi.Struct {
@@ -23992,6 +23995,9 @@ class transport_worker extends ffi.Struct {
 
   @ffi.Uint64()
   external int max_active_time;
+
+  @ffi.Uint64()
+  external int cqe_timeout_nanos;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 

@@ -47,6 +47,7 @@ class Transport {
       nativeConfiguration.ref.randomization_factor = configuration.randomizationFactor;
       nativeConfiguration.ref.max_active_time = configuration.maxActiveTime.inMicroseconds;
       nativeConfiguration.ref.max_delay = configuration.maxDelay.inMicroseconds;
+      nativeConfiguration.ref.cqe_timeout_nanos = configuration.cqeWaitTimeout.inMilliseconds * 1000;
       final result = _bindings.transport_worker_initialize(workerPointer, nativeConfiguration, _workerClosers.length);
       if (result < 0) {
         _bindings.transport_worker_destroy(workerPointer);

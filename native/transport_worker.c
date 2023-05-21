@@ -15,6 +15,7 @@ int transport_worker_initialize(transport_worker_t *worker,
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;
+  worker->cqe_timeout_nanos = configuration->cqe_timeout_nanos;
 
   worker->buffers = malloc(sizeof(struct iovec) * configuration->buffers_count);
   if (!worker->buffers)
@@ -298,17 +299,17 @@ void transport_worker_cancel_by_fd(transport_worker_t *worker, int fd)
   io_uring_submit(worker->ring);
 }
 
-int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, struct io_uring *ring)
+int transport_worker_peek(uint32_t cqe_count, struct io_uring_cqe **cqes, transport_worker_t* worker)
 {
-  int count = io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+  int count = io_uring_peek_batch_cqe(worker->ring, &cqes[0], cqe_count);
   struct __kernel_timespec timeout = {
-      .tv_nsec = 1000,
+      .tv_nsec = worker->cqe_timeout_nanos,
       .tv_sec = 0,
   };
-  if (!count)
+  if (unlikely(!count))
   {
-    io_uring_wait_cqes(ring, &cqes[0], cqe_count, &timeout, 0);
-    return io_uring_peek_batch_cqe(ring, &cqes[0], cqe_count);
+    io_uring_wait_cqes(worker->ring, &cqes[0], cqe_count, &timeout, 0);
+    return io_uring_peek_batch_cqe(worker->ring, &cqes[0], cqe_count);
   }
   return count;
 }
