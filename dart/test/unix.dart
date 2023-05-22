@@ -11,14 +11,8 @@ import 'package:test/test.dart';
 import 'generators.dart';
 import 'validators.dart';
 
-void testUnixStreamSingle({
-  required int index,
-  required int workers,
-  required int clientsPool,
-  required int listenerFlags,
-  required int workerFlags,
-}) {
-  test("(single) [index = $index, workers = $workers, clients = $clientsPool]", () async {
+void testUnixStreamSingle({required int index, required int clientsPool}) {
+  test("(single) [clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
@@ -52,15 +46,8 @@ void testUnixStreamSingle({
   });
 }
 
-void testUnixStreamMany({
-  required int index,
-  required int workers,
-  required int clientsPool,
-  required int listenerFlags,
-  required int workerFlags,
-  required int count,
-}) {
-  test("(many) [index = $index, workers = $workers, clients = $clientsPool, count = $count]", () async {
+void testUnixStreamMany({required int index, required int clientsPool, required int count}) {
+  test("(many) [clients = $clientsPool, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
@@ -111,14 +98,8 @@ void testUnixStreamMany({
   });
 }
 
-void testUnixDgramSingle({
-  required int index,
-  required int workers,
-  required int clients,
-  required int listenerFlags,
-  required int workerFlags,
-}) {
-  test("(single) [index = $index, workers = $workers, clients = $clients]", () async {
+void testUnixDgramSingle({required int index, required int clients}) {
+  test("(single) [clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
@@ -152,15 +133,8 @@ void testUnixDgramSingle({
   });
 }
 
-void testUnixDgramMany({
-  required int index,
-  required int workers,
-  required int clients,
-  required int listenerFlags,
-  required int workerFlags,
-  required int count,
-}) {
-  test("(many) [index = $index, workers = $workers, clients = $clients, count = $count]", () async {
+void testUnixDgramMany({required int index, required int clients, required int count}) {
+  test("(many) [clients = $clients, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),

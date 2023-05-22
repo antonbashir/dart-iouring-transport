@@ -11,14 +11,8 @@ import 'package:test/test.dart';
 import 'generators.dart';
 import 'validators.dart';
 
-void testTcpSingle({
-  required int index,
-  required int workers,
-  required int clientsPool,
-  required int listenerFlags,
-  required int workerFlags,
-}) {
-  test("(single) [index = $index, workers = $workers, clients = $clientsPool]", () async {
+void testTcpSingle({required int index, required int clientsPool}) {
+  test("(single) [clients = $clientsPool]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
@@ -51,15 +45,8 @@ void testTcpSingle({
   });
 }
 
-void testTcpMany({
-  required int index,
-  required int workers,
-  required int clientsPool,
-  required int listenerFlags,
-  required int workerFlags,
-  required int count,
-}) {
-  test("(many) [index = $index, workers = $workers, clients = $clientsPool, count = $count]", () async {
+void testTcpMany({required int index, required int clientsPool, required int count}) {
+  test("(many) [clients = $clientsPool, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),

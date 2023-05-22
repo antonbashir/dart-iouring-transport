@@ -15,11 +15,7 @@ Function _handleTimeout(Stopwatch actual, Duration expected, Completer completer
       return null;
     };
 
-void testTcpTimeoutSingle({
-  required Duration connection,
-  required Duration serverRead,
-  required Duration clientRead,
-}) {
+void testTcpTimeoutSingle({required Duration connection, required Duration serverRead, required Duration clientRead}) {
   test("(timeout tcp single) [connection = ${connection.inSeconds}, serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
     final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();
@@ -68,10 +64,7 @@ void testTcpTimeoutSingle({
   });
 }
 
-void testUdpTimeoutSingle({
-  required Duration serverRead,
-  required Duration clientRead,
-}) {
+void testUdpTimeoutSingle({required Duration serverRead, required Duration clientRead}) {
   test("(timeout udp single) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
     final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();
@@ -106,11 +99,7 @@ void testUdpTimeoutSingle({
   });
 }
 
-void testUdpTimeoutMany({
-  required Duration serverRead,
-  required Duration clientRead,
-  required int count,
-}) {
+void testUdpTimeoutMany({required Duration serverRead, required Duration clientRead, required int count}) {
   test("(udp many) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
     final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();

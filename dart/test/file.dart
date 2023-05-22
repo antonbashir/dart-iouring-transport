@@ -11,11 +11,8 @@ import 'validators.dart';
 
 void testFileSingle({
   required int index,
-  required int workers,
-  required int listenerFlags,
-  required int workerFlags,
 }) {
-  test("(single) [index = $index, workers = $workers]", () async {
+  test("(single) [index = $index]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
@@ -42,12 +39,9 @@ void testFileSingle({
 
 void testFileLoad({
   required int index,
-  required int workers,
-  required int listenerFlags,
-  required int workerFlags,
   required int count,
 }) {
-  test("(load) [index = $index, workers = $workers]", () async {
+  test("(load) [index = $index]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),

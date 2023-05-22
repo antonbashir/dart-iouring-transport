@@ -9,9 +9,7 @@ import 'package:test/test.dart';
 
 import 'generators.dart';
 
-void testShutdown({
-  required Duration gracefulDuration,
-}) {
+void testShutdown({required Duration gracefulDuration}) {
   test("[gracefulDuration = ${gracefulDuration.inSeconds}]", () async {
     final transport = Transport(TransportDefaults.transport(), TransportDefaults.worker(), TransportDefaults.outbound());
     final done = ReceivePort();

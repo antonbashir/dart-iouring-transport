@@ -11,14 +11,8 @@ import 'package:test/test.dart';
 import 'generators.dart';
 import 'validators.dart';
 
-void testUdpSingle({
-  required int index,
-  required int workers,
-  required int clients,
-  required int listenerFlags,
-  required int workerFlags,
-}) {
-  test("(single) [index = $index, workers = $workers, clients = $clients]", () async {
+void testUdpSingle({required int index, required int clients}) {
+  test("(single) [clients = $clients]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
@@ -50,15 +44,8 @@ void testUdpSingle({
   });
 }
 
-void testUdpMany({
-  required int index,
-  required int workers,
-  required int clients,
-  required int listenerFlags,
-  required int workerFlags,
-  required int count,
-}) {
-  test("(many) [index = $index, workers = $workers, clients = $clients, count = $count]", () async {
+void testUdpMany({required int index, required int clients, required int count}) {
+  test("(many) [clients = $clients, count = $count]", () async {
     final transport = Transport(
       TransportDefaults.transport().copyWith(workerInsolates: workers),
       TransportDefaults.worker().copyWith(ringFlags: workerFlags),
