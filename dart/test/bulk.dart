@@ -32,10 +32,10 @@ void testBulk() {
       final workerFile3 = worker.files.open(file3.path, create: true);
 
       final futures = [
-        workerFile1.writeSingle(Generators.request(), submit: false),
-        workerFile2.writeSingle(Generators.request(), submit: false),
-        workerFile3.writeSingle(Generators.request(), submit: false),
-        worker.clients.tcp(InternetAddress("127.0.0.1"), 12345).then((value) => value.select().writeSingle(Generators.request(), submit: false)),
+        workerFile1.writeSingle(Generators.request()),
+        workerFile2.writeSingle(Generators.request()),
+        workerFile3.writeSingle(Generators.request()),
+        worker.clients.tcp(InternetAddress("127.0.0.1"), 12345).then((value) => value.select().writeSingle(Generators.request())),
       ];
       worker.submit(inbound: false, outbound: true);
       await serverCompleter.future.then((value) => Validators.request(value));

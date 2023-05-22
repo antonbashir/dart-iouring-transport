@@ -54,11 +54,11 @@ class TransportClosedException implements Exception {
 
   TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer({TransportPayload? payload}) => TransportClosedException._("Server closed");
+  factory TransportClosedException.forServer({TransportPayload? payload}) => TransportClosedException._("Server closed\n${StackTrace.current}");
 
-  factory TransportClosedException.forClient({TransportPayload? payload}) => TransportClosedException._("Client closed");
+  factory TransportClosedException.forClient({TransportPayload? payload}) => TransportClosedException._("Client closed\n${StackTrace.current}");
 
-  factory TransportClosedException.forFile({TransportPayload? payload}) => TransportClosedException._("File closed");
+  factory TransportClosedException.forFile({TransportPayload? payload}) => TransportClosedException._("File closed\n${StackTrace.current}");
 
   @override
   String toString() => message;

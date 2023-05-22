@@ -142,7 +142,7 @@ void testFileBuffers() {
 
       fileProvider = worker.files.open(file.path, create: true);
       await fileProvider.writeMany(Generators.requestsUnordered(8));
-      await fileProvider.load(blocksCount: 8);
+      await fileProvider.read(blocksCount: 8);
 
       if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
       if (worker.outboundBuffers.used() != 0) throw TestFailure("actual: ${worker.outboundBuffers.used()}");

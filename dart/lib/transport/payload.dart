@@ -75,17 +75,17 @@ class TransportPayload {
 
 class TransportDatagramResponder {
   final int _bufferId;
-  late Pointer<sockaddr> _destination;
   final TransportPayloadPool _pool;
+
+  late Pointer<sockaddr> _destination;
   late Uint8List _bytes;
   late TransportServerChannel _server;
   late TransportChannel _channel;
 
   Uint8List get receivedBytes => _bytes;
+  bool get active => _server.active;
 
   TransportDatagramResponder(this._bufferId, this._pool);
-
-  bool get active => !_server.closing;
 
   @pragma(preferInlinePragma)
   Future<void> respondSingleMessage(Uint8List bytes, {int? flags}) => _server.respondSingleMessage(

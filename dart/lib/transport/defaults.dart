@@ -14,7 +14,7 @@ class TransportDefaults {
         ringFlags: 0,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
         baseDelay: Duration(microseconds: 10),
-        maxDelay: Duration(seconds: 1),
+        maxDelay: Duration(seconds: 5),
         delayRandomizationFactor: 0.25,
         cqePeekCount: 1024,
         cqeWaitCount: 1,

@@ -12,7 +12,7 @@ class TransportFile {
 
   const TransportFile(this._file, this.delegate);
 
-  bool get active => !_file.closing;
+  bool get active => _file.active;
 
   @pragma(preferInlinePragma)
   Future<void> writeSingle(Uint8List bytes, {int offset = 0}) => _file.writeSingle(bytes, offset: offset);
@@ -21,7 +21,7 @@ class TransportFile {
   Future<void> writeMany(List<Uint8List> bytes, {int offset = 0}) => _file.writeMany(bytes, offset: offset);
 
   @pragma(preferInlinePragma)
-  Future<Uint8List> load({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
+  Future<Uint8List> read({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
         final bytes = BytesBuilder();
         final completer = Completer<Uint8List>();
         if (blocksCount == 1) {

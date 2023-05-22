@@ -19,7 +19,7 @@ Future<void> _benchTcp() async {
   final encoder = Utf8Encoder();
   final fromServer = encoder.convert("from server\n");
 
-  for (var i = 0; i < 2; i++) {
+  for (var i = 0; i < 1; i++) {
     Isolate.spawn((SendPort message) async {
       final worker = TransportWorker(message);
       await worker.initialize();
@@ -28,7 +28,7 @@ Future<void> _benchTcp() async {
   }
   await Future.delayed(Duration(seconds: 1));
 
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 1; i++) {
     Isolate.spawn((SendPort message) async {
       final worker = TransportWorker(message);
       await worker.initialize();
@@ -44,12 +44,12 @@ Future<void> _benchTcp() async {
         });
         client.writeSingle(fromServer);
       }
-      await Future.delayed(Duration(days: 10));
+      await Future.delayed(Duration(seconds: 10));
       print("RPS: ${count / 10}");
     }, transport.worker(TransportDefaults.worker()));
   }
 
-  await Future.delayed(Duration(days: 15));
+  await Future.delayed(Duration(seconds: 15));
   await transport.shutdown();
 }
 

@@ -30,13 +30,14 @@ class TransportClientChannel {
 
   late final Pointer<sockaddr> _destination;
 
+  var _pending = 0;
   var _active = true;
-  bool get active => _active;
   var _closing = false;
-  bool get closing => _closing;
   final _closer = Completer();
 
-  var _pending = 0;
+  bool get active => !_closing;
+  Stream<TransportPayload> get inbound => _inboundEvents.stream;
+  Stream<void> get outbound => _outboundEvents.stream;
 
   TransportClientChannel(
     this._channel,
@@ -52,9 +53,6 @@ class TransportClientChannel {
   }) : _connectTimeout = connectTimeout {
     _destination = _bindings.transport_client_get_destination_address(_pointer);
   }
-
-  Stream<TransportPayload> get inbound => _inboundEvents.stream;
-  Stream<void> get outbound => _outboundEvents.stream;
 
   Future<void> read() async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
@@ -230,12 +228,6 @@ class TransportClientChannel {
       return;
     }
     _buffers.release(bufferId);
-    if (event == transportEventRead || event == transportEventReceiveMessage) {
-      _inboundEvents.addError(TransportClosedException.forClient());
-      if (_pending == 0) _closer.complete();
-      return;
-    }
-    _outboundEvents.addError(TransportClosedException.forClient());
     if (_pending == 0) _closer.complete();
   }
 
@@ -243,11 +235,11 @@ class TransportClientChannel {
     if (_closing) return;
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
-    await _inboundEvents.close();
-    await _outboundEvents.close();
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
     if (_pending > 0) await _closer.future;
+    if (_inboundEvents.hasListener) await _inboundEvents.close();
+    if (_outboundEvents.hasListener) await _outboundEvents.close();
     _channel.close();
     _registry.remove(_pointer.ref.fd);
     _bindings.transport_client_destroy(_pointer);

@@ -11,6 +11,7 @@ import 'lookup.dart';
 
 class Transport {
   final _workerClosers = <SendPort>[];
+  final _workerPorts = <RawReceivePort>[];
   final _workerDestroyer = ReceivePort();
 
   late final String? _libraryPath;
@@ -26,10 +27,12 @@ class Transport {
   Future<void> shutdown({Duration? gracefulDuration}) async {
     _workerClosers.forEach((worker) => worker.send(gracefulDuration));
     await _workerDestroyer.take(_workerClosers.length).toList();
+    _workerDestroyer.close();
+    _workerPorts.forEach((port) => port.close());
   }
 
   SendPort worker(TransportWorkerConfiguration configuration) {
-    final port = RawReceivePort((ports) {
+    final port = RawReceivePort((ports) async {
       SendPort toWorker = ports[0];
       _workerClosers.add(ports[1]);
       final workerPointer = calloc<transport_worker_t>();
@@ -43,7 +46,7 @@ class Transport {
       nativeConfiguration.ref.buffers_count = configuration.buffersCount;
       nativeConfiguration.ref.timeout_checker_period_millis = configuration.timeoutCheckerPeriod.inMilliseconds;
       nativeConfiguration.ref.base_delay_micros = configuration.baseDelay.inMicroseconds;
-      nativeConfiguration.ref.base_delay_micros = configuration.maxDelay.inMicroseconds;
+      nativeConfiguration.ref.max_delay_micros = configuration.maxDelay.inMicroseconds;
       nativeConfiguration.ref.delay_randomization_factor = configuration.delayRandomizationFactor;
       nativeConfiguration.ref.cqe_peek_count = configuration.cqePeekCount;
       nativeConfiguration.ref.cqe_wait_count = configuration.cqeWaitCount;
@@ -56,6 +59,7 @@ class Transport {
       final workerInput = [_libraryPath, workerPointer.address, _workerDestroyer.sendPort];
       toWorker.send(workerInput);
     });
+    _workerPorts.add(port);
     return port.sendPort;
   }
 }

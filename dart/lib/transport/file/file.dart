@@ -24,13 +24,14 @@ class TransportFileChannel {
   final TransportPayloadPool _payloadPool;
   final TransportFileRegistry _registry;
 
+  var _pending = 0;
   var _active = true;
-  bool get active => _active;
   var _closing = false;
-  bool get closing => _closing;
   final _closer = Completer();
 
-  var _pending = 0;
+  bool get active => !_closing;
+  Stream<TransportPayload> get inbound => _inboundEvents.stream;
+  Stream<void> get outbound => _outboundEvents.stream;
 
   TransportFileChannel(
     this.path,
@@ -42,9 +43,6 @@ class TransportFileChannel {
     this._payloadPool,
     this._registry,
   );
-
-  Stream<TransportPayload> get inbound => _inboundEvents.stream;
-  Stream<void> get outbound => _outboundEvents.stream;
 
   Future<void> readSingle({int offset = 0}) async {
     final bufferId = buffers.get() ?? await buffers.allocate();
@@ -136,12 +134,6 @@ class TransportFileChannel {
       return;
     }
     buffers.release(bufferId);
-    if (event == transportEventRead || event == transportEventReceiveMessage) {
-      _inboundEvents.addError(TransportClosedException.forFile());
-      if (_pending == 0) _closer.complete();
-      return;
-    }
-    _outboundEvents.addError(TransportClosedException.forFile());
     if (_pending == 0) _closer.complete();
   }
 
@@ -149,11 +141,11 @@ class TransportFileChannel {
     if (_closing) return;
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
-    await _inboundEvents.close();
-    await _outboundEvents.close();
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
     if (_pending > 0) await _closer.future;
+    if (_inboundEvents.hasListener) await _inboundEvents.close();
+    if (_outboundEvents.hasListener) await _outboundEvents.close();
     _channel.close();
     _registry.remove(_fd);
   }

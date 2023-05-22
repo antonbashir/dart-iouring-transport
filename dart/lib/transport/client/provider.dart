@@ -11,17 +11,15 @@ class TransportClientConnection {
 
   const TransportClientConnection(this._client);
 
-  bool get active => !_client.closing;
-
+  bool get active => _client.active;
   Stream<TransportPayload> get inbound => _client.inbound;
-
   Stream<void> get outbound => _client.outbound;
 
   @pragma(preferInlinePragma)
   Stream<TransportPayload> read() {
     unawaited(_client.read());
     return _client.inbound.map((event) {
-      unawaited(_client.read());
+      if (_client.active) unawaited(_client.read());
       return event;
     });
   }
@@ -41,15 +39,15 @@ class TransportDatagramClient {
 
   const TransportDatagramClient(this._client);
 
+  bool get active => _client.active;
   Stream<TransportPayload> get inbound => _client.inbound;
-
   Stream<void> get outbound => _client.outbound;
 
   @pragma(preferInlinePragma)
   Stream<TransportPayload> receiveBySingle() {
     unawaited(_client.receiveSingleMessage());
     return _client.inbound.map((event) {
-      unawaited(_client.receiveSingleMessage());
+      if (_client.active) unawaited(_client.receiveSingleMessage());
       return event;
     });
   }
@@ -58,7 +56,7 @@ class TransportDatagramClient {
   Stream<TransportPayload> receiveByMany(int count) {
     unawaited(_client.receiveManyMessages(count));
     return _client.inbound.map((event) {
-      unawaited(_client.receiveManyMessages(count));
+      if (_client.active) unawaited(_client.receiveManyMessages(count));
       return event;
     });
   }

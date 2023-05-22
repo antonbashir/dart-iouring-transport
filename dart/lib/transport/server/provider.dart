@@ -16,7 +16,7 @@ class TransportServerConnection {
   Stream<TransportPayload> read() {
     unawaited(_connection.read());
     return _connection.inbound.map((event) {
-      unawaited(_connection.read());
+      if (_connection.active) unawaited(_connection.read());
       return event;
     });
   }
@@ -39,13 +39,13 @@ class TransportServerDatagramReceiver {
 
   const TransportServerDatagramReceiver(this._server);
 
-  bool get active => !_server.closing;
+  bool get active => _server.active;
 
   @pragma(preferInlinePragma)
   Stream<TransportDatagramResponder> receiveBySingle() {
     unawaited(_server.receiveSingleMessage());
     return _server.inbound.map((event) {
-      unawaited(_server.receiveSingleMessage());
+      if (_server.active) unawaited(_server.receiveSingleMessage());
       return event;
     });
   }
@@ -54,7 +54,7 @@ class TransportServerDatagramReceiver {
   Stream<TransportDatagramResponder> receiveByMany(int count) {
     unawaited(_server.receiveManyMessages(count));
     return _server.inbound.map((event) {
-      unawaited(_server.receiveManyMessages(count));
+      if (_server.active) unawaited(_server.receiveManyMessages(count));
       return event;
     });
   }

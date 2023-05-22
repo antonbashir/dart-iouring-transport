@@ -41,6 +41,7 @@ class TransportWorker {
   late final List<Duration> _delays;
 
   var _active = true;
+  final _done = Completer();
 
   bool get active => _active;
   int get id => _workerPointer.ref.id;
@@ -51,13 +52,13 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     _closer = RawReceivePort((gracefulDuration) async {
-      _active = false;
       _timeoutChecker.stop();
       await _filesRegistry.close(gracefulDuration: gracefulDuration);
       await _clientRegistry.close(gracefulDuration: gracefulDuration);
       await _serverRegistry.close(gracefulDuration: gracefulDuration);
+      _active = false;
+      await _done.future;
       _bindings.transport_worker_destroy(_workerPointer);
-      malloc.free(_cqes);
       _closer.close();
       _destroyer.send(null);
     });
@@ -131,8 +132,9 @@ class TransportWorker {
         await Future.delayed(regularDelayDuration);
         continue;
       }
-      await Future.delayed(_delays[attempt]);
+      await Future.delayed(_delays[min(attempt, 31)]);
     }
+    _done.complete();
   }
 
   bool _handleCqes() {
@@ -188,7 +190,7 @@ class TransportWorker {
     final maxDelay = _workerPointer.ref.max_delay_micros;
     final random = Random();
     final delays = <Duration>[];
-    for (var i = 1; i < 31; i++) {
+    for (var i = 0; i < 32; i++) {
       final randomization = (delayRandomizationFactor * (random.nextDouble() * 2 - 1) + 1);
       final exponent = min(i, 31);
       final delay = (baseDelay * pow(2.0, exponent) * randomization).toInt();
