@@ -123,7 +123,6 @@ class TransportRetryConfiguration {
   final Duration maxDelay;
   final int maxAttempts;
   final bool Function(Exception exception) predicate;
-  final void Function(Exception exception)? onRetry;
 
   late final RetryOptions options;
 
@@ -133,7 +132,6 @@ class TransportRetryConfiguration {
     required this.maxDelay,
     required this.maxAttempts,
     required this.predicate,
-    this.onRetry,
   }) {
     options = RetryOptions(
       delayFactor: delayFactor,
@@ -157,6 +155,5 @@ class TransportRetryConfiguration {
         maxDelay: maxDelay ?? this.maxDelay,
         maxAttempts: maxAttempts ?? this.maxAttempts,
         predicate: predicate ?? this.predicate,
-        onRetry: onRetry ?? this.onRetry,
       );
 }

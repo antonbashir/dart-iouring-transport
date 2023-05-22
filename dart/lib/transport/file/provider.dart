@@ -17,10 +17,10 @@ class TransportFile {
   bool get active => _file.active;
 
   @pragma(preferInlinePragma)
-  void writeSingle(Uint8List bytes, {int offset = 0}) => unawaited(_file.writeSingle(bytes, offset: offset));
+  void writeSingle(Uint8List bytes, {int offset = 0, void Function(Exception error)? onError}) => unawaited(_file.writeSingle(bytes, offset: offset, onError: onError));
 
   @pragma(preferInlinePragma)
-  void writeMany(List<Uint8List> bytes, {int offset = 0}) => unawaited(_file.writeMany(bytes, offset: offset));
+  void writeMany(List<Uint8List> bytes, {int offset = 0, void Function(Exception error)? onError}) => unawaited(_file.writeMany(bytes, offset: offset, onError: onError));
 
   @pragma(preferInlinePragma)
   Future<Uint8List> read({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {

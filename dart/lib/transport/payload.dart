@@ -89,22 +89,24 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  void respondSingleMessage(Uint8List bytes, {int? flags}) => unawaited(
+  void respondSingleMessage(Uint8List bytes, {int? flags, void Function(Exception error)? onError}) => unawaited(
         _server.respondSingleMessage(
           _channel,
           _destination,
           bytes,
           flags: flags,
+          onError: onError,
         ),
       );
 
   @pragma(preferInlinePragma)
-  void respondManyMessage(List<Uint8List> bytes, {int? flags}) => unawaited(
+  void respondManyMessage(List<Uint8List> bytes, {int? flags, void Function(Exception error)? onError}) => unawaited(
         _server.respondManyMessages(
           _channel,
           _destination,
           bytes,
           flags: flags,
+          onError: onError,
         ),
       );
 

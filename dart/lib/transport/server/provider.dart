@@ -23,10 +23,10 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  void writeSingle(Uint8List bytes) => unawaited(_connection.writeSingle(bytes));
+  void writeSingle(Uint8List bytes, {void Function(Exception error)? onError}) => unawaited(_connection.writeSingle(bytes, onError: onError));
 
   @pragma(preferInlinePragma)
-  void writeMany(List<Uint8List> bytes) => unawaited(_connection.writeMany(bytes));
+  void writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError}) => unawaited(_connection.writeMany(bytes, onError: onError));
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _connection.close(gracefulDuration: gracefulDuration);

@@ -24,10 +24,48 @@ class TransportClientConnection {
   }
 
   @pragma(preferInlinePragma)
-  void writeSingle(Uint8List bytes) => unawaited(_client.writeSingle(bytes));
+  void writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
+    if (retry == null) {
+      unawaited(_client.writeSingle(bytes, onError: onError));
+      return;
+    }
+    var attempt = 0;
+    void _onError(Exception error) {
+      if (!retry.predicate(error)) {
+        onError?.call(error);
+        return;
+      }
+      if (++attempt == retry.maxAttempts) {
+        onError?.call(error);
+        return;
+      }
+      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.writeSingle(bytes, onError: _onError)));
+    }
+
+    unawaited(_client.writeSingle(bytes, onError: _onError));
+  }
 
   @pragma(preferInlinePragma)
-  void writeMany(List<Uint8List> bytes) => unawaited(_client.writeMany(bytes));
+  void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
+    if (retry == null) {
+      unawaited(_client.writeMany(bytes, onError: onError));
+      return;
+    }
+    var attempt = 0;
+    void _onError(Exception error) {
+      if (!retry.predicate(error)) {
+        onError?.call(error);
+        return;
+      }
+      if (++attempt == retry.maxAttempts) {
+        onError?.call(error);
+        return;
+      }
+      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.writeMany(bytes, onError: _onError)));
+    }
+
+    unawaited(_client.writeMany(bytes, onError: _onError));
+  }
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
@@ -60,10 +98,48 @@ class TransportDatagramClient {
   }
 
   @pragma(preferInlinePragma)
-  void sendSingleMessage(Uint8List bytes, {TransportRetryConfiguration? retry, int? flags}) => unawaited(_client.sendSingleMessage(bytes, flags: flags));
+  void sendSingleMessage(Uint8List bytes, {TransportRetryConfiguration? retry, int? flags, void Function(Exception error)? onError}) {
+    if (retry == null) {
+      unawaited(_client.sendSingleMessage(bytes, onError: onError));
+      return;
+    }
+    var attempt = 0;
+    void _onError(Exception error) {
+      if (!retry.predicate(error)) {
+        onError?.call(error);
+        return;
+      }
+      if (++attempt == retry.maxAttempts) {
+        onError?.call(error);
+        return;
+      }
+      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.sendSingleMessage(bytes, onError: _onError)));
+    }
+
+    unawaited(_client.sendSingleMessage(bytes, onError: _onError));
+  }
 
   @pragma(preferInlinePragma)
-  void sendManyMessages(List<Uint8List> bytes, {TransportRetryConfiguration? retry, int? flags}) => unawaited(_client.sendManyMessages(bytes, flags: flags));
+  void sendManyMessages(List<Uint8List> bytes, {TransportRetryConfiguration? retry, int? flags, void Function(Exception error)? onError}) {
+    if (retry == null) {
+      unawaited(_client.sendManyMessages(bytes, onError: onError));
+      return;
+    }
+    var attempt = 0;
+    void _onError(Exception error) {
+      if (!retry.predicate(error)) {
+        onError?.call(error);
+        return;
+      }
+      if (++attempt == retry.maxAttempts) {
+        onError?.call(error);
+        return;
+      }
+      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.sendManyMessages(bytes, onError: _onError)));
+    }
+
+    unawaited(_client.sendManyMessages(bytes, onError: _onError));
+  }
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
