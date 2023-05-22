@@ -107,16 +107,16 @@ void main() {
   group("[custom]", timeout: Timeout(Duration(hours: 1)), () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
-      testCustom(1);
-      testCustom(2);
-      testCustom(4);
+      testCustom(index, 1);
+      testCustom(index, 2);
+      testCustom(index, 4);
     }
   });
   testDomain();
 }
 
 void testInitialization() {
-  test("initialize", () async {
+  test("(initialize)", () async {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
@@ -124,22 +124,22 @@ void testInitialization() {
   });
 }
 
-void testCustom(int index) {
-  test("callback", () async {
+void testCustom(int index, int result) {
+  test("(callback) [index=$index, result=$result]", () async {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     final completer = Completer<int>();
     await worker.initialize();
     final id = 1;
     worker.registerCallback(id, completer);
-    worker.notifyCustom(id, index);
-    expect(await completer.future, index);
+    worker.notifyCustom(id, result);
+    expect(await completer.future, result);
     await transport.shutdown();
   });
 }
 
 void testDomain() {
-  test("[domain]", () async {
+  test("(domain)", () async {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
