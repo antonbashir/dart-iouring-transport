@@ -6,7 +6,7 @@ import '../payload.dart';
 import 'server.dart';
 
 class TransportServerConnection {
-  final TransportServerInternalConnection _connection;
+  final TransportServerConnectionChannel _connection;
 
   const TransportServerConnection(this._connection);
 

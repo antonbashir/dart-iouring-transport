@@ -20,16 +20,16 @@ class TransportClientRegistry {
   final TransportBuffers _buffers;
   final TransportPayloadPool _payloadPool;
 
-  final _clients = <int, TransportClient>{};
+  final _clients = <int, TransportClientChannel>{};
 
   @visibleForTesting
-  Map<int, TransportClient> get clients => _clients;
+  Map<int, TransportClientChannel> get clients => _clients;
 
   TransportClientRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool);
 
   Future<TransportClientStreamPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     configuration = configuration ?? TransportDefaults.tcpClient();
-    final providers = <Future<TransportClientStreamProvider>>[];
+    final providers = <Future<TransportClientConnection>>[];
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = calloc<transport_client_t>();
       if (clientPointer == nullptr) {
@@ -47,12 +47,12 @@ class TransportClientRegistry {
         if (clientPointer.ref.fd > 0) {
           _bindings.transport_close_descritor(clientPointer.ref.fd);
           calloc.free(clientPointer);
-          throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+          throw TransportInitializationException("[client] code = $result, message = ${kernelErrorToString(result, _bindings)}");
         }
         calloc.free(clientPointer);
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
       }
-      final client = TransportClient(
+      final client = TransportClientChannel(
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -70,14 +70,14 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      providers.add(client.connect().then(TransportClientStreamProvider.new));
+      providers.add(client.connect().then(TransportClientConnection.new));
     }
     return TransportClientStreamPool(await Future.wait(providers));
   }
 
   Future<TransportClientStreamPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
     configuration = configuration ?? TransportDefaults.unixStreamClient();
-    final clients = <Future<TransportClientStreamProvider>>[];
+    final clients = <Future<TransportClientConnection>>[];
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = calloc<transport_client_t>();
       if (clientPointer == nullptr) {
@@ -94,12 +94,12 @@ class TransportClientRegistry {
         if (clientPointer.ref.fd > 0) {
           _bindings.transport_close_descritor(clientPointer.ref.fd);
           calloc.free(clientPointer);
-          throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+          throw TransportInitializationException("[client] code = $result, message = ${kernelErrorToString(result, _bindings)}");
         }
         calloc.free(clientPointer);
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
       }
-      final client = TransportClient(
+      final client = TransportClientChannel(
         TransportChannel(
           _workerPointer,
           clientPointer.ref.fd,
@@ -117,12 +117,12 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      clients.add(client.connect().then(TransportClientStreamProvider.new));
+      clients.add(client.connect().then(TransportClientConnection.new));
     }
     return TransportClientStreamPool(await Future.wait(clients));
   }
 
-  TransportClientDatagramProvider createUdp(
+  TransportDatagramClient createUdp(
     String sourceHost,
     int sourcePort,
     String destinationHost,
@@ -147,7 +147,7 @@ class TransportClientRegistry {
         if (pointer.ref.fd > 0) {
           _bindings.transport_close_descritor(pointer.ref.fd);
           calloc.free(pointer);
-          throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+          throw TransportInitializationException("[client] code = $result, message = ${kernelErrorToString(result, _bindings)}");
         }
         calloc.free(pointer);
         throw TransportInitializationException("[client] unable to set socket option: ${-result}");
@@ -190,7 +190,7 @@ class TransportClientRegistry {
       }
       return pointer;
     });
-    final client = TransportClient(
+    final client = TransportClientChannel(
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
@@ -207,10 +207,10 @@ class TransportClientRegistry {
       _payloadPool,
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportClientDatagramProvider(client);
+    return TransportDatagramClient(client);
   }
 
-  TransportClientDatagramProvider createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
+  TransportDatagramClient createUnixDatagram(String sourcePath, String destinationPath, {TransportUnixDatagramClientConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramClient();
     final clientPointer = calloc<transport_client_t>();
     if (clientPointer == nullptr) {
@@ -228,12 +228,12 @@ class TransportClientRegistry {
       if (clientPointer.ref.fd > 0) {
         _bindings.transport_close_descritor(clientPointer.ref.fd);
         calloc.free(clientPointer);
-        throw TransportInitializationException("[client] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+        throw TransportInitializationException("[client] code = $result, message = ${kernelErrorToString(result, _bindings)}");
       }
       calloc.free(clientPointer);
       throw TransportInitializationException("[client] unable to set socket option: ${-result}");
     }
-    final client = TransportClient(
+    final client = TransportClientChannel(
       TransportChannel(
         _workerPointer,
         clientPointer.ref.fd,
@@ -250,11 +250,11 @@ class TransportClientRegistry {
       _payloadPool,
     );
     _clients[clientPointer.ref.fd] = client;
-    return TransportClientDatagramProvider(client);
+    return TransportDatagramClient(client);
   }
 
   @pragma(preferInlinePragma)
-  TransportClient? get(int fd) => _clients[fd];
+  TransportClientChannel? get(int fd) => _clients[fd];
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.values.toList().map((client) => client.close(gracefulDuration: gracefulDuration)));

@@ -11,7 +11,7 @@ import 'package:meta/meta.dart';
 class TransportClientsFactory {
   final TransportClientRegistry _registry;
 
-  TransportClientsFactory(this._registry);
+  const TransportClientsFactory(this._registry);
 
   Future<TransportClientStreamPool> tcp(
     InternetAddress address,
@@ -20,7 +20,7 @@ class TransportClientsFactory {
   }) =>
       _registry.createTcp(address.address, port, configuration: configuration);
 
-  TransportClientDatagramProvider udp(
+  TransportDatagramClient udp(
     InternetAddress sourceAddress,
     int sourcePort,
     InternetAddress destinationAddress,
@@ -41,7 +41,7 @@ class TransportClientsFactory {
   }) =>
       _registry.createUnixStream(path, configuration: configuration);
 
-  TransportClientDatagramProvider unixDatagram(
+  TransportDatagramClient unixDatagram(
     String sourcePath,
     String destinationPath, {
     TransportUnixDatagramClientConfiguration? configuration,

@@ -15,8 +15,8 @@ import 'server.dart';
 import 'package:meta/meta.dart';
 
 class TransportServerRegistry {
-  final _servers = <int, TransportServer>{};
-  final _serverConnections = <int, TransportServerInternalConnection>{};
+  final _servers = <int, TransportServerChannel>{};
+  final _serverConnections = <int, TransportServerConnectionChannel>{};
 
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
@@ -25,7 +25,7 @@ class TransportServerRegistry {
 
   TransportServerRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool);
 
-  TransportServer createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
+  TransportServerChannel createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
     final server = using(
       (Arena arena) {
@@ -43,12 +43,12 @@ class TransportServerRegistry {
           if (pointer.ref.fd > 0) {
             _bindings.transport_close_descritor(pointer.ref.fd);
             calloc.free(pointer);
-            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+            throw TransportInitializationException("[server] code = $result, message = ${kernelErrorToString(result, _bindings)}");
           }
           calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
         }
-        return TransportServer(
+        return TransportServerChannel(
           pointer,
           _workerPointer,
           _bindings,
@@ -65,7 +65,7 @@ class TransportServerRegistry {
     return server;
   }
 
-  TransportServer createUdp(String host, int port, {TransportUdpServerConfiguration? configuration}) {
+  TransportServerChannel createUdp(String host, int port, {TransportUdpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.udpServer();
     final server = using(
       (Arena arena) {
@@ -83,7 +83,7 @@ class TransportServerRegistry {
           if (pointer.ref.fd > 0) {
             _bindings.transport_close_descritor(pointer.ref.fd);
             calloc.free(pointer);
-            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+            throw TransportInitializationException("[server] code = $result, message = ${kernelErrorToString(result, _bindings)}");
           }
           calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
@@ -124,7 +124,7 @@ class TransportServerRegistry {
             ),
           );
         }
-        return TransportServer(
+        return TransportServerChannel(
           pointer,
           _workerPointer,
           _bindings,
@@ -146,7 +146,7 @@ class TransportServerRegistry {
     return server;
   }
 
-  TransportServer createUnixStream(String path, {TransportUnixStreamServerConfiguration? configuration}) {
+  TransportServerChannel createUnixStream(String path, {TransportUnixStreamServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixStreamServer();
     final server = using(
       (Arena arena) {
@@ -163,12 +163,12 @@ class TransportServerRegistry {
           if (pointer.ref.fd > 0) {
             _bindings.transport_close_descritor(pointer.ref.fd);
             calloc.free(pointer);
-            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+            throw TransportInitializationException("[server] code = $result, message = ${kernelErrorToString(result, _bindings)}");
           }
           calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
         }
-        return TransportServer(
+        return TransportServerChannel(
           pointer,
           _workerPointer,
           _bindings,
@@ -185,7 +185,7 @@ class TransportServerRegistry {
     return server;
   }
 
-  TransportServer createUnixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
+  TransportServerChannel createUnixDatagram(String path, {TransportUnixDatagramServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.unixDatagramServer();
     final server = using(
       (Arena arena) {
@@ -202,12 +202,12 @@ class TransportServerRegistry {
           if (pointer.ref.fd > 0) {
             _bindings.transport_close_descritor(pointer.ref.fd);
             calloc.free(pointer);
-            throw TransportInitializationException("[server] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+            throw TransportInitializationException("[server] code = $result, message = ${kernelErrorToString(result, _bindings)}");
           }
           calloc.free(pointer);
           throw TransportInitializationException("[server] unable to set socket option: ${-result}");
         }
-        return TransportServer(
+        return TransportServerChannel(
           pointer,
           _workerPointer,
           _bindings,
@@ -230,13 +230,13 @@ class TransportServerRegistry {
   }
 
   @pragma(preferInlinePragma)
-  TransportServer? getServer(int fd) => _servers[fd];
+  TransportServerChannel? getServer(int fd) => _servers[fd];
 
   @pragma(preferInlinePragma)
-  TransportServerInternalConnection? getConnection(int fd) => _serverConnections[fd];
+  TransportServerConnectionChannel? getConnection(int fd) => _serverConnections[fd];
 
   @pragma(preferInlinePragma)
-  void addConnection(int connectionFd, TransportServerInternalConnection connection) => _serverConnections[connectionFd] = connection;
+  void addConnection(int connectionFd, TransportServerConnectionChannel connection) => _serverConnections[connectionFd] = connection;
 
   @pragma(preferInlinePragma)
   void removeConnection(int fd) => _serverConnections.remove(fd);
@@ -412,8 +412,8 @@ class TransportServerRegistry {
   }
 
   @visibleForTesting
-  Map<int, TransportServer> get servers => _servers;
+  Map<int, TransportServerChannel> get servers => _servers;
 
   @visibleForTesting
-  Map<int, TransportServerInternalConnection> get serverConnections => _serverConnections;
+  Map<int, TransportServerConnectionChannel> get serverConnections => _serverConnections;
 }

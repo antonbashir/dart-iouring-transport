@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'connection.dart';
 import 'registry.dart';
-import '../extensions.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../channel.dart';
@@ -12,25 +11,29 @@ import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';
 
-class TransportServerInternalConnection {
+abstract class TransportServer {
+  Future<void> close({Duration? gracefulDuration});
+}
+
+class TransportServerConnectionChannel {
   final _closer = Completer();
   final StreamController<TransportPayload> _inboundEvents = StreamController();
   final StreamController<void> _outboundEvents = StreamController();
   final int _readTimeout;
   final int _writeTimeout;
   final TransportChannel channel;
+  final Pointer<transport_worker_t> _workerPointer;
+  final TransportBindings _bindings;
+  final TransportServerChannel _server;
+  final TransportBuffers _buffers;
+  final TransportPayloadPool _payloadPool;
+  final int _fd;
 
   var _active = true;
   var _closing = false;
   var _pending = 0;
 
-  final TransportBindings _bindings;
-  final TransportServer _server;
-  final TransportBuffers _buffers;
-  final TransportPayloadPool _payloadPool;
-  final int _fd;
-
-  TransportServerInternalConnection(
+  TransportServerConnectionChannel(
     this._server,
     this._buffers,
     this._bindings,
@@ -39,6 +42,7 @@ class TransportServerInternalConnection {
     this._readTimeout,
     this._writeTimeout,
     this.channel,
+    this._workerPointer,
   );
 
   Stream<TransportPayload> get inbound => _inboundEvents.stream;
@@ -85,13 +89,13 @@ class TransportServerInternalConnection {
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active && _server.active) {
-      if (event.isReadEvent()) {
+      if (event == transportEventRead || event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
           _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
           return;
         }
-        unawaited(_server.closeConnection(_fd));
+        unawaited(close());
         _buffers.release(bufferId);
         _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
         return;
@@ -100,7 +104,7 @@ class TransportServerInternalConnection {
         _buffers.release(bufferId);
         return;
       }
-      unawaited(_server.closeConnection(_fd));
+      unawaited(close());
       _outboundEvents.addError(createTransportException(
         TransportEvent.ofEvent(event),
         result,
@@ -110,22 +114,33 @@ class TransportServerInternalConnection {
       return;
     }
     _buffers.release(bufferId);
-    event.isReadEvent() ? _inboundEvents.addError(TransportClosedException.forServer()) : _outboundEvents.addError(TransportClosedException.forServer());
+    if (event == transportEventRead || event == transportEventReceiveMessage) {
+      _inboundEvents.addError(TransportClosedException.forServer());
+      if (!_active && _pending == 0) _closer.complete();
+      return;
+    }
+    _outboundEvents.addError(TransportClosedException.forServer());
     if (!_active && _pending == 0) _closer.complete();
   }
 
-  Future<void> close({Duration? gracefulDuration}) => _server.closeConnection(_fd, gracefulDuration: gracefulDuration);
+  Future<void> close({Duration? gracefulDuration}) async {
+    if (_closing) return;
+    _closing = false;
+    if (gracefulDuration != null) await Future.delayed(gracefulDuration);
+    await _inboundEvents.close();
+    await _outboundEvents.close();
+    _active = false;
+    _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
+    if (_pending > 0) await _closer.future;
+    _server._removeConnection(_fd);
+  }
 
   Future<void> closeServer({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
 }
 
-abstract class TransportServerCloser {
-  Future<void> close({Duration? gracefulDuration});
-}
-
-class TransportServer implements TransportServerCloser {
+class TransportServerChannel implements TransportServer {
   final _closer = Completer();
-  final _connections = <int, TransportServerInternalConnection>{};
+  final _connections = <int, TransportServerConnectionChannel>{};
   final StreamController<TransportPayload> _inboundEvents = StreamController();
   final StreamController<void> _outboundEvents = StreamController();
 
@@ -148,7 +163,7 @@ class TransportServer implements TransportServerCloser {
   var _closing = false;
   bool get closing => _closing;
 
-  TransportServer(
+  TransportServerChannel(
     this.pointer,
     this._workerPointer,
     this._bindings,
@@ -168,7 +183,6 @@ class TransportServer implements TransportServerCloser {
     if (_closing) throw TransportClosedException.forServer();
     _acceptor = onAccept;
     _bindings.transport_worker_accept(_workerPointer, pointer);
-    _pending++;
   }
 
   Future<void> receiveSingleMessage({int? flags}) async {
@@ -202,7 +216,7 @@ class TransportServer implements TransportServerCloser {
       flags,
       transportEventReceiveMessage | transportEventServer | transportEventLink,
     );
-    _pending++;
+    _pending += count;
   }
 
   Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags}) async {
@@ -248,13 +262,13 @@ class TransportServer implements TransportServerCloser {
       flags,
       transportEventSendMessage | transportEventServer | transportEventLink,
     );
-    _pending++;
+    _pending += bytes.length;
   }
 
   void notifyDatagram(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (event.isReadEvent()) {
+      if (event == transportEventRead || event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
           _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
@@ -277,15 +291,21 @@ class TransportServer implements TransportServerCloser {
       return;
     }
     _buffers.release(bufferId);
-    event.isReadEvent() ? _inboundEvents.addError(TransportClosedException.forServer()) : _outboundEvents.addError(TransportClosedException.forServer());
+    if (event == transportEventRead || event == transportEventReceiveMessage) {
+      _inboundEvents.addError(TransportClosedException.forServer());
+      if (_pending == 0) _closer.complete();
+      return;
+    }
+    _outboundEvents.addError(TransportClosedException.forServer());
     if (_pending == 0) _closer.complete();
   }
 
   @pragma(preferInlinePragma)
   void notifyAccept(int fd) {
+    if (_closing) return;
     if (fd > 0) {
       final channel = TransportChannel(_workerPointer, fd, _bindings, _buffers);
-      final connection = TransportServerInternalConnection(
+      final connection = TransportServerConnectionChannel(
         this,
         _buffers,
         _bindings,
@@ -294,41 +314,37 @@ class TransportServer implements TransportServerCloser {
         _readTimeout,
         _writeTimeout,
         channel,
+        _workerPointer,
       );
       _registry.addConnection(fd, connection);
       _connections[fd] = connection;
       _acceptor(TransportServerConnection(connection));
     }
     _bindings.transport_worker_accept(_workerPointer, pointer);
-    _pending++;
   }
 
   @pragma(preferInlinePragma)
   bool connectionIsActive(int fd) => _connections[fd]?._closing == false;
+
+  @pragma(preferInlinePragma)
+  void _removeConnection(int fd) {
+    _connections.remove(fd);
+    _registry.removeConnection(fd);
+  }
 
   @override
   Future<void> close({Duration? gracefulDuration}) async {
     if (_closing) return;
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
+    await _inboundEvents.close();
+    await _outboundEvents.close();
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
-    await Future.wait(_connections.keys.toList().map(closeConnection));
+    await Future.wait(_connections.values.toList().map((connection) => connection.close()));
     if (_pending > 0) await _closer.future;
     _registry.removeServer(pointer.ref.fd);
     _bindings.transport_close_descritor(pointer.ref.fd);
     _bindings.transport_server_destroy(pointer);
-  }
-
-  Future<void> closeConnection(int fd, {Duration? gracefulDuration}) async {
-    final connection = _connections[fd];
-    if (connection == null || connection._closing) return;
-    connection._closing = false;
-    if (gracefulDuration != null) await Future.delayed(gracefulDuration);
-    connection._active = false;
-    _bindings.transport_worker_cancel_by_fd(_workerPointer, fd);
-    if (connection._pending > 0) await connection._closer.future;
-    _registry.removeConnection(fd);
-    _connections.remove(fd);
   }
 }

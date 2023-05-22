@@ -7,7 +7,6 @@ import 'package:ffi/ffi.dart';
 import 'bindings.dart';
 import 'configuration.dart';
 import 'exception.dart';
-import 'extensions.dart';
 import 'lookup.dart';
 
 class Transport {
@@ -52,7 +51,7 @@ class Transport {
       final result = _bindings.transport_worker_initialize(workerPointer, nativeConfiguration, _workerClosers.length);
       if (result < 0) {
         _bindings.transport_worker_destroy(workerPointer);
-        throw TransportInitializationException("[worker] code = $result, message = ${result.kernelErrorToString(_bindings)}");
+        throw TransportInitializationException("[worker] code = $result, message = ${kernelErrorToString(result, _bindings)}");
       }
       final workerInput = [_libraryPath, workerPointer.address, _workerDestroyer.sendPort];
       toWorker.send(workerInput);

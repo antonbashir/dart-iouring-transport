@@ -35,7 +35,7 @@ class TransportPayloadPool {
   TransportDatagramResponder getDatagramResponder(
     int bufferId,
     Uint8List bytes,
-    TransportServer server,
+    TransportServerChannel server,
     TransportChannel channel,
     Pointer<sockaddr> destination,
   ) {
@@ -80,7 +80,7 @@ class TransportDatagramResponder {
   late Pointer<sockaddr> _destination;
   final TransportPayloadPool _pool;
   late Uint8List _bytes;
-  late TransportServer _server;
+  late TransportServerChannel _server;
   late TransportChannel _channel;
 
   Uint8List get receivedBytes => _bytes;

@@ -10,14 +10,14 @@ class TransportFilesFactory {
 
   const TransportFilesFactory(this._registry);
 
-  TransportFileProvider open(
+  TransportFile open(
     String path, {
     TransportFileMode mode = TransportFileMode.readWriteAppend,
     bool create = false,
     bool truncate = false,
   }) {
     final delegate = File(path);
-    return TransportFileProvider(
+    return TransportFile(
       _registry.open(
         path,
         mode: mode,

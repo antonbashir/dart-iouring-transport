@@ -11,11 +11,9 @@ import 'server.dart';
 class TransportServersFactory {
   final TransportServerRegistry _registry;
 
-  TransportServersFactory(
-    this._registry,
-  );
+  const TransportServersFactory(this._registry);
 
-  TransportServerCloser tcp(
+  TransportServer tcp(
     InternetAddress address,
     int port,
     void Function(TransportServerConnection connection) onAccept, {
@@ -32,7 +30,7 @@ class TransportServersFactory {
     return TransportServerDatagramReceiver(server);
   }
 
-  TransportServerCloser unixStream(
+  TransportServer unixStream(
     String path,
     void Function(TransportServerConnection connection) onAccept, {
     TransportUnixStreamServerConfiguration? configuration,

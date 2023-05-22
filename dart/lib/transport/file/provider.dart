@@ -5,11 +5,11 @@ import 'dart:typed_data';
 import '../constants.dart';
 import 'file.dart';
 
-class TransportFileProvider {
-  final TransportFile _file;
+class TransportFile {
+  final TransportFileChannel _file;
   final File delegate;
 
-  const TransportFileProvider(this._file, this.delegate);
+  const TransportFile(this._file, this.delegate);
 
   bool get active => !_file.closing;
 

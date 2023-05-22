@@ -5,7 +5,7 @@ import '../payload.dart';
 import 'server.dart';
 
 class TransportServerDatagramReceiver {
-  final TransportServer _server;
+  final TransportServerChannel _server;
 
   const TransportServerDatagramReceiver(this._server);
 
@@ -28,7 +28,6 @@ class TransportServerDatagramReceiver {
       return event;
     });
   }
-
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);

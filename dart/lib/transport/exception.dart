@@ -1,8 +1,9 @@
-import 'package:iouring_transport/transport/extensions.dart';
-import 'package:iouring_transport/transport/payload.dart';
-
+import 'package:ffi/ffi.dart';
+import 'payload.dart';
 import 'bindings.dart';
 import 'constants.dart';
+
+String kernelErrorToString(int error, TransportBindings bindings) => bindings.strerror(-error).cast<Utf8>().toDartString();
 
 class TransportInitializationException implements Exception {
   final String message;
@@ -86,7 +87,7 @@ Exception createTransportException(TransportEvent event, int result, TransportBi
     return TransportInternalException(
       event: event,
       code: result,
-      message: result.kernelErrorToString(bindings),
+      message: kernelErrorToString(result, bindings),
       payload: payload,
     );
   }

@@ -6,10 +6,10 @@ import '../constants.dart';
 import '../payload.dart';
 import 'client.dart';
 
-class TransportClientStreamProvider {
-  final TransportClient _client;
+class TransportClientConnection {
+  final TransportClientChannel _client;
 
-  const TransportClientStreamProvider(this._client);
+  const TransportClientConnection(this._client);
 
   bool get active => !_client.closing;
 
@@ -36,10 +36,10 @@ class TransportClientStreamProvider {
   Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
 }
 
-class TransportClientDatagramProvider {
-  final TransportClient _client;
+class TransportDatagramClient {
+  final TransportClientChannel _client;
 
-  const TransportClientDatagramProvider(this._client);
+  const TransportDatagramClient(this._client);
 
   Stream<TransportPayload> get inbound => _client.inbound;
 

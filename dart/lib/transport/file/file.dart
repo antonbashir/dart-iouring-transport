@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import '../extensions.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../channel.dart';
@@ -12,7 +11,7 @@ import '../payload.dart';
 import 'registry.dart';
 import 'package:meta/meta.dart';
 
-class TransportFile {
+class TransportFileChannel {
   final StreamController<TransportPayload> _inboundEvents = StreamController();
   final StreamController<void> _outboundEvents = StreamController();
 
@@ -33,7 +32,7 @@ class TransportFile {
 
   var _pending = 0;
 
-  TransportFile(
+  TransportFileChannel(
     this.path,
     this._fd,
     this._bindings,
@@ -114,7 +113,7 @@ class TransportFile {
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (event.isReadEvent()) {
+      if (event == transportEventRead || event == transportEventReceiveMessage) {
         if (result >= 0) {
           buffers.setLength(bufferId, result);
           _inboundEvents.add(_payloadPool.getPayload(bufferId, buffers.read(bufferId)));
@@ -137,7 +136,12 @@ class TransportFile {
       return;
     }
     buffers.release(bufferId);
-    event.isReadEvent() ? _inboundEvents.addError(TransportClosedException.forFile()) : _outboundEvents.addError(TransportClosedException.forFile());
+    if (event == transportEventRead || event == transportEventReceiveMessage) {
+      _inboundEvents.addError(TransportClosedException.forFile());
+      if (_pending == 0) _closer.complete();
+      return;
+    }
+    _outboundEvents.addError(TransportClosedException.forFile());
     if (_pending == 0) _closer.complete();
   }
 
@@ -145,6 +149,8 @@ class TransportFile {
     if (_closing) return;
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
+    await _inboundEvents.close();
+    await _outboundEvents.close();
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
     if (_pending > 0) await _closer.future;
