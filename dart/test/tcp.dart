@@ -13,7 +13,6 @@ import 'validators.dart';
 
 void testTcpSingle({
   required int index,
-  required int listeners,
   required int workers,
   required int clientsPool,
   required int listenerFlags,
@@ -54,7 +53,6 @@ void testTcpSingle({
 
 void testTcpMany({
   required int index,
-  required int listeners,
   required int workers,
   required int clientsPool,
   required int listenerFlags,

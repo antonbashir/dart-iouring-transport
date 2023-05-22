@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
-import 'package:iouring_transport/transport/constants.dart';
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
@@ -31,71 +29,62 @@ void main() {
   final bulk = true;
 
   group("[initialization]", timeout: Timeout(Duration(hours: 1)), skip: !initialization, () {
-    testInitialization(listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    testInitialization(listeners: 1, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-    testInitialization(listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
+    testInitialization();
   });
   group("[tcp]", timeout: Timeout(Duration(hours: 1)), skip: !tcp, () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
-      testTcpSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcpSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcpSingle(index: index, listeners: 1, workers: 2, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcpSingle(index: index, listeners: 1, workers: 2, clientsPool: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testTcpMany(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
-      testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
-      testTcpMany(index: index, listeners: 1, workers: 2, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      testTcpMany(index: index, listeners: 2, workers: 2, clientsPool: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testTcpSingle(index: index, clientsPool: 1);
+      testTcpSingle(index: index, clientsPool: 128);
+      testTcpSingle(index: index, clientsPool: 512);
+      testTcpMany(index: index, clientsPool: 1, count: 64);
+      testTcpMany(index: index, clientsPool: 1, count: 32);
+      testTcpMany(index: index, clientsPool: 128, count: 8);
+      testTcpMany(index: index, clientsPool: 512, count: 4);
     }
   });
   group("[unix stream]", timeout: Timeout(Duration(hours: 1)), skip: !unixStream, () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
-      testUnixStreamSingle(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixStreamSingle(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixStreamSingle(index: index, listeners: 1, workers: 2, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixStreamSingle(index: index, listeners: 1, workers: 2, clientsPool: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixStreamMany(index: index, listeners: 1, workers: 1, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
-      testUnixStreamMany(index: index, listeners: 2, workers: 2, clientsPool: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
-      testUnixStreamMany(index: index, listeners: 1, workers: 2, clientsPool: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      testUnixStreamMany(index: index, listeners: 1, workers: 2, clientsPool: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
+      testUnixStreamSingle(index: index, clientsPool: 1);
+      testUnixStreamSingle(index: index, clientsPool: 128);
+      testUnixStreamSingle(index: index, clientsPool: 512);
+      testUnixStreamMany(index: index, clientsPool: 1, count: 64);
+      testUnixStreamMany(index: index, clientsPool: 1, count: 32);
+      testUnixStreamMany(index: index, clientsPool: 128, count: 8);
+      testUnixStreamMany(index: index, clientsPool: 512, count: 4);
     }
   });
   group("[udp]", timeout: Timeout(Duration(hours: 1)), skip: !udp, () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
-      testUdpSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUdpSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUdpSingle(index: index, listeners: 1, workers: 2, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUdpSingle(index: index, listeners: 2, workers: 2, clients: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUdpMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      testUdpMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      testUdpMany(index: index, listeners: 1, workers: 2, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-      testUdpMany(index: index, listeners: 2, workers: 2, clients: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+      testUdpSingle(index: index, clients: 1);
+      testUdpSingle(index: index, clients: 128);
+      testUdpSingle(index: index, clients: 512);
+      testUdpMany(index: index, clients: 1, count: 8);
+      testUdpMany(index: index, clients: 1, count: 4);
+      testUdpMany(index: index, clients: 128, count: 2);
+      testUdpMany(index: index, clients: 512, count: 2);
     }
   });
   group("[unix dgram]", timeout: Timeout(Duration(hours: 1)), skip: !unixDgram, () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
-      testUnixDgramSingle(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramSingle(index: index, listeners: 1, workers: 2, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramSingle(index: index, listeners: 2, workers: 2, clients: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testUnixDgramMany(index: index, listeners: 1, workers: 1, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 8);
-      testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 4);
-      testUnixDgramMany(index: index, listeners: 1, workers: 2, clients: 128, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
-      testUnixDgramMany(index: index, listeners: 2, workers: 2, clients: 512, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 2);
+      testUnixDgramSingle(index: index, clients: 1);
+      testUnixDgramSingle(index: index, clients: 128);
+      testUnixDgramSingle(index: index, clients: 512);
+      testUnixDgramMany(index: index, clients: 1, count: 8);
+      testUnixDgramMany(index: index, clients: 1, count: 4);
+      testUnixDgramMany(index: index, clients: 128, count: 2);
+      testUnixDgramMany(index: index, clients: 512, count: 2);
     }
   });
   group("[file]", timeout: Timeout(Duration(hours: 1)), skip: !file, () {
     final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
-      testFileSingle(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testFileSingle(index: index, listeners: 1, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testFileSingle(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll);
-      testFileLoad(index: index, listeners: 1, workers: 1, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 64);
-      testFileLoad(index: index, listeners: 2, workers: 2, listenerFlags: 0, workerFlags: ringSetupSqpoll, count: 32);
+      testFileSingle(index: index);
+      testFileLoad(index: index, count: 64);
+      testFileLoad(index: index, count: 32);
     }
   });
   group("[timeout]", timeout: Timeout(Duration(hours: 1)), skip: !timeout, () {
@@ -118,80 +107,46 @@ void main() {
   group("[custom]", timeout: Timeout(Duration(hours: 1)), () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
-      testCustom(index, 1);
-      testCustom(index, 2);
-      testCustom(index, 4);
+      testCustom(1);
+      testCustom(2);
+      testCustom(4);
     }
   });
   testDomain();
 }
 
-void testInitialization({
-  required int listeners,
-  required int workers,
-  required int listenerFlags,
-  required int workerFlags,
-}) {
-  test("[listeners = $listeners, workers = $workers]", () async {
-    final transport = Transport(
-      TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.worker().copyWith(ringFlags: workerFlags),
-      TransportDefaults.outbound().copyWith(ringFlags: workerFlags),
-    );
-    final done = ReceivePort();
-    await transport.run(transmitter: done.sendPort, (input) async {
-      final worker = TransportWorker(input);
-      await worker.initialize();
-      worker.transmitter!.send(null);
-    });
-    await done.take(workers);
-    done.close();
+void testInitialization() {
+  test("initialize", () async {
+    final transport = Transport();
+    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
+    await worker.initialize();
     await transport.shutdown();
   });
 }
 
-void testCustom(int index, int workers) {
+void testCustom(int index) {
   test("callback", () async {
-    final transport = Transport(
-      TransportDefaults.transport().copyWith(workerInsolates: workers),
-      TransportDefaults.worker(),
-      TransportDefaults.outbound(),
-    );
-    final done = ReceivePort();
-    await transport.run(transmitter: done.sendPort, (input) async {
-      final worker = TransportWorker(input);
-      final completer = Completer<int>();
-      await worker.initialize();
-      final id = 1;
-      worker.registerCallback(id, completer);
-      worker.notifyCustom(id, index);
-      final result = await completer.future;
-      worker.transmitter!.send(result);
-    });
-    (await done.take(workers).toList()).forEach((element) => expect(element, index));
-    done.close();
+    final transport = Transport();
+    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
+    final completer = Completer<int>();
+    await worker.initialize();
+    final id = 1;
+    worker.registerCallback(id, completer);
+    worker.notifyCustom(id, index);
+    expect(await completer.future, index);
     await transport.shutdown();
   });
 }
 
 void testDomain() {
   test("[domain]", () async {
-    final transport = Transport(
-      TransportDefaults.transport(),
-      TransportDefaults.worker(),
-      TransportDefaults.outbound(),
-    );
-    final done = ReceivePort();
-    await transport.run(transmitter: done.sendPort, (input) async {
-      final worker = TransportWorker(input);
-      await worker.initialize();
-      final address = (await InternetAddress.lookup("google.com")).first;
-      final clients = await worker.clients.tcp(address, 443);
-      await clients.select().writeSingle(Utf8Encoder().convert("GET"));
-      worker.transmitter!.send(null);
-    });
-    await done.take(TransportDefaults.transport().workerIsolates).toList();
-    done.close();
+    final transport = Transport();
+    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
+    await worker.initialize();
+    final address = (await InternetAddress.lookup("google.com")).first;
+    final clients = await worker.clients.tcp(address, 443);
+    clients.select().writeSingle(Utf8Encoder().convert("GET"), onError: (error) => fail(error.toString()));
+    await Future.delayed(Duration(seconds: 1));
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }

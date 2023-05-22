@@ -13,7 +13,6 @@ import 'validators.dart';
 
 void testUdpSingle({
   required int index,
-  required int listeners,
   required int workers,
   required int clients,
   required int listenerFlags,
@@ -53,7 +52,6 @@ void testUdpSingle({
 
 void testUdpMany({
   required int index,
-  required int listeners,
   required int workers,
   required int clients,
   required int listenerFlags,

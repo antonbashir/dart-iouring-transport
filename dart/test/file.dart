@@ -11,7 +11,6 @@ import 'validators.dart';
 
 void testFileSingle({
   required int index,
-  required int listeners,
   required int workers,
   required int listenerFlags,
   required int workerFlags,
@@ -43,7 +42,6 @@ void testFileSingle({
 
 void testFileLoad({
   required int index,
-  required int listeners,
   required int workers,
   required int listenerFlags,
   required int workerFlags,

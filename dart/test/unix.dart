@@ -13,7 +13,6 @@ import 'validators.dart';
 
 void testUnixStreamSingle({
   required int index,
-  required int listeners,
   required int workers,
   required int clientsPool,
   required int listenerFlags,
@@ -55,7 +54,6 @@ void testUnixStreamSingle({
 
 void testUnixStreamMany({
   required int index,
-  required int listeners,
   required int workers,
   required int clientsPool,
   required int listenerFlags,
@@ -115,7 +113,6 @@ void testUnixStreamMany({
 
 void testUnixDgramSingle({
   required int index,
-  required int listeners,
   required int workers,
   required int clients,
   required int listenerFlags,
@@ -157,7 +154,6 @@ void testUnixDgramSingle({
 
 void testUnixDgramMany({
   required int index,
-  required int listeners,
   required int workers,
   required int clients,
   required int listenerFlags,
