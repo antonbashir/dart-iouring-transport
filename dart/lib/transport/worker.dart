@@ -38,7 +38,11 @@ class TransportWorker {
   late final TransportBuffers _buffers;
   late final TransportTimeoutChecker _timeoutChecker;
   late final TransportPayloadPool _payloadPool;
+  late final List<Duration> _delays;
 
+  var _active = true;
+
+  bool get active => _active;
   int get id => _workerPointer.ref.id;
   int get descriptor => _ring.ref.ring_fd;
   TransportServersFactory get servers => _serversFactory;
@@ -47,6 +51,7 @@ class TransportWorker {
 
   TransportWorker(SendPort toTransport) {
     _closer = RawReceivePort((gracefulDuration) async {
+      _active = false;
       _timeoutChecker.stop();
       await _filesRegistry.close(gracefulDuration: gracefulDuration);
       await _clientRegistry.close(gracefulDuration: gracefulDuration);
@@ -104,6 +109,7 @@ class TransportWorker {
       _workerPointer,
       Duration(milliseconds: _workerPointer.ref.timeout_checker_period_millis),
     );
+    _delays = _calculateDelays();
     _timeoutChecker.start();
     _listen();
   }
@@ -116,22 +122,16 @@ class TransportWorker {
 
   Future<void> _listen() async {
     final baseDelay = _workerPointer.ref.base_delay;
-    final delayRandomizationFactor = _workerPointer.ref.delay_randomization_factor;
-    final maxDelay = _workerPointer.ref.max_delay;
-    final random = Random();
-    var attempt = 0;
     final regularDelayDuration = Duration(microseconds: baseDelay);
-    while (true) {
+    var attempt = 0;
+    while (_active) {
       attempt++;
       if (_handleCqes()) {
         attempt = 0;
         await Future.delayed(regularDelayDuration);
         continue;
       }
-      final randomization = (delayRandomizationFactor * (random.nextDouble() * 2 - 1) + 1);
-      final exponent = min(attempt, 31);
-      final delay = (baseDelay * pow(2.0, exponent) * randomization).toInt();
-      await Future.delayed(Duration(microseconds: delay < maxDelay ? delay : maxDelay));
+      await Future.delayed(_delays[attempt]);
     }
   }
 
@@ -147,7 +147,6 @@ class TransportWorker {
       final fd = (data >> 32) & 0xffffffff;
       final bufferId = (data >> 16) & 0xffff;
       //print("${TransportEvent.ofEvent(event)} worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd");
-
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;
         if (event == transportEventConnect) {
@@ -157,7 +156,6 @@ class TransportWorker {
         _clientRegistry.get(fd)?.notifyData(bufferId, result, event);
         continue;
       }
-
       if (event & transportEventServer != 0) {
         event &= ~transportEventServer;
         if (event == transportEventRead || event == transportEventWrite) {
@@ -176,13 +174,27 @@ class TransportWorker {
         _filesRegistry.get(fd)?.notify(bufferId, result, fd);
         continue;
       }
-
       if (event & transportEventCustom != 0) {
         _customCallbacks.remove(result)?.complete(data & ~transportEventCustom);
       }
     }
     _bindings.transport_cqe_advance(_ring, cqeCount);
     return true;
+  }
+
+  List<Duration> _calculateDelays() {
+    final baseDelay = _workerPointer.ref.base_delay;
+    final delayRandomizationFactor = _workerPointer.ref.delay_randomization_factor;
+    final maxDelay = _workerPointer.ref.max_delay;
+    final random = Random();
+    final delays = <Duration>[];
+    for (var i = 1; i < 31; i++) {
+      final randomization = (delayRandomizationFactor * (random.nextDouble() * 2 - 1) + 1);
+      final exponent = min(i, 31);
+      final delay = (baseDelay * pow(2.0, exponent) * randomization).toInt();
+      delays.add(Duration(microseconds: delay < maxDelay ? delay : maxDelay));
+    }
+    return delays;
   }
 
   @visibleForTesting

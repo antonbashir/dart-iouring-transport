@@ -2,21 +2,13 @@ library iouring_transport;
 
 export 'package:iouring_transport/transport/transport.dart' show Transport;
 export 'package:iouring_transport/transport/configuration.dart'
-    show
-        TransportConfiguration,
-        TransportListenerConfiguration,
-        TransportRetryConfiguration,
-        TransportUdpMulticastConfiguration,
-        TransportUdpMulticastManager,
-        TransportUdpMulticastSourceConfiguration,
-        TransportWorkerConfiguration;
+    show TransportRetryConfiguration, TransportUdpMulticastConfiguration, TransportUdpMulticastManager, TransportUdpMulticastSourceConfiguration, TransportWorkerConfiguration;
 export 'package:iouring_transport/transport/defaults.dart' show TransportDefaults;
 export 'package:iouring_transport/transport/worker.dart' show TransportWorker;
 
 export 'package:iouring_transport/transport/server/configuration.dart'
     show TransportTcpServerConfiguration, TransportUdpServerConfiguration, TransportUnixDatagramServerConfiguration, TransportUnixStreamServerConfiguration;
-export 'package:iouring_transport/transport/server/connection.dart' show TransportServerConnection;
-export 'package:iouring_transport/transport/server/datagram.dart' show TransportServerDatagramReceiver;
+export 'package:iouring_transport/transport/server/provider.dart' show TransportServerConnection, TransportServerDatagramReceiver;
 export 'package:iouring_transport/transport/server/factory.dart' show TransportServersFactory;
 
 export 'package:iouring_transport/transport/client/configuration.dart'

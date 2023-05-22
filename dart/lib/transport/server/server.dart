@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'connection.dart';
+import 'provider.dart';
 import 'registry.dart';
 import '../bindings.dart';
 import '../buffers.dart';

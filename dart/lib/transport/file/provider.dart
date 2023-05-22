@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import '../constants.dart';
@@ -37,7 +38,7 @@ class TransportFile {
                 completer.complete(bytes.takeBytes());
                 return;
               }
-              _file.readSingle(offset: offset += bytes.length);
+              _file.readSingle(offset: offset + bytes.length);
             },
           );
           _file.readSingle(offset: offset);
@@ -56,7 +57,7 @@ class TransportFile {
               completer.complete(bytes.takeBytes());
               return;
             }
-            _file.readMany(blocksCount, offset: offset += bytes.length);
+            _file.readMany(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset: offset + bytes.length);
           },
         );
         _file.readMany(blocksCount, offset: offset);

@@ -3,8 +3,7 @@ import 'dart:io';
 import 'package:meta/meta.dart';
 
 import 'configuration.dart';
-import 'connection.dart';
-import 'datagram.dart';
+import 'provider.dart';
 import 'registry.dart';
 import 'server.dart';
 
