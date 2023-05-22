@@ -34,7 +34,6 @@ class TransportServerConnection {
   Future<void> closeServer({Duration? gracefulDuration}) => _connection.closeServer(gracefulDuration: gracefulDuration);
 }
 
-
 class TransportServerDatagramReceiver {
   final TransportServerChannel _server;
 
@@ -43,7 +42,7 @@ class TransportServerDatagramReceiver {
   bool get active => !_server.closing;
 
   @pragma(preferInlinePragma)
-  Stream<TransportPayload> receiveBySingle() {
+  Stream<TransportDatagramResponder> receiveBySingle() {
     unawaited(_server.receiveSingleMessage());
     return _server.inbound.map((event) {
       unawaited(_server.receiveSingleMessage());
@@ -52,7 +51,7 @@ class TransportServerDatagramReceiver {
   }
 
   @pragma(preferInlinePragma)
-  Stream<TransportPayload> receiveByMany(int count) {
+  Stream<TransportDatagramResponder> receiveByMany(int count) {
     unawaited(_server.receiveManyMessages(count));
     return _server.inbound.map((event) {
       unawaited(_server.receiveManyMessages(count));

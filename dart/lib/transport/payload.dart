@@ -1,8 +1,6 @@
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'configuration.dart';
-
 import 'bindings.dart';
 import 'buffers.dart';
 import 'channel.dart';
@@ -90,27 +88,20 @@ class TransportDatagramResponder {
   bool get active => !_server.closing;
 
   @pragma(preferInlinePragma)
-  Future<void> respondSingleMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry}) {
-    Future<void> respond() => _server.respondSingleMessage(
-          _channel,
-          _destination,
-          bytes,
-          flags: flags,
-        );
-    return retry == null ? respond() : retry.options.retry(respond, onRetry: retry.onRetry, retryIf: retry.predicate);
-  }
+  Future<void> respondSingleMessage(Uint8List bytes, {int? flags}) => _server.respondSingleMessage(
+        _channel,
+        _destination,
+        bytes,
+        flags: flags,
+      );
 
   @pragma(preferInlinePragma)
-  Future<void> respondManyMessage(List<Uint8List> bytes, {int? flags, TransportRetryConfiguration? retry}) {
-    Future<void> respond() => _server.respondManyMessages(
-          _channel,
-          _destination,
-          bytes,
-          flags: flags,
-        );
-
-    return retry == null ? respond() : retry.options.retry(respond, onRetry: retry.onRetry, retryIf: retry.predicate);
-  }
+  Future<void> respondManyMessage(List<Uint8List> bytes, {int? flags}) => _server.respondManyMessages(
+        _channel,
+        _destination,
+        bytes,
+        flags: flags,
+      );
 
   @pragma(preferInlinePragma)
   void release() => _pool.release(_bufferId);

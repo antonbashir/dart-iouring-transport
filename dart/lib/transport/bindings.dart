@@ -11991,21 +11991,6 @@ class TransportBindings {
       void Function(ffi.Pointer<transport_worker_t>,
           ffi.Pointer<transport_server_t>)>(isLeaf: true);
 
-  void transport_worker_submit(
-    ffi.Pointer<transport_worker_t> worker,
-  ) {
-    return _transport_worker_submit(
-      worker,
-    );
-  }
-
-  late final _transport_worker_submitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<transport_worker_t>)>>('transport_worker_submit');
-  late final _transport_worker_submit = _transport_worker_submitPtr
-      .asFunction<void Function(ffi.Pointer<transport_worker_t>)>(isLeaf: true);
-
   void transport_worker_cancel_by_fd(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
@@ -21047,10 +21032,6 @@ class _SymbolAddresses {
       _library._transport_worker_acceptPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<transport_worker_t>)>>
-      get transport_worker_submit => _library._transport_worker_submitPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
               ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Int)>>
       get transport_worker_cancel_by_fd =>
           _library._transport_worker_cancel_by_fdPtr;
@@ -23924,13 +23905,13 @@ class transport_worker_configuration extends ffi.Struct {
   external int timeout_checker_period_millis;
 
   @ffi.Uint32()
-  external int base_delay;
+  external int base_delay_micros;
 
   @ffi.Double()
   external double delay_randomization_factor;
 
   @ffi.Uint64()
-  external int max_delay;
+  external int max_delay_micros;
 
   @ffi.Uint64()
   external int cqe_wait_timeout_millis;
@@ -23962,13 +23943,13 @@ class transport_worker extends ffi.Struct {
   external int timeout_checker_period_millis;
 
   @ffi.Uint32()
-  external int base_delay;
+  external int base_delay_micros;
 
   @ffi.Double()
   external double delay_randomization_factor;
 
   @ffi.Uint64()
-  external int max_delay;
+  external int max_delay_micros;
 
   external ffi.Pointer<msghdr> inet_used_messages;
 
@@ -28247,8 +28228,6 @@ const int TRANSPORT_EVENT_SERVER = 256;
 
 const int TRANSPORT_EVENT_CUSTOM = 512;
 
-const int TRANSPORT_EVENT_LINK = 1024;
-
 const int TRANSPORT_READ_ONLY = 1;
 
 const int TRANSPORT_WRITE_ONLY = 2;
@@ -28329,7 +28308,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = 'etc';
+const String SYSCONF_DIR = '';
 
 const String INSTALL_PREFIX = '/usr/local';
 

@@ -9,8 +9,8 @@ int transport_worker_initialize(transport_worker_t *worker,
   worker->id = id;
   worker->ring_size = configuration->ring_size;
   worker->delay_randomization_factor = configuration->delay_randomization_factor;
-  worker->base_delay = configuration->base_delay;
-  worker->max_delay = configuration->max_delay;
+  worker->base_delay_micros = configuration->base_delay_micros;
+  worker->max_delay_micros = configuration->max_delay_micros;
   worker->buffer_size = configuration->buffer_size;
   worker->buffers_count = configuration->buffers_count;
   worker->timeout_checker_period_millis = configuration->timeout_checker_period_millis;

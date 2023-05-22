@@ -69,7 +69,7 @@ class TransportFileChannel {
       _channel.read(
         bufferId,
         transportTimeoutInfinity,
-        transportEventRead | transportEventFile | transportEventLink,
+        transportEventRead | transportEventFile,
         sqeFlags: transportIosqeIoLink,
         offset: offset,
       );
@@ -78,7 +78,7 @@ class TransportFileChannel {
     _channel.read(
       lastBufferId,
       transportTimeoutInfinity,
-      transportEventRead | transportEventFile | transportEventLink,
+      transportEventRead | transportEventFile,
       offset: offset,
     );
     _pending += count;
@@ -94,7 +94,7 @@ class TransportFileChannel {
         bytes[index],
         bufferId,
         transportTimeoutInfinity,
-        transportEventWrite | transportEventFile | transportEventLink,
+        transportEventWrite | transportEventFile,
         sqeFlags: transportIosqeIoLink,
         offset: offset,
       );
@@ -104,7 +104,7 @@ class TransportFileChannel {
       bytes.last,
       lastBufferId,
       transportTimeoutInfinity,
-      transportEventWrite | transportEventFile | transportEventLink,
+      transportEventWrite | transportEventFile,
       offset: offset,
     );
     _pending += bytes.length;

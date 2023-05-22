@@ -73,7 +73,7 @@ class TransportServerConnectionChannel {
         bytes[index],
         bufferId,
         _writeTimeout,
-        transportEventWrite | transportEventServer | transportEventLink,
+        transportEventWrite | transportEventServer,
         sqeFlags: transportIosqeIoLink,
       );
     }
@@ -81,7 +81,7 @@ class TransportServerConnectionChannel {
       bytes.last,
       lastBufferId,
       _writeTimeout,
-      transportEventWrite | transportEventServer | transportEventLink,
+      transportEventWrite | transportEventServer,
     );
     _pending++;
   }
@@ -141,7 +141,7 @@ class TransportServerConnectionChannel {
 class TransportServerChannel implements TransportServer {
   final _closer = Completer();
   final _connections = <int, TransportServerConnectionChannel>{};
-  final StreamController<TransportPayload> _inboundEvents = StreamController();
+  final StreamController<TransportDatagramResponder> _inboundEvents = StreamController();
   final StreamController<void> _outboundEvents = StreamController();
 
   final TransportChannel? _datagramChannel;
@@ -175,7 +175,7 @@ class TransportServerChannel implements TransportServer {
     this._datagramChannel,
   );
 
-  Stream<TransportPayload> get inbound => _inboundEvents.stream;
+  Stream<TransportDatagramResponder> get inbound => _inboundEvents.stream;
   Stream<void> get outbound => _outboundEvents.stream;
 
   @pragma(preferInlinePragma)
@@ -189,7 +189,13 @@ class TransportServerChannel implements TransportServer {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
-    _datagramChannel!.receiveMessage(bufferId, pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventServer);
+    _datagramChannel!.receiveMessage(
+      bufferId,
+      pointer.ref.family,
+      _readTimeout,
+      flags,
+      transportEventReceiveMessage | transportEventServer,
+    );
     _pending++;
   }
 
@@ -205,7 +211,7 @@ class TransportServerChannel implements TransportServer {
         pointer.ref.family,
         _readTimeout,
         flags,
-        transportEventReceiveMessage | transportEventServer | transportEventLink,
+        transportEventReceiveMessage | transportEventServer,
         sqeFlags: transportIosqeIoLink,
       );
     }
@@ -214,7 +220,7 @@ class TransportServerChannel implements TransportServer {
       pointer.ref.family,
       _readTimeout,
       flags,
-      transportEventReceiveMessage | transportEventServer | transportEventLink,
+      transportEventReceiveMessage | transportEventServer,
     );
     _pending += count;
   }
@@ -249,7 +255,7 @@ class TransportServerChannel implements TransportServer {
         destination,
         _writeTimeout,
         flags,
-        transportEventSendMessage | transportEventServer | transportEventLink,
+        transportEventSendMessage | transportEventServer,
         sqeFlags: transportIosqeIoLink,
       );
     }
@@ -260,7 +266,7 @@ class TransportServerChannel implements TransportServer {
       destination,
       _writeTimeout,
       flags,
-      transportEventSendMessage | transportEventServer | transportEventLink,
+      transportEventSendMessage | transportEventServer,
     );
     _pending += bytes.length;
   }
@@ -271,7 +277,13 @@ class TransportServerChannel implements TransportServer {
       if (event == transportEventRead || event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
-          _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
+          _inboundEvents.add(_payloadPool.getDatagramResponder(
+            bufferId,
+            _buffers.read(bufferId),
+            this,
+            _datagramChannel!,
+            _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
+          ));
           return;
         }
         _buffers.release(bufferId);

@@ -113,7 +113,6 @@ const transportEventClient = 1 << 6;
 const transportEventFile = 1 << 7;
 const transportEventServer = 1 << 8;
 const transportEventCustom = 1 << 9;
-const transportEventLink = 1 << 10;
 
 const transportEventAll = transportEventRead |
     transportEventWrite |
@@ -124,8 +123,7 @@ const transportEventAll = transportEventRead |
     transportEventClient |
     transportEventFile |
     transportEventServer |
-    transportEventCustom |
-    transportEventLink;
+    transportEventCustom;
 
 const ringSetupIopoll = 1 << 0;
 const ringSetupSqpoll = 1 << 1;
@@ -225,16 +223,6 @@ enum TransportEvent {
   clientSend,
   fileRead,
   fileWrite,
-  serverReadLink,
-  serverWriteLink,
-  clientReadLink,
-  clientWriteLink,
-  serverReceiveLink,
-  serverSendLink,
-  clientReceiveLink,
-  clientSendLink,
-  fileReadLink,
-  fileWriteLink,
   unknown;
 
   static TransportEvent ofEvent(int event) {
@@ -248,16 +236,6 @@ enum TransportEvent {
     if (event == (transportEventReceiveMessage | transportEventClient)) return TransportEvent.clientReceive;
     if (event == (transportEventSendMessage | transportEventServer)) return TransportEvent.serverSend;
     if (event == (transportEventReceiveMessage | transportEventServer)) return TransportEvent.serverReceive;
-    if (event == (transportEventRead | transportEventClient | transportEventLink)) return TransportEvent.clientReadLink;
-    if (event == (transportEventWrite | transportEventClient | transportEventLink)) return TransportEvent.clientWriteLink;
-    if (event == (transportEventRead | transportEventFile | transportEventLink)) return TransportEvent.fileReadLink;
-    if (event == (transportEventWrite | transportEventFile | transportEventLink)) return TransportEvent.fileWriteLink;
-    if (event == (transportEventRead | transportEventServer | transportEventLink)) return TransportEvent.serverReadLink;
-    if (event == (transportEventWrite | transportEventServer | transportEventLink)) return TransportEvent.serverWriteLink;
-    if (event == (transportEventSendMessage | transportEventClient | transportEventLink)) return TransportEvent.clientSendLink;
-    if (event == (transportEventReceiveMessage | transportEventClient | transportEventLink)) return TransportEvent.clientReceiveLink;
-    if (event == (transportEventSendMessage | transportEventServer | transportEventLink)) return TransportEvent.serverSendLink;
-    if (event == (transportEventReceiveMessage | transportEventServer | transportEventLink)) return TransportEvent.serverReceiveLink;
     if (event == transportEventAccept) return TransportEvent.accept;
     if (event == transportEventConnect) return TransportEvent.connect;
     return TransportEvent.unknown;

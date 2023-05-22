@@ -79,7 +79,7 @@ class TransportClientChannel {
         bytes[index],
         bufferIds[index],
         _writeTimeout,
-        transportEventWrite | transportEventClient | transportEventLink,
+        transportEventWrite | transportEventClient,
         sqeFlags: transportIosqeIoLink,
       );
     }
@@ -87,7 +87,7 @@ class TransportClientChannel {
       bytes.last,
       lastBufferId,
       _writeTimeout,
-      transportEventWrite | transportEventClient | transportEventLink,
+      transportEventWrite | transportEventClient,
     );
     _pending += bytes.length;
   }
@@ -112,7 +112,7 @@ class TransportClientChannel {
         _pointer.ref.family,
         _readTimeout,
         flags,
-        transportEventReceiveMessage | transportEventClient | transportEventLink,
+        transportEventReceiveMessage | transportEventClient,
         sqeFlags: transportIosqeIoLink,
       );
     }
@@ -121,7 +121,7 @@ class TransportClientChannel {
       _pointer.ref.family,
       _readTimeout,
       flags,
-      transportEventReceiveMessage | transportEventClient | transportEventLink,
+      transportEventReceiveMessage | transportEventClient,
     );
     _pending += count;
   }
@@ -156,7 +156,7 @@ class TransportClientChannel {
         _destination,
         _writeTimeout,
         flags,
-        transportEventSendMessage | transportEventClient | transportEventLink,
+        transportEventSendMessage | transportEventClient,
         sqeFlags: transportIosqeIoLink,
       );
     }
@@ -167,7 +167,7 @@ class TransportClientChannel {
       _destination,
       _writeTimeout,
       flags,
-      transportEventSendMessage | transportEventClient | transportEventLink,
+      transportEventSendMessage | transportEventClient,
     );
     _pending += bytes.length;
   }

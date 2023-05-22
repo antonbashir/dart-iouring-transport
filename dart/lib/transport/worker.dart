@@ -121,7 +121,7 @@ class TransportWorker {
   void removeCallback(int id) => _customCallbacks.remove(id);
 
   Future<void> _listen() async {
-    final baseDelay = _workerPointer.ref.base_delay;
+    final baseDelay = _workerPointer.ref.base_delay_micros;
     final regularDelayDuration = Duration(microseconds: baseDelay);
     var attempt = 0;
     while (_active) {
@@ -183,9 +183,9 @@ class TransportWorker {
   }
 
   List<Duration> _calculateDelays() {
-    final baseDelay = _workerPointer.ref.base_delay;
+    final baseDelay = _workerPointer.ref.base_delay_micros;
     final delayRandomizationFactor = _workerPointer.ref.delay_randomization_factor;
-    final maxDelay = _workerPointer.ref.max_delay;
+    final maxDelay = _workerPointer.ref.max_delay_micros;
     final random = Random();
     final delays = <Duration>[];
     for (var i = 1; i < 31; i++) {

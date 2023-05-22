@@ -20,9 +20,9 @@ extern "C"
     size_t ring_size;
     int ring_flags;
     uint64_t timeout_checker_period_millis;
-    uint32_t base_delay;
+    uint32_t base_delay_micros;
     double delay_randomization_factor;
-    uint64_t max_delay;
+    uint64_t max_delay_micros;
     uint64_t cqe_wait_timeout_millis;
     uint32_t cqe_wait_count;
     uint32_t cqe_peek_count;
@@ -37,9 +37,9 @@ extern "C"
     uint32_t buffer_size;
     uint16_t buffers_count;
     uint64_t timeout_checker_period_millis;
-    uint32_t base_delay;
+    uint32_t base_delay_micros;
     double delay_randomization_factor;
-    uint64_t max_delay;
+    uint64_t max_delay_micros;
     struct msghdr *inet_used_messages;
     struct msghdr *unix_used_messages;
     struct mh_events_t *events;
