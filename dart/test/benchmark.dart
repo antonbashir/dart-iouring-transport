@@ -18,32 +18,38 @@ Future<void> _benchTcp() async {
   final transport = Transport();
   final encoder = Utf8Encoder();
   final fromServer = encoder.convert("from server\n");
-  for (var i = 0; i < 1; i++) {
+
+  for (var i = 0; i < 2; i++) {
     Isolate.spawn((SendPort message) async {
       final worker = TransportWorker(message);
       await worker.initialize();
       worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.read().listen((payload) => connection.writeSingle(fromServer).then((value) => payload.release())));
-    }, transport.worker(TransportDefaults.worker()));
+    }, transport.worker(TransportDefaults.worker().copyWith(ringFlags: ringSetupSqpoll)));
   }
   await Future.delayed(Duration(seconds: 1));
-  final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
-  await worker.initialize();
-  final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 1000));
-  var count = 0;
-  final time = Stopwatch();
-  time.start();
-  for (var client in connector.clients) {
-    client.read(
-      (client, stream) => stream.listen((element) {
-        count++;
-        element.release();
+
+  for (var i = 0; i < 4; i++) {
+    Isolate.spawn((SendPort message) async {
+      final worker = TransportWorker(message);
+      await worker.initialize();
+      final connector = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: 256));
+      var count = 0;
+      final time = Stopwatch();
+      time.start();
+      for (var client in connector.clients) {
+        client.read().listen((element) {
+          count++;
+          element.release();
+          client.writeSingle(fromServer);
+        });
         client.writeSingle(fromServer);
-      }),
-    );
-    client.writeSingle(fromServer);
+      }
+      await Future.delayed(Duration(days: 10));
+      print("RPS: ${count / 10}");
+    }, transport.worker(TransportDefaults.worker()));
   }
-  await Future.delayed(Duration(seconds: 10));
-  print("RPS: ${count / 10}");
+
+  await Future.delayed(Duration(days: 15));
   await transport.shutdown();
 }
 

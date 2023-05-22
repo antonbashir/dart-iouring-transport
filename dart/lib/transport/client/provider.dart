@@ -18,12 +18,12 @@ class TransportClientStreamProvider {
   Stream<void> get outbound => _client.outbound;
 
   @pragma(preferInlinePragma)
-  void read(void Function(TransportClientStreamProvider client, Stream<TransportPayload> stream) handler) {
+  Stream<TransportPayload> read() {
     unawaited(_client.read());
-    handler(this, _client.inbound.map((event) {
+    return _client.inbound.map((event) {
       unawaited(_client.read());
       return event;
-    }));
+    });
   }
 
   @pragma(preferInlinePragma)
