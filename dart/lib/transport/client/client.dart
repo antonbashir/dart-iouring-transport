@@ -16,7 +16,7 @@ import 'registry.dart';
 class TransportClientChannel {
   final _connector = Completer();
   final StreamController<TransportPayload> _inboundEvents = StreamController();
-  final StreamController<void> _outboundEvents = StreamController();
+  final _outboundHandlers = <int, void Function(Exception error)>{};
   final Pointer<transport_client_t> _pointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportChannel _channel;
@@ -36,9 +36,8 @@ class TransportClientChannel {
   final _closer = Completer();
 
   bool get active => !_closing;
-  Stream<TransportPayload> get inbound => _inboundEvents.stream;
-  Stream<void> get outbound => _outboundEvents.stream;
 
+  Stream<TransportPayload> get inbound => _inboundEvents.stream;
   TransportClientChannel(
     this._channel,
     this._pointer,
@@ -61,14 +60,15 @@ class TransportClientChannel {
     _pending++;
   }
 
-  Future<void> writeSingle(Uint8List bytes) async {
+  Future<void> writeSingle(Uint8List bytes, {void Function(Exception error)? onError}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
+    if (onError != null) _outboundHandlers[bufferId] = onError;
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
   }
 
-  Future<void> writeMany(List<Uint8List> bytes) async {
+  Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forClient();
     final lastBufferId = bufferIds.last;
@@ -87,6 +87,7 @@ class TransportClientChannel {
       _writeTimeout,
       transportEventWrite | transportEventClient,
     );
+    if (onError != null) _outboundHandlers[lastBufferId] = onError;
     _pending += bytes.length;
   }
 
@@ -124,10 +125,11 @@ class TransportClientChannel {
     _pending += count;
   }
 
-  Future<void> sendSingleMessage(Uint8List bytes, {int? flags}) async {
+  Future<void> sendSingleMessage(Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
+    if (onError != null) _outboundHandlers[bufferId] = onError;
     _channel.sendMessage(
       bytes,
       bufferId,
@@ -140,7 +142,7 @@ class TransportClientChannel {
     _pending++;
   }
 
-  Future<void> sendManyMessages(List<Uint8List> bytes, {int? flags}) async {
+  Future<void> sendManyMessages(List<Uint8List> bytes, {int? flags, void Function(Exception error)? onError}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forServer();
@@ -167,6 +169,7 @@ class TransportClientChannel {
       flags,
       transportEventSendMessage | transportEventClient,
     );
+    if (onError != null) _outboundHandlers[lastBufferId] = onError;
     _pending += bytes.length;
   }
 
@@ -219,13 +222,13 @@ class TransportClientChannel {
         _buffers.release(bufferId);
         return;
       }
-      _outboundEvents.addError(createTransportException(
-        TransportEvent.ofEvent(event),
-        result,
-        _bindings,
-        payload: _payloadPool.getPayload(bufferId, _buffers.read(bufferId)),
-      ));
-      return;
+      final handler = _outboundHandlers.remove(bufferId);
+      if (handler != null) {
+        final bytes = _payloadPool.getPayload(bufferId, _buffers.read(bufferId)).takeBytes();
+        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
+        return;
+      }
+      _buffers.release(bufferId);
     }
     _buffers.release(bufferId);
     if (_pending == 0) _closer.complete();
@@ -239,7 +242,6 @@ class TransportClientChannel {
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
-    if (_outboundEvents.hasListener) await _outboundEvents.close();
     _channel.close();
     _registry.remove(_pointer.ref.fd);
     _bindings.transport_client_destroy(_pointer);

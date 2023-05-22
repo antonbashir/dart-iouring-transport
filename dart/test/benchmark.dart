@@ -23,11 +23,17 @@ Future<void> _benchTcp() async {
     Isolate.spawn((SendPort message) async {
       final worker = TransportWorker(message);
       await worker.initialize();
-      worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) => connection.read().listen((payload) => connection.writeSingle(fromServer).then((value) => payload.release())));
+      worker.servers.tcp(
+        InternetAddress("0.0.0.0"),
+        12345,
+        (connection) => connection.read().listen((payload) {
+          payload.release();
+          connection.writeSingle(fromServer);
+        }),
+      );
     }, transport.worker(TransportDefaults.worker().copyWith(ringFlags: ringSetupSqpoll)));
   }
   await Future.delayed(Duration(seconds: 1));
-
   for (var i = 0; i < 1; i++) {
     Isolate.spawn((SendPort message) async {
       final worker = TransportWorker(message);

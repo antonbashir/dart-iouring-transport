@@ -18,7 +18,7 @@ abstract class TransportServer {
 class TransportServerConnectionChannel {
   final _closer = Completer();
   final StreamController<TransportPayload> _inboundEvents = StreamController();
-  final StreamController<void> _outboundEvents = StreamController();
+  final _outboundHandlers = <int, void Function(Exception error)>{};
   final int _readTimeout;
   final int _writeTimeout;
   final TransportChannel channel;
@@ -35,7 +35,6 @@ class TransportServerConnectionChannel {
 
   bool get active => !closing;
   Stream<TransportPayload> get inbound => _inboundEvents.stream;
-  Stream<void> get outbound => _outboundEvents.stream;
   bool get closing => _closing;
 
   TransportServerConnectionChannel(
@@ -57,14 +56,15 @@ class TransportServerConnectionChannel {
     _pending++;
   }
 
-  Future<void> writeSingle(Uint8List bytes) async {
+  Future<void> writeSingle(Uint8List bytes, {void Function(Exception error)? onError}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing || _server._closing) throw TransportClosedException.forServer();
+    if (onError != null) _outboundHandlers[bufferId] = onError;
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     _pending++;
   }
 
-  Future<void> writeMany(List<Uint8List> bytes) async {
+  Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing || _server._closing) throw TransportClosedException.forServer();
     final lastBufferId = bufferIds.last;
@@ -84,6 +84,7 @@ class TransportServerConnectionChannel {
       _writeTimeout,
       transportEventWrite | transportEventServer,
     );
+    if (onError != null) _outboundHandlers[lastBufferId] = onError;
     _pending += bytes.length;
   }
 
@@ -106,12 +107,13 @@ class TransportServerConnectionChannel {
         return;
       }
       unawaited(close());
-      _outboundEvents.addError(createTransportException(
-        TransportEvent.ofEvent(event),
-        result,
-        _bindings,
-        payload: _payloadPool.getPayload(bufferId, _buffers.read(bufferId)),
-      ));
+      final handler = _outboundHandlers.remove(bufferId);
+      if (handler != null) {
+        final bytes = _payloadPool.getPayload(bufferId, _buffers.read(bufferId)).takeBytes();
+        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
+        return;
+      }
+      _buffers.release(bufferId);
       return;
     }
     _buffers.release(bufferId);
@@ -126,7 +128,6 @@ class TransportServerConnectionChannel {
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
-    if (_outboundEvents.hasListener) await _outboundEvents.close();
     _server._removeConnection(_fd);
     _bindings.transport_close_descritor(_fd);
   }
@@ -138,7 +139,7 @@ class TransportServerChannel implements TransportServer {
   final _closer = Completer();
   final _connections = <int, TransportServerConnectionChannel>{};
   final StreamController<TransportDatagramResponder> _inboundEvents = StreamController();
-  final StreamController<void> _outboundEvents = StreamController();
+  final _outboundHandlers = <int, void Function(Exception error)>{};
 
   final TransportChannel? _datagramChannel;
   final Pointer<transport_server_t> pointer;
@@ -158,7 +159,6 @@ class TransportServerChannel implements TransportServer {
 
   bool get active => !_closing;
   Stream<TransportDatagramResponder> get inbound => _inboundEvents.stream;
-  Stream<void> get outbound => _outboundEvents.stream;
 
   TransportServerChannel(
     this.pointer,
@@ -219,10 +219,11 @@ class TransportServerChannel implements TransportServer {
     _pending += count;
   }
 
-  Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags}) async {
+  Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
+    if (onError != null) _outboundHandlers[bufferId] = onError;
     channel.sendMessage(
       bytes,
       bufferId,
@@ -235,7 +236,7 @@ class TransportServerChannel implements TransportServer {
     _pending++;
   }
 
-  Future<void> respondManyMessages(TransportChannel channel, Pointer<sockaddr> destination, List<Uint8List> bytes, {int? flags}) async {
+  Future<void> respondManyMessages(TransportChannel channel, Pointer<sockaddr> destination, List<Uint8List> bytes, {int? flags, void Function(Exception error)? onError}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forServer();
@@ -262,6 +263,7 @@ class TransportServerChannel implements TransportServer {
       flags,
       transportEventSendMessage | transportEventServer,
     );
+    if (onError != null) _outboundHandlers[lastBufferId] = onError;
     _pending += bytes.length;
   }
 
@@ -288,12 +290,13 @@ class TransportServerChannel implements TransportServer {
         _buffers.release(bufferId);
         return;
       }
-      _outboundEvents.addError(createTransportException(
-        TransportEvent.ofEvent(event),
-        result,
-        _bindings,
-        payload: _payloadPool.getPayload(bufferId, _buffers.read(bufferId)),
-      ));
+      final handler = _outboundHandlers.remove(bufferId);
+      if (handler != null) {
+        final bytes = _payloadPool.getPayload(bufferId, _buffers.read(bufferId)).takeBytes();
+        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
+        return;
+      }
+      _buffers.release(bufferId);
       return;
     }
     _buffers.release(bufferId);
@@ -342,7 +345,6 @@ class TransportServerChannel implements TransportServer {
     await Future.wait(_connections.values.toList().map((connection) => connection.close()));
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
-    if (_outboundEvents.hasListener) await _outboundEvents.close();
     _registry.removeServer(pointer.ref.fd);
     _bindings.transport_close_descritor(pointer.ref.fd);
     _bindings.transport_server_destroy(pointer);

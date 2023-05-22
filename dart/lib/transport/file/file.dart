@@ -13,7 +13,7 @@ import 'package:meta/meta.dart';
 
 class TransportFileChannel {
   final StreamController<TransportPayload> _inboundEvents = StreamController();
-  final StreamController<void> _outboundEvents = StreamController();
+  final _outboundHandlers = <int, void Function(Exception error)>{};
 
   final String path;
   final int _fd;
@@ -31,7 +31,6 @@ class TransportFileChannel {
 
   bool get active => !_closing;
   Stream<TransportPayload> get inbound => _inboundEvents.stream;
-  Stream<void> get outbound => _outboundEvents.stream;
 
   TransportFileChannel(
     this.path,
@@ -51,9 +50,10 @@ class TransportFileChannel {
     _pending++;
   }
 
-  Future<void> writeSingle(Uint8List bytes, {int offset = 0}) async {
+  Future<void> writeSingle(Uint8List bytes, {int offset = 0, void Function(Exception error)? onError}) async {
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) throw TransportClosedException.forFile();
+    if (onError != null) _outboundHandlers[bufferId] = onError;
     _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
     _pending++;
   }
@@ -82,7 +82,7 @@ class TransportFileChannel {
     _pending += count;
   }
 
-  Future<void> writeMany(List<Uint8List> bytes, {int offset = 0}) async {
+  Future<void> writeMany(List<Uint8List> bytes, {int offset = 0, void Function(Exception error)? onError}) async {
     final bufferIds = await buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forFile();
     final lastBufferId = bufferIds.last;
@@ -105,6 +105,7 @@ class TransportFileChannel {
       transportEventWrite | transportEventFile,
       offset: offset,
     );
+    if (onError != null) _outboundHandlers[lastBufferId] = onError;
     _pending += bytes.length;
   }
 
@@ -125,12 +126,13 @@ class TransportFileChannel {
         buffers.release(bufferId);
         return;
       }
-      _outboundEvents.addError(createTransportException(
-        TransportEvent.ofEvent(event),
-        result,
-        _bindings,
-        payload: _payloadPool.getPayload(bufferId, buffers.read(bufferId)),
-      ));
+      final handler = _outboundHandlers.remove(bufferId);
+      if (handler != null) {
+        final bytes = _payloadPool.getPayload(bufferId, buffers.read(bufferId)).takeBytes();
+        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
+        return;
+      }
+      buffers.release(bufferId);
       return;
     }
     buffers.release(bufferId);
@@ -145,7 +147,6 @@ class TransportFileChannel {
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
-    if (_outboundEvents.hasListener) await _outboundEvents.close();
     _channel.close();
     _registry.remove(_fd);
   }

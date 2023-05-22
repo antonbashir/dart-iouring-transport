@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import '../constants.dart';
+import '../payload.dart';
 import 'file.dart';
 
 class TransportFile {
@@ -12,13 +13,14 @@ class TransportFile {
 
   const TransportFile(this._file, this.delegate);
 
+  Stream<TransportPayload> get inbound => _file.inbound;
   bool get active => _file.active;
 
   @pragma(preferInlinePragma)
-  Future<void> writeSingle(Uint8List bytes, {int offset = 0}) => _file.writeSingle(bytes, offset: offset);
+  void writeSingle(Uint8List bytes, {int offset = 0}) => unawaited(_file.writeSingle(bytes, offset: offset));
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes, {int offset = 0}) => _file.writeMany(bytes, offset: offset);
+  void writeMany(List<Uint8List> bytes, {int offset = 0}) => unawaited(_file.writeMany(bytes, offset: offset));
 
   @pragma(preferInlinePragma)
   Future<Uint8List> read({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {

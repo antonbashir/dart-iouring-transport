@@ -10,6 +10,7 @@ class TransportServerConnection {
 
   const TransportServerConnection(this._connection);
 
+  Stream<TransportPayload> get inbound => _connection.inbound;
   bool get active => !_connection.closing;
 
   @pragma(preferInlinePragma)
@@ -22,10 +23,10 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> writeSingle(Uint8List bytes) => _connection.writeSingle(bytes);
+  void writeSingle(Uint8List bytes) => unawaited(_connection.writeSingle(bytes));
 
   @pragma(preferInlinePragma)
-  Future<void> writeMany(List<Uint8List> bytes) => _connection.writeMany(bytes);
+  void writeMany(List<Uint8List> bytes) => unawaited(_connection.writeMany(bytes));
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _connection.close(gracefulDuration: gracefulDuration);
@@ -39,6 +40,7 @@ class TransportServerDatagramReceiver {
 
   const TransportServerDatagramReceiver(this._server);
 
+  Stream<TransportDatagramResponder> get inbound => _server.inbound;
   bool get active => _server.active;
 
   @pragma(preferInlinePragma)

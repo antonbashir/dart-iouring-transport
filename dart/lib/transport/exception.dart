@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:ffi/ffi.dart';
 import 'payload.dart';
 import 'bindings.dart';
@@ -17,14 +19,14 @@ class TransportInitializationException implements Exception {
 class TransportInternalException implements Exception {
   final TransportEvent event;
   final int code;
-  final TransportPayload? payload;
+  final Uint8List? bytes;
 
   late final String message;
 
   TransportInternalException({
     required this.event,
     required this.code,
-    this.payload,
+    this.bytes,
     required String message,
     int? bufferId,
   }) {
@@ -37,11 +39,11 @@ class TransportInternalException implements Exception {
 
 class TransportCanceledException implements Exception {
   final TransportEvent event;
-  final TransportPayload? payload;
+  final Uint8List? bytes;
 
   late final String message;
 
-  TransportCanceledException({required this.event, this.payload}) {
+  TransportCanceledException({required this.event, this.bytes}) {
     this.message = "[$event] canceled";
   }
 
@@ -66,7 +68,7 @@ class TransportClosedException implements Exception {
 
 class TransportZeroDataException implements Exception {
   final TransportEvent event;
-  final TransportPayload payload;
+  final Uint8List payload;
 
   late final String message;
 
@@ -79,17 +81,17 @@ class TransportZeroDataException implements Exception {
 }
 
 @pragma(preferInlinePragma)
-Exception createTransportException(TransportEvent event, int result, TransportBindings bindings, {TransportPayload? payload}) {
+Exception createTransportException(TransportEvent event, int result, TransportBindings bindings, {Uint8List? bytes}) {
   if (result < 0) {
     if (result == -ECANCELED) {
-      return TransportCanceledException(event: event, payload: payload);
+      return TransportCanceledException(event: event, bytes: bytes);
     }
     return TransportInternalException(
       event: event,
       code: result,
       message: kernelErrorToString(result, bindings),
-      payload: payload,
+      bytes: bytes,
     );
   }
-  return TransportZeroDataException(event: event, payload: payload!);
+  return TransportZeroDataException(event: event, payload: bytes!);
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
@@ -88,19 +89,23 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  Future<void> respondSingleMessage(Uint8List bytes, {int? flags}) => _server.respondSingleMessage(
-        _channel,
-        _destination,
-        bytes,
-        flags: flags,
+  void respondSingleMessage(Uint8List bytes, {int? flags}) => unawaited(
+        _server.respondSingleMessage(
+          _channel,
+          _destination,
+          bytes,
+          flags: flags,
+        ),
       );
 
   @pragma(preferInlinePragma)
-  Future<void> respondManyMessage(List<Uint8List> bytes, {int? flags}) => _server.respondManyMessages(
-        _channel,
-        _destination,
-        bytes,
-        flags: flags,
+  void respondManyMessage(List<Uint8List> bytes, {int? flags}) => unawaited(
+        _server.respondManyMessages(
+          _channel,
+          _destination,
+          bytes,
+          flags: flags,
+        ),
       );
 
   @pragma(preferInlinePragma)
