@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'bindings.dart';
 import 'buffers.dart';
 import 'channel.dart';
+import 'configuration.dart';
 import 'constants.dart';
 import 'server/server.dart';
 
@@ -89,7 +90,9 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  void respondSingleMessage(Uint8List bytes, {int? flags, void Function(Exception error)? onError}) => unawaited(
+  void respondSingleMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
+    if (retry == null) {
+      unawaited(
         _server.respondSingleMessage(
           _channel,
           _destination,
@@ -98,9 +101,46 @@ class TransportDatagramResponder {
           onError: onError,
         ),
       );
+      return;
+    }
+    var attempt = 0;
+    void _onError(Exception error) {
+      if (!retry.predicate(error)) {
+        onError?.call(error);
+        return;
+      }
+      if (++attempt == retry.maxAttempts) {
+        onError?.call(error);
+        return;
+      }
+      Future.delayed(retry.options.delay(attempt), () {
+        unawaited(
+          _server.respondSingleMessage(
+            _channel,
+            _destination,
+            bytes,
+            flags: flags,
+            onError: _onError,
+          ),
+        );
+      });
+    }
+
+    unawaited(
+      _server.respondSingleMessage(
+        _channel,
+        _destination,
+        bytes,
+        flags: flags,
+        onError: _onError,
+      ),
+    );
+  }
 
   @pragma(preferInlinePragma)
-  void respondManyMessage(List<Uint8List> bytes, {int? flags, void Function(Exception error)? onError}) => unawaited(
+  void respondManyMessage(List<Uint8List> bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
+    if (retry == null) {
+      unawaited(
         _server.respondManyMessages(
           _channel,
           _destination,
@@ -109,6 +149,41 @@ class TransportDatagramResponder {
           onError: onError,
         ),
       );
+      return;
+    }
+    var attempt = 0;
+    void _onError(Exception error) {
+      if (!retry.predicate(error)) {
+        onError?.call(error);
+        return;
+      }
+      if (++attempt == retry.maxAttempts) {
+        onError?.call(error);
+        return;
+      }
+      Future.delayed(retry.options.delay(attempt), () {
+        unawaited(
+          _server.respondManyMessages(
+            _channel,
+            _destination,
+            bytes,
+            flags: flags,
+            onError: _onError,
+          ),
+        );
+      });
+    }
+
+    unawaited(
+      _server.respondManyMessages(
+        _channel,
+        _destination,
+        bytes,
+        flags: flags,
+        onError: _onError,
+      ),
+    );
+  }
 
   @pragma(preferInlinePragma)
   void release() => _pool.release(_bufferId);

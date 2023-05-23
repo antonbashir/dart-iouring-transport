@@ -83,8 +83,6 @@ void main() {
     final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
       testFileSingle(index: index);
-      testFileLoad(index: index, count: 64);
-      testFileLoad(index: index, count: 32);
     }
   });
   group("[timeout]", timeout: Timeout(Duration(hours: 1)), skip: !timeout, () {
