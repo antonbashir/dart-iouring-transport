@@ -21,6 +21,7 @@ void main() {
   final callback = true;
   final domain = true;
   final shutdown = true;
+  final bulk = true;
   final tcp = true;
   final udp = true;
   final unixStream = false;
@@ -28,7 +29,6 @@ void main() {
   final file = false;
   final timeout = false;
   final buffers = false;
-  final bulk = false;
 
   group("[initialization]", timeout: Timeout(Duration(hours: 1)), skip: !initialization, () {
     testInitialization();
