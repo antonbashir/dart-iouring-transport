@@ -18,6 +18,10 @@ import 'unix.dart';
 
 void main() {
   final initialization = true;
+  final callback = true;
+  final domain = true;
+  final shutdown = true;
+
   final tcp = true;
   final udp = false;
   final unixStream = false;
@@ -25,12 +29,23 @@ void main() {
   final file = false;
   final timeout = false;
   final buffers = false;
-  final shutdown = false;
   final bulk = false;
 
   group("[initialization]", timeout: Timeout(Duration(hours: 1)), skip: !initialization, () {
     testInitialization();
   });
+  group("[shutdown]", timeout: Timeout(Duration(hours: 1)), skip: !shutdown, () {
+    testShutdown(gracefulDuration: Duration(seconds: 10));
+  });
+  group("[callback]", timeout: Timeout(Duration(hours: 1)), skip: !callback, () {
+    final testsCount = 10;
+    for (var index = 0; index < testsCount; index++) {
+      testCustom(index, 1);
+      testCustom(index, 2);
+      testCustom(index, 4);
+    }
+  });
+  group("[domain]", skip: !domain, () => testDomain());
   group("[tcp]", timeout: Timeout(Duration(hours: 1)), skip: !tcp, () {
     final testsCount = 10;
     for (var index = 0; index < testsCount; index++) {
@@ -96,21 +111,9 @@ void main() {
     testFileBuffers();
     testBuffersOverflow();
   });
-  group("[shutdown]", timeout: Timeout(Duration(hours: 1)), skip: !shutdown, () {
-    testShutdown(gracefulDuration: Duration(seconds: 10));
-  });
   group("[bulk]", timeout: Timeout(Duration(hours: 1)), skip: !bulk, () {
     testBulk();
   });
-  group("[custom]", timeout: Timeout(Duration(hours: 1)), () {
-    final testsCount = 10;
-    for (var index = 0; index < testsCount; index++) {
-      testCustom(index, 1);
-      testCustom(index, 2);
-      testCustom(index, 4);
-    }
-  });
-  testDomain();
 }
 
 void testInitialization() {

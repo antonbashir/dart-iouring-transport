@@ -67,17 +67,20 @@ void testTcpMany({required int index, required int clientsPool, required int cou
       configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool),
     );
     final clientResults = BytesBuilder();
-    final completer = Completer<Uint8List>();
-    clients.select().writeMany(Generators.requestsOrdered(count));
-    clients.select().read().listen(
-      (event) {
-        clientResults.add(event.takeBytes());
-        if (clientResults.length == Generators.responsesSumOrdered(count).length) {
-          completer.complete(clientResults.takeBytes());
-        }
-      },
-    );
-    await completer.future.then((value) => Validators.responsesSumOrdered(value, count));
+    final latch = Latch(clientsPool);
+    clients.forEach((client) {
+      client.writeMany(Generators.requestsOrdered(count));
+      client.read().listen(
+        (event) {
+          clientResults.add(event.takeBytes());
+          if (clientResults.length == Generators.responsesSumOrdered(count).length) {
+            Validators.responsesSumOrdered(clientResults.takeBytes(), count);
+            latch.countDown();
+          }
+        },
+      );
+    });
+    await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }

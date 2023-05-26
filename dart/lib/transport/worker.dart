@@ -176,7 +176,7 @@ class TransportWorker {
         continue;
       }
       if (event & transportEventCustom != 0) {
-        _customCallbacks.remove(result)?.complete(data & ~transportEventCustom);
+        _customCallbacks.remove(result)?.complete((data & ~transportEventCustom) >> 16);
       }
     }
     _bindings.transport_cqe_advance(_ring, cqeCount);
