@@ -46,19 +46,22 @@ void testUdpMany({required int index, required int clients, required int count})
       event.respondManyMessage(Generators.responsesUnordered(count));
     });
     final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
+    final latch = Latch(clients);
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       final client = worker.clients.udp(io.InternetAddress("127.0.0.1"), (worker.id + 1) * 2000 + (clientIndex + 1), io.InternetAddress("127.0.0.1"), 12345);
       final clientResults = BytesBuilder();
-      final completer = Completer<Uint8List>();
       client.receiveByMany(count).listen(
         (event) {
           clientResults.add(event.takeBytes());
-          if (clientResults.length == responsesSumLength) completer.complete(clientResults.takeBytes());
+          if (clientResults.length == responsesSumLength) {
+            Validators.responsesUnorderedSum(clientResults.takeBytes(), count * count);
+            latch.countDown();
+          }
         },
       );
       client.sendManyMessages(Generators.requestsUnordered(count));
-      await completer.future.then((actual) => Validators.responsesUnorderedSum(actual, count * count));
     }
+    await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
