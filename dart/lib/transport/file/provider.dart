@@ -47,6 +47,7 @@ class TransportFile {
           return completer.future.whenComplete(() => subscription.cancel());
         }
 
+        var counter = 0;
         final subscription = _file.inbound.listen(
           (payload) {
             final payloadBytes = payload.takeBytes();
@@ -60,7 +61,10 @@ class TransportFile {
               completer.complete(bytes.takeBytes());
               return;
             }
-            unawaited(_file.readMany(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset: offset + bytes.length));
+            if (++counter == blocksCount) {
+              counter = 0;
+              unawaited(_file.readMany(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset: offset + bytes.length));
+            }
           },
         );
         unawaited(_file.readMany(blocksCount, offset: offset));

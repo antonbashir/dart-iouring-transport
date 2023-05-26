@@ -91,8 +91,12 @@ class TransportDatagramClient {
   @pragma(preferInlinePragma)
   Stream<TransportPayload> receiveByMany(int count) {
     unawaited(_client.receiveManyMessages(count));
+    var counter = 0;
     return _client.inbound.map((event) {
-      if (_client.active) unawaited(_client.receiveManyMessages(count));
+      if (_client.active && ++counter == count) {
+        counter = 0;
+        unawaited(_client.receiveManyMessages(count));
+      }
       return event;
     });
   }

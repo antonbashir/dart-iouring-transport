@@ -55,8 +55,12 @@ class TransportServerDatagramReceiver {
   @pragma(preferInlinePragma)
   Stream<TransportDatagramResponder> receiveByMany(int count) {
     unawaited(_server.receiveManyMessages(count));
+    var counter = 0;
     return _server.inbound.map((event) {
-      if (_server.active) unawaited(_server.receiveManyMessages(count));
+      if (_server.active && ++counter == count) {
+        counter = 0;
+        unawaited(_server.receiveManyMessages(count));
+      }
       return event;
     });
   }
