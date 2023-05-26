@@ -17,16 +17,17 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = false;
-  final callback = false;
-  final domain = false;
+  final initialization = true;
+  final callback = true;
+  final domain = true;
   final shutdown = true;
 
-  final tcp = false;
+  final tcp = true;
   final udp = false;
   final unixStream = false;
   final unixDgram = false;
   final file = false;
+
   final timeout = false;
   final buffers = false;
   final bulk = false;
@@ -35,7 +36,7 @@ void main() {
     testInitialization();
   });
   group("[shutdown]", timeout: Timeout(Duration(hours: 1)), skip: !shutdown, () {
-    testShutdown(gracefulDuration: Duration(seconds: 10));
+    testShutdown(gracefulDuration: Duration(seconds: 5));
   });
   group("[callback]", timeout: Timeout(Duration(hours: 1)), skip: !callback, () {
     final testsCount = 10;
