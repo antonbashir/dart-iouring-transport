@@ -44,7 +44,7 @@ class TransportFile {
             },
           );
           unawaited(_file.readSingle(offset: offset));
-          return completer.future.whenComplete(() => subscription.cancel());
+          return completer.future.whenComplete(subscription.cancel);
         }
 
         var counter = 0;
@@ -68,7 +68,7 @@ class TransportFile {
           },
         );
         unawaited(_file.readMany(blocksCount, offset: offset));
-        return completer.future.whenComplete(() => subscription.cancel());
+        return completer.future.whenComplete(subscription.cancel);
       });
 
   @pragma(preferInlinePragma)

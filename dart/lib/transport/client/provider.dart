@@ -39,7 +39,9 @@ class TransportClientConnection {
         onError?.call(error);
         return;
       }
-      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.writeSingle(bytes, onError: _onError)));
+      unawaited(Future.delayed(retry.options.delay(attempt), () {
+        unawaited(_client.writeSingle(bytes, onError: _onError));
+      }));
     }
 
     unawaited(_client.writeSingle(bytes, onError: _onError));
@@ -61,7 +63,9 @@ class TransportClientConnection {
         onError?.call(error);
         return;
       }
-      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.writeMany(bytes, onError: _onError)));
+      unawaited(Future.delayed(retry.options.delay(attempt), () {
+        unawaited(_client.writeMany(bytes, onError: _onError));
+      }));
     }
 
     unawaited(_client.writeMany(bytes, onError: _onError));
@@ -141,7 +145,9 @@ class TransportDatagramClient {
         onError?.call(error);
         return;
       }
-      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.sendManyMessages(bytes, onError: _onError)));
+      unawaited(Future.delayed(retry.options.delay(attempt), () {
+        unawaited(_client.sendManyMessages(bytes, onError: _onError));
+      }));
     }
 
     unawaited(_client.sendManyMessages(bytes, onError: _onError));

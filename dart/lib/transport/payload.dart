@@ -113,7 +113,7 @@ class TransportDatagramResponder {
         onError?.call(error);
         return;
       }
-      Future.delayed(retry.options.delay(attempt), () {
+      unawaited(Future.delayed(retry.options.delay(attempt), () {
         unawaited(
           _server.respondSingleMessage(
             _channel,
@@ -123,7 +123,7 @@ class TransportDatagramResponder {
             onError: _onError,
           ),
         );
-      });
+      }));
     }
 
     unawaited(
@@ -161,7 +161,7 @@ class TransportDatagramResponder {
         onError?.call(error);
         return;
       }
-      Future.delayed(retry.options.delay(attempt), () {
+      unawaited(Future.delayed(retry.options.delay(attempt), () {
         unawaited(
           _server.respondManyMessages(
             _channel,
@@ -171,7 +171,7 @@ class TransportDatagramResponder {
             onError: _onError,
           ),
         );
-      });
+      }));
     }
 
     unawaited(
