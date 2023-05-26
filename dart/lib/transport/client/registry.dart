@@ -29,7 +29,7 @@ class TransportClientRegistry {
 
   Future<TransportClientStreamPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     configuration = configuration ?? TransportDefaults.tcpClient();
-    final providers = <Future<TransportClientConnection>>[];
+    final clients = <Future<TransportClientConnection>>[];
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
       final clientPointer = calloc<transport_client_t>();
       if (clientPointer == nullptr) {
@@ -70,9 +70,9 @@ class TransportClientRegistry {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _clients[clientPointer.ref.fd] = client;
-      providers.add(client.connect().then(TransportClientConnection.new));
+      clients.add(client.connect().then(TransportClientConnection.new));
     }
-    return TransportClientStreamPool(await Future.wait(providers));
+    return TransportClientStreamPool(await Future.wait(clients));
   }
 
   Future<TransportClientStreamPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {

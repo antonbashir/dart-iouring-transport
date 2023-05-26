@@ -273,5 +273,5 @@ class TransportClientStreamPool {
   int count() => _clients.length;
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.map((provider) => provider.close(gracefulDuration: gracefulDuration)));
+  Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.toList().map((provider) => provider.close(gracefulDuration: gracefulDuration)));
 }

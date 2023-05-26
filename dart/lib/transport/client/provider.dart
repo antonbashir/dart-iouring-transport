@@ -113,7 +113,9 @@ class TransportDatagramClient {
         onError?.call(error);
         return;
       }
-      Future.delayed(retry.options.delay(attempt), () => unawaited(_client.sendSingleMessage(bytes, onError: _onError)));
+      unawaited(Future.delayed(retry.options.delay(attempt), () {
+        unawaited(_client.sendSingleMessage(bytes, onError: _onError));
+      }));
     }
 
     unawaited(_client.sendSingleMessage(bytes, onError: _onError));

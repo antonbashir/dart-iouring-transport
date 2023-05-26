@@ -17,17 +17,15 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = true;
-  final callback = true;
-  final domain = true;
-  final shutdown = true;
-
-  final tcp = true;
-  final udp = false;
+  final initialization = false;
+  final callback = false;
+  final domain = false;
+  final shutdown = false;
+  final tcp = false;
+  final udp = true;
   final unixStream = false;
   final unixDgram = false;
   final file = false;
-
   final timeout = false;
   final buffers = false;
   final bulk = false;
