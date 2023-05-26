@@ -2,13 +2,13 @@ import 'dart:async';
 
 class Latch {
   var _counter = 0;
-  final int limit;
+  final int _limit;
   final Completer _completer = Completer();
 
-  Latch(this.limit);
+  Latch(this._limit);
 
   void countDown() {
-    if (++_counter == limit) _completer.complete();
+    if (++_counter == _limit) _completer.complete();
   }
 
   Future<void> done() => _completer.future;

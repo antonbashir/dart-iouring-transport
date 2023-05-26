@@ -8,6 +8,7 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'generators.dart';
+import 'latch.dart';
 import 'validators.dart';
 
 void testUnixStreamSingle({required int index, required int clientsPool}) {
@@ -26,11 +27,16 @@ void testUnixStreamSingle({required int index, required int clientsPool}) {
         },
       ),
     );
+    final latch = Latch(clientsPool);
     final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
     clients.forEach((client) {
       client.writeSingle(Generators.request());
-      client.read().listen((event) => Validators.response(event.takeBytes()));
+      client.read().listen((event) {
+        Validators.response(event.takeBytes());
+        latch.countDown();
+      });
     });
+    await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
@@ -57,19 +63,22 @@ void testUnixStreamMany({required int index, required int clientsPool, required 
         );
       },
     );
+    final latch = Latch(clientsPool);
     final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
     clients.forEach((client) async {
       final clientResults = BytesBuilder();
-      final completer = Completer();
       client.read().listen(
         (event) {
           clientResults.add(event.takeBytes());
-          if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();
+          if (clientResults.length == Generators.responsesSumOrdered(count).length) {
+            Validators.responsesSumOrdered(clientResults.takeBytes(), count);
+            latch.countDown();
+          }
         },
       );
       client.writeMany(Generators.requestsOrdered(count));
-      await completer.future.then((value) => Validators.responsesSumOrdered(clientResults.takeBytes(), count));
     });
+    await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
@@ -86,15 +95,17 @@ void testUnixDgramSingle({required int index, required int clients}) {
       Validators.request(event.takeBytes());
       event.respondSingleMessage(Generators.response(), retry: TransportDefaults.retry());
     });
-    final responseFutures = <Future<Uint8List>>[];
+    final latch = Latch(clients);
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
       final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-      client.receiveBySingle().listen((value) => value.takeBytes());
+      client.receiveBySingle().listen((value) {
+        Validators.response(value.takeBytes());
+        latch.countDown();
+      });
       client.sendSingleMessage(Generators.request(), retry: TransportDefaults.retry());
     }
-    final responses = await Future.wait(responseFutures);
-    responses.forEach(Validators.response);
+    await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
@@ -111,21 +122,24 @@ void testUnixDgramMany({required int index, required int clients, required int c
       Validators.request(event.takeBytes());
       event.respondManyMessage(Generators.responsesUnordered(count), retry: TransportDefaults.retry());
     });
+    final latch = Latch(clients);
     final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
       final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
       final clientResults = BytesBuilder();
-      final completer = Completer();
       client.receiveByMany(count).listen(
         (event) {
           clientResults.add(event.takeBytes());
-          if (clientResults.length == responsesSumLength) completer.complete();
+          if (clientResults.length == responsesSumLength) {
+            Validators.responsesUnorderedSum(clientResults.takeBytes(), count * count);
+            latch.countDown();
+          }
         },
       );
       client.sendManyMessages(Generators.requestsUnordered(count), retry: TransportDefaults.retry());
-      await completer.future.then((_) => Validators.responsesUnorderedSum(clientResults.takeBytes(), count * count));
     }
+    await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
