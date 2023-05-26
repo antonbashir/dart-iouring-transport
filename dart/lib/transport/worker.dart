@@ -157,6 +157,7 @@ class TransportWorker {
         _clientRegistry.get(fd)?.notifyData(bufferId, result, event);
         continue;
       }
+
       if (event & transportEventServer != 0) {
         event &= ~transportEventServer;
         if (event == transportEventRead || event == transportEventWrite) {
@@ -172,9 +173,10 @@ class TransportWorker {
       }
 
       if (event & transportEventFile != 0) {
-        _filesRegistry.get(fd)?.notify(bufferId, result, fd);
+        _filesRegistry.get(fd)?.notify(bufferId, result, event & ~transportEventFile);
         continue;
       }
+
       if (event & transportEventCustom != 0) {
         _customCallbacks.remove(result)?.complete((data & ~transportEventCustom) >> 16);
       }

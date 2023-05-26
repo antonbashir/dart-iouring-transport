@@ -112,7 +112,7 @@ class TransportFileChannel {
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (event == transportEventRead || event == transportEventReceiveMessage) {
+      if (event == transportEventRead) {
         if (result >= 0) {
           buffers.setLength(bufferId, result);
           _inboundEvents.add(_payloadPool.getPayload(bufferId, buffers.read(bufferId)));

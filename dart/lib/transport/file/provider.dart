@@ -40,12 +40,13 @@ class TransportFile {
                 completer.complete(bytes.takeBytes());
                 return;
               }
-              _file.readSingle(offset: offset + bytes.length);
+              unawaited(_file.readSingle(offset: offset + bytes.length));
             },
           );
-          _file.readSingle(offset: offset);
+          unawaited(_file.readSingle(offset: offset));
           return completer.future.whenComplete(() => subscription.cancel());
         }
+
         final subscription = _file.inbound.listen(
           (payload) {
             final payloadBytes = payload.takeBytes();
@@ -59,10 +60,10 @@ class TransportFile {
               completer.complete(bytes.takeBytes());
               return;
             }
-            _file.readMany(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset: offset + bytes.length);
+            unawaited(_file.readMany(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset: offset + bytes.length));
           },
         );
-        _file.readMany(blocksCount, offset: offset);
+        unawaited(_file.readMany(blocksCount, offset: offset));
         return completer.future.whenComplete(() => subscription.cancel());
       });
 

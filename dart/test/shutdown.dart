@@ -19,16 +19,21 @@ void testShutdown({required Duration gracefulDuration}) {
     final serverCompleter = Completer();
     final fileCompleter = Completer();
     final clientCompleter = Completer();
+    
     final server = worker.servers.tcp(InternetAddress("0.0.0.0"), 12345, (connection) {
       connection.writeSingle(Generators.request());
       serverCompleter.complete();
     });
+    
     final clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
-
+    
     var fileProvider = worker.files.open(file.path, create: true);
     fileProvider.writeSingle(Generators.request());
 
-    fileProvider.read().then((value) => fileCompleter.complete());
+    fileProvider.read().then((value) {
+      fileCompleter.complete();
+    });
+
     clients.select().read().listen((value) {
       value.release();
       clientCompleter.complete();
