@@ -147,7 +147,7 @@ class TransportWorker {
       var event = data & 0xffff;
       final fd = (data >> 32) & 0xffffffff;
       final bufferId = (data >> 16) & 0xffff;
-      //print("worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd");
+      print("worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd");
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;
         if (event == transportEventConnect) {

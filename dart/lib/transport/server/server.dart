@@ -91,7 +91,7 @@ class TransportServerConnectionChannel {
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (event == transportEventRead || event == transportEventReceiveMessage) {
+      if (event == transportEventRead) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
           _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
@@ -107,7 +107,6 @@ class TransportServerConnectionChannel {
       if (result > 0) return;
       unawaited(close());
       if (result == 0) return;
-      _buffers.release(bufferId);
       final handler = _outboundHandlers.remove(bufferId);
       handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       return;
@@ -266,7 +265,7 @@ class TransportServerChannel implements TransportServer {
   void notifyDatagram(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (event == transportEventRead || event == transportEventReceiveMessage) {
+      if (event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
           _inboundEvents.add(_payloadPool.getDatagramResponder(

@@ -220,7 +220,6 @@ class TransportClientChannel {
       }
       _buffers.release(bufferId);
       if (result > 0) return;
-      _buffers.release(bufferId);
       final handler = _outboundHandlers.remove(bufferId);
       handler?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
       return;
