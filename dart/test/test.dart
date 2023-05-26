@@ -24,7 +24,7 @@ void main() {
   final bulk = false;
   final tcp = false;
   final udp = false;
-  final unixStream = true;
+  final unixStream = false;
   final unixDgram = true;
   final file = false;
   final timeout = false;

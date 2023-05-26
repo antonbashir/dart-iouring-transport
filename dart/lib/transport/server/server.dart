@@ -97,11 +97,9 @@ class TransportServerConnectionChannel {
           _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
           return;
         }
-        if (result == 0) {
-          _buffers.release(bufferId);
-          unawaited(close());
-          return;
-        }
+        _buffers.release(bufferId);
+        unawaited(close());
+        if (result == 0) return;
         _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
@@ -109,11 +107,9 @@ class TransportServerConnectionChannel {
         _buffers.release(bufferId);
         return;
       }
-      if (result == 0) {
-        _buffers.release(bufferId);
-        unawaited(close());
-        return;
-      }
+      _buffers.release(bufferId);
+      unawaited(close());
+      if (result == 0) return;
       _buffers.release(bufferId);
       final handler = _outboundHandlers.remove(bufferId);
       handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));

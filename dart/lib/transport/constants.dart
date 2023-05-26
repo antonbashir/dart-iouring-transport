@@ -179,8 +179,8 @@ enum TransportEvent {
   static TransportEvent serverEvent(int event) {
     if (event == transportEventRead) return TransportEvent.serverRead;
     if (event == transportEventWrite) return TransportEvent.serverWrite;
-    if (event == transportEventSendMessage | transportEventServer) return TransportEvent.serverSend;
-    if (event == transportEventReceiveMessage | transportEventServer) return TransportEvent.serverReceive;
+    if (event == transportEventSendMessage) return TransportEvent.serverSend;
+    if (event == transportEventReceiveMessage) return TransportEvent.serverReceive;
     if (event == transportEventAccept) return TransportEvent.accept;
     return TransportEvent.unknown;
   }
