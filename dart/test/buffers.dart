@@ -87,7 +87,7 @@ void testUdpBuffers() {
     server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
     server.receiveBySingle().listen((value) {
       value.release();
-      value.respondManyMessage(Generators.requestsUnordered(8));
+      value.respondManyMessages(Generators.requestsUnordered(8));
       serverCompleter.complete();
     });
     clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);

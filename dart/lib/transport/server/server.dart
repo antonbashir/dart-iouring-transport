@@ -103,11 +103,8 @@ class TransportServerConnectionChannel {
         _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
-      if (result > 0) {
-        _buffers.release(bufferId);
-        return;
-      }
       _buffers.release(bufferId);
+      if (result > 0) return;
       unawaited(close());
       if (result == 0) return;
       _buffers.release(bufferId);
@@ -285,11 +282,8 @@ class TransportServerChannel implements TransportServer {
         _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
-      if (result > 0) {
-        _buffers.release(bufferId);
-        return;
-      }
       _buffers.release(bufferId);
+      if (result > 0) return;
       final handler = _outboundHandlers.remove(bufferId);
       handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       return;

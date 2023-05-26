@@ -49,6 +49,10 @@ class TransportServerDatagramReceiver {
     return _server.inbound.map((event) {
       if (_server.active) unawaited(_server.receiveSingleMessage());
       return event;
+    }).handleError((error) {
+      if (_server.active) {
+        unawaited(_server.receiveSingleMessage());
+      }
     });
   }
 
@@ -62,6 +66,11 @@ class TransportServerDatagramReceiver {
         unawaited(_server.receiveManyMessages(count));
       }
       return event;
+    }).handleError((error) {
+      if (_server.active && ++counter == count) {
+        counter = 0;
+        unawaited(_server.receiveManyMessages(count));
+      }
     });
   }
 

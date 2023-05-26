@@ -120,7 +120,7 @@ void testUnixDgramMany({required int index, required int clients, required int c
     if (serverSocket.existsSync()) serverSocket.deleteSync();
     worker.servers.unixDatagram(serverSocket.path).receiveByMany(count).listen((event) {
       Validators.request(event.takeBytes());
-      event.respondManyMessage(Generators.responsesUnordered(count), retry: TransportDefaults.retry());
+      event.respondManyMessages(Generators.responsesUnordered(count), retry: TransportDefaults.retry());
     });
     final latch = Latch(clients);
     final responsesSumLength = Generators.responsesSumUnordered(count * count).length;

@@ -89,6 +89,10 @@ class TransportDatagramClient {
     return _client.inbound.map((event) {
       if (_client.active) unawaited(_client.receiveSingleMessage());
       return event;
+    }).handleError((error) {
+      if (_client.active) {
+        unawaited(_client.receiveSingleMessage());
+      }
     });
   }
 
@@ -102,6 +106,11 @@ class TransportDatagramClient {
         unawaited(_client.receiveManyMessages(count));
       }
       return event;
+    }).handleError((error) {
+      if (_client.active && ++counter == count) {
+        counter = 0;
+        unawaited(_client.receiveManyMessages(count));
+      }
     });
   }
 

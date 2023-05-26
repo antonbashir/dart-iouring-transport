@@ -43,7 +43,7 @@ void testUdpMany({required int index, required int clients, required int count})
     await worker.initialize();
     worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345).receiveByMany(count).listen((event) {
       Validators.request(event.takeBytes());
-      event.respondManyMessage(Generators.responsesUnordered(count));
+      event.respondManyMessages(Generators.responsesUnordered(count));
     });
     final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
     final latch = Latch(clients);

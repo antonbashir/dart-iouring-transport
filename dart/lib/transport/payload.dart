@@ -138,7 +138,7 @@ class TransportDatagramResponder {
   }
 
   @pragma(preferInlinePragma)
-  void respondManyMessage(List<Uint8List> bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
+  void respondManyMessages(List<Uint8List> bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
     if (retry == null) {
       unawaited(
         _server.respondManyMessages(
