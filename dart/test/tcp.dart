@@ -8,6 +8,7 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'generators.dart';
+import 'latch.dart';
 import 'validators.dart';
 
 void testTcpSingle({required int index, required int clientsPool}) {
@@ -26,10 +27,15 @@ void testTcpSingle({required int index, required int clientsPool}) {
       ),
     );
     final clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool));
+    final latch = Latch(clientsPool);
     clients.forEach((client) {
       client.writeSingle(Generators.request());
-      client.read().listen((value) => Validators.response(value.takeBytes()));
+      client.read().listen((value) {
+        Validators.response(value.takeBytes());
+        latch.countDown();
+      });
     });
+    await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
@@ -61,15 +67,17 @@ void testTcpMany({required int index, required int clientsPool, required int cou
       configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool),
     );
     final clientResults = BytesBuilder();
-    final completer = Completer();
+    final completer = Completer<Uint8List>();
     clients.select().writeMany(Generators.requestsOrdered(count));
     clients.select().read().listen(
       (event) {
         clientResults.add(event.takeBytes());
-        if (clientResults.length == Generators.responsesSumOrdered(count).length) completer.complete();
+        if (clientResults.length == Generators.responsesSumOrdered(count).length) {
+          completer.complete(clientResults.takeBytes());
+        }
       },
     );
-    await completer.future.then((value) => Validators.responsesSumOrdered(clientResults.takeBytes(), count));
+    await completer.future.then((value) => Validators.responsesSumOrdered(value, count));
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }

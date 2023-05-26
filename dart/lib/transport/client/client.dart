@@ -215,20 +215,17 @@ class TransportClientChannel {
           return;
         }
         _buffers.release(bufferId);
-        _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
+        _inboundEvents.addError(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
         return;
       }
       if (result > 0) {
         _buffers.release(bufferId);
         return;
       }
-      final handler = _outboundHandlers.remove(bufferId);
-      if (handler != null) {
-        final bytes = _payloadPool.getPayload(bufferId, _buffers.read(bufferId)).takeBytes();
-        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
-        return;
-      }
       _buffers.release(bufferId);
+      final handler = _outboundHandlers.remove(bufferId);
+      handler?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
+      return;
     }
     _buffers.release(bufferId);
     if (_pending == 0) _closer.complete();

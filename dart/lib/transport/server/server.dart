@@ -97,23 +97,26 @@ class TransportServerConnectionChannel {
           _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
           return;
         }
-        unawaited(close());
-        _buffers.release(bufferId);
-        _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
+        if (result == 0) {
+          _buffers.release(bufferId);
+          unawaited(close());
+          return;
+        }
+        _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
       if (result > 0) {
         _buffers.release(bufferId);
         return;
       }
-      unawaited(close());
-      final handler = _outboundHandlers.remove(bufferId);
-      if (handler != null) {
-        final bytes = _payloadPool.getPayload(bufferId, _buffers.read(bufferId)).takeBytes();
-        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
+      if (result == 0) {
+        _buffers.release(bufferId);
+        unawaited(close());
         return;
       }
       _buffers.release(bufferId);
+      final handler = _outboundHandlers.remove(bufferId);
+      handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       return;
     }
     _buffers.release(bufferId);
@@ -122,7 +125,7 @@ class TransportServerConnectionChannel {
 
   Future<void> close({Duration? gracefulDuration}) async {
     if (_closing) return;
-    _closing = false;
+    _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
@@ -283,20 +286,16 @@ class TransportServerChannel implements TransportServer {
           return;
         }
         _buffers.release(bufferId);
-        _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
+        _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
       if (result > 0) {
         _buffers.release(bufferId);
         return;
       }
-      final handler = _outboundHandlers.remove(bufferId);
-      if (handler != null) {
-        final bytes = _payloadPool.getPayload(bufferId, _buffers.read(bufferId)).takeBytes();
-        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
-        return;
-      }
       _buffers.release(bufferId);
+      final handler = _outboundHandlers.remove(bufferId);
+      handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       return;
     }
     _buffers.release(bufferId);
@@ -339,10 +338,10 @@ class TransportServerChannel implements TransportServer {
   Future<void> close({Duration? gracefulDuration}) async {
     if (_closing) return;
     _closing = true;
+    await Future.wait(_connections.values.toList().map((connection) => connection.close(gracefulDuration: gracefulDuration)));
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
-    await Future.wait(_connections.values.toList().map((connection) => connection.close()));
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
     _registry.removeServer(pointer.ref.fd);

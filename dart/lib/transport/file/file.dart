@@ -119,20 +119,16 @@ class TransportFileChannel {
           return;
         }
         buffers.release(bufferId);
-        _inboundEvents.addError(createTransportException(TransportEvent.ofEvent(event), result, _bindings));
+        _inboundEvents.addError(createTransportException(TransportEvent.fileEvent(event), result, _bindings));
         return;
       }
       if (result >= 0) {
         buffers.release(bufferId);
         return;
       }
-      final handler = _outboundHandlers.remove(bufferId);
-      if (handler != null) {
-        final bytes = _payloadPool.getPayload(bufferId, buffers.read(bufferId)).takeBytes();
-        handler(createTransportException(TransportEvent.ofEvent(event), result, _bindings, bytes: bytes));
-        return;
-      }
       buffers.release(bufferId);
+      final handler = _outboundHandlers.remove(bufferId);
+      handler?.call(createTransportException(TransportEvent.fileEvent(event), result, _bindings));
       return;
     }
     buffers.release(bufferId);

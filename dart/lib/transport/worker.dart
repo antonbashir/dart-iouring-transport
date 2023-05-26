@@ -3,7 +3,6 @@ import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:math';
 
-import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
 
 import 'bindings.dart';

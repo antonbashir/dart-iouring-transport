@@ -176,18 +176,26 @@ enum TransportEvent {
   fileWrite,
   unknown;
 
-  static TransportEvent ofEvent(int event) {
-    if (event == (transportEventRead | transportEventClient)) return TransportEvent.clientRead;
-    if (event == (transportEventWrite | transportEventClient)) return TransportEvent.clientWrite;
-    if (event == (transportEventRead | transportEventFile)) return TransportEvent.fileRead;
-    if (event == (transportEventWrite | transportEventFile)) return TransportEvent.fileWrite;
-    if (event == (transportEventRead | transportEventServer)) return TransportEvent.serverRead;
-    if (event == (transportEventWrite | transportEventServer)) return TransportEvent.serverWrite;
-    if (event == (transportEventSendMessage | transportEventClient)) return TransportEvent.clientSend;
-    if (event == (transportEventReceiveMessage | transportEventClient)) return TransportEvent.clientReceive;
-    if (event == (transportEventSendMessage | transportEventServer)) return TransportEvent.serverSend;
-    if (event == (transportEventReceiveMessage | transportEventServer)) return TransportEvent.serverReceive;
+  static TransportEvent serverEvent(int event) {
+    if (event == transportEventRead) return TransportEvent.serverRead;
+    if (event == transportEventWrite) return TransportEvent.serverWrite;
+    if (event == transportEventSendMessage | transportEventServer) return TransportEvent.serverSend;
+    if (event == transportEventReceiveMessage | transportEventServer) return TransportEvent.serverReceive;
     if (event == transportEventAccept) return TransportEvent.accept;
+    return TransportEvent.unknown;
+  }
+
+  static TransportEvent fileEvent(int event) {
+    if (event == transportEventRead) return TransportEvent.fileRead;
+    if (event == transportEventWrite) return TransportEvent.fileWrite;
+    return TransportEvent.unknown;
+  }
+
+  static TransportEvent clientEvent(int event) {
+    if (event == transportEventRead) return TransportEvent.clientRead;
+    if (event == transportEventWrite) return TransportEvent.clientWrite;
+    if (event == transportEventSendMessage) return TransportEvent.clientSend;
+    if (event == transportEventReceiveMessage) return TransportEvent.clientReceive;
     if (event == transportEventConnect) return TransportEvent.connect;
     return TransportEvent.unknown;
   }
