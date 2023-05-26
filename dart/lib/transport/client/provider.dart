@@ -107,9 +107,8 @@ class TransportDatagramClient {
       }
       return event;
     }).handleError((error) {
-      if (_client.active && ++counter == count) {
-        counter = 0;
-        unawaited(_client.receiveManyMessages(count));
+      if (_client.active) {
+        unawaited(_client.receiveManyMessages(count - counter));
       }
     });
   }

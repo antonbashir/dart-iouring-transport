@@ -67,9 +67,8 @@ class TransportServerDatagramReceiver {
       }
       return event;
     }).handleError((error) {
-      if (_server.active && ++counter == count) {
-        counter = 0;
-        unawaited(_server.receiveManyMessages(count));
+      if (_server.active) {
+        unawaited(_server.receiveManyMessages(count - counter));
       }
     });
   }
