@@ -16,7 +16,7 @@ class TransportClientConnection {
 
   @pragma(preferInlinePragma)
   Stream<TransportPayload> read() {
-    unawaited(_client.read().onError((error, stackTrace) {}));
+    unawaited(_client.read());
     return _client.inbound.map((event) {
       if (_client.active) unawaited(_client.read().onError((error, stackTrace) {}));
       return event;
@@ -102,12 +102,10 @@ class TransportDatagramClient {
   Stream<TransportPayload> receive() {
     unawaited(_client.receive());
     return _client.inbound.map((event) {
-      if (_client.active) unawaited(_client.receive());
+      if (_client.active) unawaited(_client.receive().onError((error, stackTrace) {}));
       return event;
     }).handleError((error) {
-      if (_client.active) {
-        unawaited(_client.receive());
-      }
+      if (_client.active) unawaited(_client.receive().onError((error, stackTrace) {}));
       throw error;
     });
   }
