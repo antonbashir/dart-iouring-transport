@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/exception.dart';
+
 import '../constants.dart';
 import '../payload.dart';
 import 'file.dart';
@@ -17,10 +19,32 @@ class TransportFile {
   bool get active => _file.active;
 
   @pragma(preferInlinePragma)
-  void writeSingle(Uint8List bytes, {int offset = 0, void Function(Exception error)? onError}) => unawaited(_file.writeSingle(bytes, offset: offset, onError: onError));
+  void writeSingle(
+    Uint8List bytes, {
+    int offset = 0,
+    void Function(Exception error)? onError,
+    void Function()? onDone,
+  }) =>
+      unawaited(_file.writeSingle(
+        bytes,
+        offset: offset,
+        onError: onError,
+        onDone: onDone,
+      ));
 
   @pragma(preferInlinePragma)
-  void writeMany(List<Uint8List> bytes, {int offset = 0, void Function(Exception error)? onError}) => unawaited(_file.writeMany(bytes, offset: offset, onError: onError));
+  void writeMany(
+    List<Uint8List> bytes, {
+    int offset = 0,
+    void Function(Exception error)? onError,
+    void Function()? onDone,
+  }) =>
+      unawaited(_file.writeMany(
+        bytes,
+        offset: offset,
+        onError: onError,
+        onDone: onDone,
+      ));
 
   @pragma(preferInlinePragma)
   Future<Uint8List> read({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
@@ -43,7 +67,13 @@ class TransportFile {
               unawaited(_file.readSingle(offset: offset + bytes.length));
             },
             onError: (error) {
-              if (!completer.isCompleted) completer.completeError(error);
+              if (!completer.isCompleted) {
+                if (error is TransportInternalException) {
+                  completer.completeError(error);
+                  return;
+                }
+                completer.complete(bytes.takeBytes());
+              }
             },
           );
           unawaited(_file.readSingle(offset: offset));
@@ -66,11 +96,18 @@ class TransportFile {
             }
             if (++counter == blocksCount) {
               counter = 0;
-              unawaited(_file.readMany(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset: offset + bytes.length));
+              blocksCount = min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1));
+              unawaited(_file.readMany(blocksCount, offset: offset + bytes.length));
             }
           },
           onError: (error) {
-            if (!completer.isCompleted) completer.completeError(error);
+            if (!completer.isCompleted) {
+              if (error is TransportInternalException) {
+                completer.completeError(error);
+                return;
+              }
+              completer.complete(bytes.takeBytes());
+            }
           },
         );
         unawaited(_file.readMany(blocksCount, offset: offset));

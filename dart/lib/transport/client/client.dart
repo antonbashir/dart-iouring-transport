@@ -16,7 +16,8 @@ import 'registry.dart';
 class TransportClientChannel {
   final _connector = Completer();
   final StreamController<TransportPayload> _inboundEvents = StreamController();
-  final _outboundHandlers = <int, void Function(Exception error)>{};
+  final _outboundHandlers = <int, void Function()>{};
+  final _outboundErrorHandlers = <int, void Function(Exception error)>{};
   final Pointer<transport_client_t> _pointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportChannel _channel;
@@ -60,26 +61,30 @@ class TransportClientChannel {
     _pending++;
   }
 
-  Future<void> writeSingle(Uint8List bytes, {void Function(Exception error)? onError}) async {
+  Future<void> writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    if (onError != null) _outboundHandlers[bufferId] = onError;
+    if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+    if (onDone != null) _outboundHandlers[bufferId] = onDone;
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
   }
 
-  Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError}) async {
+  Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError, void Function()? onDone}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing) throw TransportClosedException.forClient();
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
+      final bufferId = bufferIds[index];
       _channel.write(
         bytes[index],
-        bufferIds[index],
+        bufferId,
         _writeTimeout,
         transportEventWrite | transportEventClient,
         sqeFlags: transportIosqeIoLink,
       );
+      if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+      if (onDone != null) _outboundHandlers[bufferId] = onDone;
     }
     _channel.write(
       bytes.last,
@@ -87,7 +92,8 @@ class TransportClientChannel {
       _writeTimeout,
       transportEventWrite | transportEventClient,
     );
-    if (onError != null) _outboundHandlers[lastBufferId] = onError;
+    if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
+    if (onDone != null) _outboundHandlers[lastBufferId] = onDone;
     _pending += bytes.length;
   }
 
@@ -99,11 +105,17 @@ class TransportClientChannel {
     _pending++;
   }
 
-  Future<void> send(Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
+  Future<void> send(
+    Uint8List bytes, {
+    int? flags,
+    void Function(Exception error)? onError,
+    void Function()? onDone,
+  }) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
-    if (onError != null) _outboundHandlers[bufferId] = onError;
+    if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+    if (onDone != null) _outboundHandlers[bufferId] = onDone;
     _channel.sendMessage(
       bytes,
       bufferId,
@@ -162,8 +174,12 @@ class TransportClientChannel {
         return;
       }
       _buffers.release(bufferId);
-      if (result > 0) return;
-      final handler = _outboundHandlers.remove(bufferId);
+      if (result > 0) {
+        final handler = _outboundHandlers.remove(bufferId);
+        handler?.call();
+        return;
+      }
+      final handler = _outboundErrorHandlers.remove(bufferId);
       handler?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
       return;
     }

@@ -26,7 +26,7 @@ void main() {
   final udp = true;
   final unixStream = true;
   final unixDgram = true;
-  final file = false;
+  final file = true;
   final timeout = false;
   final buffers = false;
 
@@ -89,6 +89,9 @@ void main() {
     final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
       testFileSingle(index: index);
+      testFileLoad(index: index, count: 1);
+      testFileLoad(index: index, count: 8);
+      testFileLoad(index: index, count: 16);
     }
   });
   group("[timeout]", timeout: Timeout(Duration(hours: 1)), skip: !timeout, () {

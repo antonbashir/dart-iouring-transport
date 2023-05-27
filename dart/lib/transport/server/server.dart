@@ -18,7 +18,8 @@ abstract class TransportServer {
 class TransportServerConnectionChannel {
   final _closer = Completer();
   final StreamController<TransportPayload> _inboundEvents = StreamController();
-  final _outboundHandlers = <int, void Function(Exception error)>{};
+  final _outboundHandlers = <int, void Function()>{};
+  final _outboundErrorHandlers = <int, void Function(Exception error)>{};
   final int _readTimeout;
   final int _writeTimeout;
   final TransportChannel channel;
@@ -56,15 +57,16 @@ class TransportServerConnectionChannel {
     _pending++;
   }
 
-  Future<void> writeSingle(Uint8List bytes, {void Function(Exception error)? onError}) async {
+  Future<void> writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing || _server._closing) throw TransportClosedException.forServer();
-    if (onError != null) _outboundHandlers[bufferId] = onError;
+    if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+    if (onDone != null) _outboundHandlers[bufferId] = onDone;
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     _pending++;
   }
 
-  Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError}) async {
+  Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError, void Function()? onDone}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing || _server._closing) throw TransportClosedException.forServer();
     final lastBufferId = bufferIds.last;
@@ -77,6 +79,8 @@ class TransportServerConnectionChannel {
         transportEventWrite | transportEventServer,
         sqeFlags: transportIosqeIoLink,
       );
+      if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+      if (onDone != null) _outboundHandlers[bufferId] = onDone;
     }
     channel.write(
       bytes.last,
@@ -84,7 +88,8 @@ class TransportServerConnectionChannel {
       _writeTimeout,
       transportEventWrite | transportEventServer,
     );
-    if (onError != null) _outboundHandlers[lastBufferId] = onError;
+    if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
+    if (onDone != null) _outboundHandlers[lastBufferId] = onDone;
     _pending += bytes.length;
   }
 
@@ -104,10 +109,14 @@ class TransportServerConnectionChannel {
         return;
       }
       _buffers.release(bufferId);
-      if (result > 0) return;
+      if (result > 0) {
+        final handler = _outboundHandlers.remove(bufferId);
+        handler?.call();
+        return;
+      }
       unawaited(close());
       if (result == 0) return;
-      final handler = _outboundHandlers.remove(bufferId);
+      final handler = _outboundErrorHandlers.remove(bufferId);
       handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       return;
     }

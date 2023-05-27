@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:iouring_transport/transport/defaults.dart';
@@ -8,9 +9,7 @@ import 'package:test/test.dart';
 import 'generators.dart';
 import 'validators.dart';
 
-void testFileSingle({
-  required int index,
-}) {
+void testFileSingle({required int index}) {
   test("(single) [index = $index]", () async {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
@@ -26,11 +25,8 @@ void testFileSingle({
   });
 }
 
-void testFileLoad({
-  required int index,
-  required int count,
-}) {
-  test("(load) [index = $index]", () async {
+void testFileLoad({required int index, required int count}) {
+  test("(load) [index = $index, count = $count]", () async {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
@@ -39,9 +35,14 @@ void testFileLoad({
     if (!nativeFile.existsSync()) nativeFile.createSync();
     final file = worker.files.open(nativeFile.path, create: true);
     final data = Generators.requestsOrdered(count * count);
-    file.writeMany(data);
-    final result = await file.read(blocksCount: count);
-    Validators.requestsSumOrdered(result, count * count);
+    final completer = Completer();
+    file.writeMany(data, onDone: () async {
+      Validators.requestsSumOrdered(await file.read(blocksCount: count), count * count);
+      completer.complete();
+    });
+    await completer.future;
+    await file.close();
+    Validators.requestsSumOrdered(await worker.files.open(nativeFile.path, create: true).read(blocksCount: 1), count * count);
     if (nativeFile.existsSync()) nativeFile.deleteSync();
     await transport.shutdown();
   });

@@ -23,10 +23,18 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  void writeSingle(Uint8List bytes, {void Function(Exception error)? onError}) => unawaited(_connection.writeSingle(bytes, onError: onError));
+  void writeSingle(
+    Uint8List bytes, {
+    void Function(Exception error)? onError,
+  }) =>
+      unawaited(_connection.writeSingle(bytes, onError: onError));
 
   @pragma(preferInlinePragma)
-  void writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError}) => unawaited(_connection.writeMany(bytes, onError: onError));
+  void writeMany(
+    List<Uint8List> bytes, {
+    void Function(Exception error)? onError,
+  }) =>
+      unawaited(_connection.writeMany(bytes, onError: onError));
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulDuration}) => _connection.close(gracefulDuration: gracefulDuration);
@@ -50,9 +58,7 @@ class TransportServerDatagramReceiver {
       if (_server.active) unawaited(_server.receiveSingleMessage());
       return event;
     }).handleError((error) {
-      if (_server.active) {
-        unawaited(_server.receiveSingleMessage());
-      }
+      if (_server.active) unawaited(_server.receiveSingleMessage());
       throw error;
     });
   }
