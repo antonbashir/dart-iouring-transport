@@ -91,7 +91,7 @@ class TransportClientChannel {
     _pending += bytes.length;
   }
 
-  Future<void> receiveSingleMessage({int? flags}) async {
+  Future<void> receive({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
@@ -99,33 +99,7 @@ class TransportClientChannel {
     _pending++;
   }
 
-  Future<void> receiveManyMessages(int count, {int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferIds = await _buffers.allocateArray(count);
-    if (_closing) throw TransportClosedException.forClient();
-    final lastBufferId = bufferIds.last;
-    for (var index = 0; index < count - 1; index++) {
-      final bufferId = bufferIds[index];
-      _channel.receiveMessage(
-        bufferId,
-        _pointer.ref.family,
-        _readTimeout,
-        flags,
-        transportEventReceiveMessage | transportEventClient,
-        sqeFlags: transportIosqeIoLink,
-      );
-    }
-    _channel.receiveMessage(
-      lastBufferId,
-      _pointer.ref.family,
-      _readTimeout,
-      flags,
-      transportEventReceiveMessage | transportEventClient,
-    );
-    _pending += count;
-  }
-
-  Future<void> sendSingleMessage(Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
+  Future<void> send(Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forClient();
@@ -140,37 +114,6 @@ class TransportClientChannel {
       transportEventSendMessage | transportEventClient,
     );
     _pending++;
-  }
-
-  Future<void> sendManyMessages(List<Uint8List> bytes, {int? flags, void Function(Exception error)? onError}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferIds = await _buffers.allocateArray(bytes.length);
-    if (_closing) throw TransportClosedException.forServer();
-    final lastBufferId = bufferIds.last;
-    for (var index = 0; index < bytes.length - 1; index++) {
-      final bufferId = bufferIds[index];
-      _channel.sendMessage(
-        bytes[index],
-        bufferId,
-        _pointer.ref.family,
-        _destination,
-        _writeTimeout,
-        flags,
-        transportEventSendMessage | transportEventClient,
-        sqeFlags: transportIosqeIoLink,
-      );
-    }
-    _channel.sendMessage(
-      bytes.last,
-      lastBufferId,
-      _pointer.ref.family,
-      _destination,
-      _writeTimeout,
-      flags,
-      transportEventSendMessage | transportEventClient,
-    );
-    if (onError != null) _outboundHandlers[lastBufferId] = onError;
-    _pending += bytes.length;
   }
 
   @pragma(preferInlinePragma)

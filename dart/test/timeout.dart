@@ -67,7 +67,7 @@ void testUdpTimeoutSingle({required Duration serverRead, required Duration clien
     time.start();
     await worker.clients
         .udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.udpClient().copyWith(readTimeout: clientRead))
-        .receiveBySingle()
+        .receive()
         .listen((_) {}, onError: _handleTimeout(time, clientRead, completer));
     await completer.future;
     await server.close();
@@ -75,35 +75,7 @@ void testUdpTimeoutSingle({required Duration serverRead, required Duration clien
     server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345, configuration: TransportDefaults.udpServer().copyWith(readTimeout: serverRead));
     time.reset();
     completer = Completer();
-    server.receiveBySingle().listen((_) {}, onError: _handleTimeout(time, serverRead, completer));
-    await completer.future;
-    await server.close();
-
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
-  });
-}
-
-void testUdpTimeoutMany({required Duration serverRead, required Duration clientRead, required int count}) {
-  test("(udp many) [serverRead = ${serverRead.inSeconds}, clientRead = ${clientRead.inSeconds}] ", () async {
-    final transport = Transport();
-    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
-    await worker.initialize();
-    final time = Stopwatch();
-    var completer = Completer();
-
-    var server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345);
-    time.start();
-    await worker.clients
-        .udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.udpClient().copyWith(readTimeout: clientRead))
-        .receiveByMany(count)
-        .listen((_) {}, onError: _handleTimeout(time, clientRead, completer));
-    await completer.future;
-    await server.close();
-
-    server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345, configuration: TransportDefaults.udpServer().copyWith(readTimeout: serverRead));
-    time.reset();
-    completer = Completer();
-    server.receiveByMany(count).listen((_) {}, onError: _handleTimeout(time, serverRead, completer));
+    server.receive().listen((_) {}, onError: _handleTimeout(time, serverRead, completer));
     await completer.future;
     await server.close();
 

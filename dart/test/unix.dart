@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
@@ -91,53 +89,19 @@ void testUnixDgramSingle({required int index, required int clients}) {
     final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
     final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
     if (serverSocket.existsSync()) serverSocket.deleteSync();
-    worker.servers.unixDatagram(serverSocket.path).receiveBySingle().listen((event) {
+    worker.servers.unixDatagram(serverSocket.path).receive().listen((event) {
       Validators.request(event.takeBytes());
-      event.respondSingleMessage(Generators.response(), retry: TransportDefaults.retry());
+      event.respond(Generators.response(), retry: TransportDefaults.retry());
     });
     final latch = Latch(clients);
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
       final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-      client.receiveBySingle().listen((value) {
+      client.receive().listen((value) {
         Validators.response(value.takeBytes());
         latch.countDown();
       });
-      client.sendSingleMessage(Generators.request(), retry: TransportDefaults.retry());
-    }
-    await latch.done();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
-  });
-}
-
-void testUnixDgramMany({required int index, required int clients, required int count}) {
-  test("(many) [clients = $clients, count = $count]", () async {
-    final transport = Transport();
-    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
-    await worker.initialize();
-    final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
-    final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
-    if (serverSocket.existsSync()) serverSocket.deleteSync();
-    worker.servers.unixDatagram(serverSocket.path).receiveByMany(count).listen((event) {
-      Validators.request(event.takeBytes());
-      event.respondManyMessages(Generators.responsesUnordered(count), retry: TransportDefaults.retry());
-    });
-    final latch = Latch(clients);
-    final responsesSumLength = Generators.responsesSumUnordered(count * count).length;
-    for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
-      if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
-      final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-      final clientResults = BytesBuilder();
-      client.receiveByMany(count).listen(
-        (event) {
-          clientResults.add(event.takeBytes());
-          if (clientResults.length == responsesSumLength) {
-            Validators.responsesUnorderedSum(clientResults.takeBytes(), count * count);
-            latch.countDown();
-          }
-        },
-      );
-      client.sendManyMessages(Generators.requestsUnordered(count), retry: TransportDefaults.retry());
+      client.send(Generators.request(), retry: TransportDefaults.retry());
     }
     await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));

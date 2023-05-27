@@ -29,6 +29,7 @@ class TransportClientConnection {
       unawaited(_client.writeSingle(bytes, onError: onError));
       return;
     }
+
     var attempt = 0;
     void _onError(Exception error) {
       if (!retry.predicate(error)) {
@@ -53,6 +54,7 @@ class TransportClientConnection {
       unawaited(_client.writeMany(bytes, onError: onError));
       return;
     }
+
     var attempt = 0;
     void _onError(Exception error) {
       if (!retry.predicate(error)) {
@@ -84,41 +86,26 @@ class TransportDatagramClient {
   Stream<TransportPayload> get inbound => _client.inbound;
 
   @pragma(preferInlinePragma)
-  Stream<TransportPayload> receiveBySingle() {
-    unawaited(_client.receiveSingleMessage());
+  Stream<TransportPayload> receive() {
+    unawaited(_client.receive());
     return _client.inbound.map((event) {
-      if (_client.active) unawaited(_client.receiveSingleMessage());
+      if (_client.active) unawaited(_client.receive());
       return event;
     }).handleError((error) {
       if (_client.active) {
-        unawaited(_client.receiveSingleMessage());
+        unawaited(_client.receive());
       }
+      throw error;
     });
   }
 
   @pragma(preferInlinePragma)
-  Stream<TransportPayload> receiveByMany(int count) {
-    unawaited(_client.receiveManyMessages(count));
-    var counter = 0;
-    return _client.inbound.map((event) {
-      if (_client.active && ++counter == count) {
-        counter = 0;
-        unawaited(_client.receiveManyMessages(count));
-      }
-      return event;
-    }).handleError((error) {
-      if (_client.active) {
-        unawaited(_client.receiveManyMessages(count - counter));
-      }
-    });
-  }
-
-  @pragma(preferInlinePragma)
-  void sendSingleMessage(Uint8List bytes, {TransportRetryConfiguration? retry, int? flags, void Function(Exception error)? onError}) {
+  void send(Uint8List bytes, {TransportRetryConfiguration? retry, int? flags, void Function(Exception error)? onError}) {
     if (retry == null) {
-      unawaited(_client.sendSingleMessage(bytes, onError: onError));
+      unawaited(_client.send(bytes, onError: onError));
       return;
     }
+
     var attempt = 0;
     void _onError(Exception error) {
       if (!retry.predicate(error)) {
@@ -130,35 +117,11 @@ class TransportDatagramClient {
         return;
       }
       unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(_client.sendSingleMessage(bytes, onError: _onError));
+        unawaited(_client.send(bytes, onError: _onError));
       }));
     }
 
-    unawaited(_client.sendSingleMessage(bytes, onError: _onError));
-  }
-
-  @pragma(preferInlinePragma)
-  void sendManyMessages(List<Uint8List> bytes, {TransportRetryConfiguration? retry, int? flags, void Function(Exception error)? onError}) {
-    if (retry == null) {
-      unawaited(_client.sendManyMessages(bytes, onError: onError));
-      return;
-    }
-    var attempt = 0;
-    void _onError(Exception error) {
-      if (!retry.predicate(error)) {
-        onError?.call(error);
-        return;
-      }
-      if (++attempt == retry.maxAttempts) {
-        onError?.call(error);
-        return;
-      }
-      unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(_client.sendManyMessages(bytes, onError: _onError));
-      }));
-    }
-
-    unawaited(_client.sendManyMessages(bytes, onError: _onError));
+    unawaited(_client.send(bytes, onError: _onError));
   }
 
   @pragma(preferInlinePragma)

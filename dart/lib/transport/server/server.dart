@@ -188,32 +188,6 @@ class TransportServerChannel implements TransportServer {
     _pending++;
   }
 
-  Future<void> receiveManyMessages(int count, {int? flags}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferIds = await _buffers.allocateArray(count);
-    if (_closing) throw TransportClosedException.forServer();
-    final lastBufferId = bufferIds.last;
-    for (var index = 0; index < count - 1; index++) {
-      final bufferId = bufferIds[index];
-      _datagramChannel!.receiveMessage(
-        bufferId,
-        pointer.ref.family,
-        _readTimeout,
-        flags,
-        transportEventReceiveMessage | transportEventServer,
-        sqeFlags: transportIosqeIoLink,
-      );
-    }
-    _datagramChannel!.receiveMessage(
-      lastBufferId,
-      pointer.ref.family,
-      _readTimeout,
-      flags,
-      transportEventReceiveMessage | transportEventServer,
-    );
-    _pending += count;
-  }
-
   Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
@@ -229,37 +203,6 @@ class TransportServerChannel implements TransportServer {
       transportEventSendMessage | transportEventServer,
     );
     _pending++;
-  }
-
-  Future<void> respondManyMessages(TransportChannel channel, Pointer<sockaddr> destination, List<Uint8List> bytes, {int? flags, void Function(Exception error)? onError}) async {
-    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
-    final bufferIds = await _buffers.allocateArray(bytes.length);
-    if (_closing) throw TransportClosedException.forServer();
-    final lastBufferId = bufferIds.last;
-    for (var index = 0; index < bytes.length - 1; index++) {
-      final bufferId = bufferIds[index];
-      channel.sendMessage(
-        bytes[index],
-        bufferId,
-        pointer.ref.family,
-        destination,
-        _writeTimeout,
-        flags,
-        transportEventSendMessage | transportEventServer,
-        sqeFlags: transportIosqeIoLink,
-      );
-    }
-    channel.sendMessage(
-      bytes.last,
-      lastBufferId,
-      pointer.ref.family,
-      destination,
-      _writeTimeout,
-      flags,
-      transportEventSendMessage | transportEventServer,
-    );
-    if (onError != null) _outboundHandlers[lastBufferId] = onError;
-    _pending += bytes.length;
   }
 
   void notifyDatagram(int bufferId, int result, int event) {

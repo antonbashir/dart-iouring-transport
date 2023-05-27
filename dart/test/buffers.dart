@@ -64,14 +64,14 @@ void testUdpBuffers() {
 
     var serverCompleter = Completer();
     var server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
-    server.receiveBySingle().listen((value) {
+    server.receive().listen((value) {
       value.release();
-      value.respondSingleMessage(Generators.request());
+      value.respond(Generators.request());
       serverCompleter.complete();
     });
     var clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
-    clients.sendSingleMessage(Generators.request());
-    clients.receiveBySingle().listen((value) => value.release());
+    clients.send(Generators.request());
+    clients.receive().listen((value) => value.release());
     await serverCompleter.future;
 
     if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
@@ -85,14 +85,14 @@ void testUdpBuffers() {
 
     serverCompleter = Completer();
     server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
-    server.receiveBySingle().listen((value) {
+    server.receive().listen((value) {
       value.release();
-      value.respondManyMessages(Generators.requestsUnordered(8));
+      for (var i = 0; i < 8; i++) value.respond(Generators.request());
       serverCompleter.complete();
     });
     clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
-    clients.sendSingleMessage(Generators.request());
-    clients.receiveByMany(8).listen((value) => value.release());
+    clients.send(Generators.request());
+    clients.receive().listen((value) => value.release());
     await serverCompleter.future;
 
     if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");

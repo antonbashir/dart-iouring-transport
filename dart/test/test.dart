@@ -17,14 +17,14 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = false;
-  final callback = false;
-  final domain = false;
-  final shutdown = false;
-  final bulk = false;
-  final tcp = false;
-  final udp = false;
-  final unixStream = false;
+  final initialization = true;
+  final callback = true;
+  final domain = true;
+  final shutdown = true;
+  final bulk = true;
+  final tcp = true;
+  final udp = true;
+  final unixStream = true;
   final unixDgram = true;
   final file = false;
   final timeout = false;
@@ -75,10 +75,6 @@ void main() {
       testUdpSingle(index: index, clients: 1);
       testUdpSingle(index: index, clients: 128);
       testUdpSingle(index: index, clients: 512);
-      testUdpMany(index: index, clients: 1, count: 8);
-      testUdpMany(index: index, clients: 1, count: 4);
-      testUdpMany(index: index, clients: 128, count: 2);
-      testUdpMany(index: index, clients: 512, count: 2);
     }
   });
   group("[unix dgram]", timeout: Timeout(Duration(hours: 1)), skip: !unixDgram, () {
@@ -87,10 +83,6 @@ void main() {
       testUnixDgramSingle(index: index, clients: 1);
       testUnixDgramSingle(index: index, clients: 128);
       testUnixDgramSingle(index: index, clients: 512);
-      testUnixDgramMany(index: index, clients: 1, count: 8);
-      testUnixDgramMany(index: index, clients: 1, count: 4);
-      testUnixDgramMany(index: index, clients: 128, count: 2);
-      testUnixDgramMany(index: index, clients: 512, count: 2);
     }
   });
   group("[file]", timeout: Timeout(Duration(hours: 1)), skip: !file, () {
@@ -102,7 +94,6 @@ void main() {
   group("[timeout]", timeout: Timeout(Duration(hours: 1)), skip: !timeout, () {
     testTcpTimeoutSingle(connection: Duration(seconds: 1), serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
     testUdpTimeoutSingle(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3));
-    testUdpTimeoutMany(serverRead: Duration(seconds: 5), clientRead: Duration(seconds: 3), count: 8);
   });
   group("[buffers]", timeout: Timeout(Duration(hours: 1)), skip: !buffers, () {
     testTcpBuffers();

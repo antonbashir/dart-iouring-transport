@@ -90,7 +90,7 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  void respondSingleMessage(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
+  void respond(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
     if (retry == null) {
       unawaited(
         _server.respondSingleMessage(
@@ -128,54 +128,6 @@ class TransportDatagramResponder {
 
     unawaited(
       _server.respondSingleMessage(
-        _channel,
-        _destination,
-        bytes,
-        flags: flags,
-        onError: _onError,
-      ),
-    );
-  }
-
-  @pragma(preferInlinePragma)
-  void respondManyMessages(List<Uint8List> bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
-    if (retry == null) {
-      unawaited(
-        _server.respondManyMessages(
-          _channel,
-          _destination,
-          bytes,
-          flags: flags,
-          onError: onError,
-        ),
-      );
-      return;
-    }
-    var attempt = 0;
-    void _onError(Exception error) {
-      if (!retry.predicate(error)) {
-        onError?.call(error);
-        return;
-      }
-      if (++attempt == retry.maxAttempts) {
-        onError?.call(error);
-        return;
-      }
-      unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(
-          _server.respondManyMessages(
-            _channel,
-            _destination,
-            bytes,
-            flags: flags,
-            onError: _onError,
-          ),
-        );
-      }));
-    }
-
-    unawaited(
-      _server.respondManyMessages(
         _channel,
         _destination,
         bytes,

@@ -44,7 +44,7 @@ class TransportServerDatagramReceiver {
   bool get active => _server.active;
 
   @pragma(preferInlinePragma)
-  Stream<TransportDatagramResponder> receiveBySingle() {
+  Stream<TransportDatagramResponder> receive() {
     unawaited(_server.receiveSingleMessage());
     return _server.inbound.map((event) {
       if (_server.active) unawaited(_server.receiveSingleMessage());
@@ -53,23 +53,7 @@ class TransportServerDatagramReceiver {
       if (_server.active) {
         unawaited(_server.receiveSingleMessage());
       }
-    });
-  }
-
-  @pragma(preferInlinePragma)
-  Stream<TransportDatagramResponder> receiveByMany(int count) {
-    unawaited(_server.receiveManyMessages(count));
-    var counter = 0;
-    return _server.inbound.map((event) {
-      if (_server.active && ++counter == count) {
-        counter = 0;
-        unawaited(_server.receiveManyMessages(count));
-      }
-      return event;
-    }).handleError((error) {
-      if (_server.active) {
-        unawaited(_server.receiveManyMessages(count - counter));
-      }
+      throw error;
     });
   }
 

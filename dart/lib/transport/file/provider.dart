@@ -42,6 +42,9 @@ class TransportFile {
               }
               unawaited(_file.readSingle(offset: offset + bytes.length));
             },
+            onError: (error) {
+              if (!completer.isCompleted) completer.completeError(error);
+            },
           );
           unawaited(_file.readSingle(offset: offset));
           return completer.future.whenComplete(subscription.cancel);
@@ -65,6 +68,9 @@ class TransportFile {
               counter = 0;
               unawaited(_file.readMany(min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1)), offset: offset + bytes.length));
             }
+          },
+          onError: (error) {
+            if (!completer.isCompleted) completer.completeError(error);
           },
         );
         unawaited(_file.readMany(blocksCount, offset: offset));
