@@ -8,6 +8,7 @@ import 'package:iouring_transport/transport/worker.dart';
 import 'package:test/test.dart';
 
 import 'generators.dart';
+import 'latch.dart';
 import 'validators.dart';
 
 void testTcpBuffers() {
@@ -17,15 +18,20 @@ void testTcpBuffers() {
     await worker.initialize();
 
     var serverCompleter = Completer();
+    var clientCompleter = Completer();
     var server = worker.servers.tcp(io.InternetAddress("0.0.0.0"), 12345, (connection) {
       connection.writeSingle(Generators.request());
       serverCompleter.complete();
     });
     var clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345);
-    await clients.select().read().listen((value) => value.release());
+    await clients.select().read().listen((value) {
+      value.release();
+      clientCompleter.complete();
+    });
     await serverCompleter.future;
+    await clientCompleter.future;
 
-    if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
+    if (worker.buffers.used() != 1) throw TestFailure("actual: ${worker.buffers.used()}");
 
     await server.close();
     await clients.close();
@@ -35,15 +41,23 @@ void testTcpBuffers() {
     if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
     serverCompleter = Completer();
+    clientCompleter = Completer();
+    final clientBuffer = BytesBuilder();
     server = worker.servers.tcp(io.InternetAddress("0.0.0.0"), 12345, (connection) {
       connection.writeMany(Generators.requestsUnordered(8));
       serverCompleter.complete();
     });
     clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345);
-    await clients.select().read().listen((value) => value.release());
+    await clients.select().read().listen((value) {
+      clientBuffer.add(value.takeBytes());
+      if (clientBuffer.length == Generators.requestsSumUnordered(8).length) {
+        clientCompleter.complete();
+      }
+    });
     await serverCompleter.future;
+    await clientCompleter.future;
 
-    if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
+    if (worker.buffers.used() != 1) throw TestFailure("actual: ${worker.buffers.used()}");
 
     await server.close();
     await clients.close();
@@ -52,7 +66,7 @@ void testTcpBuffers() {
     if (worker.servers.registry.servers.isNotEmpty) throw TestFailure("servers isNotEmpty");
     if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
-    await transport.shutdown();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
 
@@ -63,6 +77,7 @@ void testUdpBuffers() {
     await worker.initialize();
 
     var serverCompleter = Completer();
+    var clientCompleter = Completer();
     var server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
     server.receive().listen((value) {
       value.release();
@@ -71,10 +86,14 @@ void testUdpBuffers() {
     });
     var clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
     clients.send(Generators.request());
-    clients.receive().listen((value) => value.release());
+    clients.receive().listen((value) {
+      value.release();
+      clientCompleter.complete();
+    });
     await serverCompleter.future;
+    await clientCompleter.future;
 
-    if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
+    if (worker.buffers.used() != 2) throw TestFailure("actual: ${worker.buffers.used()}");
 
     await server.close();
     await clients.close();
@@ -84,6 +103,7 @@ void testUdpBuffers() {
     if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
     serverCompleter = Completer();
+    final clientLatch = Latch(8);
     server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
     server.receive().listen((value) {
       value.release();
@@ -92,10 +112,14 @@ void testUdpBuffers() {
     });
     clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
     clients.send(Generators.request());
-    clients.receive().listen((value) => value.release());
+    clients.receive().listen((value) {
+      value.release();
+      clientLatch.countDown();
+    });
     await serverCompleter.future;
+    await clientLatch.done();
 
-    if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
+    if (worker.buffers.used() != 2) throw TestFailure("actual: ${worker.buffers.used()}");
 
     await server.close();
     await clients.close();
@@ -104,7 +128,7 @@ void testUdpBuffers() {
     if (worker.servers.registry.servers.isNotEmpty) throw TestFailure("servers isNotEmpty");
     if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
-    await transport.shutdown();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
 
@@ -120,7 +144,7 @@ void testFileBuffers() {
     fileProvider.writeSingle(Generators.request());
     fileProvider.inbound.listen((value) => value.release());
 
-    if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
+    if (worker.buffers.used() != 1) throw TestFailure("actual: ${worker.buffers.used()}");
 
     await fileProvider.close();
 
@@ -140,7 +164,7 @@ void testFileBuffers() {
 
     fileProvider.delegate.deleteSync();
 
-    await transport.shutdown();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
 
@@ -169,12 +193,11 @@ void testBuffersOverflow() {
       bytes.add(value.takeBytes());
       if (bytes.length == Generators.responsesSumUnordered(6).length) {
         completer.complete();
-        clients.close();
       }
     });
     await completer.future;
-    Validators.responsesUnorderedSum(bytes.takeBytes(), 6);
-    if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
-    await transport.shutdown();
+    Validators.responsesSumUnordered(bytes.takeBytes(), 6);
+    if (worker.buffers.used() != 1) throw TestFailure("actual: ${worker.buffers.used()}");
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }

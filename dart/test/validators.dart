@@ -35,7 +35,7 @@ class Validators {
     if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }
 
-  static void responsesUnorderedSum(Uint8List actual, int count) {
+  static void responsesSumUnordered(Uint8List actual, int count) {
     final expected = Generators.responsesSumUnordered(count);
     if (!actual._equals(expected)) throw TestFailure("actual = ${_decoder.convert(actual)}\nexpected = ${_decoder.convert(expected)}");
   }

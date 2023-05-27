@@ -46,7 +46,7 @@ class TransportFileChannel {
 
   Future<void> readSingle({int offset = 0}) async {
     final bufferId = buffers.get() ?? await buffers.allocate();
-    if (_closing) throw TransportClosedException.forFile();
+    if (_closing) return Future.error(TransportClosedException.forFile());
     _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
     _pending++;
   }
@@ -58,7 +58,7 @@ class TransportFileChannel {
     void Function()? onDone,
   }) async {
     final bufferId = buffers.get() ?? await buffers.allocate();
-    if (_closing) throw TransportClosedException.forFile();
+    if (_closing) return Future.error(TransportClosedException.forFile());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
@@ -67,7 +67,7 @@ class TransportFileChannel {
 
   Future<void> readMany(int count, {int offset = 0}) async {
     final bufferIds = await buffers.allocateArray(count);
-    if (_closing) throw TransportClosedException.forFile();
+    if (_closing) return Future.error(TransportClosedException.forFile());
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < count - 1; index++) {
       final bufferId = bufferIds[index];
@@ -96,7 +96,7 @@ class TransportFileChannel {
     void Function()? onDone,
   }) async {
     final bufferIds = await buffers.allocateArray(bytes.length);
-    if (_closing) throw TransportClosedException.forFile();
+    if (_closing) return Future.error(TransportClosedException.forFile());
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];

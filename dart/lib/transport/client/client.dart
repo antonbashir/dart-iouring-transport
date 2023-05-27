@@ -56,14 +56,14 @@ class TransportClientChannel {
 
   Future<void> read() async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forClient();
+    if (_closing) return Future.error(TransportClosedException.forClient());
     _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
     _pending++;
   }
 
   Future<void> writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forClient();
+    if (_closing) return Future.error(TransportClosedException.forClient());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
     if (onDone != null) _outboundHandlers[bufferId] = onDone;
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
@@ -72,7 +72,7 @@ class TransportClientChannel {
 
   Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError, void Function()? onDone}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
-    if (_closing) throw TransportClosedException.forClient();
+    if (_closing) return Future.error(TransportClosedException.forClient());
     final lastBufferId = bufferIds.last;
     for (var index = 0; index < bytes.length - 1; index++) {
       final bufferId = bufferIds[index];
@@ -100,7 +100,7 @@ class TransportClientChannel {
   Future<void> receive({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forClient();
+    if (_closing) return Future.error(TransportClosedException.forClient());
     _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
     _pending++;
   }
@@ -113,7 +113,7 @@ class TransportClientChannel {
   }) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
-    if (_closing) throw TransportClosedException.forClient();
+    if (_closing) return Future.error(TransportClosedException.forClient());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
     if (onDone != null) _outboundHandlers[bufferId] = onDone;
     _channel.sendMessage(
@@ -130,7 +130,7 @@ class TransportClientChannel {
 
   @pragma(preferInlinePragma)
   Future<TransportClientChannel> connect() {
-    if (_closing) throw TransportClosedException.forClient();
+    if (_closing) return Future.error(TransportClosedException.forClient());
     _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
     _pending++;
     return _connector.future.then((_) => this);

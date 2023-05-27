@@ -16,9 +16,9 @@ class TransportClientConnection {
 
   @pragma(preferInlinePragma)
   Stream<TransportPayload> read() {
-    unawaited(_client.read());
+    unawaited(_client.read().onError((error, stackTrace) {}));
     return _client.inbound.map((event) {
-      if (_client.active) unawaited(_client.read());
+      if (_client.active) unawaited(_client.read().onError((error, stackTrace) {}));
       return event;
     });
   }

@@ -17,18 +17,18 @@ import 'udp.dart';
 import 'unix.dart';
 
 void main() {
-  final initialization = false;
-  final callback = false;
-  final domain = false;
-  final shutdown = false;
-  final bulk = false;
-  final tcp = false;
-  final udp = false;
-  final unixStream = false;
-  final unixDgram = false;
-  final file = false;
+  final initialization = true;
+  final callback = true;
+  final domain = true;
+  final shutdown = true;
+  final bulk = true;
+  final tcp = true;
+  final udp = true;
+  final unixStream = true;
+  final unixDgram = true;
+  final file = true;
   final timeout = true;
-  final buffers = false;
+  final buffers = true;
 
   group("[initialization]", timeout: Timeout(Duration(hours: 1)), skip: !initialization, () {
     testInitialization();
