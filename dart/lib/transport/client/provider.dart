@@ -20,9 +20,6 @@ class TransportClientConnection {
     return _client.inbound.map((event) {
       if (_client.active) unawaited(_client.read());
       return event;
-    }).handleError((error) {
-      if (_client.active) unawaited(_client.read());
-      throw error;
     });
   }
 

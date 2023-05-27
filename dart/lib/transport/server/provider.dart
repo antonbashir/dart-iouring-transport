@@ -53,12 +53,12 @@ class TransportServerDatagramReceiver {
 
   @pragma(preferInlinePragma)
   Stream<TransportDatagramResponder> receive() {
-    unawaited(_server.receiveSingleMessage());
+    unawaited(_server.receive());
     return _server.inbound.map((event) {
-      if (_server.active) unawaited(_server.receiveSingleMessage());
+      if (_server.active) unawaited(_server.receive());
       return event;
     }).handleError((error) {
-      if (_server.active) unawaited(_server.receiveSingleMessage());
+      if (_server.active) unawaited(_server.receive());
       throw error;
     });
   }

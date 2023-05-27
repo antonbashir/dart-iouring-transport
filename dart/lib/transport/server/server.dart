@@ -103,9 +103,12 @@ class TransportServerConnectionChannel {
           return;
         }
         _buffers.release(bufferId);
-        unawaited(close());
-        if (result == 0) return;
+        if (result == 0) {
+          unawaited(close());
+          return;
+        }
         _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
+        unawaited(close());
         return;
       }
       _buffers.release(bufferId);
@@ -114,10 +117,13 @@ class TransportServerConnectionChannel {
         handler?.call();
         return;
       }
-      unawaited(close());
-      if (result == 0) return;
+      if (result == 0) {
+        unawaited(close());
+        return;
+      }
       final handler = _outboundErrorHandlers.remove(bufferId);
       handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
+      unawaited(close());
       return;
     }
     _buffers.release(bufferId);
@@ -183,7 +189,7 @@ class TransportServerChannel implements TransportServer {
     _bindings.transport_worker_accept(_workerPointer, pointer);
   }
 
-  Future<void> receiveSingleMessage({int? flags}) async {
+  Future<void> receive({int? flags}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();
@@ -197,7 +203,7 @@ class TransportServerChannel implements TransportServer {
     _pending++;
   }
 
-  Future<void> respondSingleMessage(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
+  Future<void> respond(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) throw TransportClosedException.forServer();

@@ -93,7 +93,7 @@ class TransportDatagramResponder {
   void respond(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
     if (retry == null) {
       unawaited(
-        _server.respondSingleMessage(
+        _server.respond(
           _channel,
           _destination,
           bytes,
@@ -115,7 +115,7 @@ class TransportDatagramResponder {
       }
       unawaited(Future.delayed(retry.options.delay(attempt), () {
         unawaited(
-          _server.respondSingleMessage(
+          _server.respond(
             _channel,
             _destination,
             bytes,
@@ -127,7 +127,7 @@ class TransportDatagramResponder {
     }
 
     unawaited(
-      _server.respondSingleMessage(
+      _server.respond(
         _channel,
         _destination,
         bytes,
