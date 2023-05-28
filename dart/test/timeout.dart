@@ -34,7 +34,7 @@ void testTcpTimeout({required Duration connection, required Duration serverRead,
     time.reset();
     completer = Completer();
     final clients = await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.tcpClient().copyWith(readTimeout: clientRead));
-    clients.select().read().listen((_) {}, onError: _handleTimeout(time, clientRead, completer));
+    clients.select().stream().listen((_) {}, onError: _handleTimeout(time, clientRead, completer));
     await completer.future;
     await server.close();
 
@@ -44,7 +44,7 @@ void testTcpTimeout({required Duration connection, required Duration serverRead,
       InternetAddress("0.0.0.0"),
       12345,
       configuration: TransportDefaults.tcpServer().copyWith(readTimeout: serverRead),
-      (connection) => connection.read().listen((_) {}, onError: _handleTimeout(time, serverRead, completer)),
+      (connection) => connection.stream().listen((_) {}, onError: _handleTimeout(time, serverRead, completer)),
     );
     await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
     await completer.future;
@@ -65,7 +65,7 @@ void testUdpTimeout({required Duration serverRead, required Duration clientRead}
     time.start();
     final clientSubscription = worker.clients
         .udp(InternetAddress("127.0.0.1"), 12346, InternetAddress("127.0.0.1"), 12345, configuration: TransportDefaults.udpClient().copyWith(readTimeout: clientRead))
-        .receive()
+        .stream()
         .listen((_) {}, onError: _handleTimeout(time, clientRead, completer));
     await completer.future.whenComplete(clientSubscription.cancel);
     await server.close();

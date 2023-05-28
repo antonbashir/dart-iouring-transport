@@ -24,7 +24,7 @@ void testTcpBuffers() {
       serverCompleter.complete();
     });
     var clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345);
-    await clients.select().read().listen((value) {
+    await clients.select().stream().listen((value) {
       value.release();
       clientCompleter.complete();
     });
@@ -48,7 +48,7 @@ void testTcpBuffers() {
       serverCompleter.complete();
     });
     clients = await worker.clients.tcp(io.InternetAddress("127.0.0.1"), 12345);
-    await clients.select().read().listen((value) {
+    await clients.select().stream().listen((value) {
       clientBuffer.add(value.takeBytes());
       if (clientBuffer.length == Generators.requestsSumUnordered(8).length) {
         clientCompleter.complete();
@@ -86,7 +86,7 @@ void testUdpBuffers() {
     });
     var clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
     clients.send(Generators.request());
-    clients.receive().listen((value) {
+    clients.stream().listen((value) {
       value.release();
       clientCompleter.complete();
     });
@@ -112,7 +112,7 @@ void testUdpBuffers() {
     });
     clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
     clients.send(Generators.request());
-    clients.receive().listen((value) {
+    clients.stream().listen((value) {
       value.release();
       clientLatch.countDown();
     });
@@ -142,9 +142,9 @@ void testFileBuffers() {
 
     var fileProvider = worker.files.open(file.path, create: true);
     fileProvider.writeSingle(Generators.request());
-    fileProvider.inbound.listen((value) => value.release());
+    await fileProvider.load();
 
-    if (worker.buffers.used() != 1) throw TestFailure("actual: ${worker.buffers.used()}");
+    if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
 
     await fileProvider.close();
 
@@ -154,7 +154,7 @@ void testFileBuffers() {
 
     fileProvider = worker.files.open(file.path, create: true);
     fileProvider.writeMany(Generators.requestsUnordered(8));
-    await fileProvider.read(blocksCount: 8);
+    await fileProvider.load(blocksCount: 8);
 
     if (worker.buffers.used() != 0) throw TestFailure("actual: ${worker.buffers.used()}");
 
@@ -171,11 +171,11 @@ void testFileBuffers() {
 void testBuffersOverflow() {
   test("(overflow)", () async {
     final transport = Transport();
-    final worker = TransportWorker(transport.worker(TransportDefaults.worker().copyWith(buffersCount: 1)));
+    final worker = TransportWorker(transport.worker(TransportDefaults.worker().copyWith(buffersCount: 2)));
     await worker.initialize();
 
     worker.servers.tcp(io.InternetAddress("0.0.0.0"), 12345, (connection) {
-      connection.read().listen((value) {
+      connection.stream().listen((value) {
         value.release();
         connection.writeSingle(Generators.response());
         connection.writeSingle(Generators.response());
@@ -189,7 +189,7 @@ void testBuffersOverflow() {
     clients.select().writeSingle(Generators.request());
     final bytes = BytesBuilder();
     final completer = Completer();
-    clients.select().read().listen((value) {
+    clients.select().stream().listen((value) {
       bytes.add(value.takeBytes());
       if (bytes.length == Generators.responsesSumUnordered(6).length) {
         completer.complete();
@@ -197,7 +197,7 @@ void testBuffersOverflow() {
     });
     await completer.future;
     Validators.responsesSumUnordered(bytes.takeBytes(), 6);
-    if (worker.buffers.used() != 1) throw TestFailure("actual: ${worker.buffers.used()}");
+    if (worker.buffers.used() != 2) throw TestFailure("actual: ${worker.buffers.used()}");
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }

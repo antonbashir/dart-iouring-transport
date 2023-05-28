@@ -18,7 +18,7 @@ void testTcpSingle({required int index, required int clientsPool}) {
     worker.servers.tcp(
       io.InternetAddress("0.0.0.0"),
       12345,
-      (connection) => connection.read().listen(
+      (connection) => connection.stream().listen(
         (event) {
           Validators.request(event.takeBytes());
           connection.writeSingle(Generators.response());
@@ -29,7 +29,7 @@ void testTcpSingle({required int index, required int clientsPool}) {
     final latch = Latch(clientsPool);
     clients.forEach((client) {
       client.writeSingle(Generators.request());
-      client.read().listen((value) {
+      client.stream().listen((value) {
         Validators.response(value.takeBytes());
         latch.countDown();
       });
@@ -49,7 +49,7 @@ void testTcpMany({required int index, required int clientsPool, required int cou
       12345,
       (connection) {
         final serverRequests = BytesBuilder();
-        connection.read().listen(
+        connection.stream().listen(
           (event) {
             serverRequests.add(event.takeBytes());
             if (serverRequests.length == Generators.requestsSumOrdered(count).length) {
@@ -69,7 +69,7 @@ void testTcpMany({required int index, required int clientsPool, required int cou
     final latch = Latch(clientsPool);
     clients.forEach((client) {
       client.writeMany(Generators.requestsOrdered(count));
-      client.read().listen(
+      client.stream().listen(
         (event) {
           clientResults.add(event.takeBytes());
           if (clientResults.length == Generators.responsesSumOrdered(count).length) {

@@ -23,7 +23,7 @@ void testUdpSingle({required int index, required int clients}) {
     final latch = Latch(clients);
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       final client = worker.clients.udp(io.InternetAddress("127.0.0.1"), (worker.id + 1) * 2000 + (clientIndex + 1), io.InternetAddress("127.0.0.1"), 12345);
-      client.receive().listen((event) {
+      client.stream().listen((event) {
         Validators.response(event.takeBytes());
         latch.countDown();
       });

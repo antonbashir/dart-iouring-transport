@@ -109,6 +109,8 @@ class TransportFileChannel {
         offset: offset,
       );
       offset += buffers.bufferSize;
+      if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+      if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     }
     _channel.write(
       bytes.last,
@@ -148,7 +150,12 @@ class TransportFileChannel {
   }
 
   Future<void> close({Duration? gracefulDuration}) async {
-    if (_closing) return;
+    if (_closing) {
+      if (!_closer.isCompleted) {
+        if (_pending > 0) await _closer.future;
+      }
+      return;
+    }
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
     _active = false;

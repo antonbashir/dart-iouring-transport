@@ -19,7 +19,7 @@ void testFileSingle({required int index}) {
     if (!nativeFile.existsSync()) nativeFile.createSync();
     final file = worker.files.open(nativeFile.path, create: true);
     file.writeSingle(Generators.request());
-    Validators.request(await file.read());
+    Validators.request(await file.load());
     if (nativeFile.existsSync()) nativeFile.deleteSync();
     await transport.shutdown();
   });
@@ -37,12 +37,12 @@ void testFileLoad({required int index, required int count}) {
     final data = Generators.requestsOrdered(count * count);
     final completer = Completer();
     file.writeMany(data, onDone: () async {
-      Validators.requestsSumOrdered(await file.read(blocksCount: count), count * count);
+      Validators.requestsSumOrdered(await file.load(blocksCount: count), count * count);
       completer.complete();
     });
     await completer.future;
     await file.close();
-    Validators.requestsSumOrdered(await worker.files.open(nativeFile.path, create: true).read(blocksCount: 1), count * count);
+    Validators.requestsSumOrdered(await worker.files.open(nativeFile.path, create: true).load(blocksCount: 1), count * count);
     if (nativeFile.existsSync()) nativeFile.deleteSync();
     await transport.shutdown();
   });

@@ -171,6 +171,7 @@ class TransportClientChannel {
         }
         _buffers.release(bufferId);
         _inboundEvents.addError(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
+        if (event == transportEventRead) unawaited(close());
         return;
       }
       _buffers.release(bufferId);
@@ -186,7 +187,12 @@ class TransportClientChannel {
   }
 
   Future<void> close({Duration? gracefulDuration}) async {
-    if (_closing) return;
+    if (_closing) {
+      if (!_closer.isCompleted) {
+        if (_pending > 0) await _closer.future;
+      }
+      return;
+    }
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
     _active = false;

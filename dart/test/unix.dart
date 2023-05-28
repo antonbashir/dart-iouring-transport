@@ -18,7 +18,7 @@ void testUnixStreamSingle({required int index, required int clientsPool}) {
     if (serverSocket.existsSync()) serverSocket.deleteSync();
     worker.servers.unixStream(
       serverSocket.path,
-      (connection) => connection.read().listen(
+      (connection) => connection.stream().listen(
         (event) {
           Validators.request(event.takeBytes());
           connection.writeSingle(Generators.response());
@@ -29,7 +29,7 @@ void testUnixStreamSingle({required int index, required int clientsPool}) {
     final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
     clients.forEach((client) {
       client.writeSingle(Generators.request());
-      client.read().listen((event) {
+      client.stream().listen((event) {
         Validators.response(event.takeBytes());
         latch.countDown();
       });
@@ -50,7 +50,7 @@ void testUnixStreamMany({required int index, required int clientsPool, required 
       serverSocket.path,
       (connection) {
         final serverResults = BytesBuilder();
-        connection.read().listen(
+        connection.stream().listen(
           (event) {
             serverResults.add(event.takeBytes());
             if (serverResults.length == Generators.requestsSumOrdered(count).length) {
@@ -65,7 +65,7 @@ void testUnixStreamMany({required int index, required int clientsPool, required 
     final clients = await worker.clients.unixStream(serverSocket.path, configuration: TransportDefaults.unixStreamClient().copyWith(pool: clientsPool));
     clients.forEach((client) async {
       final clientResults = BytesBuilder();
-      client.read().listen(
+      client.stream().listen(
         (event) {
           clientResults.add(event.takeBytes());
           if (clientResults.length == Generators.responsesSumOrdered(count).length) {
@@ -97,7 +97,7 @@ void testUnixDgramSingle({required int index, required int clients}) {
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
       final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
-      client.receive().listen((value) {
+      client.stream().listen((value) {
         Validators.response(value.takeBytes());
         latch.countDown();
       });

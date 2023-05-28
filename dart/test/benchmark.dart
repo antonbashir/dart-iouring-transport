@@ -26,7 +26,7 @@ Future<void> _benchTcp() async {
       worker.servers.tcp(
         InternetAddress("0.0.0.0"),
         12345,
-        (connection) => connection.read().listen((payload) {
+        (connection) => connection.stream().listen((payload) {
           payload.release();
           connection.writeSingle(fromServer);
         }),
@@ -43,7 +43,7 @@ Future<void> _benchTcp() async {
       final time = Stopwatch();
       time.start();
       for (var client in connector.clients) {
-        client.read().listen((element) {
+        client.stream().listen((element) {
           count++;
           element.release();
           client.writeSingle(fromServer);

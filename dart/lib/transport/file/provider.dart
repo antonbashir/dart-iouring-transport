@@ -18,9 +18,17 @@ class TransportFile {
   Stream<TransportPayload> get inbound => _file.inbound;
   bool get active => _file.active;
 
+  void read({int blocksCount = 1, int offset = 0}) {
+    if (blocksCount == 1) {
+      _file.readSingle(offset: offset);
+      return;
+    }
+    _file.readMany(blocksCount, offset: offset);
+  }
+
   void writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
     if (retry == null) {
-      unawaited(_file.writeSingle(bytes, onError: onError, onDone: onDone));
+      unawaited(_file.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
       return;
     }
 
@@ -35,11 +43,11 @@ class TransportFile {
         return;
       }
       unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone));
+        unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
       }));
     }
 
-    unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone));
+    unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
   void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
@@ -47,7 +55,7 @@ class TransportFile {
       var doneCounter = 0;
       unawaited(_file.writeMany(bytes, onError: onError, onDone: () {
         if (++doneCounter == bytes.length) onDone?.call();
-      }));
+      }).onError((error, stackTrace) => onError?.call(error as Exception)));
       return;
     }
 
@@ -69,18 +77,18 @@ class TransportFile {
         unawaited(Future.delayed(retry.options.delay(attempt), () {
           unawaited(_file.writeMany(bytes.sublist(doneCounter), onError: _onError, onDone: () {
             if (++doneCounter == bytes.length) onDone?.call();
-          }));
+          }).onError((error, stackTrace) => onError?.call(error as Exception)));
         }));
       }
     }
 
     unawaited(_file.writeMany(bytes, onError: _onError, onDone: () {
       if (++doneCounter == bytes.length) onDone?.call();
-    }));
+    }).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
   @pragma(preferInlinePragma)
-  Future<Uint8List> read({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
+  Future<Uint8List> load({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
         final bytes = BytesBuilder();
         final completer = Completer<Uint8List>();
         if (blocksCount == 1) {
@@ -103,7 +111,7 @@ class TransportFile {
             },
             onError: (error) {
               if (!completer.isCompleted) {
-                if (error is TransportZeroDataException) {
+                if (error is TransportCanceledException) {
                   completer.complete(bytes.takeBytes());
                   return;
                 }
@@ -141,7 +149,7 @@ class TransportFile {
           },
           onError: (error) {
             if (!completer.isCompleted) {
-              if (error is TransportZeroDataException) {
+              if (error is TransportCanceledException) {
                 completer.complete(bytes.takeBytes());
                 return;
               }

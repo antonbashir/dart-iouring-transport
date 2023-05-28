@@ -93,14 +93,16 @@ class TransportDatagramResponder {
   void respond(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
     if (retry == null) {
       unawaited(
-        _server.respond(
-          _channel,
-          _destination,
-          bytes,
-          flags: flags,
-          onError: onError,
-          onDone: onDone,
-        ),
+        _server
+            .respond(
+              _channel,
+              _destination,
+              bytes,
+              flags: flags,
+              onError: onError,
+              onDone: onDone,
+            )
+            .onError((error, stackTrace) => onError?.call(error as Exception)),
       );
       return;
     }
@@ -116,27 +118,31 @@ class TransportDatagramResponder {
       }
       unawaited(Future.delayed(retry.options.delay(attempt), () {
         unawaited(
-          _server.respond(
+          _server
+              .respond(
+                _channel,
+                _destination,
+                bytes,
+                flags: flags,
+                onError: _onError,
+                onDone: onDone,
+              )
+              .onError((error, stackTrace) => onError?.call(error as Exception)),
+        );
+      }));
+    }
+
+    unawaited(
+      _server
+          .respond(
             _channel,
             _destination,
             bytes,
             flags: flags,
             onError: _onError,
             onDone: onDone,
-          ),
-        );
-      }));
-    }
-
-    unawaited(
-      _server.respond(
-        _channel,
-        _destination,
-        bytes,
-        flags: flags,
-        onError: _onError,
-        onDone: onDone,
-      ),
+          )
+          .onError((error, stackTrace) => onError?.call(error as Exception)),
     );
   }
 

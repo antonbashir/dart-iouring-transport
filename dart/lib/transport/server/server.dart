@@ -115,10 +115,6 @@ class TransportServerConnectionChannel {
         _outboundDoneHandlers.remove(bufferId)?.call();
         return;
       }
-      if (result == 0) {
-        unawaited(close());
-        return;
-      }
       _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       unawaited(close());
       return;
@@ -128,7 +124,12 @@ class TransportServerConnectionChannel {
   }
 
   Future<void> close({Duration? gracefulDuration}) async {
-    if (_closing) return;
+    if (_closing) {
+      if (!_closer.isCompleted) {
+        if (_pending > 0) await _closer.future;
+      }
+      return;
+    }
     _closing = true;
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
     _active = false;
@@ -291,7 +292,12 @@ class TransportServerChannel implements TransportServer {
 
   @override
   Future<void> close({Duration? gracefulDuration}) async {
-    if (_closing) return;
+    if (_closing) {
+      if (!_closer.isCompleted) {
+        if (_pending > 0) await _closer.future;
+      }
+      return;
+    }
     _closing = true;
     await Future.wait(_connections.values.toList().map((connection) => connection.close(gracefulDuration: gracefulDuration)));
     if (gracefulDuration != null) await Future.delayed(gracefulDuration);
