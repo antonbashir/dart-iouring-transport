@@ -19,7 +19,7 @@ Future<void> _benchTcp() async {
   final encoder = Utf8Encoder();
   final fromServer = encoder.convert("from server\n");
 
-  for (var i = 0; i < 1; i++) {
+  for (var i = 0; i < 2; i++) {
     Isolate.spawn((SendPort message) async {
       final worker = TransportWorker(message);
       await worker.initialize();
@@ -34,7 +34,7 @@ Future<void> _benchTcp() async {
     }, transport.worker(TransportDefaults.worker().copyWith(ringFlags: ringSetupSqpoll)));
   }
   await Future.delayed(Duration(seconds: 1));
-  for (var i = 0; i < 1; i++) {
+  for (var i = 0; i < 2; i++) {
     Isolate.spawn((SendPort message) async {
       final worker = TransportWorker(message);
       await worker.initialize();

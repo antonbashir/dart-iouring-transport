@@ -86,7 +86,7 @@ TODO: Make benchmark on preferable machine
 
 Latest benchmark results:
 
-- RPS: 100k per isolate for echo (server and client in same process, different isolates)
+- RPS: 100k-150k per isolate for echo (server and client in same process, different isolates)
 
 # Limitations
 
