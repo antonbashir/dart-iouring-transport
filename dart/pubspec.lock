@@ -330,7 +330,7 @@ packages:
     source: hosted
     version: "1.2.1"
   test:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: test
       sha256: "4f92f103ef63b1bbac6f4bd1930624fca81b2574464482512c4f0896319be575"
