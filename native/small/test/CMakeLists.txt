@@ -95,10 +95,6 @@ if(DEFINED SMALL_EMBEDDED)
     return()
 endif()
 
-if(POLICY CMP0037)
-    cmake_policy(SET CMP0037 OLD) # don't blame "test" target name
-endif(POLICY CMP0037)
-
 add_custom_target(test
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
     COMMAND ctest
