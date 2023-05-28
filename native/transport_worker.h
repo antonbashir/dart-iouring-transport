@@ -55,7 +55,6 @@ extern "C"
                                   transport_worker_configuration_t *configuration,
                                   uint8_t id);
 
-  void transport_worker_custom(transport_worker_t *worker, uint32_t id, uint32_t custom_data);
   void transport_worker_write(transport_worker_t *worker,
                               uint32_t fd,
                               uint16_t buffer_id,

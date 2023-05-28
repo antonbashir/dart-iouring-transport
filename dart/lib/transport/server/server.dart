@@ -17,8 +17,8 @@ abstract class TransportServer {
 
 class TransportServerConnectionChannel {
   final _closer = Completer();
-  final StreamController<TransportPayload> _inboundEvents = StreamController();
-  final _outboundHandlers = <int, void Function()>{};
+  final _inboundEvents = StreamController<TransportPayload>();
+  final _outboundDoneHandlers = <int, void Function()>{};
   final _outboundErrorHandlers = <int, void Function(Exception error)>{};
   final int _readTimeout;
   final int _writeTimeout;
@@ -34,9 +34,8 @@ class TransportServerConnectionChannel {
   var _closing = false;
   var _pending = 0;
 
-  bool get active => !closing;
+  bool get active => !_closing;
   Stream<TransportPayload> get inbound => _inboundEvents.stream;
-  bool get closing => _closing;
 
   TransportServerConnectionChannel(
     this._server,
@@ -61,7 +60,7 @@ class TransportServerConnectionChannel {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing || _server._closing) return Future.error(TransportClosedException.forServer());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
-    if (onDone != null) _outboundHandlers[bufferId] = onDone;
+    if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
     _pending++;
   }
@@ -80,7 +79,7 @@ class TransportServerConnectionChannel {
         sqeFlags: transportIosqeIoLink,
       );
       if (onError != null) _outboundErrorHandlers[bufferId] = onError;
-      if (onDone != null) _outboundHandlers[bufferId] = onDone;
+      if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     }
     channel.write(
       bytes.last,
@@ -89,7 +88,7 @@ class TransportServerConnectionChannel {
       transportEventWrite | transportEventServer,
     );
     if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
-    if (onDone != null) _outboundHandlers[lastBufferId] = onDone;
+    if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;
     _pending += bytes.length;
   }
 
@@ -113,16 +112,14 @@ class TransportServerConnectionChannel {
       }
       _buffers.release(bufferId);
       if (result > 0) {
-        final handler = _outboundHandlers.remove(bufferId);
-        handler?.call();
+        _outboundDoneHandlers.remove(bufferId)?.call();
         return;
       }
       if (result == 0) {
         unawaited(close());
         return;
       }
-      final handler = _outboundErrorHandlers.remove(bufferId);
-      handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
+      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       unawaited(close());
       return;
     }
@@ -148,8 +145,9 @@ class TransportServerConnectionChannel {
 class TransportServerChannel implements TransportServer {
   final _closer = Completer();
   final _connections = <int, TransportServerConnectionChannel>{};
-  final StreamController<TransportDatagramResponder> _inboundEvents = StreamController();
-  final _outboundHandlers = <int, void Function(Exception error)>{};
+  final _inboundEvents = StreamController<TransportDatagramResponder>();
+  final _outboundErrorHandlers = <int, void Function(Exception error)>{};
+  final _outboundDoneHandlers = <int, void Function()>{};
 
   final TransportChannel? _datagramChannel;
   final Pointer<transport_server_t> pointer;
@@ -203,11 +201,19 @@ class TransportServerChannel implements TransportServer {
     _pending++;
   }
 
-  Future<void> respond(TransportChannel channel, Pointer<sockaddr> destination, Uint8List bytes, {int? flags, void Function(Exception error)? onError}) async {
+  Future<void> respond(
+    TransportChannel channel,
+    Pointer<sockaddr> destination,
+    Uint8List bytes, {
+    int? flags,
+    void Function(Exception error)? onError,
+    void Function()? onDone,
+  }) async {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) return Future.error(TransportClosedException.forServer());
-    if (onError != null) _outboundHandlers[bufferId] = onError;
+    if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+    if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     channel.sendMessage(
       bytes,
       bufferId,
@@ -240,9 +246,11 @@ class TransportServerChannel implements TransportServer {
         return;
       }
       _buffers.release(bufferId);
-      if (result > 0) return;
-      final handler = _outboundHandlers.remove(bufferId);
-      handler?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
+      if (result > 0) {
+        _outboundDoneHandlers.remove(bufferId)?.call();
+        return;
+      }
+      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       return;
     }
     _buffers.release(bufferId);

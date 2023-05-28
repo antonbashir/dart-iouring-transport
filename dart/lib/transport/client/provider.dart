@@ -14,16 +14,23 @@ class TransportClientConnection {
   bool get active => _client.active;
   Stream<TransportPayload> get inbound => _client.inbound;
 
-  @pragma(preferInlinePragma)
   Stream<TransportPayload> read() {
-    unawaited(_client.read());
-    return _client.inbound.map((event) {
-      if (_client.active) unawaited(_client.read().onError((error, stackTrace) {}));
-      return event;
-    });
+    final out = StreamController<TransportPayload>(sync: true);
+    out.onListen = () => unawaited(_client.read().onError((error, stackTrace) => out.addError(error!)));
+    _client.inbound.listen(
+      (event) {
+        out.add(event);
+        if (_client.active) unawaited(_client.read().onError((error, stackTrace) => out.addError(error!)));
+      },
+      onDone: out.close,
+      onError: (error) {
+        out.addError(error);
+        if (_client.active) unawaited(_client.read().onError((error, stackTrace) => out.addError(error!)));
+      },
+    );
+    return out.stream;
   }
 
-  @pragma(preferInlinePragma)
   void writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
     if (retry == null) {
       unawaited(_client.writeSingle(bytes, onError: onError, onDone: onDone));
@@ -48,7 +55,6 @@ class TransportClientConnection {
     unawaited(_client.writeSingle(bytes, onError: _onError, onDone: onDone));
   }
 
-  @pragma(preferInlinePragma)
   void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
     if (retry == null) {
       var doneCounter = 0;
@@ -98,19 +104,23 @@ class TransportDatagramClient {
   bool get active => _client.active;
   Stream<TransportPayload> get inbound => _client.inbound;
 
-  @pragma(preferInlinePragma)
-  Stream<TransportPayload> receive() {
-    unawaited(_client.receive());
-    return _client.inbound.map((event) {
-      if (_client.active) unawaited(_client.receive().onError((error, stackTrace) {}));
-      return event;
-    }).handleError((error) {
-      if (_client.active) unawaited(_client.receive().onError((error, stackTrace) {}));
-      throw error;
-    });
+  Stream<TransportPayload> receive({int? flags}) {
+    final out = StreamController<TransportPayload>(sync: true);
+    out.onListen = () => unawaited(_client.receive(flags: flags).onError((error, stackTrace) => out.addError(error!)));
+    _client.inbound.listen(
+      (event) {
+        out.add(event);
+        if (_client.active) unawaited(_client.receive(flags: flags).onError((error, stackTrace) => out.addError(error!)));
+      },
+      onDone: out.close,
+      onError: (error) {
+        out.addError(error);
+        if (_client.active) unawaited(_client.receive(flags: flags).onError((error, stackTrace) => out.addError(error!)));
+      },
+    );
+    return out.stream;
   }
 
-  @pragma(preferInlinePragma)
   void send(
     Uint8List bytes, {
     TransportRetryConfiguration? retry,
@@ -119,7 +129,7 @@ class TransportDatagramClient {
     void Function()? onDone,
   }) {
     if (retry == null) {
-      unawaited(_client.send(bytes, onError: onError, onDone: onDone));
+      unawaited(_client.send(bytes, onError: onError, onDone: onDone, flags: flags));
       return;
     }
 
@@ -134,11 +144,11 @@ class TransportDatagramClient {
         return;
       }
       unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(_client.send(bytes, onError: _onError, onDone: onDone));
+        unawaited(_client.send(bytes, onError: _onError, onDone: onDone, flags: flags));
       }));
     }
 
-    unawaited(_client.send(bytes, onError: _onError, onDone: onDone));
+    unawaited(_client.send(bytes, onError: _onError, onDone: onDone, flags: flags));
   }
 
   @pragma(preferInlinePragma)

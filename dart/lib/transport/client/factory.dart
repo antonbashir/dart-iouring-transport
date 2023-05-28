@@ -13,7 +13,7 @@ class TransportClientsFactory {
 
   const TransportClientsFactory(this._registry);
 
-  Future<TransportClientStreamPool> tcp(
+  Future<TransportClientConnectionPool> tcp(
     InternetAddress address,
     int port, {
     TransportTcpClientConfiguration? configuration,
@@ -35,7 +35,7 @@ class TransportClientsFactory {
         configuration: configuration,
       );
 
-  Future<TransportClientStreamPool> unixStream(
+  Future<TransportClientConnectionPool> unixStream(
     String path, {
     TransportUnixStreamClientConfiguration? configuration,
   }) =>

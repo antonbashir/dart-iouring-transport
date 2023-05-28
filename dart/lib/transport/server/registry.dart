@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
+import '../configuration.dart';
 import '../channel.dart';
 import '../payload.dart';
 import '../bindings.dart';
@@ -9,7 +10,6 @@ import '../buffers.dart';
 import '../constants.dart';
 import '../defaults.dart';
 import '../exception.dart';
-import '../extensions.dart';
 import 'configuration.dart';
 import 'server.dart';
 import 'package:meta/meta.dart';
@@ -95,7 +95,7 @@ class TransportServerRegistry {
                 pointer.ref.fd,
                 configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
                 configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
-                configuration.getMembershipIndex(_bindings),
+                _getMembershipIndex(configuration),
               ),
             ),
             onDropMembership: (configuration) => using(
@@ -103,7 +103,7 @@ class TransportServerRegistry {
                 pointer.ref.fd,
                 configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
                 configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
-                configuration.getMembershipIndex(_bindings),
+                _getMembershipIndex(configuration),
               ),
             ),
             onAddSourceMembership: (configuration) => using(
@@ -350,7 +350,7 @@ class TransportServerRegistry {
         nativeServerConfiguration.ref.ip_multicast_interface,
         interface.groupAddress.toNativeUtf8(allocator: allocator).cast(),
         interface.localAddress.toNativeUtf8(allocator: allocator).cast(),
-        interface.getMembershipIndex(_bindings),
+        _getMembershipIndex(interface),
       );
     }
     nativeServerConfiguration.ref.socket_configuration_flags = flags;
@@ -410,6 +410,15 @@ class TransportServerRegistry {
     nativeServerConfiguration.ref.socket_configuration_flags = flags;
     return nativeServerConfiguration;
   }
+
+  int _getMembershipIndex(TransportUdpMulticastConfiguration configuration) => using(
+        (arena) {
+          if (configuration.calculateInterfaceIndex) {
+            return _bindings.transport_socket_get_interface_index(configuration.localInterface!.toNativeUtf8(allocator: arena).cast());
+          }
+          return configuration.interfaceIndex!;
+        },
+      );
 
   @visibleForTesting
   Map<int, TransportServerChannel> get servers => _servers;

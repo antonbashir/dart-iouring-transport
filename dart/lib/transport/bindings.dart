@@ -11783,26 +11783,6 @@ class TransportBindings {
               ffi.Pointer<transport_worker_configuration_t>,
               int)>(isLeaf: true);
 
-  void transport_worker_custom(
-    ffi.Pointer<transport_worker_t> worker,
-    int id,
-    int custom_data,
-  ) {
-    return _transport_worker_custom(
-      worker,
-      id,
-      custom_data,
-    );
-  }
-
-  late final _transport_worker_customPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<transport_worker_t>, ffi.Uint32,
-              ffi.Uint32)>>('transport_worker_custom');
-  late final _transport_worker_custom = _transport_worker_customPtr
-      .asFunction<void Function(ffi.Pointer<transport_worker_t>, int, int)>(
-          isLeaf: true);
-
   void transport_worker_write(
     ffi.Pointer<transport_worker_t> worker,
     int fd,
@@ -20967,11 +20947,6 @@ class _SymbolAddresses {
               ffi.Uint8)>> get transport_worker_initialize =>
       _library._transport_worker_initializePtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(
-                  ffi.Pointer<transport_worker_t>, ffi.Uint32, ffi.Uint32)>>
-      get transport_worker_custom => _library._transport_worker_customPtr;
-  ffi.Pointer<
       ffi.NativeFunction<
           ffi.Void Function(
               ffi.Pointer<transport_worker_t>,
@@ -28226,8 +28201,6 @@ const int TRANSPORT_EVENT_FILE = 128;
 
 const int TRANSPORT_EVENT_SERVER = 256;
 
-const int TRANSPORT_EVENT_CUSTOM = 512;
-
 const int TRANSPORT_READ_ONLY = 1;
 
 const int TRANSPORT_WRITE_ONLY = 2;
@@ -28308,7 +28281,7 @@ const String TRANSPORT_LIBEXT = 'so';
 
 const int HAVE_CLOCK_GETTIME_DECL = 1;
 
-const String SYSCONF_DIR = '';
+const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 

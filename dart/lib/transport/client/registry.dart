@@ -1,9 +1,9 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import '../configuration.dart';
 import '../payload.dart';
 import '../exception.dart';
-import '../extensions.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../channel.dart';
@@ -27,7 +27,7 @@ class TransportClientRegistry {
 
   TransportClientRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool);
 
-  Future<TransportClientStreamPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
+  Future<TransportClientConnectionPool> createTcp(String host, int port, {TransportTcpClientConfiguration? configuration}) async {
     configuration = configuration ?? TransportDefaults.tcpClient();
     final clients = <Future<TransportClientConnection>>[];
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
@@ -72,10 +72,10 @@ class TransportClientRegistry {
       _clients[clientPointer.ref.fd] = client;
       clients.add(client.connect().then(TransportClientConnection.new));
     }
-    return TransportClientStreamPool(await Future.wait(clients));
+    return TransportClientConnectionPool(await Future.wait(clients));
   }
 
-  Future<TransportClientStreamPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
+  Future<TransportClientConnectionPool> createUnixStream(String path, {TransportUnixStreamClientConfiguration? configuration}) async {
     configuration = configuration ?? TransportDefaults.unixStreamClient();
     final clients = <Future<TransportClientConnection>>[];
     for (var clientIndex = 0; clientIndex < configuration.pool; clientIndex++) {
@@ -119,7 +119,7 @@ class TransportClientRegistry {
       _clients[clientPointer.ref.fd] = client;
       clients.add(client.connect().then(TransportClientConnection.new));
     }
-    return TransportClientStreamPool(await Future.wait(clients));
+    return TransportClientConnectionPool(await Future.wait(clients));
   }
 
   TransportDatagramClient createUdp(
@@ -159,7 +159,7 @@ class TransportClientRegistry {
               pointer.ref.fd,
               configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
               configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
-              configuration.getMembershipIndex(_bindings),
+              _getMembershipIndex(configuration),
             ),
           ),
           onDropMembership: (configuration) => using(
@@ -167,7 +167,7 @@ class TransportClientRegistry {
               pointer.ref.fd,
               configuration.groupAddress.toNativeUtf8(allocator: arena).cast(),
               configuration.localAddress.toNativeUtf8(allocator: arena).cast(),
-              configuration.getMembershipIndex(_bindings),
+              _getMembershipIndex(configuration),
             ),
           ),
           onAddSourceMembership: (configuration) => using(
@@ -361,7 +361,7 @@ class TransportClientRegistry {
         nativeClientConfiguration.ref.ip_multicast_interface,
         interface.groupAddress.toNativeUtf8(allocator: allocator).cast(),
         interface.localAddress.toNativeUtf8(allocator: allocator).cast(),
-        interface.getMembershipIndex(_bindings),
+        _getMembershipIndex(interface),
       );
     }
     nativeClientConfiguration.ref.socket_configuration_flags = flags;
@@ -418,4 +418,13 @@ class TransportClientRegistry {
     nativeClientConfiguration.ref.socket_configuration_flags = flags;
     return nativeClientConfiguration;
   }
+
+  int _getMembershipIndex(TransportUdpMulticastConfiguration configuration) => using(
+        (arena) {
+          if (configuration.calculateInterfaceIndex) {
+            return _bindings.transport_socket_get_interface_index(configuration.localInterface!.toNativeUtf8(allocator: arena).cast());
+          }
+          return configuration.interfaceIndex!;
+        },
+      );
 }

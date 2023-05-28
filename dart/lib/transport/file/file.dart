@@ -12,7 +12,7 @@ import 'registry.dart';
 import 'package:meta/meta.dart';
 
 class TransportFileChannel {
-  final StreamController<TransportPayload> _inboundEvents = StreamController();
+  final _inboundEvents = StreamController<TransportPayload>();
   final _outboundErrorHandlers = <int, void Function(Exception error)>{};
   final _outboundDoneHandlers = <int, void Function()>{};
 
@@ -137,12 +137,10 @@ class TransportFileChannel {
       }
       buffers.release(bufferId);
       if (result >= 0) {
-        final handler = _outboundDoneHandlers.remove(bufferId);
-        handler?.call();
+        _outboundDoneHandlers.remove(bufferId)?.call();
         return;
       }
-      final handler = _outboundErrorHandlers.remove(bufferId);
-      handler?.call(createTransportException(TransportEvent.fileEvent(event), result, _bindings));
+      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.fileEvent(event), result, _bindings));
       return;
     }
     buffers.release(bufferId);

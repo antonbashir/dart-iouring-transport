@@ -15,8 +15,8 @@ import 'registry.dart';
 
 class TransportClientChannel {
   final _connector = Completer();
-  final StreamController<TransportPayload> _inboundEvents = StreamController();
-  final _outboundHandlers = <int, void Function()>{};
+  final _inboundEvents = StreamController<TransportPayload>();
+  final _outboundDoneHandlers = <int, void Function()>{};
   final _outboundErrorHandlers = <int, void Function(Exception error)>{};
   final Pointer<transport_client_t> _pointer;
   final Pointer<transport_worker_t> _workerPointer;
@@ -37,8 +37,8 @@ class TransportClientChannel {
   final _closer = Completer();
 
   bool get active => !_closing;
-
   Stream<TransportPayload> get inbound => _inboundEvents.stream;
+
   TransportClientChannel(
     this._channel,
     this._pointer,
@@ -65,7 +65,7 @@ class TransportClientChannel {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) return Future.error(TransportClosedException.forClient());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
-    if (onDone != null) _outboundHandlers[bufferId] = onDone;
+    if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
     _pending++;
   }
@@ -84,7 +84,7 @@ class TransportClientChannel {
         sqeFlags: transportIosqeIoLink,
       );
       if (onError != null) _outboundErrorHandlers[bufferId] = onError;
-      if (onDone != null) _outboundHandlers[bufferId] = onDone;
+      if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     }
     _channel.write(
       bytes.last,
@@ -93,7 +93,7 @@ class TransportClientChannel {
       transportEventWrite | transportEventClient,
     );
     if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
-    if (onDone != null) _outboundHandlers[lastBufferId] = onDone;
+    if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;
     _pending += bytes.length;
   }
 
@@ -115,7 +115,7 @@ class TransportClientChannel {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) return Future.error(TransportClosedException.forClient());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
-    if (onDone != null) _outboundHandlers[bufferId] = onDone;
+    if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
     _channel.sendMessage(
       bytes,
       bufferId,
@@ -175,12 +175,10 @@ class TransportClientChannel {
       }
       _buffers.release(bufferId);
       if (result > 0) {
-        final handler = _outboundHandlers.remove(bufferId);
-        handler?.call();
+        _outboundDoneHandlers.remove(bufferId)?.call();
         return;
       }
-      final handler = _outboundErrorHandlers.remove(bufferId);
-      handler?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
+      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
       return;
     }
     _buffers.release(bufferId);
@@ -204,13 +202,13 @@ class TransportClientChannel {
   TransportClientRegistry get registry => _registry;
 }
 
-class TransportClientStreamPool {
+class TransportClientConnectionPool {
   final List<TransportClientConnection> _clients;
   var _next = 0;
 
   List<TransportClientConnection> get clients => _clients;
 
-  TransportClientStreamPool(this._clients);
+  TransportClientConnectionPool(this._clients);
 
   @pragma(preferInlinePragma)
   TransportClientConnection select() {
@@ -221,9 +219,6 @@ class TransportClientStreamPool {
 
   @pragma(preferInlinePragma)
   void forEach(FutureOr<void> Function(TransportClientConnection provider) action) => _clients.forEach(action);
-
-  @pragma(preferInlinePragma)
-  Iterable<Future<M>> map<M>(Future<M> Function(TransportClientConnection provider) mapper) => _clients.map(mapper);
 
   @pragma(preferInlinePragma)
   int count() => _clients.length;

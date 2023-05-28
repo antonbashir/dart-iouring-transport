@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/exception.dart';
-
+import '../configuration.dart';
+import '../exception.dart';
 import '../constants.dart';
 import '../payload.dart';
 import 'file.dart';
@@ -18,33 +18,66 @@ class TransportFile {
   Stream<TransportPayload> get inbound => _file.inbound;
   bool get active => _file.active;
 
-  @pragma(preferInlinePragma)
-  void writeSingle(
-    Uint8List bytes, {
-    int offset = 0,
-    void Function(Exception error)? onError,
-    void Function()? onDone,
-  }) =>
-      unawaited(_file.writeSingle(
-        bytes,
-        offset: offset,
-        onError: onError,
-        onDone: onDone,
-      ));
+  void writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
+    if (retry == null) {
+      unawaited(_file.writeSingle(bytes, onError: onError, onDone: onDone));
+      return;
+    }
 
-  @pragma(preferInlinePragma)
-  void writeMany(
-    List<Uint8List> bytes, {
-    int offset = 0,
-    void Function(Exception error)? onError,
-    void Function()? onDone,
-  }) =>
-      unawaited(_file.writeMany(
-        bytes,
-        offset: offset,
-        onError: onError,
-        onDone: onDone,
-      ));
+    var attempt = 0;
+    void _onError(Exception error) {
+      if (!retry.predicate(error)) {
+        onError?.call(error);
+        return;
+      }
+      if (++attempt == retry.maxAttempts) {
+        onError?.call(error);
+        return;
+      }
+      unawaited(Future.delayed(retry.options.delay(attempt), () {
+        unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone));
+      }));
+    }
+
+    unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone));
+  }
+
+  void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
+    if (retry == null) {
+      var doneCounter = 0;
+      unawaited(_file.writeMany(bytes, onError: onError, onDone: () {
+        if (++doneCounter == bytes.length) onDone?.call();
+      }));
+      return;
+    }
+
+    var doneCounter = 0;
+    var errorCounter = 0;
+    var attempt = 0;
+
+    void _onError(Exception error) {
+      if (++errorCounter + doneCounter == bytes.length) {
+        errorCounter = 0;
+        if (!retry.predicate(error)) {
+          onError?.call(error);
+          return;
+        }
+        if (++attempt == retry.maxAttempts) {
+          onError?.call(error);
+          return;
+        }
+        unawaited(Future.delayed(retry.options.delay(attempt), () {
+          unawaited(_file.writeMany(bytes.sublist(doneCounter), onError: _onError, onDone: () {
+            if (++doneCounter == bytes.length) onDone?.call();
+          }));
+        }));
+      }
+    }
+
+    unawaited(_file.writeMany(bytes, onError: _onError, onDone: () {
+      if (++doneCounter == bytes.length) onDone?.call();
+    }));
+  }
 
   @pragma(preferInlinePragma)
   Future<Uint8List> read({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
@@ -64,19 +97,23 @@ class TransportFile {
                 completer.complete(bytes.takeBytes());
                 return;
               }
-              unawaited(_file.readSingle(offset: offset + bytes.length));
+              unawaited(_file.readSingle(offset: offset + bytes.length).onError((error, stackTrace) {
+                if (!completer.isCompleted) completer.completeError(error!);
+              }));
             },
             onError: (error) {
               if (!completer.isCompleted) {
-                if (error is TransportInternalException) {
-                  completer.completeError(error);
+                if (error is TransportZeroDataException) {
+                  completer.complete(bytes.takeBytes());
                   return;
                 }
-                completer.complete(bytes.takeBytes());
+                completer.completeError(error);
               }
             },
           );
-          unawaited(_file.readSingle(offset: offset));
+          unawaited(_file.readSingle(offset: offset).onError((error, stackTrace) {
+            if (!completer.isCompleted) completer.completeError(error!);
+          }));
           return completer.future.whenComplete(subscription.cancel);
         }
 
@@ -97,20 +134,24 @@ class TransportFile {
             if (++counter == blocksCount) {
               counter = 0;
               blocksCount = min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1));
-              unawaited(_file.readMany(blocksCount, offset: offset + bytes.length));
+              unawaited(_file.readMany(blocksCount, offset: offset + bytes.length).onError((error, stackTrace) {
+                if (!completer.isCompleted) completer.completeError(error!);
+              }));
             }
           },
           onError: (error) {
             if (!completer.isCompleted) {
-              if (error is TransportInternalException) {
-                completer.completeError(error);
+              if (error is TransportZeroDataException) {
+                completer.complete(bytes.takeBytes());
                 return;
               }
-              completer.complete(bytes.takeBytes());
+              completer.completeError(error);
             }
           },
         );
-        unawaited(_file.readMany(blocksCount, offset: offset));
+        unawaited(_file.readMany(blocksCount, offset: offset).onError((error, stackTrace) {
+          if (!completer.isCompleted) completer.completeError(error!);
+        }));
         return completer.future.whenComplete(subscription.cancel);
       });
 

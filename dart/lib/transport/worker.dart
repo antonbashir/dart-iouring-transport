@@ -20,7 +20,6 @@ import 'timeout.dart';
 
 class TransportWorker {
   final _fromTransport = ReceivePort();
-  final _customCallbacks = <int, Completer<int>>{};
 
   late final TransportBindings _bindings;
   late final Pointer<transport_worker_t> _workerPointer;
@@ -114,12 +113,6 @@ class TransportWorker {
     _listen();
   }
 
-  @pragma(preferInlinePragma)
-  void registerCallback(int id, Completer<int> completer) => _customCallbacks[id] = completer;
-
-  @pragma(preferInlinePragma)
-  void removeCallback(int id) => _customCallbacks.remove(id);
-
   Future<void> _listen() async {
     final baseDelay = _workerPointer.ref.base_delay_micros;
     final regularDelayDuration = Duration(microseconds: baseDelay);
@@ -176,10 +169,6 @@ class TransportWorker {
         _filesRegistry.get(fd)?.notify(bufferId, result, event & ~transportEventFile);
         continue;
       }
-
-      if (event & transportEventCustom != 0) {
-        _customCallbacks.remove(result)?.complete((data & ~transportEventCustom) >> 16);
-      }
     }
     _bindings.transport_cqe_advance(_ring, cqeCount);
     return true;
@@ -199,9 +188,6 @@ class TransportWorker {
     }
     return delays;
   }
-
-  @visibleForTesting
-  void notifyCustom(int id, int data) => _bindings.transport_worker_custom(_workerPointer, id, data);
 
   @visibleForTesting
   TransportBuffers get buffers => _buffers;

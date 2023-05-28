@@ -90,7 +90,7 @@ class TransportDatagramResponder {
   TransportDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  void respond(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError}) {
+  void respond(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
     if (retry == null) {
       unawaited(
         _server.respond(
@@ -99,6 +99,7 @@ class TransportDatagramResponder {
           bytes,
           flags: flags,
           onError: onError,
+          onDone: onDone,
         ),
       );
       return;
@@ -121,6 +122,7 @@ class TransportDatagramResponder {
             bytes,
             flags: flags,
             onError: _onError,
+            onDone: onDone,
           ),
         );
       }));
@@ -133,6 +135,7 @@ class TransportDatagramResponder {
         bytes,
         flags: flags,
         onError: _onError,
+        onDone: onDone,
       ),
     );
   }

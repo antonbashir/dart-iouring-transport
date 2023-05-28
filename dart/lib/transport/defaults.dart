@@ -110,7 +110,7 @@ class TransportDefaults {
       );
 
   static TransportRetryConfiguration retry() => TransportRetryConfiguration(
-        delayFactor: Duration(milliseconds: 50),
+        baseDelay: Duration(milliseconds: 50),
         randomizationFactor: 0.25,
         maxDelay: Duration(seconds: 30),
         maxAttempts: 5,

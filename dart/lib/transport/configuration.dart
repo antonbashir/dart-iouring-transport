@@ -118,7 +118,7 @@ class TransportUdpMulticastManager {
 }
 
 class TransportRetryConfiguration {
-  final Duration delayFactor;
+  final Duration baseDelay;
   final double randomizationFactor;
   final Duration maxDelay;
   final int maxAttempts;
@@ -127,14 +127,14 @@ class TransportRetryConfiguration {
   late final RetryOptions options;
 
   TransportRetryConfiguration({
-    required this.delayFactor,
+    required this.baseDelay,
     required this.randomizationFactor,
     required this.maxDelay,
     required this.maxAttempts,
     required this.predicate,
   }) {
     options = RetryOptions(
-      delayFactor: delayFactor,
+      delayFactor: baseDelay,
       randomizationFactor: randomizationFactor,
       maxDelay: maxDelay,
       maxAttempts: maxAttempts,
@@ -142,7 +142,7 @@ class TransportRetryConfiguration {
   }
 
   TransportRetryConfiguration copyWith({
-    Duration? delayFactor,
+    Duration? baseDelay,
     double? randomizationFactor,
     Duration? maxDelay,
     int? maxAttempts,
@@ -150,7 +150,7 @@ class TransportRetryConfiguration {
     void Function(Exception exception)? onRetry,
   }) =>
       TransportRetryConfiguration(
-        delayFactor: delayFactor ?? this.delayFactor,
+        baseDelay: baseDelay ?? this.baseDelay,
         randomizationFactor: randomizationFactor ?? this.randomizationFactor,
         maxDelay: maxDelay ?? this.maxDelay,
         maxAttempts: maxAttempts ?? this.maxAttempts,

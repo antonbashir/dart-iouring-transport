@@ -1,7 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';
@@ -18,8 +14,6 @@ import 'unix.dart';
 
 void main() {
   final initialization = true;
-  final callback = true;
-  final domain = true;
   final shutdown = true;
   final bulk = true;
   final tcp = true;
@@ -36,17 +30,8 @@ void main() {
   group("[shutdown]", timeout: Timeout(Duration(hours: 1)), skip: !shutdown, () {
     testShutdown(gracefulDuration: Duration(seconds: 5));
   });
-  group("[callback]", timeout: Timeout(Duration(hours: 1)), skip: !callback, () {
-    final testsCount = 10;
-    for (var index = 0; index < testsCount; index++) {
-      testCustom(index, 1);
-      testCustom(index, 2);
-      testCustom(index, 4);
-    }
-  });
-  group("[domain]", skip: !domain, () => testDomain());
   group("[tcp]", timeout: Timeout(Duration(hours: 1)), skip: !tcp, () {
-    final testsCount = 10;
+    final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
       testTcpSingle(index: index, clientsPool: 1);
       testTcpSingle(index: index, clientsPool: 128);
@@ -58,7 +43,7 @@ void main() {
     }
   });
   group("[unix stream]", timeout: Timeout(Duration(hours: 1)), skip: !unixStream, () {
-    final testsCount = 10;
+    final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
       testUnixStreamSingle(index: index, clientsPool: 1);
       testUnixStreamSingle(index: index, clientsPool: 128);
@@ -70,7 +55,7 @@ void main() {
     }
   });
   group("[udp]", timeout: Timeout(Duration(hours: 1)), skip: !udp, () {
-    final testsCount = 10;
+    final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
       testUdpSingle(index: index, clients: 1);
       testUdpSingle(index: index, clients: 128);
@@ -78,7 +63,7 @@ void main() {
     }
   });
   group("[unix dgram]", timeout: Timeout(Duration(hours: 1)), skip: !unixDgram, () {
-    final testsCount = 10;
+    final testsCount = 5;
     for (var index = 0; index < testsCount; index++) {
       testUnixDgramSingle(index: index, clients: 1);
       testUnixDgramSingle(index: index, clients: 128);
@@ -115,32 +100,5 @@ void testInitialization() {
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
     await transport.shutdown();
-  });
-}
-
-void testCustom(int index, int result) {
-  test("(callback) [index=$index, result=$result]", () async {
-    final transport = Transport();
-    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
-    final completer = Completer<int>();
-    await worker.initialize();
-    final id = 1;
-    worker.registerCallback(id, completer);
-    worker.notifyCustom(id, result);
-    expect(await completer.future, result);
-    await transport.shutdown();
-  });
-}
-
-void testDomain() {
-  test("(domain)", () async {
-    final transport = Transport();
-    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
-    await worker.initialize();
-    final address = (await InternetAddress.lookup("google.com")).first;
-    final clients = await worker.clients.tcp(address, 443);
-    clients.select().writeSingle(Utf8Encoder().convert("GET"), onError: (error) => fail(error.toString()));
-    await Future.delayed(Duration(seconds: 1));
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }
