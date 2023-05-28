@@ -12,12 +12,12 @@ import 'server/server.dart';
 class TransportPayloadPool {
   final TransportBuffers _buffers;
   final _payloads = <TransportPayload>[];
-  final _datagramResponders = <TransportDatagramResponder>[];
+  final _datagramResponders = <TransportServerDatagramResponder>[];
 
   TransportPayloadPool(int buffersCount, this._buffers) {
     for (var bufferId = 0; bufferId < buffersCount; bufferId++) {
       _payloads.add(TransportPayload(bufferId, this));
-      _datagramResponders.add(TransportDatagramResponder(bufferId, this));
+      _datagramResponders.add(TransportServerDatagramResponder(bufferId, this));
     }
   }
 
@@ -32,7 +32,7 @@ class TransportPayloadPool {
   void release(int bufferId) => _buffers.release(bufferId);
 
   @pragma(preferInlinePragma)
-  TransportDatagramResponder getDatagramResponder(
+  TransportServerDatagramResponder getDatagramResponder(
     int bufferId,
     Uint8List bytes,
     TransportServerChannel server,
@@ -75,7 +75,7 @@ class TransportPayload {
   }
 }
 
-class TransportDatagramResponder {
+class TransportServerDatagramResponder {
   final int _bufferId;
   final TransportPayloadPool _pool;
 
@@ -87,7 +87,7 @@ class TransportDatagramResponder {
   Uint8List get receivedBytes => _bytes;
   bool get active => _server.active;
 
-  TransportDatagramResponder(this._bufferId, this._pool);
+  TransportServerDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
   void respond(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {

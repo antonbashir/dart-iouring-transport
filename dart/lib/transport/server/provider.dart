@@ -52,11 +52,11 @@ class TransportServerDatagramReceiver {
 
   const TransportServerDatagramReceiver(this._server);
 
-  Stream<TransportDatagramResponder> get inbound => _server.inbound;
+  Stream<TransportServerDatagramResponder> get inbound => _server.inbound;
   bool get active => _server.active;
 
-  Stream<TransportDatagramResponder> receive({int? flags}) {
-    final out = StreamController<TransportDatagramResponder>(sync: true);
+  Stream<TransportServerDatagramResponder> receive({int? flags}) {
+    final out = StreamController<TransportServerDatagramResponder>(sync: true);
     out.onListen = () => unawaited(_server.receive(flags: flags).onError((error, stackTrace) => out.addError(error!)));
     _server.inbound.listen(
       (event) {

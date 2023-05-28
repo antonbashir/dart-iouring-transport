@@ -146,7 +146,7 @@ class TransportServerConnectionChannel {
 class TransportServerChannel implements TransportServer {
   final _closer = Completer();
   final _connections = <int, TransportServerConnectionChannel>{};
-  final _inboundEvents = StreamController<TransportDatagramResponder>();
+  final _inboundEvents = StreamController<TransportServerDatagramResponder>();
   final _outboundErrorHandlers = <int, void Function(Exception error)>{};
   final _outboundDoneHandlers = <int, void Function()>{};
 
@@ -167,7 +167,7 @@ class TransportServerChannel implements TransportServer {
   var _closing = false;
 
   bool get active => !_closing;
-  Stream<TransportDatagramResponder> get inbound => _inboundEvents.stream;
+  Stream<TransportServerDatagramResponder> get inbound => _inboundEvents.stream;
 
   TransportServerChannel(
     this.pointer,

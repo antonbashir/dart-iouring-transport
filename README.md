@@ -9,21 +9,28 @@ The main goal of this library is to provide fast transport API to Dart developer
 - [Installation \& Usage](#installation--usage)
     - [Quick start](#quick-start)
   - [Sample](#sample)
-  - [Packaging](#packaging)
 - [API](#api)
+- [Transport](#transport)
+    - [\[async\] shutdown() - Shutdowning all workers](#async-shutdown---shutdowning-all-workers)
+    - [\[async\] worker() - Shutdowning all workers](#async-worker---shutdowning-all-workers)
+- [TransportWorker](#transportworker)
+- [TransportClientConnection](#transportclientconnection)
+- [TransportServerConnection](#transportserverconnection)
+- [TransportServerDatagramReceiver](#transportserverdatagramreceiver)
+- [TransportServerDatagramResponder](#transportserverdatagramresponder)
+- [TransportDatagramClient](#transportdatagramclient)
+- [TransportFile](#transportfile)
 - [Perfomance](#perfomance)
 - [Limitations](#limitations)
 - [Further work](#further-work)
 - [Contribution](#contribution)
 
 ## Features
-
 - TCP
 - UDP
-- UNIX socket stream
-- UNIX socket datagram
-- file
-- custom callbacks
+- UNIX socket streams
+- UNIX socket datagrams
+- files
 - fast
 - asynchronous (based on Dart streams and futures)
 
@@ -48,17 +55,30 @@ The main goal of this library is to provide fast transport API to Dart developer
 
 You can find simple example [here](https://github.com/antonbashir/dart-iouring-sample)
 
-## Packaging
-
-If you want to distribute your module, run `dart run iouring_transport:pack ${path to main dart file}`.
-
-This command will recompile Native files and create `${directory name}.tar.gz` archive with executables and libraries.
-
-After this you can transfer archive to whatever place you want, unarchive it and run `module.exe`.
-
 # API
 
-TODO: write APIs
+# Transport
+
+### [async] shutdown() - Shutdowning all workers
+* [optional] `Duration gracefulDuration` - How long to wait before closing
+
+### [async] worker() - Shutdowning all workers
+* `TransportWorkerConfiguration configuration` - Worker configuration (see `TransportDefaults`)
+* [return] `SendPort` - This port you should put into `TransportWorker` constructor. I use `SendPort` to make available of using workers with isolates.
+
+# TransportWorker
+
+# TransportClientConnection
+
+# TransportServerConnection
+
+# TransportServerDatagramReceiver
+
+# TransportServerDatagramResponder
+
+# TransportDatagramClient
+
+# TransportFile
 
 # Perfomance
 
@@ -71,7 +91,6 @@ Latest benchmark results:
 # Limitations
 
 - Linux only
-- Linux kernel with support of IO_URING MSG type
 - Not production tested, current version is coded and tested by function unit tests, bugs are possible
 
 # Further work
@@ -81,6 +100,7 @@ Latest benchmark results:
 3. Demo project
 4. Reactive transport
 5. Media transport
+6. SSL
 
 # Contribution
 
