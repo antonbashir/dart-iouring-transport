@@ -137,12 +137,15 @@ class TransportFileChannel {
         _inboundEvents.addError(createTransportException(TransportEvent.fileEvent(event), result, _bindings));
         return;
       }
-      buffers.release(bufferId);
-      if (result >= 0) {
-        _outboundDoneHandlers.remove(bufferId)?.call();
+      if (event == transportEventWrite) {
+        buffers.release(bufferId);
+        if (result >= 0) {
+          _outboundDoneHandlers.remove(bufferId)?.call();
+          return;
+        }
+        _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.fileEvent(event), result, _bindings));
         return;
       }
-      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.fileEvent(event), result, _bindings));
       return;
     }
     buffers.release(bufferId);

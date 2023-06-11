@@ -144,6 +144,7 @@ class TransportWorker {
       final fd = (data >> 32) & 0xffffffff;
       final bufferId = (data >> 16) & 0xffff;
       if (_workerPointer.ref.trace) print(TransportMessages.workerTrace(id, result, data, fd));
+      
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;
         if (event == transportEventConnect) {

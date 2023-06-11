@@ -104,21 +104,22 @@ class TransportServerConnectionChannel {
           return;
         }
         _buffers.release(bufferId);
-        if (result == 0) {
-          unawaited(close());
-          return;
+        if (result < 0) {
+          _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         }
-        _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         unawaited(close());
         return;
       }
-      _buffers.release(bufferId);
-      if (result > 0) {
-        _outboundDoneHandlers.remove(bufferId)?.call();
+      if (event == transportEventWrite) {
+        _buffers.release(bufferId);
+        if (result > 0) {
+          _outboundDoneHandlers.remove(bufferId)?.call();
+          return;
+        }
+        _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
+        unawaited(close());
         return;
       }
-      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
-      unawaited(close());
       return;
     }
     _buffers.release(bufferId);
@@ -237,25 +238,30 @@ class TransportServerChannel implements TransportServer {
       if (event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
-          _inboundEvents.add(_datagramResponderPool.getDatagramResponder(
-            bufferId,
-            _buffers.read(bufferId),
-            this,
-            _datagramChannel!,
-            _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
-          ));
+          _inboundEvents.add(
+            _datagramResponderPool.getDatagramResponder(
+              bufferId,
+              _buffers.read(bufferId),
+              this,
+              _datagramChannel!,
+              _bindings.transport_worker_get_datagram_address(_workerPointer, pointer.ref.family, bufferId),
+            ),
+          );
           return;
         }
         _buffers.release(bufferId);
         _inboundEvents.addError(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
-      _buffers.release(bufferId);
-      if (result > 0) {
-        _outboundDoneHandlers.remove(bufferId)?.call();
+      if (event == transportEventSendMessage) {
+        _buffers.release(bufferId);
+        if (result > 0) {
+          _outboundDoneHandlers.remove(bufferId)?.call();
+          return;
+        }
+        _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
-      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
       return;
     }
     _buffers.release(bufferId);

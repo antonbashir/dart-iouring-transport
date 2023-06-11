@@ -163,7 +163,20 @@ class TransportClientChannel {
   void notifyData(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
-      if (event == transportEventRead || event == transportEventReceiveMessage) {
+      if (event == transportEventRead) {
+        if (result > 0) {
+          _buffers.setLength(bufferId, result);
+          _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
+          return;
+        }
+        _buffers.release(bufferId);
+        if (result < 0) {
+          _inboundEvents.addError(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
+        }
+        unawaited(close());
+        return;
+      }
+      if (event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
           _inboundEvents.add(_payloadPool.getPayload(bufferId, _buffers.read(bufferId)));
@@ -171,15 +184,26 @@ class TransportClientChannel {
         }
         _buffers.release(bufferId);
         _inboundEvents.addError(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
-        if (event == transportEventRead) unawaited(close());
         return;
       }
-      _buffers.release(bufferId);
-      if (result > 0) {
-        _outboundDoneHandlers.remove(bufferId)?.call();
+      if (event == transportEventWrite) {
+        _buffers.release(bufferId);
+        if (result > 0) {
+          _outboundDoneHandlers.remove(bufferId)?.call();
+          return;
+        }
+        _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
         return;
       }
-      _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
+      if (event == transportEventSendMessage) {
+        _buffers.release(bufferId);
+        if (result > 0) {
+          _outboundDoneHandlers.remove(bufferId)?.call();
+          return;
+        }
+        _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
+        return;
+      }
       return;
     }
     _buffers.release(bufferId);
