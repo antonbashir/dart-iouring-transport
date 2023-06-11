@@ -37,10 +37,10 @@ This library's primary objective is to deliver a high-speed transport API to Dar
     - [active - Indicates whether the server connection is currently active or not.](#active---indicates-whether-the-server-connection-is-currently-active-or-not)
     - [inbound - Returns the inbound stream of the server.](#inbound---returns-the-inbound-stream-of-the-server)
   - [Methods](#methods-2)
-    - [\[async\] read() - Initiates the reading process from the server.](#async-read---initiates-the-reading-process-from-the-server)
+    - [\[async\] read() - Initiates the reading process from the client connection.](#async-read---initiates-the-reading-process-from-the-client-connection)
     - [stream() - Returns a stream of data as it becomes available.](#stream---returns-a-stream-of-data-as-it-becomes-available-1)
-    - [writeSingle() - Writes a single chunk of data to the server.](#writesingle---writes-a-single-chunk-of-data-to-the-server)
-    - [writeMany() - Writes multiple chunks of data to the server.](#writemany---writes-multiple-chunks-of-data-to-the-server)
+    - [writeSingle() - Writes a single chunk of data to the client connection.](#writesingle---writes-a-single-chunk-of-data-to-the-client-connection)
+    - [writeMany() - Writes multiple chunks of data to the client connection.](#writemany---writes-multiple-chunks-of-data-to-the-client-connection)
     - [\[async\] close() - Closes the server connection. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the connection.](#async-close---closes-the-server-connection-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-connection)
     - [\[async\] closeServer() - Closes the server. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the server.](#async-closeserver---closes-the-server-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-server)
 - [TransportServerDatagramReceiver](#transportserverdatagramreceiver)
@@ -193,20 +193,20 @@ A simple example can be found [here](https://github.com/antonbashir/dart-iouring
 * [return] `Stream<TransportPayload>`
 
 ## Methods
-### [async] read() - Initiates the reading process from the server.
+### [async] read() - Initiates the reading process from the client connection.
 * [return] `Future<void>`
 
 ### stream() - Returns a stream of data as it becomes available.
 * [return] `Stream<TransportPayload>`
 
-### writeSingle() - Writes a single chunk of data to the server.
+### writeSingle() - Writes a single chunk of data to the client connection.
 * `Uint8List bytes`
 
  - The data to be written.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
 
-### writeMany() - Writes multiple chunks of data to the server.
+### writeMany() - Writes multiple chunks of data to the client connection.
 * `List<Uint8List> bytes` - The list of data to be written.
 * [optional]`void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
