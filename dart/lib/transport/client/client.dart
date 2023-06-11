@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:iouring_transport/transport/configuration.dart';
 import 'package:meta/meta.dart';
 
 import '../bindings.dart';
@@ -14,7 +15,6 @@ import 'provider.dart';
 import 'registry.dart';
 
 class TransportClientChannel {
-  final _connector = Completer();
   final _inboundEvents = StreamController<TransportPayload>();
   final _outboundDoneHandlers = <int, void Function()>{};
   final _outboundErrorHandlers = <int, void Function(Exception error)>{};
@@ -31,6 +31,7 @@ class TransportClientChannel {
 
   late final Pointer<sockaddr> _destination;
 
+  var _connector = Completer();
   var _pending = 0;
   var _active = true;
   var _closing = false;
@@ -129,7 +130,19 @@ class TransportClientChannel {
   }
 
   @pragma(preferInlinePragma)
-  Future<TransportClientChannel> connect() {
+  Future<TransportClientChannel> connect({TransportRetryConfiguration? retry}) {
+    if (retry != null) {
+      return retry.options.retry(
+        () {
+          if (_closing) return Future.error(TransportClosedException.forClient());
+          _connector = Completer();
+          _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
+          _pending++;
+          return _connector.future.then((_) => this);
+        },
+        retryIf: retry.predicate,
+      );
+    }
     if (_closing) return Future.error(TransportClosedException.forClient());
     _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
     _pending++;
