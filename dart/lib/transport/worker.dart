@@ -78,6 +78,7 @@ class TransportWorker {
       _workerPointer,
     );
     _payloadPool = TransportPayloadPool(_workerPointer.ref.buffers_count, _buffers);
+    _datagramResponderPool = TransportServerDatagramResponderPool(_workerPointer.ref.buffers_count, _buffers);
     _clientRegistry = TransportClientRegistry();
     _serverRegistry = TransportServerRegistry();
     _serversFactory = TransportServersFactory(
