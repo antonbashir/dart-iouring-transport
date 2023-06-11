@@ -78,32 +78,31 @@ class TransportWorker {
       _workerPointer,
     );
     _payloadPool = TransportPayloadPool(_workerPointer.ref.buffers_count, _buffers);
-    _clientRegistry = TransportClientRegistry(
-      _bindings,
-      _workerPointer,
-      _buffers,
-      _payloadPool,
-    );
-    _serverRegistry = TransportServerRegistry(
+    _clientRegistry = TransportClientRegistry();
+    _serverRegistry = TransportServerRegistry();
+    _serversFactory = TransportServersFactory(
+      _serverRegistry,
       _bindings,
       _workerPointer,
       _buffers,
       _payloadPool,
       _datagramResponderPool,
     );
-    _serversFactory = TransportServersFactory(
-      _serverRegistry,
-    );
     _clientsFactory = TransportClientsFactory(
       _clientRegistry,
-    );
-    _filesRegistry = TransportFileRegistry(
       _bindings,
       _workerPointer,
       _buffers,
       _payloadPool,
     );
-    _filesFactory = TransportFilesFactory(_filesRegistry);
+    _filesRegistry = TransportFileRegistry();
+    _filesFactory = TransportFilesFactory(
+      _filesRegistry,
+      _bindings,
+      _workerPointer,
+      _buffers,
+      _payloadPool,
+    );
     _ring = _workerPointer.ref.ring;
     _cqes = _workerPointer.ref.cqes;
     _timeoutChecker = TransportTimeoutChecker(

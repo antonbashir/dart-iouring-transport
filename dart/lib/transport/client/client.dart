@@ -144,14 +144,14 @@ class TransportClientChannel {
         return;
       }
       if (result == -ECANCELED) {
-        _connector.completeError(TransportCanceledException(event: TransportEvent.connect));
+        _connector.completeError(TransportCanceledException(TransportEvent.connect));
         return;
       }
       _connector.completeError(
         TransportInternalException(
           event: TransportEvent.connect,
           code: result,
-          message: kernelErrorToString(result, _bindings),
+          bindings: _bindings,
         ),
       );
       return;

@@ -37,7 +37,7 @@ class Transport {
       SendPort toWorker = ports[0];
       _workerClosers.add(ports[1]);
       final workerPointer = calloc<transport_worker_t>();
-      if (workerPointer == nullptr) throw TransportInitializationException(TransportMessages.workerMemory);
+      if (workerPointer == nullptr) throw TransportInitializationException(TransportMessages.workerMemoryError);
       final result = using((arena) {
         final nativeConfiguration = arena<transport_worker_configuration_t>();
         nativeConfiguration.ref.ring_flags = configuration.ringFlags;

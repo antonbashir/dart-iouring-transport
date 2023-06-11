@@ -24,7 +24,7 @@ TransportLibrary _load() {
   } on ArgumentError {
     final dotDartTool = findDotDartTool();
     if (dotDartTool != null) {
-      final packageNativeRoot = Directory(findPackageRoot(dotDartTool).toFilePath() + Directories.native);
+      final packageNativeRoot = Directory(findPackageRoot(dotDartTool).toFilePath() + TransportDirectories.native);
       final libraryFile = File(packageNativeRoot.path + slash + transportLibraryName);
       if (libraryFile.existsSync()) {
         return TransportLibrary(DynamicLibrary.open(libraryFile.path), libraryFile.path);
@@ -39,16 +39,16 @@ Uri? findDotDartTool() {
   Uri root = Platform.script.resolve(currentDirectorySymbol);
 
   do {
-    if (File.fromUri(root.resolve(Directories.dotDartTool + slash + packageConfigJsonFile)).existsSync()) {
-      return root.resolve(Directories.dotDartTool + slash);
+    if (File.fromUri(root.resolve(TransportDirectories.dotDartTool + slash + packageConfigJsonFile)).existsSync()) {
+      return root.resolve(TransportDirectories.dotDartTool + slash);
     }
   } while (root != (root = root.resolve(parentDirectorySymbol)));
 
   root = Directory.current.uri;
 
   do {
-    if (File.fromUri(root.resolve(Directories.dotDartTool + slash + packageConfigJsonFile)).existsSync()) {
-      return root.resolve(Directories.dotDartTool + slash);
+    if (File.fromUri(root.resolve(TransportDirectories.dotDartTool + slash + packageConfigJsonFile)).existsSync()) {
+      return root.resolve(TransportDirectories.dotDartTool + slash);
     }
   } while (root != (root = root.resolve(parentDirectorySymbol)));
 
@@ -63,11 +63,11 @@ Uri findPackageRoot(Uri dotDartTool) {
   } catch (ignore) {
     throw UnsupportedError(unableToFindProjectRoot);
   }
-  final package = (packageConfig[PackageConfigFields.packages] ?? []).firstWhere(
-    (element) => element[PackageConfigFields.name] == transportPackageName,
+  final package = (packageConfig[TransportPackageConfigFields.packages] ?? []).firstWhere(
+    (element) => element[TransportPackageConfigFields.name] == transportPackageName,
     orElse: () => throw UnsupportedError(unableToFindProjectRoot),
   );
-  return packageConfigFile.uri.resolve(package[PackageConfigFields.rootUri] ?? empty);
+  return packageConfigFile.uri.resolve(package[TransportPackageConfigFields.rootUri] ?? empty);
 }
 
 String? findProjectRoot() {

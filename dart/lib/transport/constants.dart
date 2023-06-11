@@ -1,3 +1,5 @@
+import 'package:ffi/ffi.dart';
+
 import 'bindings.dart';
 import 'exception.dart';
 
@@ -28,25 +30,16 @@ const unableToFindProjectRoot = "Unable to find project root";
 const pubspecYamlFile = 'pubspec.yaml';
 const pubspecYmlFile = 'pubspec.yml';
 
-class Directories {
-  const Directories._();
+class TransportDirectories {
+  const TransportDirectories._();
 
   static const native = "/native";
   static const package = "/package";
   static const dotDartTool = ".dart_tool";
 }
 
-class Messages {
-  const Messages._();
-
-  static const runPubGet = "Run 'dart pub get'";
-  static const specifyDartEntryPoint = 'Specify dart execution entry point';
-  static const projectRootNotFound = "Project root not found (parent of 'pubspec.yaml')";
-  static const nativeSourcesNotFound = "Native root does not contain any *.c or *.cpp sources";
-}
-
-class PackageConfigFields {
-  PackageConfigFields._();
+class TransportPackageConfigFields {
+  TransportPackageConfigFields._();
 
   static const rootUri = 'rootUri';
   static const name = 'name';
@@ -220,7 +213,28 @@ enum TransportFileMode {
 class TransportMessages {
   TransportMessages._();
 
-  static final workerMemory = "[worker] out of memory";
-  static workerError(int result, TransportBindings bindings) => "[worker] code = $result, message = ${kernelErrorToString(result, bindings)}";
+  static final workerMemoryError = "[worker] out of memory";
+  static workerError(int result, TransportBindings bindings) => "[worker] code = $result, message = ${_kernelErrorToString(result, bindings)}";
   static workerTrace(int id, int result, int data, int fd) => "worker = $id, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd";
+
+  static final serverMemoryError = "[server] out of memory";
+  static final serverClosedError = "[server] closed";
+  static serverError(int result, TransportBindings bindings) => "[server] code = $result, message = ${_kernelErrorToString(result, bindings)}";
+  static serverSocketError(int result) => "[server] unable to set socket option: ${-result}";
+
+  static final clientMemoryError = "[client] out of memory";
+  static final clientClosedError = "[client] closed";
+  static clientError(int result, TransportBindings bindings) => "[client] code = $result, message = ${_kernelErrorToString(result, bindings)}";
+  static clientSocketError(int result) => "[client] unable to set socket option: ${-result}";
+
+  static final fileMemory = "[file] out of memory";
+  static final fileClosedError = "[file] closed";
+  static fileOpenError(String path) => "[file] open file failed: $path";
+  static fileError(int result, TransportBindings bindings) => "[file] code = $result, message = ${_kernelErrorToString(result, bindings)}";
+
+  static internalError(TransportEvent event, int code, TransportBindings bindings) => "[$event] code = $code, message = ${_kernelErrorToString(code, bindings)}";
+  static canceledError(TransportEvent event) => "[$event] canceled";
+  static zeroDataError(TransportEvent event) => "[$event] completed with zero result (no data)";
+
+  static _kernelErrorToString(int error, TransportBindings bindings) => bindings.strerror(-error).cast<Utf8>().toDartString();
 }

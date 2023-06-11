@@ -21,6 +21,7 @@ class TransportServerConnectionChannel {
   final _inboundEvents = StreamController<TransportPayload>();
   final _outboundDoneHandlers = <int, void Function()>{};
   final _outboundErrorHandlers = <int, void Function(Exception error)>{};
+
   final int _readTimeout;
   final int _writeTimeout;
   final TransportChannel channel;

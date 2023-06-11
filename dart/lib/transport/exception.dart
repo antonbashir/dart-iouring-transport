@@ -3,8 +3,6 @@ import 'payload.dart';
 import 'bindings.dart';
 import 'constants.dart';
 
-String kernelErrorToString(int error, TransportBindings bindings) => bindings.strerror(-error).cast<Utf8>().toDartString();
-
 class TransportInitializationException implements Exception {
   final String message;
 
@@ -23,11 +21,8 @@ class TransportInternalException implements Exception {
   TransportInternalException({
     required this.event,
     required this.code,
-    required String message,
-    int? bufferId,
-  }) {
-    this.message = "[$event] code = $code, message = $message";
-  }
+    required TransportBindings bindings,
+  }) : this.message = TransportMessages.internalError(event, code, bindings);
 
   @override
   String toString() => message;
@@ -38,9 +33,7 @@ class TransportCanceledException implements Exception {
 
   late final String message;
 
-  TransportCanceledException({required this.event}) {
-    this.message = "[$event] canceled";
-  }
+  TransportCanceledException(this.event) : this.message = TransportMessages.canceledError(event);
 
   @override
   String toString() => message;
@@ -51,11 +44,11 @@ class TransportClosedException implements Exception {
 
   TransportClosedException._(this.message);
 
-  factory TransportClosedException.forServer({TransportPayload? payload}) => TransportClosedException._("Server closed\n${StackTrace.current}");
+  factory TransportClosedException.forServer({TransportPayload? payload}) => TransportClosedException._(TransportMessages.serverClosedError);
 
-  factory TransportClosedException.forClient({TransportPayload? payload}) => TransportClosedException._("Client closed\n${StackTrace.current}");
+  factory TransportClosedException.forClient({TransportPayload? payload}) => TransportClosedException._(TransportMessages.clientClosedError);
 
-  factory TransportClosedException.forFile({TransportPayload? payload}) => TransportClosedException._("File closed\n${StackTrace.current}");
+  factory TransportClosedException.forFile({TransportPayload? payload}) => TransportClosedException._(TransportMessages.fileClosedError);
 
   @override
   String toString() => message;
@@ -66,9 +59,7 @@ class TransportZeroDataException implements Exception {
 
   late final String message;
 
-  TransportZeroDataException({required this.event}) {
-    message = "[$event] completed with zero result (no data)";
-  }
+  TransportZeroDataException(this.event) : message = TransportMessages.zeroDataError(event);
 
   @override
   String toString() => message;
@@ -78,13 +69,13 @@ class TransportZeroDataException implements Exception {
 Exception createTransportException(TransportEvent event, int result, TransportBindings bindings) {
   if (result < 0) {
     if (result == -ECANCELED) {
-      return TransportCanceledException(event: event);
+      return TransportCanceledException(event);
     }
     return TransportInternalException(
       event: event,
       code: result,
-      message: kernelErrorToString(result, bindings),
+      bindings: bindings,
     );
   }
-  return TransportZeroDataException(event: event);
+  return TransportZeroDataException(event);
 }
