@@ -272,9 +272,7 @@ A simple example can be found [here](https://github.com/antonbashir/dart-iouring
 * [return] `bool`
 
 ### inbound - Returns the inbound stream of the client.
-* [
-
-return] `Stream<TransportPayload>`
+* [return] `Stream<TransportPayload>`
 
 ## Methods
 ### [async] receive() - Initiates the process of receiving datagrams.
