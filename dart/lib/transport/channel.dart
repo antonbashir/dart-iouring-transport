@@ -58,7 +58,7 @@ class TransportChannel {
     int bufferId,
     int socketFamily,
     int timeout,
-    int flags,
+    int messageFlags,
     int event, {
     int sqeFlags = 0,
   }) {
@@ -67,7 +67,7 @@ class TransportChannel {
       fd,
       bufferId,
       socketFamily,
-      flags,
+      messageFlags,
       timeout,
       event,
       sqeFlags,
@@ -81,7 +81,7 @@ class TransportChannel {
     int socketFamily,
     Pointer<sockaddr> destination,
     int timeout,
-    int flags,
+    int messageFlags,
     int event, {
     int sqeFlags = 0,
   }) {
@@ -92,7 +92,7 @@ class TransportChannel {
       bufferId,
       destination,
       socketFamily,
-      flags,
+      messageFlags,
       timeout,
       event,
       sqeFlags,

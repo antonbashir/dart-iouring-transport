@@ -19,6 +19,7 @@ int transport_worker_initialize(transport_worker_t *worker,
   worker->cqe_wait_timeout_millis = configuration->cqe_wait_timeout_millis;
   worker->cqe_wait_count = configuration->cqe_wait_count;
   worker->cqe_peek_count = configuration->cqe_peek_count;
+  worker->trace = configuration->trace;
   if (!worker->buffers)
   {
     return -ENOMEM;

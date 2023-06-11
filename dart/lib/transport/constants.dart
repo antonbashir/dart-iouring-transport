@@ -1,4 +1,5 @@
 import 'bindings.dart';
+import 'exception.dart';
 
 const preferInlinePragma = "vm:prefer-inline";
 
@@ -214,4 +215,12 @@ enum TransportFileMode {
   final int mode;
 
   const TransportFileMode(this.mode);
+}
+
+class TransportMessages {
+  TransportMessages._();
+
+  static final workerMemory = "[worker] out of memory";
+  static workerError(int result, TransportBindings bindings) => "[worker] code = $result, message = ${kernelErrorToString(result, bindings)}";
+  static workerTrace(int id, int result, int data, int fd) => "worker = $id, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd";
 }

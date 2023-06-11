@@ -8,6 +8,7 @@ class TransportDefaults {
   TransportDefaults._();
 
   static TransportWorkerConfiguration worker() => TransportWorkerConfiguration(
+        trace: false,
         buffersCount: 4096,
         bufferSize: 4096,
         ringSize: 16384,

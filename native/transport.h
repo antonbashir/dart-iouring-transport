@@ -17,8 +17,6 @@ extern "C"
   void transport_cqe_advance(struct io_uring *ring, int count);
 
   void transport_close_descritor(int fd);
-
-  void transport_notify_idle(int64_t deadline);
 #if defined(__cplusplus)
 }
 #endif

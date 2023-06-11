@@ -12,6 +12,7 @@ class TransportWorkerConfiguration {
   final Duration cqeWaitTimeout;
   final Duration baseDelay;
   final Duration maxDelay;
+  final bool trace;
 
   TransportWorkerConfiguration({
     required this.buffersCount,
@@ -25,6 +26,7 @@ class TransportWorkerConfiguration {
     required this.cqePeekCount,
     required this.cqeWaitCount,
     required this.cqeWaitTimeout,
+    required this.trace,
   });
 
   TransportWorkerConfiguration copyWith({
@@ -39,6 +41,7 @@ class TransportWorkerConfiguration {
     int? cqePeekCount,
     int? cqeWaitCount,
     Duration? cqeWaitTimeout,
+    bool? trace,
   }) =>
       TransportWorkerConfiguration(
         buffersCount: buffersCount ?? this.buffersCount,
@@ -52,6 +55,7 @@ class TransportWorkerConfiguration {
         cqePeekCount: cqePeekCount ?? this.cqePeekCount,
         cqeWaitCount: cqeWaitCount ?? this.cqeWaitCount,
         cqeWaitTimeout: cqeWaitTimeout ?? this.cqeWaitTimeout,
+        trace: trace ?? this.trace,
       );
 }
 
@@ -70,11 +74,19 @@ class TransportUdpMulticastConfiguration {
     this.calculateInterfaceIndex,
   );
 
-  factory TransportUdpMulticastConfiguration.byInterfaceIndex({required String groupAddress, required String localAddress, required int interfaceIndex}) {
+  factory TransportUdpMulticastConfiguration.byInterfaceIndex({
+    required String groupAddress,
+    required String localAddress,
+    required int interfaceIndex,
+  }) {
     return TransportUdpMulticastConfiguration._(groupAddress, localAddress, null, interfaceIndex, false);
   }
 
-  factory TransportUdpMulticastConfiguration.byInterfaceName({required String groupAddress, required String localAddress, required String interfaceName}) {
+  factory TransportUdpMulticastConfiguration.byInterfaceName({
+    required String groupAddress,
+    required String localAddress,
+    required String interfaceName,
+  }) {
     return TransportUdpMulticastConfiguration._(groupAddress, localAddress, interfaceName, -1, true);
   }
 }

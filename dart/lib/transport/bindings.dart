@@ -18045,20 +18045,6 @@ class TransportBindings {
   late final _transport_close_descritor =
       _transport_close_descritorPtr.asFunction<void Function(int)>();
 
-  void transport_notify_idle(
-    int deadline,
-  ) {
-    return _transport_notify_idle(
-      deadline,
-    );
-  }
-
-  late final _transport_notify_idlePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'transport_notify_idle');
-  late final _transport_notify_idle =
-      _transport_notify_idlePtr.asFunction<void Function(int)>();
-
   int transport_file_open(
     ffi.Pointer<ffi.Char> path,
     int mode,
@@ -21959,8 +21945,6 @@ class _SymbolAddresses {
       get transport_cqe_advance => _library._transport_cqe_advancePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>
       get transport_close_descritor => _library._transport_close_descritorPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>
-      get transport_notify_idle => _library._transport_notify_idlePtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(
@@ -23896,6 +23880,9 @@ class transport_worker_configuration extends ffi.Struct {
 
   @ffi.Uint32()
   external int cqe_peek_count;
+
+  @ffi.Bool()
+  external bool trace;
 }
 
 class transport_worker extends ffi.Struct {
@@ -23948,6 +23935,9 @@ class transport_worker extends ffi.Struct {
 
   @ffi.Uint32()
   external int cqe_peek_count;
+
+  @ffi.Bool()
+  external bool trace;
 }
 
 typedef transport_worker_t = transport_worker;

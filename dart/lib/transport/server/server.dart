@@ -10,6 +10,7 @@ import '../channel.dart';
 import '../constants.dart';
 import '../exception.dart';
 import '../payload.dart';
+import 'responder.dart';
 
 abstract class TransportServer {
   Future<void> close({Duration? gracefulDuration});
@@ -159,6 +160,7 @@ class TransportServerChannel implements TransportServer {
   final TransportBuffers _buffers;
   final TransportServerRegistry _registry;
   final TransportPayloadPool _payloadPool;
+  final TransportServerDatagramResponderPool _datagramResponderPool;
 
   late void Function(TransportServerConnection connection) _acceptor;
 
@@ -178,8 +180,9 @@ class TransportServerChannel implements TransportServer {
     this._buffers,
     this._registry,
     this._payloadPool,
-    this._datagramChannel,
-  );
+    this._datagramResponderPool, {
+    TransportChannel? datagramChannel,
+  }) : this._datagramChannel = datagramChannel;
 
   @pragma(preferInlinePragma)
   void accept(void Function(TransportServerConnection connection) onAccept) {
@@ -233,7 +236,7 @@ class TransportServerChannel implements TransportServer {
       if (event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
-          _inboundEvents.add(_payloadPool.getDatagramResponder(
+          _inboundEvents.add(_datagramResponderPool.getDatagramResponder(
             bufferId,
             _buffers.read(bufferId),
             this,

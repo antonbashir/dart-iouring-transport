@@ -16,6 +16,7 @@ import 'lookup.dart';
 import 'payload.dart';
 import 'server/factory.dart';
 import 'server/registry.dart';
+import 'server/responder.dart';
 import 'timeout.dart';
 
 class TransportWorker {
@@ -36,6 +37,7 @@ class TransportWorker {
   late final TransportBuffers _buffers;
   late final TransportTimeoutChecker _timeoutChecker;
   late final TransportPayloadPool _payloadPool;
+  late final TransportServerDatagramResponderPool _datagramResponderPool;
   late final List<Duration> _delays;
 
   var _active = true;
@@ -87,6 +89,7 @@ class TransportWorker {
       _workerPointer,
       _buffers,
       _payloadPool,
+      _datagramResponderPool,
     );
     _serversFactory = TransportServersFactory(
       _serverRegistry,
@@ -110,7 +113,7 @@ class TransportWorker {
     );
     _delays = _calculateDelays();
     _timeoutChecker.start();
-    _listen();
+    unawaited(_listen());
   }
 
   Future<void> _listen() async {
@@ -131,7 +134,7 @@ class TransportWorker {
 
   bool _handleCqes() {
     final cqeCount = _bindings.transport_worker_peek(_workerPointer);
-    if (cqeCount <= 0) return false;
+    if (cqeCount == 0) return false;
     for (var cqeIndex = 0; cqeIndex < cqeCount; cqeIndex++) {
       final cqe = _cqes.elementAt(cqeIndex).value;
       final data = cqe.ref.user_data;
@@ -140,7 +143,7 @@ class TransportWorker {
       var event = data & 0xffff;
       final fd = (data >> 32) & 0xffffffff;
       final bufferId = (data >> 16) & 0xffff;
-      // print("worker = ${_workerPointer.ref.id}, result = $result,  bid = ${((data >> 16) & 0xffff)}, fd = $fd");
+      if (_workerPointer.ref.trace) print(TransportMessages.workerTrace(id, result, data, fd));
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;
         if (event == transportEventConnect) {

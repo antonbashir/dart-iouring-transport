@@ -26,6 +26,7 @@ extern "C"
     uint64_t cqe_wait_timeout_millis;
     uint32_t cqe_wait_count;
     uint32_t cqe_peek_count;
+    bool trace;
   } transport_worker_configuration_t;
 
   typedef struct transport_worker
@@ -49,6 +50,7 @@ extern "C"
     uint64_t cqe_wait_timeout_millis;
     uint32_t cqe_wait_count;
     uint32_t cqe_peek_count;
+    bool trace;
   } transport_worker_t;
 
   int transport_worker_initialize(transport_worker_t *worker,

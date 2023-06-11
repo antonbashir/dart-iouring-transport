@@ -6,6 +6,7 @@ import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
 import 'configuration.dart';
+import 'constants.dart';
 import 'exception.dart';
 import 'lookup.dart';
 
@@ -36,7 +37,7 @@ class Transport {
       SendPort toWorker = ports[0];
       _workerClosers.add(ports[1]);
       final workerPointer = calloc<transport_worker_t>();
-      if (workerPointer == nullptr) throw TransportInitializationException("[worker] out of memory");
+      if (workerPointer == nullptr) throw TransportInitializationException(TransportMessages.workerMemory);
       final result = using((arena) {
         final nativeConfiguration = arena<transport_worker_configuration_t>();
         nativeConfiguration.ref.ring_flags = configuration.ringFlags;
@@ -54,7 +55,7 @@ class Transport {
       });
       if (result < 0) {
         _bindings.transport_worker_destroy(workerPointer);
-        throw TransportInitializationException("[worker] code = $result, message = ${kernelErrorToString(result, _bindings)}");
+        throw TransportInitializationException(TransportMessages.workerError(result, _bindings));
       }
       final workerInput = [_libraryPath, workerPointer.address, _workerDestroyer.sendPort];
       toWorker.send(workerInput);

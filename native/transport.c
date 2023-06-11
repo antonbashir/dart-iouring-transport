@@ -15,11 +15,6 @@
 #include "transport_server.h"
 #include "small/include/small/rlist.h"
 
-void transport_notify_idle(int64_t deadline)
-{
-  Dart_NotifyIdle(deadline);
-}
-
 void transport_cqe_advance(struct io_uring *ring, int count)
 {
   io_uring_cq_advance(ring, count);

@@ -11,6 +11,7 @@ import '../constants.dart';
 import '../defaults.dart';
 import '../exception.dart';
 import 'configuration.dart';
+import 'responder.dart';
 import 'server.dart';
 import 'package:meta/meta.dart';
 
@@ -22,8 +23,9 @@ class TransportServerRegistry {
   final TransportBindings _bindings;
   final TransportBuffers _buffers;
   final TransportPayloadPool _payloadPool;
+  final TransportServerDatagramResponderPool _datagramResponderPool;
 
-  TransportServerRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool);
+  TransportServerRegistry(this._bindings, this._workerPointer, this._buffers, this._payloadPool, this._datagramResponderPool);
 
   TransportServerChannel createTcp(String host, int port, {TransportTcpServerConfiguration? configuration}) {
     configuration = configuration ?? TransportDefaults.tcpServer();
@@ -57,7 +59,7 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
-          null,
+          _datagramResponderPool,
         );
       },
     );
@@ -133,7 +135,8 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
-          TransportChannel(
+          _datagramResponderPool,
+          datagramChannel: TransportChannel(
             _workerPointer,
             pointer.ref.fd,
             _bindings,
@@ -177,7 +180,7 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
-          null,
+          _datagramResponderPool,
         );
       },
     );
@@ -216,7 +219,8 @@ class TransportServerRegistry {
           _buffers,
           this,
           _payloadPool,
-          TransportChannel(
+          _datagramResponderPool,
+          datagramChannel: TransportChannel(
             _workerPointer,
             pointer.ref.fd,
             _bindings,
