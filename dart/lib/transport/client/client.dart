@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:iouring_transport/transport/configuration.dart';
 import 'package:meta/meta.dart';
 
+import '../configuration.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../channel.dart';
