@@ -112,7 +112,9 @@ This library's primary objective is to deliver a high-speed transport API to Dar
 
 ## Sample
 
-A simple example can be found [here](https://github.com/antonbashir/dart-iouring-sample).
+Simple example can be found [here](https://github.com/antonbashir/dart-iouring-sample).
+
+Reactive transport implementation can be found [here](https://github.com/antonbashir/dart-reactive-transport).
 
 # API
 
@@ -347,9 +349,8 @@ Most recent benchmark results:
 1. Benchmarks and optimization
 2. CI for building library and way to provide it to user modules (currently library included with sources, that is not good)
 3. Demo project
-4. Reactive transport
-5. Media transport
-6. SSL
+4. Media transport
+5. SSL
 
 # Contribution
 
