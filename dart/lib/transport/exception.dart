@@ -1,4 +1,3 @@
-import 'package:ffi/ffi.dart';
 import 'payload.dart';
 import 'bindings.dart';
 import 'constants.dart';

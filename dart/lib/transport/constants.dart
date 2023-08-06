@@ -1,7 +1,6 @@
 import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
-import 'exception.dart';
 
 const preferInlinePragma = "vm:prefer-inline";
 

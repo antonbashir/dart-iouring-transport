@@ -244,7 +244,7 @@
 /** Command line used to run CMake */
 #define BUILD_OPTIONS "cmake . "
 /** Compiler ID and version, assuming the C and C++ compiler IDs are equal. */
-#define COMPILER_INFO "GNU-10.2.1"
+#define COMPILER_INFO "GNU-12.2.0"
 /** C compile flags used to build Tarantool */
 #define TRANSPORT_C_FLAGS ""
 /** CXX compile flags used to build Tarantool */
