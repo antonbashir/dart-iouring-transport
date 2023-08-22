@@ -21,3 +21,5 @@ export 'package:iouring_transport/transport/file/provider.dart' show TransportFi
 export 'package:iouring_transport/transport/file/factory.dart' show TransportFilesFactory;
 
 export 'package:iouring_transport/transport/payload.dart' show TransportPayload;
+
+export 'package:iouring_transport/transport/client/client.dart' show TransportClientConnectionPool;
