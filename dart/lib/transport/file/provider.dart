@@ -3,9 +3,8 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import '../configuration.dart';
-import '../exception.dart';
 import '../constants.dart';
+import '../exception.dart';
 import '../payload.dart';
 import 'file.dart';
 
@@ -26,64 +25,17 @@ class TransportFile {
     _file.readMany(blocksCount, offset: offset);
   }
 
-  void writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
-    if (retry == null) {
-      unawaited(_file.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
-      return;
-    }
-
-    var attempt = 0;
-    void _onError(Exception error) {
-      if (!retry.predicate(error)) {
-        onError?.call(error);
-        return;
-      }
-      if (++attempt == retry.maxAttempts) {
-        onError?.call(error);
-        return;
-      }
-      unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
-      }));
-    }
-
-    unawaited(_file.writeSingle(bytes, onError: _onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
+  void writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) {
+    unawaited(_file.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
-  void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
-    if (retry == null) {
-      var doneCounter = 0;
-      unawaited(_file.writeMany(bytes, onError: onError, onDone: () {
-        if (++doneCounter == bytes.length) onDone?.call();
-      }).onError((error, stackTrace) => onError?.call(error as Exception)));
-      return;
-    }
-
+  void writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError, void Function()? onDone}) {
     var doneCounter = 0;
     var errorCounter = 0;
-    var attempt = 0;
-
-    void _onError(Exception error) {
-      if (++errorCounter + doneCounter == bytes.length) {
-        errorCounter = 0;
-        if (!retry.predicate(error)) {
-          onError?.call(error);
-          return;
-        }
-        if (++attempt == retry.maxAttempts) {
-          onError?.call(error);
-          return;
-        }
-        unawaited(Future.delayed(retry.options.delay(attempt), () {
-          unawaited(_file.writeMany(bytes.sublist(doneCounter), onError: _onError, onDone: () {
-            if (++doneCounter == bytes.length) onDone?.call();
-          }).onError((error, stackTrace) => onError?.call(error as Exception)));
-        }));
-      }
-    }
-
-    unawaited(_file.writeMany(bytes, onError: _onError, onDone: () {
-      if (++doneCounter == bytes.length) onDone?.call();
+    unawaited(_file.writeMany(bytes, onError: (error) {
+      if (++errorCounter + doneCounter == bytes.length) onError?.call(error);
+    }, onDone: () {
+      if (errorCounter == 0 && ++doneCounter == bytes.length) onDone?.call();
     }).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 

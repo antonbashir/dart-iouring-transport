@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import '../configuration.dart';
 import '../constants.dart';
 import '../payload.dart';
 import 'responder.dart';
@@ -31,65 +30,19 @@ class TransportServerConnection {
     return out.stream;
   }
 
-  void writeSingle(Uint8List bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
-    if (retry == null) {
-      unawaited(_connection.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
-      return;
-    }
-
-    var attempt = 0;
-    void _onError(Exception error) {
-      if (!retry.predicate(error)) {
-        onError?.call(error);
-        return;
-      }
-      if (++attempt == retry.maxAttempts) {
-        onError?.call(error);
-        return;
-      }
-      unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(_connection.writeSingle(bytes, onError: _onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
-      }));
-    }
-
-    unawaited(_connection.writeSingle(bytes, onError: _onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
+  void writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) {
+    unawaited(_connection.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
-  void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, bool linked = true, void Function(Exception error)? onError, void Function()? onDone}) {
-    if (retry == null) {
-      var doneCounter = 0;
-      unawaited(_connection.writeMany(bytes, linked: linked, onError: onError, onDone: () {
-        if (++doneCounter == bytes.length) onDone?.call();
-      }).onError((error, stackTrace) => onError?.call(error as Exception)));
-      return;
-    }
-
+  void writeMany(List<Uint8List> bytes, {bool linked = true, void Function(Exception error)? onError, void Function()? onDone}) {
     var doneCounter = 0;
     var errorCounter = 0;
-    var attempt = 0;
-
-    void _onError(Exception error) {
-      if (++errorCounter + doneCounter == bytes.length) {
-        errorCounter = 0;
-        if (!retry.predicate(error)) {
-          onError?.call(error);
-          return;
-        }
-        if (++attempt == retry.maxAttempts) {
-          onError?.call(error);
-          return;
-        }
-        unawaited(Future.delayed(retry.options.delay(attempt), () {
-          unawaited(_connection.writeMany(bytes.sublist(doneCounter), linked: linked, onError: _onError, onDone: () {
-            if (++doneCounter == bytes.length) onDone?.call();
-          }).onError((error, stackTrace) => onError?.call(error as Exception)));
-        }));
-      }
-    }
-
-    unawaited(_connection.writeMany(bytes, linked: linked, onError: _onError, onDone: () {
-      if (++doneCounter == bytes.length) onDone?.call();
+    unawaited(_connection.writeMany(bytes, linked: linked, onError: (error) {
+      if (++errorCounter + doneCounter == bytes.length) onError?.call(error);
+    }, onDone: () {
+      if (errorCounter == 0 && ++doneCounter == bytes.length) onDone?.call();
     }).onError((error, stackTrace) => onError?.call(error as Exception)));
+    return;
   }
 
   @pragma(preferInlinePragma)

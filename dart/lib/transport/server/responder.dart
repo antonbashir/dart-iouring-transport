@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../channel.dart';
-import '../configuration.dart';
 import '../constants.dart';
 import 'server.dart';
 
@@ -54,48 +53,7 @@ class TransportServerDatagramResponder {
   TransportServerDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  void respond(Uint8List bytes, {int? flags, TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
-    if (retry == null) {
-      unawaited(
-        _server
-            .respond(
-              _channel,
-              _destination,
-              bytes,
-              flags: flags,
-              onError: onError,
-              onDone: onDone,
-            )
-            .onError((error, stackTrace) => onError?.call(error as Exception)),
-      );
-      return;
-    }
-    var attempt = 0;
-    void _onError(Exception error) {
-      if (!retry.predicate(error)) {
-        onError?.call(error);
-        return;
-      }
-      if (++attempt == retry.maxAttempts) {
-        onError?.call(error);
-        return;
-      }
-      unawaited(Future.delayed(retry.options.delay(attempt), () {
-        unawaited(
-          _server
-              .respond(
-                _channel,
-                _destination,
-                bytes,
-                flags: flags,
-                onError: _onError,
-                onDone: onDone,
-              )
-              .onError((error, stackTrace) => onError?.call(error as Exception)),
-        );
-      }));
-    }
-
+  void respond(Uint8List bytes, {int? flags, void Function(Exception error)? onError, void Function()? onDone}) {
     unawaited(
       _server
           .respond(
@@ -103,7 +61,7 @@ class TransportServerDatagramResponder {
             _destination,
             bytes,
             flags: flags,
-            onError: _onError,
+            onError: onError,
             onDone: onDone,
           )
           .onError((error, stackTrace) => onError?.call(error as Exception)),

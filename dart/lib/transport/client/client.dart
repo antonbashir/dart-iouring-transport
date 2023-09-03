@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:meta/meta.dart';
 
-import '../configuration.dart';
 import '../bindings.dart';
 import '../buffers.dart';
 import '../channel.dart';
@@ -130,19 +129,7 @@ class TransportClientChannel {
   }
 
   @pragma(preferInlinePragma)
-  Future<TransportClientChannel> connect({TransportRetryConfiguration? retry}) {
-    if (retry != null) {
-      return retry.options.retry(
-        () {
-          if (_closing) return Future.error(TransportClosedException.forClient());
-          _connector = Completer();
-          _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
-          _pending++;
-          return _connector.future.then((_) => this);
-        },
-        retryIf: retry.predicate,
-      );
-    }
+  Future<TransportClientChannel> connect() {
     if (_closing) return Future.error(TransportClosedException.forClient());
     _bindings.transport_worker_connect(_workerPointer, _pointer, _connectTimeout!);
     _pending++;

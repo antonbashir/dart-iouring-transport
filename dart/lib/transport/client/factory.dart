@@ -32,7 +32,6 @@ class TransportClientsFactory {
     InternetAddress address,
     int port, {
     TransportTcpClientConfiguration? configuration,
-    TransportRetryConfiguration? connectRetry,
   }) async {
     configuration = configuration ?? TransportDefaults.tcpClient();
     final clients = <Future<TransportClientConnection>>[];
@@ -76,7 +75,7 @@ class TransportClientsFactory {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _registry.add(clientPointer.ref.fd, client);
-      clients.add(client.connect(retry: connectRetry).then(TransportClientConnection.new));
+      clients.add(client.connect().then(TransportClientConnection.new));
     }
     return TransportClientConnectionPool(await Future.wait(clients));
   }
@@ -172,7 +171,6 @@ class TransportClientsFactory {
   Future<TransportClientConnectionPool> unixStream(
     String path, {
     TransportUnixStreamClientConfiguration? configuration,
-    TransportRetryConfiguration? connectRetry,
   }) async {
     configuration = configuration ?? TransportDefaults.unixStreamClient();
     final clients = <Future<TransportClientConnection>>[];
@@ -215,7 +213,7 @@ class TransportClientsFactory {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _registry.add(clientPointer.ref.fd, client);
-      clients.add(client.connect(retry: connectRetry).then(TransportClientConnection.new));
+      clients.add(client.connect().then(TransportClientConnection.new));
     }
     return TransportClientConnectionPool(await Future.wait(clients));
   }

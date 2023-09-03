@@ -1,5 +1,3 @@
-import 'package:retry/retry.dart';
-
 class TransportWorkerConfiguration {
   final int buffersCount;
   final int bufferSize;
@@ -127,45 +125,4 @@ class TransportUdpMulticastManager {
   void addSourceMembership(TransportUdpMulticastSourceConfiguration configuration) => _onAddSourceMembership(configuration);
 
   void dropSourceMembership(TransportUdpMulticastSourceConfiguration configuration) => _onDropSourceMembership(configuration);
-}
-
-class TransportRetryConfiguration {
-  final Duration baseDelay;
-  final double randomizationFactor;
-  final Duration maxDelay;
-  final int maxAttempts;
-  final bool Function(Exception exception) predicate;
-
-  late final RetryOptions options;
-
-  TransportRetryConfiguration({
-    required this.baseDelay,
-    required this.randomizationFactor,
-    required this.maxDelay,
-    required this.maxAttempts,
-    required this.predicate,
-  }) {
-    options = RetryOptions(
-      delayFactor: baseDelay,
-      randomizationFactor: randomizationFactor,
-      maxDelay: maxDelay,
-      maxAttempts: maxAttempts,
-    );
-  }
-
-  TransportRetryConfiguration copyWith({
-    Duration? baseDelay,
-    double? randomizationFactor,
-    Duration? maxDelay,
-    int? maxAttempts,
-    bool Function(Exception exception)? predicate,
-    void Function(Exception exception)? onRetry,
-  }) =>
-      TransportRetryConfiguration(
-        baseDelay: baseDelay ?? this.baseDelay,
-        randomizationFactor: randomizationFactor ?? this.randomizationFactor,
-        maxDelay: maxDelay ?? this.maxDelay,
-        maxAttempts: maxAttempts ?? this.maxAttempts,
-        predicate: predicate ?? this.predicate,
-      );
 }

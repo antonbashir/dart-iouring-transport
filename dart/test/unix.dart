@@ -91,7 +91,7 @@ void testUnixDgramSingle({required int index, required int clients}) {
     if (serverSocket.existsSync()) serverSocket.deleteSync();
     worker.servers.unixDatagram(serverSocket.path).receive().listen((event) {
       Validators.request(event.takeBytes());
-      event.respond(Generators.response(), retry: TransportDefaults.retry());
+      event.respond(Generators.response());
     });
     final latch = Latch(clients);
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
@@ -101,7 +101,7 @@ void testUnixDgramSingle({required int index, required int clients}) {
         Validators.response(value.takeBytes());
         latch.countDown();
       });
-      client.send(Generators.request(), retry: TransportDefaults.retry());
+      client.send(Generators.request());
     }
     await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));

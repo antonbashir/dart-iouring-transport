@@ -27,7 +27,7 @@ void testUdpSingle({required int index, required int clients}) {
         Validators.response(event.takeBytes());
         latch.countDown();
       });
-      client.send(Generators.request(), retry: TransportDefaults.retry());
+      client.send(Generators.request());
     }
     await latch.done();
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));

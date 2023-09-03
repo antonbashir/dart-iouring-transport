@@ -1,7 +1,5 @@
 import 'client/configuration.dart';
-import 'exception.dart';
 import 'configuration.dart';
-import 'constants.dart';
 import 'server/configuration.dart';
 
 class TransportDefaults {
@@ -108,18 +106,5 @@ class TransportDefaults {
         writeTimeout: Duration(days: 1),
         socketNonblock: true,
         socketClockexec: true,
-      );
-
-  static TransportRetryConfiguration retry() => TransportRetryConfiguration(
-        baseDelay: Duration(milliseconds: 50),
-        randomizationFactor: 0.25,
-        maxDelay: Duration(seconds: 30),
-        maxAttempts: 5,
-        predicate: (exception) {
-          if (exception is TransportZeroDataException) return true;
-          if (exception is TransportCanceledException) return true;
-          if (exception is TransportInternalException) return transportRetryableErrorCodes.contains(-exception.code);
-          return false;
-        },
       );
 }
