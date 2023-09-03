@@ -2,15 +2,15 @@ name: iouring_transport
 version: 1.0.0
 
 environment:
-  sdk: ">=2.17.0 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dev_dependencies:
-  ffigen: ^7.2.5
+  ffigen: ^9.0.1
 
 dependencies:
-  ffi: ^2.0.1
-  retry: ^3.1.1
-  test: ^1.22.0
+  ffi: ^2.1.0
+  retry: ^3.1.2
+  test: ^1.24.6
 
 ffigen:
   name: "TransportBindings"
