@@ -24321,7 +24321,7 @@ final class transport_worker_configuration extends ffi.Struct {
   @ffi.Size()
   external int ring_size;
 
-  @ffi.Int()
+  @ffi.Uint32()
   external int ring_flags;
 
   @ffi.Uint64()
@@ -24386,7 +24386,7 @@ final class transport_worker extends ffi.Struct {
   @ffi.Size()
   external int ring_size;
 
-  @ffi.Int()
+  @ffi.Uint32()
   external int ring_flags;
 
   external ffi.Pointer<ffi.Pointer<io_uring_cqe>> cqes;

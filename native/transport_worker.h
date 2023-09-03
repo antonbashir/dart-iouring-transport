@@ -18,7 +18,7 @@ extern "C"
     uint16_t buffers_count;
     uint32_t buffer_size;
     size_t ring_size;
-    int ring_flags;
+    unsigned int ring_flags;
     uint64_t timeout_checker_period_millis;
     uint32_t base_delay_micros;
     double delay_randomization_factor;
