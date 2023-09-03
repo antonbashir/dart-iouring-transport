@@ -11,7 +11,7 @@ class TransportDefaults {
         trace: false,
         buffersCount: 4096,
         bufferSize: 4096,
-        ringSize: 4096,
+        ringSize: 16384,
         ringFlags: 0,
         timeoutCheckerPeriod: Duration(milliseconds: 500),
         baseDelay: Duration(microseconds: 10),
