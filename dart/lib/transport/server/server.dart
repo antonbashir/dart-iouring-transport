@@ -67,7 +67,7 @@ class TransportServerConnectionChannel {
     _pending++;
   }
 
-  Future<void> writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError, void Function()? onDone}) async {
+  Future<void> writeMany(List<Uint8List> bytes, {bool linked = true, void Function(Exception error)? onError, void Function()? onDone}) async {
     final bufferIds = await _buffers.allocateArray(bytes.length);
     if (_closing || _server._closing) return Future.error(TransportClosedException.forServer());
     final lastBufferId = bufferIds.last;
@@ -78,7 +78,7 @@ class TransportServerConnectionChannel {
         bufferId,
         _writeTimeout,
         transportEventWrite | transportEventServer,
-        sqeFlags: transportIosqeIoLink,
+        sqeFlags: linked ? transportIosqeIoLink : 0,
       );
       if (onError != null) _outboundErrorHandlers[bufferId] = onError;
       if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;

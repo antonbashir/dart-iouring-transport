@@ -54,10 +54,10 @@ class TransportClientConnection {
     unawaited(_client.writeSingle(bytes, onError: _onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
-  void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, void Function(Exception error)? onError, void Function()? onDone}) {
+  void writeMany(List<Uint8List> bytes, {TransportRetryConfiguration? retry, linked = true, void Function(Exception error)? onError, void Function()? onDone}) {
     if (retry == null) {
       var doneCounter = 0;
-      unawaited(_client.writeMany(bytes, onError: onError, onDone: () {
+      unawaited(_client.writeMany(bytes, linked: linked, onError: onError, onDone: () {
         if (++doneCounter == bytes.length) onDone?.call();
       }).onError((error, stackTrace) => onError?.call(error as Exception)));
       return;
@@ -79,14 +79,14 @@ class TransportClientConnection {
           return;
         }
         unawaited(Future.delayed(retry.options.delay(attempt), () {
-          unawaited(_client.writeMany(bytes.sublist(doneCounter), onError: _onError, onDone: () {
+          unawaited(_client.writeMany(bytes.sublist(doneCounter), linked: linked, onError: _onError, onDone: () {
             if (++doneCounter == bytes.length) onDone?.call();
           }).onError((error, stackTrace) => onError?.call(error as Exception)));
         }));
       }
     }
 
-    unawaited(_client.writeMany(bytes, onError: _onError, onDone: () {
+    unawaited(_client.writeMany(bytes, linked: linked, onError: _onError, onDone: () {
       if (++doneCounter == bytes.length) onDone?.call();
     }).onError((error, stackTrace) => onError?.call(error as Exception)));
   }

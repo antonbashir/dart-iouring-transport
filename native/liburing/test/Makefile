@@ -13,8 +13,7 @@ override CPPFLAGS += \
 	-D_GNU_SOURCE \
 	-D__SANE_USERSPACE_TYPES__ \
 	-I../src/include/ \
-	-include ../config-host.h \
-	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+	-include ../config-host.h
 
 CFLAGS ?= -g -O3 -Wall -Wextra
 XCFLAGS = -Wno-unused-parameter -Wno-sign-compare
@@ -55,7 +54,6 @@ test_srcs := \
 	ce593a6c480a.c \
 	close-opath.c \
 	connect.c \
-	connect-rep.c \
 	cq-full.c \
 	cq-overflow.c \
 	cq-peek-batch.c \
@@ -69,12 +67,10 @@ test_srcs := \
 	drop-submit.c \
 	eeed8b54e0df.c \
 	empty-eownerdead.c \
-	eploop.c \
 	eventfd.c \
 	eventfd-disable.c \
 	eventfd-reg.c \
 	eventfd-ring.c \
-	evloop.c \
 	exec-target.c \
 	exit-no-cleanup.c \
 	fadvise.c \
@@ -90,13 +86,11 @@ test_srcs := \
 	fixed-link.c \
 	fixed-reuse.c \
 	fpos.c \
-	fsnotify.c \
 	fsync.c \
 	hardlink.c \
 	io-cancel.c \
 	iopoll.c \
 	iopoll-leak.c \
-	iopoll-overflow.c \
 	io_uring_enter.c \
 	io_uring_passthrough.c \
 	io_uring_register.c \
@@ -109,8 +103,6 @@ test_srcs := \
 	madvise.c \
 	mkdir.c \
 	msg-ring.c \
-	msg-ring-flags.c \
-	msg-ring-overflow.c \
 	multicqes_drain.c \
 	nolibc.c \
 	nop-all-sizes.c \
@@ -120,7 +112,6 @@ test_srcs := \
 	open-direct-link.c \
 	open-direct-pick.c \
 	personality.c \
-	pipe-bug.c \
 	pipe-eof.c \
 	pipe-reuse.c \
 	poll.c \
@@ -129,10 +120,8 @@ test_srcs := \
 	poll-cancel-ton.c \
 	poll-link.c \
 	poll-many.c \
-	poll-mshot-overflow.c \
 	poll-mshot-update.c \
-	poll-race.c \
-	poll-race-mshot.c \
+	poll-mshot-overflow.c \
 	poll-ring.c \
 	poll-v-poll.c \
 	pollfree.c \
@@ -142,9 +131,6 @@ test_srcs := \
 	recv-msgall.c \
 	recv-msgall-stream.c \
 	recv-multishot.c \
-	reg-hint.c \
-	reg-reg-ring.c \
-	regbuf-merge.c \
 	register-restrictions.c \
 	rename.c \
 	ringbuf-read.c \
@@ -156,12 +142,10 @@ test_srcs := \
 	sendmsg_fs_cve.c \
 	send_recv.c \
 	send_recvmsg.c \
-	send-zerocopy.c \
 	shared-wq.c \
 	short-read.c \
 	shutdown.c \
 	sigfd-deadlock.c \
-	single-issuer.c \
 	skip-cqe.c \
 	socket.c \
 	socket-rw.c \
@@ -182,17 +166,20 @@ test_srcs := \
 	submit-and-wait.c \
 	submit-link-fail.c \
 	submit-reuse.c \
-	symlink.c \
 	sync-cancel.c \
+	symlink.c \
 	teardowns.c \
 	thread-exit.c \
 	timeout.c \
 	timeout-new.c \
+	timeout-overflow.c \
 	tty-write-dpoll.c \
 	unlink.c \
-	version.c \
 	wakeup-hang.c \
 	xattr.c \
+	skip-cqe.c \
+	single-issuer.c \
+	send-zerocopy.c \
 	# EOL
 
 all_targets :=
@@ -226,17 +213,8 @@ helpers.o: helpers.c
 %.t: %.c $(helpers) helpers.h ../src/liburing.a
 	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(helpers) $(LDFLAGS)
 
-#
-# Clang++ is not happy with -Wmissing-prototypes:
-#
-#   cc1plus: warning: command-line option '-Wmissing-prototypes' \
-#   is valid for C/ObjC but not for C++
-#
 %.t: %.cc $(helpers) helpers.h ../src/liburing.a
-	$(QUIET_CXX)$(CXX) \
-	$(patsubst -Wmissing-prototypes,,$(CPPFLAGS)) \
-	$(patsubst -Wmissing-prototypes,,$(CXXFLAGS)) \
-	-o $@ $< $(helpers) $(LDFLAGS)
+	$(QUIET_CXX)$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $< $(helpers) $(LDFLAGS)
 
 
 install: $(test_targets) runtests.sh runtests-loop.sh
