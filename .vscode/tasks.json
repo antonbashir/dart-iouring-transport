@@ -10,21 +10,6 @@
       ],
       "group": "build",
       "problemMatcher": [],
-    },
-    {
-      "type": "shell",
-      "label": "dart-benchmark-build",
-      "command": "/usr/bin/dart",
-      "args": [
-        "compile",
-        "exe",
-        "benchmark.dart"
-      ],
-      "options": {
-        "cwd": "${cwd}/binding/dart/test"
-      },
-      "group": "build",
-      "problemMatcher": [],
     }
   ]
 }
