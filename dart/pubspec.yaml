@@ -37,14 +37,12 @@ ffigen:
         - ".*"
     exclude:
       - "_(.*)"
-      - "ck(.*)"
       - "io_uring(.*)"
   macros:
     exclude:
       - "_(.*)"
       - "true"
       - "false"
-      - "CK(.*)"
   typedefs:
     exclude:
       - "_(.*)"
