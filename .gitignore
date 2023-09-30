@@ -1,4 +1,6 @@
 _CPack_Packages
+.cache
+.dart_tool
 *.a
 *.cbp
 *.d
