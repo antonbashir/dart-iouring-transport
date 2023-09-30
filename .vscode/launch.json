@@ -6,7 +6,7 @@
       "type": "dart",
       "request": "launch",
       "program": "${workspaceFolder}/dart/test/test.dart",
-      "preLaunchTask": "transport-binding-build"
+      "preLaunchTask": "transport-native-build"
     },
     {
       "name": "dart-test-debug (no-rebuild)",
@@ -32,7 +32,7 @@
           "ignoreFailures": true
         }
       ],
-      "preLaunchTask": "transport-binding-build"
+      "preLaunchTask": "transport-native-build"
     },
     {
       "name": "dart-test-debug-native (no-rebuild)",

@@ -3,10 +3,10 @@
   "tasks": [
     {
       "type": "cmake",
-      "label": "transport-binding-build",
+      "label": "transport-native-build",
       "command": "build",
       "targets": [
-        "binding"
+        "native"
       ],
       "group": "build",
       "problemMatcher": [],
