@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:ffi/ffi.dart';
 
@@ -43,7 +44,7 @@ class Transport {
         nativeConfiguration.ref.ring_flags = configuration.ringFlags;
         nativeConfiguration.ref.ring_size = configuration.ringSize;
         nativeConfiguration.ref.buffer_size = configuration.bufferSize;
-        nativeConfiguration.ref.buffers_count = configuration.buffersCount;
+        nativeConfiguration.ref.buffers_count = max(configuration.buffersCount, 2);
         nativeConfiguration.ref.timeout_checker_period_millis = configuration.timeoutCheckerPeriod.inMilliseconds;
         nativeConfiguration.ref.base_delay_micros = configuration.baseDelay.inMicroseconds;
         nativeConfiguration.ref.max_delay_micros = configuration.maxDelay.inMicroseconds;
