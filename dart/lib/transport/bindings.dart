@@ -2246,69 +2246,6 @@ class TransportBindings {
   late final _atomic_signal_fence =
       _atomic_signal_fencePtr.asFunction<void Function(int)>();
 
-  bool atomic_flag_test_and_set(
-    ffi.Pointer<atomic_flag> arg0,
-  ) {
-    return _atomic_flag_test_and_set(
-      arg0,
-    );
-  }
-
-  late final _atomic_flag_test_and_setPtr =
-      _lookup<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<atomic_flag>)>>(
-          'atomic_flag_test_and_set');
-  late final _atomic_flag_test_and_set = _atomic_flag_test_and_setPtr
-      .asFunction<bool Function(ffi.Pointer<atomic_flag>)>();
-
-  bool atomic_flag_test_and_set_explicit(
-    ffi.Pointer<atomic_flag> arg0,
-    int arg1,
-  ) {
-    return _atomic_flag_test_and_set_explicit(
-      arg0,
-      arg1,
-    );
-  }
-
-  late final _atomic_flag_test_and_set_explicitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Bool Function(ffi.Pointer<atomic_flag>,
-              ffi.Int32)>>('atomic_flag_test_and_set_explicit');
-  late final _atomic_flag_test_and_set_explicit =
-      _atomic_flag_test_and_set_explicitPtr
-          .asFunction<bool Function(ffi.Pointer<atomic_flag>, int)>();
-
-  void atomic_flag_clear(
-    ffi.Pointer<atomic_flag> arg0,
-  ) {
-    return _atomic_flag_clear(
-      arg0,
-    );
-  }
-
-  late final _atomic_flag_clearPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<atomic_flag>)>>(
-          'atomic_flag_clear');
-  late final _atomic_flag_clear = _atomic_flag_clearPtr
-      .asFunction<void Function(ffi.Pointer<atomic_flag>)>();
-
-  void atomic_flag_clear_explicit(
-    ffi.Pointer<atomic_flag> arg0,
-    int arg1,
-  ) {
-    return _atomic_flag_clear_explicit(
-      arg0,
-      arg1,
-    );
-  }
-
-  late final _atomic_flag_clear_explicitPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<atomic_flag>,
-              ffi.Int32)>>('atomic_flag_clear_explicit');
-  late final _atomic_flag_clear_explicit = _atomic_flag_clear_explicitPtr
-      .asFunction<void Function(ffi.Pointer<atomic_flag>, int)>();
-
   ffi.Pointer<ffi.Void> memcpy(
     ffi.Pointer<ffi.Void> __dest,
     ffi.Pointer<ffi.Void> __src,
@@ -2682,6 +2619,23 @@ class TransportBindings {
   late final _strrchr = _strrchrPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
 
+  ffi.Pointer<ffi.Char> strchrnul(
+    ffi.Pointer<ffi.Char> __s,
+    int __c,
+  ) {
+    return _strchrnul(
+      __s,
+      __c,
+    );
+  }
+
+  late final _strchrnulPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+              ffi.Pointer<ffi.Char>, ffi.Int)>>('strchrnul');
+  late final _strchrnul = _strchrnulPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, int)>();
+
   int strcspn(
     ffi.Pointer<ffi.Char> __s,
     ffi.Pointer<ffi.Char> __reject,
@@ -2791,6 +2745,66 @@ class TransportBindings {
   late final _strtok_r = _strtok_rPtr.asFunction<
       ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  ffi.Pointer<ffi.Char> strcasestr(
+    ffi.Pointer<ffi.Char> __haystack,
+    ffi.Pointer<ffi.Char> __needle,
+  ) {
+    return _strcasestr(
+      __haystack,
+      __needle,
+    );
+  }
+
+  late final _strcasestrPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('strcasestr');
+  late final _strcasestr = _strcasestrPtr.asFunction<
+      ffi.Pointer<ffi.Char> Function(
+          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+
+  ffi.Pointer<ffi.Void> memmem(
+    ffi.Pointer<ffi.Void> __haystack,
+    int __haystacklen,
+    ffi.Pointer<ffi.Void> __needle,
+    int __needlelen,
+  ) {
+    return _memmem(
+      __haystack,
+      __haystacklen,
+      __needle,
+      __needlelen,
+    );
+  }
+
+  late final _memmemPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size,
+              ffi.Pointer<ffi.Void>, ffi.Size)>>('memmem');
+  late final _memmem = _memmemPtr.asFunction<
+      ffi.Pointer<ffi.Void> Function(
+          ffi.Pointer<ffi.Void>, int, ffi.Pointer<ffi.Void>, int)>();
+
+  ffi.Pointer<ffi.Void> mempcpy(
+    ffi.Pointer<ffi.Void> __dest,
+    ffi.Pointer<ffi.Void> __src,
+    int __n,
+  ) {
+    return _mempcpy(
+      __dest,
+      __src,
+      __n,
+    );
+  }
+
+  late final _mempcpyPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>,
+              ffi.Pointer<ffi.Void>, ffi.Size)>>('mempcpy');
+  late final _mempcpy = _mempcpyPtr.asFunction<
+      ffi.Pointer<ffi.Void> Function(
+          ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, int)>();
 
   int strlen(
     ffi.Pointer<ffi.Char> __s,
@@ -3162,6 +3176,60 @@ class TransportBindings {
       ffi.Pointer<ffi.Char> Function(
           ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
+  /// Copy string. Unlike @a strncpy the result string
+  /// is always null-terminated.
+  ///
+  /// @param dst destination buffer.
+  /// @param src source string.
+  /// @param size destination buffer size.
+  ///
+  /// @return size of @a src string.
+  int strlcpy(
+    ffi.Pointer<ffi.Char> __dest,
+    ffi.Pointer<ffi.Char> __src,
+    int __n,
+  ) {
+    return _strlcpy(
+      __dest,
+      __src,
+      __n,
+    );
+  }
+
+  late final _strlcpyPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.UnsignedLong Function(ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>, ffi.Size)>>('strlcpy');
+  late final _strlcpy = _strlcpyPtr.asFunction<
+      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+
+  /// Append the null-terminated string @a src to the end of @a dst string.
+  /// Unlike @a strncat the resulting string is always null-terminated.
+  ///
+  /// @param dst destination buffer and the first input string
+  /// @param src the second input string
+  /// @param size destination buffer size
+  ///
+  /// @return the total length of the string, that it is trying to create
+  int strlcat(
+    ffi.Pointer<ffi.Char> __dest,
+    ffi.Pointer<ffi.Char> __src,
+    int __n,
+  ) {
+    return _strlcat(
+      __dest,
+      __src,
+      __n,
+    );
+  }
+
+  late final _strlcatPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.UnsignedLong Function(ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>, ffi.Size)>>('strlcat');
+  late final _strlcat = _strlcatPtr.asFunction<
+      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
+
   late final ffi.Pointer<ffi.Pointer<FILE>> _stdin =
       _lookup<ffi.Pointer<FILE>>('stdin');
 
@@ -3383,6 +3451,26 @@ class TransportBindings {
               ffi.Int, ffi.Pointer<ffi.Char>)>>('fdopen');
   late final _fdopen = _fdopenPtr
       .asFunction<ffi.Pointer<FILE> Function(int, ffi.Pointer<ffi.Char>)>();
+
+  ffi.Pointer<FILE> fopencookie(
+    ffi.Pointer<ffi.Void> __magic_cookie,
+    ffi.Pointer<ffi.Char> __modes,
+    cookie_io_functions_t __io_funcs,
+  ) {
+    return _fopencookie(
+      __magic_cookie,
+      __modes,
+      __io_funcs,
+    );
+  }
+
+  late final _fopencookiePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Void>,
+              ffi.Pointer<ffi.Char>, cookie_io_functions_t)>>('fopencookie');
+  late final _fopencookie = _fopencookiePtr.asFunction<
+      ffi.Pointer<FILE> Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Char>,
+          cookie_io_functions_t)>();
 
   ffi.Pointer<FILE> fmemopen(
     ffi.Pointer<ffi.Void> __s,
@@ -3638,6 +3726,44 @@ class TransportBindings {
   late final _vsnprintf = _vsnprintfPtr.asFunction<
       int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>,
           ffi.Pointer<__va_list_tag>)>();
+
+  int vasprintf(
+    ffi.Pointer<ffi.Pointer<ffi.Char>> __ptr,
+    ffi.Pointer<ffi.Char> __f,
+    ffi.Pointer<__va_list_tag> __arg,
+  ) {
+    return _vasprintf(
+      __ptr,
+      __f,
+      __arg,
+    );
+  }
+
+  late final _vasprintfPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>,
+              ffi.Pointer<ffi.Char>, ffi.Pointer<__va_list_tag>)>>('vasprintf');
+  late final _vasprintf = _vasprintfPtr.asFunction<
+      int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Char>,
+          ffi.Pointer<__va_list_tag>)>();
+
+  int asprintf(
+    ffi.Pointer<ffi.Pointer<ffi.Char>> __ptr,
+    ffi.Pointer<ffi.Char> __fmt,
+  ) {
+    return _asprintf(
+      __ptr,
+      __fmt,
+    );
+  }
+
+  late final _asprintfPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>,
+              ffi.Pointer<ffi.Char>)>>('asprintf');
+  late final _asprintf = _asprintfPtr.asFunction<
+      int Function(
+          ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Char>)>();
 
   int vdprintf(
     int __fd,
@@ -7786,60 +7912,6 @@ class TransportBindings {
   set precision_fmts(ffi.Pointer<ffi.Pointer<ffi.Char>> value) =>
       _precision_fmts.value = value;
 
-  /// Copy string. Unlike @a strncpy the result string
-  /// is always null-terminated.
-  ///
-  /// @param dst destination buffer.
-  /// @param src source string.
-  /// @param size destination buffer size.
-  ///
-  /// @return size of @a src string.
-  int strlcpy(
-    ffi.Pointer<ffi.Char> dst,
-    ffi.Pointer<ffi.Char> src,
-    int size,
-  ) {
-    return _strlcpy(
-      dst,
-      src,
-      size,
-    );
-  }
-
-  late final _strlcpyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('strlcpy');
-  late final _strlcpy = _strlcpyPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
-
-  /// Append the null-terminated string @a src to the end of @a dst string.
-  /// Unlike @a strncat the resulting string is always null-terminated.
-  ///
-  /// @param dst destination buffer and the first input string
-  /// @param src the second input string
-  /// @param size destination buffer size
-  ///
-  /// @return the total length of the string, that it is trying to create
-  int strlcat(
-    ffi.Pointer<ffi.Char> dst,
-    ffi.Pointer<ffi.Char> src,
-    int size,
-  ) {
-    return _strlcat(
-      dst,
-      src,
-      size,
-    );
-  }
-
-  late final _strlcatPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Size Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
-              ffi.Size)>>('strlcat');
-  late final _strlcat = _strlcatPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
-
   /// Check that @a str is valid utf-8 sequence and can be printed
   /// unescaped.
   /// @param str string
@@ -7860,28 +7932,6 @@ class TransportBindings {
       'utf8_check_printable');
   late final _utf8_check_printable = _utf8_check_printablePtr
       .asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
-
-  ffi.Pointer<ffi.Void> memmem(
-    ffi.Pointer<ffi.Void> block,
-    int blen,
-    ffi.Pointer<ffi.Void> pat,
-    int plen,
-  ) {
-    return _memmem(
-      block,
-      blen,
-      pat,
-      plen,
-    );
-  }
-
-  late final _memmemPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, ffi.Size,
-              ffi.Pointer<ffi.Void>, ffi.Size)>>('memmem');
-  late final _memmem = _memmemPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(
-          ffi.Pointer<ffi.Void>, int, ffi.Pointer<ffi.Void>, int)>();
 
   ffi.Pointer<ffi.Void> memrchr(
     ffi.Pointer<ffi.Void> s,
@@ -18999,19 +19049,6 @@ class _SymbolAddresses {
       get atomic_thread_fence => _library._atomic_thread_fencePtr;
   ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>
       get atomic_signal_fence => _library._atomic_signal_fencePtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<atomic_flag>)>>
-      get atomic_flag_test_and_set => _library._atomic_flag_test_and_setPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Bool Function(ffi.Pointer<atomic_flag>, ffi.Int32)>>
-      get atomic_flag_test_and_set_explicit =>
-          _library._atomic_flag_test_and_set_explicitPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<atomic_flag>)>>
-      get atomic_flag_clear => _library._atomic_flag_clearPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Void Function(ffi.Pointer<atomic_flag>, ffi.Int32)>>
-      get atomic_flag_clear_explicit => _library._atomic_flag_clear_explicitPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<ffi.Void> Function(
@@ -19108,6 +19145,10 @@ class _SymbolAddresses {
               ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int)>>
       get strrchr => _library._strrchrPtr;
   ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>, ffi.Int)>>
+      get strchrnul => _library._strchrnulPtr;
+  ffi.Pointer<
       ffi.NativeFunction<
           ffi.UnsignedLong Function(
               ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>> get strcspn =>
@@ -19139,6 +19180,23 @@ class _SymbolAddresses {
               ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Pointer<ffi.Char>>)>> get strtok_r =>
       _library._strtok_rPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>> get strcasestr =>
+      _library._strcasestrPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<ffi.Void>,
+              ffi.Size,
+              ffi.Pointer<ffi.Void>,
+              ffi.Size)>> get memmem => _library._memmemPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Pointer<ffi.Void> Function(
+                  ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Void>, ffi.Size)>>
+      get mempcpy => _library._mempcpyPtr;
   ffi.Pointer<
           ffi.NativeFunction<ffi.UnsignedLong Function(ffi.Pointer<ffi.Char>)>>
       get strlen => _library._strlenPtr;
@@ -19225,6 +19283,16 @@ class _SymbolAddresses {
               ffi.Pointer<ffi.Char> Function(
                   ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
       get stpncpy => _library._stpncpyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.UnsignedLong Function(
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
+      get strlcpy => _library._strlcpyPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.UnsignedLong Function(
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
+      get strlcat => _library._strlcatPtr;
   ffi.Pointer<ffi.Pointer<FILE>> get stdin => _library._stdin;
   ffi.Pointer<ffi.Pointer<FILE>> get stdout => _library._stdout;
   ffi.Pointer<ffi.Pointer<FILE>> get stderr => _library._stderr;
@@ -19274,6 +19342,13 @@ class _SymbolAddresses {
           ffi.NativeFunction<
               ffi.Pointer<FILE> Function(ffi.Int, ffi.Pointer<ffi.Char>)>>
       get fdopen => _library._fdopenPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Pointer<FILE> Function(
+              ffi.Pointer<ffi.Void>,
+              ffi.Pointer<ffi.Char>,
+              cookie_io_functions_t)>> get fopencookie =>
+      _library._fopencookiePtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Pointer<FILE> Function(
@@ -19338,6 +19413,18 @@ class _SymbolAddresses {
               ffi.Pointer<ffi.Char>,
               ffi.Pointer<__va_list_tag>)>> get vsnprintf =>
       _library._vsnprintfPtr;
+  ffi.Pointer<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              ffi.Pointer<ffi.Pointer<ffi.Char>>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<__va_list_tag>)>> get vasprintf =>
+      _library._vasprintfPtr;
+  ffi.Pointer<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Char>)>>
+      get asprintf => _library._asprintfPtr;
   ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(
@@ -20256,25 +20343,8 @@ class _SymbolAddresses {
   ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> get precision_fmts =>
       _library._precision_fmts;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Size Function(
-                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
-      get strlcpy => _library._strlcpyPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Size Function(
-                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
-      get strlcat => _library._strlcatPtr;
-  ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Size)>>
       get utf8_check_printable => _library._utf8_check_printablePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>,
-              ffi.Size,
-              ffi.Pointer<ffi.Void>,
-              ffi.Size)>> get memmem => _library._memmemPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Pointer<ffi.Void> Function(
@@ -23492,16 +23562,7 @@ abstract class io_uring_op {
   static const int IORING_OP_LAST = 49;
 }
 
-final class io_uring_cqe extends ffi.Struct {
-  @ffi.UnsignedLongLong()
-  external int user_data;
-
-  @ffi.Int()
-  external int res;
-  
-  @ffi.UnsignedInt()
-  external int flags;
-}
+final class io_uring_cqe extends ffi.Struct {@ffi.UnsignedLongLong()external int user_data; @ffi.Int() external int res; @ffi.UnsignedInt()external int flags;}
 
 final class io_sqring_offsets extends ffi.Struct {
   @ffi.UnsignedInt()
@@ -23650,31 +23711,6 @@ final class io_uring_rsrc_update2 extends ffi.Struct {
   external int resv2;
 }
 
-final class io_uring_notification_slot extends ffi.Struct {
-  @ffi.UnsignedLongLong()
-  external int tag;
-
-  @ffi.Array.multi([3])
-  external ffi.Array<ffi.UnsignedLongLong> resv;
-}
-
-final class io_uring_notification_register extends ffi.Struct {
-  @ffi.UnsignedInt()
-  external int nr_slots;
-
-  @ffi.UnsignedInt()
-  external int resv;
-
-  @ffi.UnsignedLongLong()
-  external int resv2;
-
-  @ffi.UnsignedLongLong()
-  external int data;
-
-  @ffi.UnsignedLongLong()
-  external int resv3;
-}
-
 final class io_uring_probe_op extends ffi.Struct {
   @ffi.UnsignedChar()
   external int op;
@@ -23740,7 +23776,7 @@ final class io_uring_buf_reg extends ffi.Struct {
   external int bgid;
 
   @ffi.UnsignedShort()
-  external int pad;
+  external int flags;
 
   @ffi.Array.multi([3])
   external ffi.Array<ffi.UnsignedLongLong> resv;
@@ -23817,8 +23853,6 @@ abstract class memory_order {
   static const int memory_order_acq_rel = 4;
   static const int memory_order_seq_cst = 5;
 }
-
-final class atomic_flag extends ffi.Opaque {}
 
 final class io_uring_sq extends ffi.Struct {
   external ffi.Pointer<ffi.UnsignedInt> khead;
@@ -24005,6 +24039,30 @@ final class _IO_marker extends ffi.Opaque {}
 final class _IO_codecvt extends ffi.Opaque {}
 
 final class _IO_wide_data extends ffi.Opaque {}
+
+typedef cookie_io_functions_t = _IO_cookie_io_functions_t;
+
+final class _IO_cookie_io_functions_t extends ffi.Struct {
+  external ffi.Pointer<cookie_read_function_t> read;
+
+  external ffi.Pointer<cookie_write_function_t> write;
+
+  external ffi.Pointer<cookie_seek_function_t> seek;
+
+  external ffi.Pointer<cookie_close_function_t> close;
+}
+
+typedef cookie_read_function_t = ffi.NativeFunction<
+    ffi.Long Function(ffi.Pointer<ffi.Void> __cookie,
+        ffi.Pointer<ffi.Char> __buf, ffi.Size __nbytes)>;
+typedef cookie_write_function_t = ffi.NativeFunction<
+    ffi.Long Function(ffi.Pointer<ffi.Void> __cookie,
+        ffi.Pointer<ffi.Char> __buf, ffi.Size __nbytes)>;
+typedef cookie_seek_function_t = ffi.NativeFunction<
+    ffi.Int Function(ffi.Pointer<ffi.Void> __cookie,
+        ffi.Pointer<ffi.Long> __pos, ffi.Int __w)>;
+typedef cookie_close_function_t
+    = ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Void> __cookie)>;
 
 final class __va_list_tag extends ffi.Struct {
   @ffi.UnsignedInt()
@@ -25183,6 +25241,8 @@ const int IPPROTO_PIM = 103;
 
 const int IPPROTO_COMP = 108;
 
+const int IPPROTO_L2TP = 115;
+
 const int IPPROTO_SCTP = 132;
 
 const int IPPROTO_UDPLITE = 136;
@@ -25459,9 +25519,13 @@ const int IORING_REGISTER_FILE_ALLOC_RANGE = 25;
 
 const int IORING_REGISTER_LAST = 26;
 
+const int IORING_REGISTER_USE_REGISTERED_RING = -2147483648;
+
 const int IO_WQ_BOUND = 0;
 
 const int IO_WQ_UNBOUND = 1;
+
+const int IOU_PBUF_RING_MMAP = 1;
 
 const int IORING_RESTRICTION_REGISTER_OP = 0;
 
@@ -26799,6 +26863,8 @@ const int IP_PMTUDISC_INTERFACE = 4;
 
 const int IP_PMTUDISC_OMIT = 5;
 
+const int IP_LOCAL_PORT_RANGE = 51;
+
 const int SOL_IP = 0;
 
 const int IP_DEFAULT_MULTICAST_TTL = 1;
@@ -26986,6 +27052,8 @@ const int IPPROTO_ENCAP1 = 98;
 const int IPPROTO_PIM1 = 103;
 
 const int IPPROTO_COMP1 = 108;
+
+const int IPPROTO_L2TP1 = 115;
 
 const int IPPROTO_SCTP1 = 132;
 
@@ -28171,16 +28239,6 @@ const int POSIX_FADV_DONTNEED = 4;
 
 const int POSIX_FADV_NOREUSE = 5;
 
-const int AT_FDCWD = -100;
-
-const int AT_SYMLINK_NOFOLLOW = 256;
-
-const int AT_REMOVEDIR = 512;
-
-const int AT_SYMLINK_FOLLOW = 1024;
-
-const int AT_EACCESS = 512;
-
 const int R_OK = 4;
 
 const int W_OK = 2;
@@ -28195,6 +28253,16 @@ const int SEEK_CUR = 1;
 
 const int SEEK_END = 2;
 
+const int AT_FDCWD = -100;
+
+const int AT_SYMLINK_NOFOLLOW = 256;
+
+const int AT_REMOVEDIR = 512;
+
+const int AT_SYMLINK_FOLLOW = 1024;
+
+const int AT_EACCESS = 512;
+
 const int F_ULOCK = 0;
 
 const int F_LOCK = 1;
@@ -28208,6 +28276,8 @@ const int SCHED_OTHER = 0;
 const int SCHED_FIFO = 1;
 
 const int SCHED_RR = 2;
+
+const int UAPI_LINUX_IO_URING_H_SKIP_LINUX_TIME_TYPES_H = 1;
 
 const int RESOLVE_NO_XDEV = 1;
 
@@ -28278,6 +28348,10 @@ const int FSCRYPT_MODE_AES_256_CTS = 4;
 const int FSCRYPT_MODE_AES_128_CBC = 5;
 
 const int FSCRYPT_MODE_AES_128_CTS = 6;
+
+const int FSCRYPT_MODE_SM4_XTS = 7;
+
+const int FSCRYPT_MODE_SM4_CTS = 8;
 
 const int FSCRYPT_MODE_ADIANTUM = 9;
 
@@ -28360,10 +28434,6 @@ const int FS_ENCRYPTION_MODE_AES_256_CTS = 4;
 const int FS_ENCRYPTION_MODE_AES_128_CBC = 5;
 
 const int FS_ENCRYPTION_MODE_AES_128_CTS = 6;
-
-const int FS_ENCRYPTION_MODE_SPECK128_256_XTS = 7;
-
-const int FS_ENCRYPTION_MODE_SPECK128_256_CTS = 8;
 
 const int FS_ENCRYPTION_MODE_ADIANTUM = 9;
 
@@ -28803,6 +28873,8 @@ const int IORING_LINK_TIMEOUT_UPDATE = 16;
 
 const int IORING_TIMEOUT_ETIME_SUCCESS = 32;
 
+const int IORING_TIMEOUT_MULTISHOT = 64;
+
 const int IORING_TIMEOUT_CLOCK_MASK = 12;
 
 const int IORING_TIMEOUT_UPDATE_MASK = 18;
@@ -28831,9 +28903,15 @@ const int IORING_RECV_MULTISHOT = 2;
 
 const int IORING_RECVSEND_FIXED_BUF = 4;
 
+const int IORING_SEND_ZC_REPORT_USAGE = 8;
+
+const int IORING_NOTIF_USAGE_ZC_COPIED = 2147483648;
+
 const int IORING_ACCEPT_MULTISHOT = 1;
 
 const int IORING_MSG_RING_CQE_SKIP = 1;
+
+const int IORING_MSG_RING_FLAGS_PASS = 2;
 
 const int IORING_CQE_F_BUFFER = 1;
 
@@ -28848,6 +28926,12 @@ const int IORING_OFF_SQ_RING = 0;
 const int IORING_OFF_CQ_RING = 134217728;
 
 const int IORING_OFF_SQES = 268435456;
+
+const int IORING_OFF_PBUF_RING = 2147483648;
+
+const int IORING_OFF_PBUF_SHIFT = 16;
+
+const int IORING_OFF_MMAP_MASK = 4160749568;
 
 const int IORING_SQ_NEED_WAKEUP = 1;
 
@@ -28893,11 +28977,17 @@ const int IORING_FEAT_CQE_SKIP = 2048;
 
 const int IORING_FEAT_LINKED_FILE = 4096;
 
+const int IORING_FEAT_REG_REG_RING = 8192;
+
 const int IORING_RSRC_REGISTER_SPARSE = 1;
 
 const int IORING_REGISTER_FILES_SKIP = -2;
 
 const int IO_URING_OP_SUPPORTED = 1;
+
+const int IO_URING_VERSION_MAJOR = 2;
+
+const int IO_URING_VERSION_MINOR = 4;
 
 const int ATOMIC_BOOL_LOCK_FREE = 2;
 
@@ -29041,13 +29131,13 @@ const String SYSCONF_DIR = 'etc';
 
 const String INSTALL_PREFIX = '/usr/local';
 
-const String BUILD_TYPE = 'RelWithDebInfo';
+const String BUILD_TYPE = 'Debug';
 
 const String BUILD_INFO = '';
 
 const String BUILD_OPTIONS = 'cmake . ';
 
-const String COMPILER_INFO = 'GNU-12.2.0';
+const String COMPILER_INFO = 'GNU-13.2.1';
 
 const String TRANSPORT_C_FLAGS = '';
 
