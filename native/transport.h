@@ -16,7 +16,7 @@ extern "C"
 #endif
   void transport_cqe_advance(struct io_uring *ring, int count);
 
-  void transport_close_descritor(int fd);
+  void transport_close_descriptor(int fd);
 #if defined(__cplusplus)
 }
 #endif

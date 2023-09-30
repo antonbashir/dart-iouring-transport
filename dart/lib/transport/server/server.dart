@@ -140,7 +140,7 @@ class TransportServerConnectionChannel {
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
     _server._removeConnection(_fd);
-    _bindings.transport_close_descritor(_fd);
+    _bindings.transport_close_descriptor(_fd);
   }
 
   Future<void> closeServer({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
@@ -316,7 +316,7 @@ class TransportServerChannel implements TransportServer {
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
     _registry.removeServer(pointer.ref.fd);
-    _bindings.transport_close_descritor(pointer.ref.fd);
+    _bindings.transport_close_descriptor(pointer.ref.fd);
     _bindings.transport_server_destroy(pointer);
   }
 }

@@ -100,5 +100,5 @@ class TransportChannel {
   }
 
   @pragma(preferInlinePragma)
-  void close() => _bindings.transport_close_descritor(fd);
+  void close() => _bindings.transport_close_descriptor(fd);
 }

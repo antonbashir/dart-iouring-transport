@@ -56,7 +56,7 @@ class TransportServersFactory {
         );
         if (result < 0) {
           if (pointer.ref.fd > 0) {
-            _bindings.transport_close_descritor(pointer.ref.fd);
+            _bindings.transport_close_descriptor(pointer.ref.fd);
             calloc.free(pointer);
             throw TransportInitializationException(TransportMessages.serverError(result, _bindings));
           }
@@ -100,7 +100,7 @@ class TransportServersFactory {
         );
         if (result < 0) {
           if (pointer.ref.fd > 0) {
-            _bindings.transport_close_descritor(pointer.ref.fd);
+            _bindings.transport_close_descriptor(pointer.ref.fd);
             calloc.free(pointer);
             throw TransportInitializationException(TransportMessages.serverError(result, _bindings));
           }
@@ -185,7 +185,7 @@ class TransportServersFactory {
         );
         if (result < 0) {
           if (pointer.ref.fd > 0) {
-            _bindings.transport_close_descritor(pointer.ref.fd);
+            _bindings.transport_close_descriptor(pointer.ref.fd);
             calloc.free(pointer);
             throw TransportInitializationException(TransportMessages.serverError(result, _bindings));
           }
@@ -227,7 +227,7 @@ class TransportServersFactory {
         );
         if (result < 0) {
           if (pointer.ref.fd > 0) {
-            _bindings.transport_close_descritor(pointer.ref.fd);
+            _bindings.transport_close_descriptor(pointer.ref.fd);
             calloc.free(pointer);
             throw TransportInitializationException(TransportMessages.serverError(result, _bindings));
           }

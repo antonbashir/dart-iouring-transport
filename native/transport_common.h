@@ -7,7 +7,7 @@ extern "C"
 #endif
 
 #include "liburing.h"
-#include "trivia/util.h"
+#include "trivia/common.h"
 #include "pthread.h"
 
   static inline struct io_uring_sqe *transport_provide_sqe(struct io_uring *ring)

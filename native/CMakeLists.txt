@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16.0)
 project(native C ASM)
 
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 add_definitions("-D_GNU_SOURCE")
 set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
 
@@ -43,14 +47,10 @@ file(GLOB sources
 
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories(small/include)
-include_directories(small/third_party)
-
-add_subdirectory(small)
 
 add_library(native SHARED ${sources})
-add_dependencies(native liburing small)
-target_link_libraries(native PRIVATE ${liburing_SOURCE_DIR}/build/lib/liburing.a small)
+add_dependencies(native liburing)
+target_link_libraries(native PRIVATE ${liburing_SOURCE_DIR}/build/lib/liburing.a)
 add_custom_command(TARGET native POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:native> ${CMAKE_CURRENT_SOURCE_DIR}/../dart/native/libtransport.so
 )

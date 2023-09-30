@@ -6,6 +6,7 @@ environment:
 
 dev_dependencies:
   ffigen: ^9.0.1
+  lint: ^2.1.2
 
 dependencies:
   ffi: ^2.1.0

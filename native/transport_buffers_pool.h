@@ -1,7 +1,7 @@
 #ifndef TRANSPORT_BUFFERS_POOL_INCLUDED
 #define TRANSPORT_BUFFERS_POOL_INCLUDED
 
-#include "trivia/util.h"
+#include "trivia/common.h"
 #include "transport_constants.h"
 
 struct transport_buffers_pool
