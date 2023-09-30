@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.27)
 project(native C ASM)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
