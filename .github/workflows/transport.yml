@@ -14,7 +14,7 @@ jobs:
       - uses: dart-lang/setup-dart@v1
 
       - name: OS configure
-        run: cat >/etc/sysctl.conf <<EOL
+        run: sudo cat >/etc/sysctl.conf <<EOL
           fs.file-max = 2097152
           vm.swappiness = 10
           vm.dirty_ratio = 60
@@ -44,7 +44,7 @@ jobs:
           net.ipv4.tcp_max_tw_buckets = 1440000
           net.ipv4.tcp_tw_recycle = 1
           net.ipv4.tcp_tw_reuse = 1
-          EOL && sysctl -p
+          EOL && sudo sysctl -p
 
       - name: Native configure
         run: cd native && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
