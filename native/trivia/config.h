@@ -234,17 +234,17 @@
 /** \cond public */
 
 /** System configuration dir (e.g /etc) */
-#define SYSCONF_DIR "etc"
+#define SYSCONF_DIR ""
 /** Install prefix (e.g. /usr) */
 #define INSTALL_PREFIX "/usr/local"
 /** Build type, e.g. Debug or Release */
-#define BUILD_TYPE "RelWithDebInfo"
+#define BUILD_TYPE "Debug"
 /** CMake build type signature, e.g. Linux-x86_64-Debug */
 #define BUILD_INFO ""
 /** Command line used to run CMake */
 #define BUILD_OPTIONS "cmake . "
 /** Compiler ID and version, assuming the C and C++ compiler IDs are equal. */
-#define COMPILER_INFO "GNU-12.2.0"
+#define COMPILER_INFO "GNU-13.2.1"
 /** C compile flags used to build Tarantool */
 #define TRANSPORT_C_FLAGS ""
 /** CXX compile flags used to build Tarantool */
