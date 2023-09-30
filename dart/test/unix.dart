@@ -15,7 +15,7 @@ void testUnixStreamSingle({required int index, required int clientsPool}) {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
-    final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
+    final serverSocket = File(Directory.systemTemp.path + "/dart-iouring-socket_${worker.id}.sock");
     if (serverSocket.existsSync()) serverSocket.deleteSync();
     worker.servers.unixStream(
       serverSocket.path,
@@ -45,7 +45,7 @@ void testUnixStreamMany({required int index, required int clientsPool, required 
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
-    final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
+    final serverSocket = File(Directory.systemTemp.path + "/dart-iouring-socket_${worker.id}.sock");
     if (serverSocket.existsSync()) serverSocket.deleteSync();
     worker.servers.unixStream(
       serverSocket.path,
@@ -87,8 +87,8 @@ void testUnixDgramSingle({required int index, required int clients}) {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
-    final serverSocket = File(Directory.current.path + "/socket_${worker.id}.sock");
-    final clientSockets = List.generate(clients, (index) => File(Directory.current.path + "/socket_${worker.id}_$index.sock"));
+    final serverSocket = File(Directory.systemTemp.path + "/dart-iouring-socket_${worker.id}.sock");
+    final clientSockets = List.generate(clients, (index) => File(Directory.systemTemp.path + "/dart-iouring-socket_${worker.id}_$index.sock"));
     if (serverSocket.existsSync()) serverSocket.deleteSync();
     worker.servers.unixDatagram(serverSocket.path).receive().listen((event) {
       Validators.request(event.takeBytes());
