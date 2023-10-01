@@ -177,13 +177,11 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 
 ### writeSingle() - Writes a single chunk of data to the client.
 * `Uint8List bytes` - The data to be written.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
 
 ### writeMany() - Writes multiple chunks of data to the client.
 * `List<Uint8List> bytes` - The list of data to be written.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional]`void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
 
@@ -258,14 +256,12 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 ### respondSingle() - Sends a single response with the given bytes.
 * `Uint8List bytes` - The bytes to be sent as a response.
 * [optional] `int flags` - Optional flags to control the behavior of the respond method.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when the response is finished.
 
 ### respondMany() - Sends many responses with the given bytes.
 * `List<Uint8List> bytes` - The bytes to be sent as a response.
 * [optional] `int flags` - Optional flags to control the behavior of the respond method.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when the response is finished.
 
@@ -300,14 +296,12 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 
 ### sendSingle() - Sends the given bytes.
 * `Uint8List bytes` - The bytes to be sent.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `int flags` - Optional flags to control the behavior of the send method.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when sending is finished.
 
 ### sendMany() - Sends the list of the given bytes.
 * `List<Uint8List> bytes` - The bytes to be sent.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `int flags` - Optional flags to control the behavior of the send method.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when sending is finished.
@@ -332,13 +326,11 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 
 ### writeSingle() - Writes the given bytes to the file.
 * `Uint8List bytes` - The bytes to write.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
 
 ### writeMany() - Writes multiple chunks of data to the file.
 * `List<Uint8List> bytes` - The list of byte blocks to write.
-* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
 
