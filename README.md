@@ -55,7 +55,8 @@ This library's primary objective is to deliver a high-speed transport API to Dar
     - [active - Indicates whether the datagram responder is currently active or not.](#active---indicates-whether-the-datagram-responder-is-currently-active-or-not)
     - [receivedBytes - Returns the bytes received by the datagram responder.](#receivedbytes---returns-the-bytes-received-by-the-datagram-responder)
   - [Methods](#methods-4)
-    - [respond() - Sends a response with the given bytes.](#respond---sends-a-response-with-the-given-bytes)
+    - [respondSingle() - Sends a single response with the given bytes.](#respondsingle---sends-a-single-response-with-the-given-bytes)
+    - [respondMany() - Sends many responses with the given bytes.](#respondmany---sends-many-responses-with-the-given-bytes)
     - [release() - Releases the buffer used by the datagram responder.](#release---releases-the-buffer-used-by-the-datagram-responder)
     - [takeBytes() - Retrieves and optionally releases the bytes received by the responder.](#takebytes---retrieves-and-optionally-releases-the-bytes-received-by-the-responder)
     - [toBytes() - Converts the received bytes to a list and optionally releases them.](#tobytes---converts-the-received-bytes-to-a-list-and-optionally-releases-them)
@@ -66,7 +67,8 @@ This library's primary objective is to deliver a high-speed transport API to Dar
   - [Methods](#methods-5)
     - [\[async\] receive() - Initiates the process of receiving datagrams.](#async-receive---initiates-the-process-of-receiving-datagrams)
     - [stream() - Provides a stream of data as it becomes available.](#stream---provides-a-stream-of-data-as-it-becomes-available)
-    - [send() - Sends the given bytes.](#send---sends-the-given-bytes)
+    - [sendSingle() - Sends the given bytes.](#sendsingle---sends-the-given-bytes)
+    - [sendMany() - Sends the list of the given bytes.](#sendmany---sends-the-list-of-the-given-bytes)
     - [\[async\] close() - Closes the datagram client. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the client.](#async-close---closes-the-datagram-client-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-client)
 - [TransportFile](#transportfile)
   - [Properties](#properties-6)
@@ -249,8 +251,15 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 * [return] `Uint8List`
 
 ## Methods
-### respond() - Sends a response with the given bytes.
+### respondSingle() - Sends a single response with the given bytes.
 * `Uint8List bytes` - The bytes to be sent as a response.
+* [optional] `int flags` - Optional flags to control the behavior of the respond method.
+* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
+* [optional] `void Function(Exception error) onError` - Optional callback for error handling.
+* [optional] `void Function() onDone` - Optional callback to be called when the response is finished.
+
+### respondMany() - Sends many responses with the given bytes.
+* `List<Uint8List> bytes` - The bytes to be sent as a response.
 * [optional] `int flags` - Optional flags to control the behavior of the respond method.
 * [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
@@ -285,8 +294,15 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 * [optional] `int flags` - Optional flags to control the behavior of the stream method.
 * [return] `Stream<TransportPayload>`
 
-### send() - Sends the given bytes.
+### sendSingle() - Sends the given bytes.
 * `Uint8List bytes` - The bytes to be sent.
+* [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
+* [optional] `int flags` - Optional flags to control the behavior of the send method.
+* [optional] `void Function(Exception error) onError` - Optional callback for error handling.
+* [optional] `void Function() onDone` - Optional callback to be called when sending is finished.
+
+### sendMany() - Sends the list of the given bytes.
+* `List<Uint8List> bytes` - The bytes to be sent.
 * [optional] `TransportRetryConfiguration retry` - Optional retry configuration.
 * [optional] `int flags` - Optional flags to control the behavior of the send method.
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
