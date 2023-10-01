@@ -396,10 +396,8 @@ Most recent benchmark results:
 # Further work
 
 1. Benchmarks and optimization
-2. CI for building library and way to provide it to user modules (currently library included with sources, that is not good)
-3. Demo project
-4. Media transport
-5. SSL
+2. Media transport
+3. SSL
 
 # Contribution
 
