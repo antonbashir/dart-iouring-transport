@@ -7,7 +7,7 @@
 extern "C"
 {
 #endif
-  int transport_file_open(const char *path, int mode, bool trunace, bool create);
+  int transport_file_open(const char *path, int mode, bool truncate, bool create);
 #if defined(__cplusplus)
 }
 #endif
