@@ -52,6 +52,7 @@ class Transport {
         nativeConfiguration.ref.cqe_peek_count = configuration.cqePeekCount;
         nativeConfiguration.ref.cqe_wait_count = configuration.cqeWaitCount;
         nativeConfiguration.ref.cqe_wait_timeout_millis = configuration.cqeWaitTimeout.inMilliseconds;
+        nativeConfiguration.ref.trace = configuration.trace;
         return _bindings.transport_worker_initialize(workerPointer, nativeConfiguration, _workerClosers.length);
       });
       if (result < 0) {

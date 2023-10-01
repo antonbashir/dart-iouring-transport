@@ -207,7 +207,7 @@ class TransportServerChannel implements TransportServer {
     _pending++;
   }
 
-  Future<void> respond(
+  Future<void> respondSingle(
     TransportChannel channel,
     Pointer<sockaddr> destination,
     Uint8List bytes, {
@@ -230,6 +230,49 @@ class TransportServerChannel implements TransportServer {
       transportEventSendMessage | transportEventServer,
     );
     _pending++;
+  }
+
+  Future<void> respondMany(
+    TransportChannel channel,
+    Pointer<sockaddr> destination,
+    List<Uint8List> bytes, {
+    int? flags,
+    bool linked = false,
+    void Function(Exception error)? onError,
+    void Function()? onDone,
+  }) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    final bufferIds = await _buffers.allocateArray(bytes.length);
+    if (_closing) return Future.error(TransportClosedException.forServer());
+    final lastBufferId = bufferIds.last;
+    for (var index = 0; index < bytes.length - 1; index++) {
+      final bufferId = bufferIds[index];
+      channel.sendMessage(
+        bytes[index],
+        bufferId,
+        pointer.ref.family,
+        destination,
+        _writeTimeout,
+        flags,
+        transportEventSendMessage | transportEventServer,
+        sqeFlags: linked ? transportIosqeIoLink : 0,
+      );
+      if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+      if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
+    }
+    channel.sendMessage(
+      bytes.last,
+      lastBufferId,
+      pointer.ref.family,
+      destination,
+      _writeTimeout,
+      flags,
+      transportEventSendMessage | transportEventServer,
+      sqeFlags: linked ? transportIosqeIoLink : 0,
+    );
+    if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
+    if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;
+    _pending += bytes.length;
   }
 
   void notifyDatagram(int bufferId, int result, int event) {

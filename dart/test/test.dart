@@ -37,7 +37,6 @@ void main() {
       testTcpSingle(index: index, clientsPool: 128);
       testTcpSingle(index: index, clientsPool: 512);
       testTcpMany(index: index, clientsPool: 1, count: 64);
-      testTcpMany(index: index, clientsPool: 1, count: 32);
       testTcpMany(index: index, clientsPool: 128, count: 8);
       testTcpMany(index: index, clientsPool: 512, count: 4);
     }
@@ -49,7 +48,6 @@ void main() {
       testUnixStreamSingle(index: index, clientsPool: 128);
       testUnixStreamSingle(index: index, clientsPool: 512);
       testUnixStreamMany(index: index, clientsPool: 1, count: 64);
-      testUnixStreamMany(index: index, clientsPool: 1, count: 32);
       testUnixStreamMany(index: index, clientsPool: 128, count: 8);
       testUnixStreamMany(index: index, clientsPool: 512, count: 4);
     }
@@ -60,6 +58,9 @@ void main() {
       testUdpSingle(index: index, clients: 1);
       testUdpSingle(index: index, clients: 128);
       testUdpSingle(index: index, clients: 512);
+      testUdpMany(index: index, clients: 1, count: 64);
+      testUdpMany(index: index, clients: 128, count: 8);
+      testUdpMany(index: index, clients: 512, count: 4);
     }
   });
   group("[unix dgram]", timeout: Timeout(Duration(hours: 1)), skip: !unixDgram, () {
@@ -68,6 +69,9 @@ void main() {
       testUnixDgramSingle(index: index, clients: 1);
       testUnixDgramSingle(index: index, clients: 128);
       testUnixDgramSingle(index: index, clients: 512);
+      testUnixDgramMany(index: index, clients: 1, count: 64);
+      testUnixDgramMany(index: index, clients: 128, count: 8);
+      testUnixDgramMany(index: index, clients: 512, count: 4);
     }
   });
   group("[file]", timeout: Timeout(Duration(hours: 1)), skip: !file, () {

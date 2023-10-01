@@ -30,10 +30,12 @@ class TransportServerConnection {
     return out.stream;
   }
 
+  @pragma(preferInlinePragma)
   void writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) {
     unawaited(_connection.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
+  @pragma(preferInlinePragma)
   void writeMany(List<Uint8List> bytes, {bool linked = true, void Function(Exception error)? onError, void Function()? onDone}) {
     var doneCounter = 0;
     var errorCounter = 0;
@@ -42,7 +44,6 @@ class TransportServerConnection {
     }, onDone: () {
       if (errorCounter == 0 && ++doneCounter == bytes.length) onDone?.call();
     }).onError((error, stackTrace) => onError?.call(error as Exception)));
-    return;
   }
 
   @pragma(preferInlinePragma)

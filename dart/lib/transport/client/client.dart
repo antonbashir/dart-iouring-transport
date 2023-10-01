@@ -105,7 +105,7 @@ class TransportClientChannel {
     _pending++;
   }
 
-  Future<void> send(
+  Future<void> sendSingle(
     Uint8List bytes, {
     int? flags,
     void Function(Exception error)? onError,
@@ -126,6 +126,47 @@ class TransportClientChannel {
       transportEventSendMessage | transportEventClient,
     );
     _pending++;
+  }
+
+  Future<void> sendMany(
+    List<Uint8List> bytes, {
+    int? flags,
+    bool linked = false,
+    void Function(Exception error)? onError,
+    void Function()? onDone,
+  }) async {
+    flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
+    final bufferIds = await _buffers.allocateArray(bytes.length);
+    if (_closing) return Future.error(TransportClosedException.forClient());
+    final lastBufferId = bufferIds.last;
+    for (var index = 0; index < bytes.length - 1; index++) {
+      final bufferId = bufferIds[index];
+      _channel.sendMessage(
+        bytes[index],
+        bufferId,
+        _pointer.ref.family,
+        _destination,
+        _writeTimeout,
+        flags,
+        transportEventSendMessage | transportEventClient,
+        sqeFlags: linked ? transportIosqeIoLink : 0,
+      );
+      if (onError != null) _outboundErrorHandlers[bufferId] = onError;
+      if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
+    }
+    _channel.sendMessage(
+      bytes.last,
+      lastBufferId,
+      _pointer.ref.family,
+      _destination,
+      _writeTimeout,
+      flags,
+      transportEventSendMessage | transportEventClient,
+      sqeFlags: linked ? transportIosqeIoLink : 0,
+    );
+    if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
+    if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;
+    _pending += bytes.length;
   }
 
   @pragma(preferInlinePragma)

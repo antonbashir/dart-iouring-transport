@@ -53,10 +53,10 @@ class TransportServerDatagramResponder {
   TransportServerDatagramResponder(this._bufferId, this._pool);
 
   @pragma(preferInlinePragma)
-  void respond(Uint8List bytes, {int? flags, void Function(Exception error)? onError, void Function()? onDone}) {
+  void respondSingle(Uint8List bytes, {int? flags, void Function(Exception error)? onError, void Function()? onDone}) {
     unawaited(
       _server
-          .respond(
+          .respondSingle(
             _channel,
             _destination,
             bytes,
@@ -66,6 +66,17 @@ class TransportServerDatagramResponder {
           )
           .onError((error, stackTrace) => onError?.call(error as Exception)),
     );
+  }
+
+  @pragma(preferInlinePragma)
+  void respondMany(List<Uint8List> bytes, {int? flags, bool linked = true, void Function(Exception error)? onError, void Function()? onDone}) {
+    var doneCounter = 0;
+    var errorCounter = 0;
+    unawaited(_server.respondMany(_channel, _destination, bytes, flags: flags, linked: linked, onError: (error) {
+      if (++errorCounter + doneCounter == bytes.length) onError?.call(error);
+    }, onDone: () {
+      if (errorCounter == 0 && ++doneCounter == bytes.length) onDone?.call();
+    }).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
   @pragma(preferInlinePragma)

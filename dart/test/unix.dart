@@ -92,7 +92,7 @@ void testUnixDgramSingle({required int index, required int clients}) {
     if (serverSocket.existsSync()) serverSocket.deleteSync();
     worker.servers.unixDatagram(serverSocket.path).receive().listen((event) {
       Validators.request(event.takeBytes());
-      event.respond(Generators.response());
+      event.respondSingle(Generators.response());
     });
     final latch = Latch(clients);
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
@@ -102,9 +102,46 @@ void testUnixDgramSingle({required int index, required int clients}) {
         Validators.response(value.takeBytes());
         latch.countDown();
       });
-      client.send(Generators.request());
+      client.sendSingle(Generators.request());
     }
     await latch.done();
+    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+  });
+}
+
+void testUnixDgramMany({required int index, required int clients, required int count}) {
+  test("(many) [clients = $clients, count = $count]", () async {
+    final transport = Transport();
+    final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
+    await worker.initialize();
+    final serverRequests = BytesBuilder();
+    final serverSocket = File(Directory.systemTemp.path + "/dart-iouring-socket_${worker.id}.sock");
+    final clientSockets = List.generate(clients, (index) => File(Directory.systemTemp.path + "/dart-iouring-socket_${worker.id}_$index.sock"));
+    if (serverSocket.existsSync()) serverSocket.deleteSync();
+    worker.servers.unixDatagram(serverSocket.path).receive().listen(
+      (responder) {
+        serverRequests.add(responder.takeBytes());
+        if (serverRequests.length == Generators.requestsSumUnordered(count).length) {
+          Validators.requestsSumUnordered(serverRequests.takeBytes(), count);
+        }
+        responder.respondMany(Generators.responsesUnordered(2));
+      },
+    );
+    final clientResults = BytesBuilder();
+    for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
+      final latch = Latch(1);
+      if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
+      final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
+      client.stream().listen((event) {
+        clientResults.add(event.takeBytes());
+        if (clientResults.length == Generators.responsesSumUnordered(count * 2).length) {
+          Validators.responsesSumUnordered(clientResults.takeBytes(), count * 2);
+          latch.countDown();
+        }
+      });
+      client.sendMany(Generators.requestsUnordered(count));
+      await latch.done();
+    }
     await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
   });
 }

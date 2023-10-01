@@ -7,6 +7,8 @@ class Latch {
 
   Latch(this._limit);
 
+  int get count => _counter;
+
   void countDown() {
     if (++_counter == _limit) _completer.complete();
   }

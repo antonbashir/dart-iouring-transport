@@ -81,11 +81,11 @@ void testUdpBuffers() {
     var server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
     server.receive().listen((value) {
       value.release();
-      value.respond(Generators.request());
+      value.respondSingle(Generators.request());
       serverCompleter.complete();
     });
     var clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
-    clients.send(Generators.request());
+    clients.sendSingle(Generators.request());
     clients.stream().listen((value) {
       value.release();
       clientCompleter.complete();
@@ -107,11 +107,11 @@ void testUdpBuffers() {
     server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
     server.receive().listen((value) {
       value.release();
-      for (var i = 0; i < 8; i++) value.respond(Generators.request());
+      for (var i = 0; i < 8; i++) value.respondSingle(Generators.request());
       serverCompleter.complete();
     });
     clients = await worker.clients.udp(io.InternetAddress("127.0.0.1"), 12346, io.InternetAddress("127.0.0.1"), 12345);
-    clients.send(Generators.request());
+    clients.sendSingle(Generators.request());
     clients.stream().listen((value) {
       value.release();
       clientLatch.countDown();

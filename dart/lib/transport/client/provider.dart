@@ -29,10 +29,12 @@ class TransportClientConnection {
     return out.stream;
   }
 
+  @pragma(preferInlinePragma)
   void writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) {
     unawaited(_client.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
+  @pragma(preferInlinePragma)
   void writeMany(List<Uint8List> bytes, {linked = true, void Function(Exception error)? onError, void Function()? onDone}) {
     var doneCounter = 0;
     var errorCounter = 0;
@@ -74,13 +76,31 @@ class TransportDatagramClient {
     return out.stream;
   }
 
-  void send(
+  @pragma(preferInlinePragma)
+  void sendSingle(
     Uint8List bytes, {
     int? flags,
     void Function(Exception error)? onError,
     void Function()? onDone,
   }) {
-    unawaited(_client.send(bytes, onError: onError, onDone: onDone, flags: flags).onError((error, stackTrace) => onError?.call(error as Exception)));
+    unawaited(_client.sendSingle(bytes, onError: onError, onDone: onDone, flags: flags).onError((error, stackTrace) => onError?.call(error as Exception)));
+  }
+
+  @pragma(preferInlinePragma)
+  void sendMany(
+    List<Uint8List> bytes, {
+    int? flags,
+    bool linked = false,
+    void Function(Exception error)? onError,
+    void Function()? onDone,
+  }) {
+    var doneCounter = 0;
+    var errorCounter = 0;
+    unawaited(_client.sendMany(bytes, flags: flags, linked: linked, onError: (error) {
+      if (++errorCounter + doneCounter == bytes.length) onError?.call(error);
+    }, onDone: () {
+      if (errorCounter == 0 && ++doneCounter == bytes.length) onDone?.call();
+    }).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
   @pragma(preferInlinePragma)
