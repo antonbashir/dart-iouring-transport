@@ -80,6 +80,10 @@ This library's primary objective is to deliver a high-speed transport API to Dar
     - [writeMany() - Writes multiple chunks of data to the file.](#writemany---writes-multiple-chunks-of-data-to-the-file)
     - [\[async\] load() - Reads a specified number of blocks from the file and returns them as a `Uint8List`.](#async-load---reads-a-specified-number-of-blocks-from-the-file-and-returns-them-as-a-uint8list)
     - [\[async\] close() - Closes the file. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the file.](#async-close---closes-the-file-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-file)
+- [Error handling](#error-handling)
+    - [Client](#client)
+    - [Server](#server)
+    - [File](#file)
 - [Performance](#performance)
 - [Limitations](#limitations)
 - [Further work](#further-work)
@@ -346,6 +350,35 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 ### [async] close() - Closes the file. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the file.
 * [optional] `Duration gracefulDuration` - Optional duration to wait before force closing the file.
 * [return] `Future<void>`
+
+# Error handling
+
+### Client
+* TCP client connect -> close on error, throw exception
+* TCP client read: 
+  * result < 0 -> close, throw exception
+  * result == 0 -> close
+* TCP client write: 
+  * result <= 0 ->  throw exception
+* UDP client receive: 
+  * result <= 0 -> throw exception
+* UDP client send: 
+  * result <= 0 -> throw exception
+### Server
+* TCP server read: 
+  * result < 0 -> close, throw exception
+  * result == 0 -> close
+* TCP server write: 
+  * result <= 0 -> close, throw exception
+* UDP server receive: 
+  * result <= 0 -> throw exception
+* UDP server send: 
+  * result <= 0 -> throw exception
+### File
+* File read: 
+  * result < 0 -> throw exception
+* File write: 
+  * result < 0 -> throw exception
 
 # Performance
 
