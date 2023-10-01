@@ -14,6 +14,7 @@ class TransportServerConnection {
   Stream<TransportPayload> get inbound => _connection.inbound;
   bool get active => _connection.active;
 
+  @pragma(preferInlinePragma)
   Future<void> read() => _connection.read();
 
   @pragma(preferInlinePragma)
