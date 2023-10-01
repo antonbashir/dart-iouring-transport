@@ -195,13 +195,14 @@ class TransportClientsFactory {
         calloc.free(clientPointer);
         throw TransportInitializationException(TransportMessages.clientSocketError(result));
       }
+      final channel = TransportChannel(
+        _workerPointer,
+        clientPointer.ref.fd,
+        _bindings,
+        _buffers,
+      );
       final client = TransportClientChannel(
-        TransportChannel(
-          _workerPointer,
-          clientPointer.ref.fd,
-          _bindings,
-          _buffers,
-        ),
+        channel,
         clientPointer,
         _workerPointer,
         _bindings,
@@ -213,7 +214,12 @@ class TransportClientsFactory {
         connectTimeout: configuration.connectTimeout.inSeconds,
       );
       _registry.add(clientPointer.ref.fd, client);
-      clients.add(client.connect().then(TransportClientConnection.new));
+      clients.add(client.connect().then(TransportClientConnection.new, onError: (error, stackTrace) {
+        channel.close();
+        _registry.remove(clientPointer.ref.fd);
+        _bindings.transport_client_destroy(clientPointer);
+        throw error;
+      }));
     }
     return TransportClientConnectionPool(await Future.wait(clients));
   }
