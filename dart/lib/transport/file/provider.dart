@@ -17,6 +17,7 @@ class TransportFile {
   Stream<TransportPayload> get inbound => _file.inbound;
   bool get active => _file.active;
 
+  @pragma(preferInlinePragma)
   void read({int blocksCount = 1, int offset = 0}) {
     if (blocksCount == 1) {
       _file.readSingle(offset: offset);
@@ -25,10 +26,12 @@ class TransportFile {
     _file.readMany(blocksCount, offset: offset);
   }
 
+  @pragma(preferInlinePragma)
   void writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone}) {
     unawaited(_file.writeSingle(bytes, onError: onError, onDone: onDone).onError((error, stackTrace) => onError?.call(error as Exception)));
   }
 
+  @pragma(preferInlinePragma)
   void writeMany(List<Uint8List> bytes, {void Function(Exception error)? onError, void Function()? onDone}) {
     var doneCounter = 0;
     var errorCounter = 0;

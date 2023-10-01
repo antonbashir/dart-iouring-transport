@@ -15,6 +15,7 @@ class TransportClientConnection {
 
   Future<void> read() => _client.read();
 
+  @pragma(preferInlinePragma)
   Stream<TransportPayload> stream() {
     final out = StreamController<TransportPayload>(sync: true);
     out.onListen = () => unawaited(_client.read().onError((error, stackTrace) => out.addError(error!)));
@@ -57,8 +58,10 @@ class TransportDatagramClient {
   bool get active => _client.active;
   Stream<TransportPayload> get inbound => _client.inbound;
 
+  @pragma(preferInlinePragma)
   Future<void> receive({int? flags}) => _client.receive(flags: flags);
 
+  @pragma(preferInlinePragma)
   Stream<TransportPayload> stream({int? flags}) {
     final out = StreamController<TransportPayload>(sync: true);
     out.onListen = () => unawaited(_client.receive(flags: flags).onError((error, stackTrace) => out.addError(error!)));
