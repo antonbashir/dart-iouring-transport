@@ -141,6 +141,8 @@ class TransportServerConnectionChannel {
     _closing = true;
     if (_pending > 0) {
       if (gracefulTimeout == null) {
+        _active = false;
+        _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
         await _closer.future;
       }
       if (gracefulTimeout != null) {
@@ -377,6 +379,8 @@ class TransportServerChannel implements TransportServer {
     await Future.wait(_connections.values.toList().map((connection) => connection.close(gracefulTimeout: gracefulTimeout)));
     if (_pending > 0) {
       if (gracefulTimeout == null) {
+        _active = false;
+        _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
         await _closer.future;
       }
       if (gracefulTimeout != null) {

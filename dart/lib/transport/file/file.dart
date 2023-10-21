@@ -167,6 +167,8 @@ class TransportFileChannel {
     _closing = true;
     if (_pending > 0) {
       if (gracefulTimeout == null) {
+        _active = false;
+        _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
         await _closer.future;
       }
       if (gracefulTimeout != null) {
