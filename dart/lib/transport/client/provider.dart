@@ -47,7 +47,7 @@ class TransportClientConnection {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
+  Future<void> close({Duration? gracefulTimeout}) => _client.close(gracefulTimeout: gracefulTimeout);
 }
 
 class TransportDatagramClient {
@@ -107,5 +107,5 @@ class TransportDatagramClient {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => _client.close(gracefulDuration: gracefulDuration);
+  Future<void> close({Duration? gracefulTimeout}) => _client.close(gracefulTimeout: gracefulTimeout);
 }

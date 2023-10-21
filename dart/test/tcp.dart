@@ -35,7 +35,7 @@ void testTcpSingle({required int index, required int clientsPool}) {
       });
     });
     await latch.done();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -80,6 +80,6 @@ void testTcpMany({required int index, required int clientsPool, required int cou
       );
     });
     await latch.done();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }

@@ -51,11 +51,11 @@ class TransportWorker {
   TransportFilesFactory get files => _filesFactory;
 
   TransportWorker(SendPort toTransport) {
-    _closer = RawReceivePort((gracefulDuration) async {
+    _closer = RawReceivePort((gracefulTimeout) async {
       _timeoutChecker.stop();
-      await _filesRegistry.close(gracefulDuration: gracefulDuration);
-      await _clientRegistry.close(gracefulDuration: gracefulDuration);
-      await _serverRegistry.close(gracefulDuration: gracefulDuration);
+      await _filesRegistry.close(gracefulTimeout: gracefulTimeout);
+      await _clientRegistry.close(gracefulTimeout: gracefulTimeout);
+      await _serverRegistry.close(gracefulTimeout: gracefulTimeout);
       _active = false;
       await _done.future;
       _bindings.transport_worker_destroy(_workerPointer);
@@ -144,7 +144,7 @@ class TransportWorker {
       final fd = (data >> 32) & 0xffffffff;
       final bufferId = (data >> 16) & 0xffff;
       if (_workerPointer.ref.trace) print(TransportMessages.workerTrace(id, result, data, fd));
-      
+
       if (event & transportEventClient != 0) {
         event &= ~transportEventClient;
         if (event == transportEventConnect) {

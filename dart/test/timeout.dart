@@ -49,7 +49,7 @@ void testTcpTimeout({required Duration connection, required Duration serverRead,
     await worker.clients.tcp(InternetAddress("127.0.0.1"), 12345);
     await completer.future;
     await server.close();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -77,6 +77,6 @@ void testUdpTimeout({required Duration serverRead, required Duration clientRead}
     await completer.future.whenComplete(serverSubscription.cancel);
     await server.close();
 
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }

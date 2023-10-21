@@ -28,7 +28,7 @@ class TransportServerRegistry {
   void addServer(int fd, TransportServerChannel channel) => _servers[fd] = channel;
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => Future.wait(_servers.values.toList().map((server) => server.close(gracefulDuration: gracefulDuration)));
+  Future<void> close({Duration? gracefulTimeout}) => Future.wait(_servers.values.toList().map((server) => server.close(gracefulTimeout: gracefulTimeout)));
 
   @visibleForTesting
   Map<int, TransportServerChannel> get servers => _servers;

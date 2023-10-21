@@ -49,10 +49,10 @@ class TransportServerConnection {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => _connection.close(gracefulDuration: gracefulDuration);
+  Future<void> close({Duration? gracefulTimeout}) => _connection.close(gracefulTimeout: gracefulTimeout);
 
   @pragma(preferInlinePragma)
-  Future<void> closeServer({Duration? gracefulDuration}) => _connection.closeServer(gracefulDuration: gracefulDuration);
+  Future<void> closeServer({Duration? gracefulTimeout}) => _connection.closeServer(gracefulTimeout: gracefulTimeout);
 }
 
 class TransportServerDatagramReceiver {
@@ -82,5 +82,5 @@ class TransportServerDatagramReceiver {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
+  Future<void> close({Duration? gracefulTimeout}) => _server.close(gracefulTimeout: gracefulTimeout);
 }

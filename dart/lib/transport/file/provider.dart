@@ -119,5 +119,5 @@ class TransportFile {
       });
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => _file.close(gracefulDuration: gracefulDuration);
+  Future<void> close({Duration? gracefulTimeout}) => _file.close(gracefulTimeout: gracefulTimeout);
 }

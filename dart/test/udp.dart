@@ -32,7 +32,7 @@ void testUdpSingle({required int index, required int clients}) {
       client.sendSingle(Generators.request());
     }
     await latch.done();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -65,6 +65,6 @@ void testUdpMany({required int index, required int clients, required int count})
       client.sendMany(Generators.requestsUnordered(count));
       await latch.done();
     }
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }

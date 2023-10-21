@@ -8,8 +8,8 @@ import 'package:test/test.dart';
 
 import 'generators.dart';
 
-void testShutdown({required Duration gracefulDuration}) {
-  test("[gracefulDuration = ${gracefulDuration.inSeconds}]", () async {
+void testShutdown({required Duration gracefulTimeout}) {
+  test("[gracefulTimeout = ${gracefulTimeout.inSeconds}]", () async {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
@@ -41,9 +41,9 @@ void testShutdown({required Duration gracefulDuration}) {
 
     await serverCompleter.future;
     final futures = [
-      server.close(gracefulDuration: gracefulDuration),
-      clients.close(gracefulDuration: gracefulDuration),
-      fileProvider.close(gracefulDuration: gracefulDuration),
+      server.close(gracefulTimeout: gracefulTimeout),
+      clients.close(gracefulTimeout: gracefulTimeout),
+      fileProvider.close(gracefulTimeout: gracefulTimeout),
     ];
     await Future.wait(futures);
     await fileCompleter.future;

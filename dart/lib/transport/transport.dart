@@ -26,8 +26,8 @@ class Transport {
     _bindings = TransportBindings(_library.library);
   }
 
-  Future<void> shutdown({Duration? gracefulDuration}) async {
-    _workerClosers.forEach((worker) => worker.send(gracefulDuration));
+  Future<void> shutdown({Duration? gracefulTimeout}) async {
+    _workerClosers.forEach((worker) => worker.send(gracefulTimeout));
     await _workerDestroyer.take(_workerClosers.length).toList();
     _workerDestroyer.close();
     _workerPorts.forEach((port) => port.close());

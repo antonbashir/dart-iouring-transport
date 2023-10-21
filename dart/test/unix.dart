@@ -36,7 +36,7 @@ void testUnixStreamSingle({required int index, required int clientsPool}) {
       });
     });
     await latch.done();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -78,7 +78,7 @@ void testUnixStreamMany({required int index, required int clientsPool, required 
       client.writeMany(Generators.requestsOrdered(count));
     });
     await latch.done();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -105,7 +105,7 @@ void testUnixDgramSingle({required int index, required int clients}) {
       client.sendSingle(Generators.request());
     }
     await latch.done();
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -142,6 +142,6 @@ void testUnixDgramMany({required int index, required int clients, required int c
       client.sendMany(Generators.requestsUnordered(count));
       await latch.done();
     }
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }

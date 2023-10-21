@@ -66,7 +66,7 @@ void testTcpBuffers() {
     if (worker.servers.registry.servers.isNotEmpty) throw TestFailure("servers isNotEmpty");
     if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -128,7 +128,7 @@ void testUdpBuffers() {
     if (worker.servers.registry.servers.isNotEmpty) throw TestFailure("servers isNotEmpty");
     if (worker.clients.registry.clients.isNotEmpty) throw TestFailure("clients isNotEmpty");
 
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -164,7 +164,7 @@ void testFileBuffers() {
 
     fileProvider.delegate.deleteSync();
 
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }
 
@@ -198,6 +198,6 @@ void testBuffersOverflow() {
     await completer.future;
     Validators.responsesSumUnordered(bytes.takeBytes(), 6);
     if (worker.buffers.used() != 2) throw TestFailure("actual: ${worker.buffers.used()}");
-    await transport.shutdown(gracefulDuration: Duration(milliseconds: 100));
+    await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });
 }

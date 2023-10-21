@@ -10,7 +10,7 @@ This library's primary objective is to deliver a high-speed transport API to Dar
   - [Sample](#sample)
 - [API](#api)
 - [Transport](#transport)
-    - [\[async\] shutdown() - Shuts down the transport layer. If `gracefulDuration` is provided, the system will wait for the specified duration before shutting down.](#async-shutdown---shuts-down-the-transport-layer-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-shutting-down)
+    - [\[async\] shutdown() - Shuts down the transport layer. If `gracefulTimeout` is provided, the system will wait for the specified duration before shutting down.](#async-shutdown---shuts-down-the-transport-layer-if-gracefulTimeout-is-provided-the-system-will-wait-for-the-specified-duration-before-shutting-down)
     - [\[async\] worker() - Creates a worker based on the given configuration. Returns a `SendPort` to be used in the `TransportWorker` constructor.](#async-worker---creates-a-worker-based-on-the-given-configuration-returns-a-sendport-to-be-used-in-the-transportworker-constructor)
 - [TransportWorker](#transportworker)
   - [Properties](#properties)
@@ -31,7 +31,7 @@ This library's primary objective is to deliver a high-speed transport API to Dar
     - [stream() - Returns a stream of data as it becomes available.](#stream---returns-a-stream-of-data-as-it-becomes-available)
     - [writeSingle() - Writes a single chunk of data to the client.](#writesingle---writes-a-single-chunk-of-data-to-the-client)
     - [writeMany() - Writes multiple chunks of data to the client.](#writemany---writes-multiple-chunks-of-data-to-the-client)
-    - [\[async\] close() - Closes the client connection. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the connection.](#async-close---closes-the-client-connection-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-connection)
+    - [\[async\] close() - Closes the client connection. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the connection.](#async-close---closes-the-client-connection-if-gracefulTimeout-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-connection)
 - [TransportServerConnection](#transportserverconnection)
   - [Properties](#properties-2)
     - [active - Indicates whether the server connection is currently active or not.](#active---indicates-whether-the-server-connection-is-currently-active-or-not)
@@ -41,15 +41,15 @@ This library's primary objective is to deliver a high-speed transport API to Dar
     - [stream() - Returns a stream of data as it becomes available.](#stream---returns-a-stream-of-data-as-it-becomes-available-1)
     - [writeSingle() - Writes a single chunk of data to the client connection.](#writesingle---writes-a-single-chunk-of-data-to-the-client-connection)
     - [writeMany() - Writes multiple chunks of data to the client connection.](#writemany---writes-multiple-chunks-of-data-to-the-client-connection)
-    - [\[async\] close() - Closes the server connection. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the connection.](#async-close---closes-the-server-connection-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-connection)
-    - [\[async\] closeServer() - Closes the server. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the server.](#async-closeserver---closes-the-server-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-server)
+    - [\[async\] close() - Closes the server connection. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the connection.](#async-close---closes-the-server-connection-if-gracefulTimeout-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-connection)
+    - [\[async\] closeServer() - Closes the server. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the server.](#async-closeserver---closes-the-server-if-gracefulTimeout-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-server)
 - [TransportServerDatagramReceiver](#transportserverdatagramreceiver)
   - [Properties](#properties-3)
     - [active - Indicates whether the server datagram receiver is currently active or not.](#active---indicates-whether-the-server-datagram-receiver-is-currently-active-or-not)
     - [inbound - Returns the inbound stream of the server datagram receiver.](#inbound---returns-the-inbound-stream-of-the-server-datagram-receiver)
   - [Methods](#methods-3)
     - [receive() - Initiates the process of receiving datagrams.](#receive---initiates-the-process-of-receiving-datagrams)
-    - [\[async\] close() - Closes the server datagram receiver. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the server datagram receiver.](#async-close---closes-the-server-datagram-receiver-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-server-datagram-receiver)
+    - [\[async\] close() - Closes the server datagram receiver. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the server datagram receiver.](#async-close---closes-the-server-datagram-receiver-if-gracefulTimeout-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-server-datagram-receiver)
 - [TransportServerDatagramResponder](#transportserverdatagramresponder)
   - [Properties](#properties-4)
     - [active - Indicates whether the datagram responder is currently active or not.](#active---indicates-whether-the-datagram-responder-is-currently-active-or-not)
@@ -69,7 +69,7 @@ This library's primary objective is to deliver a high-speed transport API to Dar
     - [stream() - Provides a stream of data as it becomes available.](#stream---provides-a-stream-of-data-as-it-becomes-available)
     - [sendSingle() - Sends the given bytes.](#sendsingle---sends-the-given-bytes)
     - [sendMany() - Sends the list of the given bytes.](#sendmany---sends-the-list-of-the-given-bytes)
-    - [\[async\] close() - Closes the datagram client. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the client.](#async-close---closes-the-datagram-client-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-client)
+    - [\[async\] close() - Closes the datagram client. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the client.](#async-close---closes-the-datagram-client-if-gracefulTimeout-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-client)
 - [TransportFile](#transportfile)
   - [Properties](#properties-6)
     - [inbound - Returns the inbound stream of the file.](#inbound---returns-the-inbound-stream-of-the-file)
@@ -79,7 +79,7 @@ This library's primary objective is to deliver a high-speed transport API to Dar
     - [writeSingle() - Writes the given bytes to the file.](#writesingle---writes-the-given-bytes-to-the-file)
     - [writeMany() - Writes multiple chunks of data to the file.](#writemany---writes-multiple-chunks-of-data-to-the-file)
     - [\[async\] load() - Reads a specified number of blocks from the file and returns them as a `Uint8List`.](#async-load---reads-a-specified-number-of-blocks-from-the-file-and-returns-them-as-a-uint8list)
-    - [\[async\] close() - Closes the file. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the file.](#async-close---closes-the-file-if-gracefulduration-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-file)
+    - [\[async\] close() - Closes the file. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the file.](#async-close---closes-the-file-if-gracefulTimeout-is-provided-the-system-will-wait-for-the-specified-duration-before-force-closing-the-file)
 - [Error handling](#error-handling)
     - [Client](#client)
     - [Server](#server)
@@ -126,8 +126,8 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 
 # Transport
 
-### [async] shutdown() - Shuts down the transport layer. If `gracefulDuration` is provided, the system will wait for the specified duration before shutting down.
-* [optional] `Duration gracefulDuration` - The duration to wait before closing.
+### [async] shutdown() - Shuts down the transport layer. If `gracefulTimeout` is provided, the system will wait for the specified duration before shutting down.
+* [optional] `Duration gracefulTimeout` - The duration to wait before closing.
 * [return] `Future<void>` - A future that completes when the operation finishes.
 
 ### [async] worker() - Creates a worker based on the given configuration. Returns a `SendPort` to be used in the `TransportWorker` constructor.
@@ -185,8 +185,8 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 * [optional]`void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
 
-### [async] close() - Closes the client connection. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the connection.
-* [optional] `Duration gracefulDuration` - Optional duration to wait before force closing the connection.
+### [async] close() - Closes the client connection. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the connection.
+* [optional] `Duration gracefulTimeout` - Optional duration to wait before force closing the connection.
 * [return] `Future<void>`
 
 # TransportServerConnection
@@ -217,12 +217,12 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 * [optional]`void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when writing is finished.
 
-### [async] close() - Closes the server connection. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the connection.
-* [optional] `Duration gracefulDuration` - Optional duration to wait before force closing the connection.
+### [async] close() - Closes the server connection. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the connection.
+* [optional] `Duration gracefulTimeout` - Optional duration to wait before force closing the connection.
 * [return] `Future<void>`
 
-### [async] closeServer() - Closes the server. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the server.
-* [optional] `Duration gracefulDuration` - Optional duration to wait before force closing the server.
+### [async] closeServer() - Closes the server. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the server.
+* [optional] `Duration gracefulTimeout` - Optional duration to wait before force closing the server.
 * [return] `Future<void>`
 
 # TransportServerDatagramReceiver
@@ -239,8 +239,8 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 * [optional] `int flags` - Optional flags to control the behavior of the receive method.
 * [return] `Stream<TransportServerDatagramResponder>`
 
-### [async] close() - Closes the server datagram receiver. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the server datagram receiver.
-* [optional] `Duration gracefulDuration` - Optional duration to wait before force closing the server datagram receiver.
+### [async] close() - Closes the server datagram receiver. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the server datagram receiver.
+* [optional] `Duration gracefulTimeout` - Optional duration to wait before force closing the server datagram receiver.
 * [return] `Future<void>`
 
 # TransportServerDatagramResponder
@@ -306,8 +306,8 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 * [optional] `void Function(Exception error) onError` - Optional callback for error handling.
 * [optional] `void Function() onDone` - Optional callback to be called when sending is finished.
 
-### [async] close() - Closes the datagram client. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the client.
-* [optional] `Duration gracefulDuration` - Optional duration to wait before force closing the client.
+### [async] close() - Closes the datagram client. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the client.
+* [optional] `Duration gracefulTimeout` - Optional duration to wait before force closing the client.
 * [return] `Future<void>`
 
 # TransportFile
@@ -339,8 +339,8 @@ Reactive transport implementation can be found [here](https://github.com/antonba
 * [optional] `int offset` - The offset from the start of the file to begin reading. Defaults to 0.
 * [return] `Future<Uint8List>`
 
-### [async] close() - Closes the file. If `gracefulDuration` is provided, the system will wait for the specified duration before force closing the file.
-* [optional] `Duration gracefulDuration` - Optional duration to wait before force closing the file.
+### [async] close() - Closes the file. If `gracefulTimeout` is provided, the system will wait for the specified duration before force closing the file.
+* [optional] `Duration gracefulTimeout` - Optional duration to wait before force closing the file.
 * [return] `Future<void>`
 
 # Error handling

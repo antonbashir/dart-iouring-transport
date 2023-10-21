@@ -180,6 +180,10 @@ class TransportClientChannel {
   void notifyConnect(int fd, int result) {
     _pending--;
     if (_active) {
+      if (_pending == 0 && _closing) {
+        _active = false;
+        _closer.complete();
+      }
       if (result == 0) {
         _connector.complete();
         return;
@@ -198,12 +202,15 @@ class TransportClientChannel {
       return;
     }
     _connector.completeError(TransportClosedException.forClient());
-    if (_pending == 0) _closer.complete();
   }
 
   void notifyData(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
+      if (_pending == 0 && _closing) {
+        _active = false;
+        _closer.complete();
+      }
       if (event == transportEventRead) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
@@ -245,13 +252,13 @@ class TransportClientChannel {
         _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.clientEvent(event), result, _bindings));
         return;
       }
+      _buffers.release(bufferId);
       return;
     }
     _buffers.release(bufferId);
-    if (_pending == 0) _closer.complete();
   }
 
-  Future<void> close({Duration? gracefulDuration}) async {
+  Future<void> close({Duration? gracefulTimeout}) async {
     if (_closing) {
       if (!_closer.isCompleted) {
         if (_pending > 0) await _closer.future;
@@ -259,10 +266,20 @@ class TransportClientChannel {
       return;
     }
     _closing = true;
-    if (gracefulDuration != null) await Future.delayed(gracefulDuration);
+    if (_pending > 0) {
+      await (
+        gracefulTimeout == null
+            ? _closer.future
+            : _closer.future.timeout(
+                gracefulTimeout,
+                onTimeout: () {
+                  _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
+                  return _closer.future;
+                },
+              ),
+      );
+    }
     _active = false;
-    _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
-    if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
     _channel.close();
     _registry.remove(_pointer.ref.fd);
@@ -295,5 +312,5 @@ class TransportClientConnectionPool {
   int count() => _clients.length;
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => Future.wait(_clients.toList().map((provider) => provider.close(gracefulDuration: gracefulDuration)));
+  Future<void> close({Duration? gracefulTimeout}) => Future.wait(_clients.toList().map((provider) => provider.close(gracefulTimeout: gracefulTimeout)));
 }

@@ -13,7 +13,7 @@ import '../payload.dart';
 import 'responder.dart';
 
 abstract class TransportServer {
-  Future<void> close({Duration? gracefulDuration});
+  Future<void> close({Duration? gracefulTimeout});
 }
 
 class TransportServerConnectionChannel {
@@ -97,6 +97,10 @@ class TransportServerConnectionChannel {
   void notify(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
+      if (_pending == 0 && _closing) {
+        _active = false;
+        _closer.complete();
+      }
       if (event == transportEventRead) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
@@ -120,13 +124,13 @@ class TransportServerConnectionChannel {
         unawaited(close());
         return;
       }
+      _buffers.release(bufferId);
       return;
     }
     _buffers.release(bufferId);
-    if (_pending == 0) _closer.complete();
   }
 
-  Future<void> close({Duration? gracefulDuration}) async {
+  Future<void> close({Duration? gracefulTimeout}) async {
     if (_closing) {
       if (!_closer.isCompleted) {
         if (_pending > 0) await _closer.future;
@@ -134,16 +138,27 @@ class TransportServerConnectionChannel {
       return;
     }
     _closing = true;
-    if (gracefulDuration != null) await Future.delayed(gracefulDuration);
+    if (_pending > 0) {
+      await (
+        gracefulTimeout == null
+            ? _closer.future
+            : _closer.future.timeout(
+                gracefulTimeout,
+                onTimeout: () {
+                  _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
+                  return _closer.future;
+                },
+              ),
+      );
+    }
     _active = false;
-    _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
     if (_pending > 0) await _closer.future;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
     _server._removeConnection(_fd);
     _bindings.transport_close_descriptor(_fd);
   }
 
-  Future<void> closeServer({Duration? gracefulDuration}) => _server.close(gracefulDuration: gracefulDuration);
+  Future<void> closeServer({Duration? gracefulTimeout}) => _server.close(gracefulTimeout: gracefulTimeout);
 }
 
 class TransportServerChannel implements TransportServer {
@@ -278,6 +293,10 @@ class TransportServerChannel implements TransportServer {
   void notifyDatagram(int bufferId, int result, int event) {
     _pending--;
     if (_active) {
+      if (_pending == 0 && _closing) {
+        _active = false;
+        _closer.complete();
+      }
       if (event == transportEventReceiveMessage) {
         if (result > 0) {
           _buffers.setLength(bufferId, result);
@@ -305,10 +324,10 @@ class TransportServerChannel implements TransportServer {
         _outboundErrorHandlers.remove(bufferId)?.call(createTransportException(TransportEvent.serverEvent(event), result, _bindings));
         return;
       }
+      _buffers.release(bufferId);
       return;
     }
     _buffers.release(bufferId);
-    if (_pending == 0) _closer.complete();
   }
 
   @pragma(preferInlinePragma)
@@ -344,7 +363,7 @@ class TransportServerChannel implements TransportServer {
   }
 
   @override
-  Future<void> close({Duration? gracefulDuration}) async {
+  Future<void> close({Duration? gracefulTimeout}) async {
     if (_closing) {
       if (!_closer.isCompleted) {
         if (_pending > 0) await _closer.future;
@@ -352,8 +371,20 @@ class TransportServerChannel implements TransportServer {
       return;
     }
     _closing = true;
-    await Future.wait(_connections.values.toList().map((connection) => connection.close(gracefulDuration: gracefulDuration)));
-    if (gracefulDuration != null) await Future.delayed(gracefulDuration);
+    await Future.wait(_connections.values.toList().map((connection) => connection.close(gracefulTimeout: gracefulTimeout)));
+    if (_pending > 0) {
+      await (
+        gracefulTimeout == null
+            ? _closer.future
+            : _closer.future.timeout(
+                gracefulTimeout,
+                onTimeout: () {
+                  _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
+                  return _closer.future;
+                },
+              ),
+      );
+    }
     _active = false;
     _bindings.transport_worker_cancel_by_fd(_workerPointer, pointer.ref.fd);
     if (_pending > 0) await _closer.future;

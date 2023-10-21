@@ -18,7 +18,7 @@ class TransportFileRegistry {
   void add(int fd, TransportFileChannel file) => _files[fd] = file;
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulDuration}) => Future.wait(_files.values.toList().map((file) => file.close(gracefulDuration: gracefulDuration)));
+  Future<void> close({Duration? gracefulTimeout}) => Future.wait(_files.values.toList().map((file) => file.close(gracefulTimeout: gracefulTimeout)));
 
   @visibleForTesting
   Map<int, TransportFileChannel> get files => _files;
