@@ -267,17 +267,18 @@ class TransportClientChannel {
     }
     _closing = true;
     if (_pending > 0) {
-      await (
-        gracefulTimeout == null
-            ? _closer.future
-            : _closer.future.timeout(
-                gracefulTimeout,
-                onTimeout: () {
-                  _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
-                  return _closer.future;
-                },
-              ),
-      );
+      if (gracefulTimeout == null) {
+        await _closer.future;
+      }
+      if (gracefulTimeout != null) {
+        await _closer.future.timeout(
+          gracefulTimeout,
+          onTimeout: () async {
+            _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
+            await _closer.future;
+          },
+        );
+      }
     }
     _active = false;
     if (_inboundEvents.hasListener) await _inboundEvents.close();
