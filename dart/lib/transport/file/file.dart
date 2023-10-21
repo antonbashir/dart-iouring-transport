@@ -154,6 +154,7 @@ class TransportFileChannel {
       return;
     }
     buffers.release(bufferId);
+    if (_pending == 0 && _closing && !_closer.isCompleted) _closer.complete();
   }
 
   Future<void> close({Duration? gracefulTimeout}) async {
@@ -172,6 +173,7 @@ class TransportFileChannel {
         await _closer.future.timeout(
           gracefulTimeout,
           onTimeout: () {
+            _active = false;
             _bindings.transport_worker_cancel_by_fd(_workerPointer, _fd);
             return _closer.future;
           },

@@ -256,6 +256,7 @@ class TransportClientChannel {
       return;
     }
     _buffers.release(bufferId);
+    if (_pending == 0 && _closing && !_closer.isCompleted) _closer.complete();
   }
 
   Future<void> close({Duration? gracefulTimeout}) async {
@@ -274,6 +275,7 @@ class TransportClientChannel {
         await _closer.future.timeout(
           gracefulTimeout,
           onTimeout: () async {
+            _active = false;
             _bindings.transport_worker_cancel_by_fd(_workerPointer, _pointer.ref.fd);
             await _closer.future;
           },
