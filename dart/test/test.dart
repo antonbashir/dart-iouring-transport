@@ -28,7 +28,8 @@ void main() {
     testInitialization();
   });
   group("[shutdown]", timeout: Timeout(Duration(hours: 1)), skip: !shutdown, () {
-    testShutdown(gracefulTimeout: Duration(seconds: 5));
+    testForceShutdown();
+    testGracefulShutdown(gracefulTimeout: Duration(seconds: 5));
   });
   group("[tcp]", timeout: Timeout(Duration(hours: 1)), skip: !tcp, () {
     final testsCount = 5;
