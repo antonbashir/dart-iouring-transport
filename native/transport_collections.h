@@ -28,7 +28,7 @@ extern "C"
 #define mh_hash_key(a, arg) (a)
 #define mh_cmp(a, b, arg) ((a->data) != (b->data))
 #define mh_cmp_key(a, b, arg) ((a) != (b->data))
-#include "salad/mhash.h"
+#include "collections/mhash.h"
 #undef mh_node_t
 #undef mh_arg_t
 #undef mh_hash

@@ -5,12 +5,14 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
   cmake_policy(SET CMP0135 NEW)
 endif()
 
+set(LIBURING_VERSION liburing-2.4)
+set(DART_VERSION 3.2.0)
+
 add_definitions("-D_GNU_SOURCE")
 set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
 
-set(LIBURING_VERSION liburing-2.4)
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fPIC -static-libgcc -static-libstdc++ -fno-stack-protector")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O2 -fPIC -static-libgcc -static-libstdc++ -fno-stack-protector")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g -fno-stack-protector")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -O3 -fno-stack-protector")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 set(HAVE_CLOCK_GETTIME_DECL ON)
 
@@ -23,16 +25,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(liburing)
 include_directories(${liburing_SOURCE_DIR}/src/include)
+add_custom_target(liburing COMMAND ./configure --prefix=${liburing_SOURCE_DIR}/build && make && make install WORKING_DIRECTORY ${liburing_SOURCE_DIR})
 
-add_custom_target(liburing
-  COMMAND ./configure
-  --prefix=${liburing_SOURCE_DIR}/build && make && make install
-  WORKING_DIRECTORY ${liburing_SOURCE_DIR}
+FetchContent_Declare(
+  dart
+  URL "https://github.com/antonbashir/dart-native-api/archive/refs/tags/${DART_VERSION}.tar.gz"
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dart
 )
+FetchContent_MakeAvailable(dart)
+execute_process(COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/patches/dart-patch-apply.sh" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 configure_file(
-  "${PROJECT_SOURCE_DIR}/trivia/config.h.cmake"
-  "${PROJECT_SOURCE_DIR}/trivia/config.h"
+  "${PROJECT_SOURCE_DIR}/common/configuration.h.cmake"
+  "${PROJECT_SOURCE_DIR}/common/configuration.h"
 )
 message(STATUS "")
 
@@ -41,8 +46,8 @@ file(GLOB sources
   *.h
   dart/*.h
   dart/*.c
-  salad/*.h
-  salad/*.c
+  collections/*.h
+  collections/*.c
 )
 
 include_directories(${PROJECT_BINARY_DIR})
@@ -51,6 +56,4 @@ include_directories(${PROJECT_SOURCE_DIR})
 add_library(native SHARED ${sources})
 add_dependencies(native liburing)
 target_link_libraries(native PRIVATE ${liburing_SOURCE_DIR}/build/lib/liburing.a)
-add_custom_command(TARGET native POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:native> ${CMAKE_CURRENT_SOURCE_DIR}/../dart/native/libtransport.so
-)
+add_custom_command(TARGET native POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:native> ${CMAKE_CURRENT_SOURCE_DIR}/../dart/native/libtransport.so)

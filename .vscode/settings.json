@@ -56,7 +56,7 @@
     "fiber.h": "c",
     "assoc.h": "c",
     "util.h": "c",
-    "config.h": "c",
+    "configuration.h": "c",
     "fiber_cond.h": "c",
     "fiber_ev.h": "c",
     "stdint.h": "c",
