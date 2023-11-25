@@ -51,10 +51,10 @@ void testUdpMany({required int index, required int clients, required int count})
         responder.respondMany(Generators.responsesUnordered(2));
       },
     );
-    final clientResults = BytesBuilder();
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       final latch = Latch(1);
       final client = worker.clients.udp(io.InternetAddress("127.0.0.1"), (worker.id + 1) * 2000 + (clientIndex + 1), io.InternetAddress("127.0.0.1"), 12345);
+      final clientResults = BytesBuilder();
       client.stream().listen((event) {
         clientResults.add(event.takeBytes());
         if (clientResults.length == Generators.responsesSumUnordered(count * 2).length) {

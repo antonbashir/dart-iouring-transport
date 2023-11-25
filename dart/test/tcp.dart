@@ -65,10 +65,10 @@ void testTcpMany({required int index, required int clientsPool, required int cou
       12345,
       configuration: TransportDefaults.tcpClient().copyWith(pool: clientsPool),
     );
-    final clientResults = BytesBuilder();
     final latch = Latch(clientsPool);
     clients.forEach((client) {
-      client.writeMany(Generators.requestsOrdered(count));
+      client.writeMany(Generators.requestsOrdered(count), linked: true);
+      final clientResults = BytesBuilder();
       client.stream().listen(
         (event) {
           clientResults.add(event.takeBytes());

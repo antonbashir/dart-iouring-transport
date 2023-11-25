@@ -77,7 +77,7 @@ class TransportClientsFactory {
       _registry.add(clientPointer.ref.fd, client);
       clients.add(client.connect().then(TransportClientConnection.new));
     }
-    return TransportClientConnectionPool(await Future.wait(clients));
+    return Future.wait(clients).then(TransportClientConnectionPool.new);
   }
 
   TransportDatagramClient udp(

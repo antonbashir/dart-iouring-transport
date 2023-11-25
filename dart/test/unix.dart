@@ -127,11 +127,11 @@ void testUnixDgramMany({required int index, required int clients, required int c
         responder.respondMany(Generators.responsesUnordered(2));
       },
     );
-    final clientResults = BytesBuilder();
     for (var clientIndex = 0; clientIndex < clients; clientIndex++) {
       final latch = Latch(1);
       if (clientSockets[clientIndex].existsSync()) clientSockets[clientIndex].deleteSync();
       final client = worker.clients.unixDatagram(clientSockets[clientIndex].path, serverSocket.path);
+      final clientResults = BytesBuilder();
       client.stream().listen((event) {
         clientResults.add(event.takeBytes());
         if (clientResults.length == Generators.responsesSumUnordered(count * 2).length) {
