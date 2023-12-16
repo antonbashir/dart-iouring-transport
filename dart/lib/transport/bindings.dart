@@ -9647,14 +9647,6 @@ class TransportBindings {
       ffi.Pointer<ffi.Char> Function(
           ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
-  /// Copy string. Unlike @a strncpy the result string
-  /// is always null-terminated.
-  ///
-  /// @param dst destination buffer.
-  /// @param src source string.
-  /// @param size destination buffer size.
-  ///
-  /// @return size of @a src string.
   int strlcpy(
     ffi.Pointer<ffi.Char> __dest,
     ffi.Pointer<ffi.Char> __src,
@@ -9674,14 +9666,6 @@ class TransportBindings {
   late final _strlcpy = _strlcpyPtr.asFunction<
       int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
-  /// Append the null-terminated string @a src to the end of @a dst string.
-  /// Unlike @a strncat the resulting string is always null-terminated.
-  ///
-  /// @param dst destination buffer and the first input string
-  /// @param src the second input string
-  /// @param size destination buffer size
-  ///
-  /// @return the total length of the string, that it is trying to create
   int strlcat(
     ffi.Pointer<ffi.Char> __dest,
     ffi.Pointer<ffi.Char> __src,
@@ -9700,194 +9684,6 @@ class TransportBindings {
               ffi.Pointer<ffi.Char>, ffi.Size)>>('strlcat');
   late final _strlcat = _strlcatPtr.asFunction<
       int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
-
-  int strindex(
-    ffi.Pointer<ffi.Pointer<ffi.Char>> haystack,
-    ffi.Pointer<ffi.Char> needle,
-    int hmax,
-  ) {
-    return _strindex(
-      haystack,
-      needle,
-      hmax,
-    );
-  }
-
-  late final _strindexPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Uint32 Function(ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Pointer<ffi.Char>, ffi.Uint32)>>('strindex');
-  late final _strindex = _strindexPtr.asFunction<
-      int Function(
-          ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Char>, int)>();
-
-  int strnindex(
-    ffi.Pointer<ffi.Pointer<ffi.Char>> haystack,
-    ffi.Pointer<ffi.Char> needle,
-    int len,
-    int hmax,
-  ) {
-    return _strnindex(
-      haystack,
-      needle,
-      len,
-      hmax,
-    );
-  }
-
-  late final _strnindexPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Uint32 Function(ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Pointer<ffi.Char>, ffi.Uint32, ffi.Uint32)>>('strnindex');
-  late final _strnindex = _strnindexPtr.asFunction<
-      int Function(ffi.Pointer<ffi.Pointer<ffi.Char>>, ffi.Pointer<ffi.Char>,
-          int, int)>();
-
-  /// \endcond public
-  void close_all_xcpt(
-    int fdc,
-  ) {
-    return _close_all_xcpt(
-      fdc,
-    );
-  }
-
-  late final _close_all_xcptPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>('close_all_xcpt');
-  late final _close_all_xcpt =
-      _close_all_xcptPtr.asFunction<void Function(int)>();
-
-  /// Async-signal-safe implementation of printf(), to
-  /// be able to write messages into the error log
-  /// inside a signal handler.
-  int fdprintf(
-    int fd,
-    ffi.Pointer<ffi.Char> format,
-  ) {
-    return _fdprintf(
-      fd,
-      format,
-    );
-  }
-
-  late final _fdprintfPtr = _lookup<
-          ffi.NativeFunction<ssize_t Function(ffi.Int, ffi.Pointer<ffi.Char>)>>(
-      'fdprintf');
-  late final _fdprintf =
-      _fdprintfPtr.asFunction<int Function(int, ffi.Pointer<ffi.Char>)>();
-
-  ffi.Pointer<ffi.Char> find_path(
-    ffi.Pointer<ffi.Char> argv0,
-  ) {
-    return _find_path(
-      argv0,
-    );
-  }
-
-  late final _find_pathPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('find_path');
-  late final _find_path = _find_pathPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
-
-  ffi.Pointer<ffi.Char> abspath(
-    ffi.Pointer<ffi.Char> filename,
-  ) {
-    return _abspath(
-      filename,
-    );
-  }
-
-  late final _abspathPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('abspath');
-  late final _abspath = _abspathPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
-
-  int mkdirpath(
-    ffi.Pointer<ffi.Char> path,
-  ) {
-    return _mkdirpath(
-      path,
-    );
-  }
-
-  late final _mkdirpathPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
-          'mkdirpath');
-  late final _mkdirpath =
-      _mkdirpathPtr.asFunction<int Function(ffi.Pointer<ffi.Char>)>();
-
-  ffi.Pointer<ffi.Char> int2str(
-    int val,
-  ) {
-    return _int2str(
-      val,
-    );
-  }
-
-  late final _int2strPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.LongLong)>>(
-          'int2str');
-  late final _int2str =
-      _int2strPtr.asFunction<ffi.Pointer<ffi.Char> Function(int)>();
-
-  void fpconv_check() {
-    return _fpconv_check();
-  }
-
-  late final _fpconv_checkPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('fpconv_check');
-  late final _fpconv_check = _fpconv_checkPtr.asFunction<void Function()>();
-
-  late final ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> _precision_fmts =
-      _lookup<ffi.Pointer<ffi.Pointer<ffi.Char>>>('precision_fmts');
-
-  ffi.Pointer<ffi.Pointer<ffi.Char>> get precision_fmts =>
-      _precision_fmts.value;
-
-  set precision_fmts(ffi.Pointer<ffi.Pointer<ffi.Char>> value) =>
-      _precision_fmts.value = value;
-
-  /// Check that @a str is valid utf-8 sequence and can be printed
-  /// unescaped.
-  /// @param str string
-  /// @param length string length
-  int utf8_check_printable(
-    ffi.Pointer<ffi.Char> str,
-    int length,
-  ) {
-    return _utf8_check_printable(
-      str,
-      length,
-    );
-  }
-
-  late final _utf8_check_printablePtr = _lookup<
-          ffi
-          .NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Size)>>(
-      'utf8_check_printable');
-  late final _utf8_check_printable = _utf8_check_printablePtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
-
-  ffi.Pointer<ffi.Void> memrchr(
-    ffi.Pointer<ffi.Void> s,
-    int c,
-    int n,
-  ) {
-    return _memrchr(
-      s,
-      c,
-      n,
-    );
-  }
-
-  late final _memrchrPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>>('memrchr');
-  late final _memrchr = _memrchrPtr.asFunction<
-      ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>, int, int)>();
 
   int gettimeofday(
     ffi.Pointer<timeval> __tv,
@@ -10024,130 +9820,6 @@ class TransportBindings {
       'futimes');
   late final _futimes =
       _futimesPtr.asFunction<int Function(int, ffi.Pointer<timeval>)>();
-
-  /// Escape special characters in @a data to @a buf
-  int json_escape(
-    ffi.Pointer<ffi.Char> buf,
-    int size,
-    ffi.Pointer<ffi.Char> data,
-  ) {
-    return _json_escape(
-      buf,
-      size,
-      data,
-    );
-  }
-
-  late final _json_escapePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Int,
-              ffi.Pointer<ffi.Char>)>>('json_escape');
-  late final _json_escape = _json_escapePtr.asFunction<
-      int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Char>)>();
-
-  /// Compare LHS with RHS, return a value <0, 0 or >0 depending on the
-  /// comparison result (strcmp-style).
-  /// Normally, K==1. If K==-1, the result is inverted (as if LHS and RHS
-  /// were swapped).
-  /// K is needed to enable tail call optimization in Release build.
-  int double_compare_uint64(
-    double lhs,
-    int rhs,
-    int k,
-  ) {
-    return _double_compare_uint64(
-      lhs,
-      rhs,
-      k,
-    );
-  }
-
-  late final _double_compare_uint64Ptr = _lookup<
-          ffi
-          .NativeFunction<ffi.Int Function(ffi.Double, ffi.Uint64, ffi.Int)>>(
-      'double_compare_uint64');
-  late final _double_compare_uint64 =
-      _double_compare_uint64Ptr.asFunction<int Function(double, int, int)>();
-
-  /// The same as double_compare_uint64(), but for negative int64_t
-  /// value. To avoid unnecessary negation for cast to uint64_t to
-  /// be able to use the other function, and to avoid the undefined
-  /// behaviour in it, because "(uint64_t)-value" is UB, if value is
-  /// INT64_MIN.
-  int double_compare_nint64(
-    double lhs,
-    int rhs,
-    int k,
-  ) {
-    return _double_compare_nint64(
-      lhs,
-      rhs,
-      k,
-    );
-  }
-
-  late final _double_compare_nint64Ptr = _lookup<
-          ffi.NativeFunction<ffi.Int Function(ffi.Double, ffi.Int64, ffi.Int)>>(
-      'double_compare_nint64');
-  late final _double_compare_nint64 =
-      _double_compare_nint64Ptr.asFunction<int Function(double, int, int)>();
-
-  /// Put the current thread in sleep for the given number of
-  /// seconds.
-  void thread_sleep(
-    double sec,
-  ) {
-    return _thread_sleep(
-      sec,
-    );
-  }
-
-  late final _thread_sleepPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
-          'thread_sleep');
-  late final _thread_sleep =
-      _thread_sleepPtr.asFunction<void Function(double)>();
-
-  /// Returns the value associated with an environment variable \a name. The value
-  /// is copied onto the buffer, which's either user-provided (when \a buf != NULL)
-  /// or dynamically allocated.
-  ///
-  /// \return buf  in case \a buf != NULL, and strlen(value) < \a buf_size.
-  /// ptr  a pointer to dynamically allocated memory, which has to be freed
-  /// manually, in case \a buf == NULL and strlen(value) < internal
-  /// hard limit.
-  /// NULL in case no value is found.
-  /// in case buf != NULL and strlen(value) >= \a buf_size.
-  /// in case buf == NULL and strlen(value) >= internal limit.
-  ///
-  /// When a non-null pointer is returned, it's guaranteed to contain a
-  /// null-terminated string. The string is a copy of the corresponding environment
-  /// variable in all cases, except when `getenv_safe` is run concurrently with
-  /// `setenv`.
-  /// In that case the buffer might contain:
-  /// - an old variable value,
-  /// - a new value, truncated to not exceed old value length,
-  /// - garbage, truncated to not exceed old value length
-  /// Hence the user has to validate the returns.
-  ffi.Pointer<ffi.Char> getenv_safe(
-    ffi.Pointer<ffi.Char> name,
-    ffi.Pointer<ffi.Char> buf,
-    int buf_size,
-  ) {
-    return _getenv_safe(
-      name,
-      buf,
-      buf_size,
-    );
-  }
-
-  late final _getenv_safePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>, ffi.Size)>>('getenv_safe');
-  late final _getenv_safe = _getenv_safePtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, int)>();
 
   int transport_client_initialize_tcp(
     ffi.Pointer<transport_client_t> client,
@@ -15318,48 +14990,6 @@ class _SymbolAddresses {
                   ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
       get strlcat => _library._strlcatPtr;
   ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Uint32 Function(
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Uint32)>> get strindex => _library._strindexPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Uint32 Function(
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Uint32,
-              ffi.Uint32)>> get strnindex => _library._strnindexPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>
-      get close_all_xcpt => _library._close_all_xcptPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ssize_t Function(ffi.Int, ffi.Pointer<ffi.Char>)>>
-      get fdprintf => _library._fdprintfPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>
-      get find_path => _library._find_pathPtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>> get abspath =>
-      _library._abspathPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>
-      get mkdirpath => _library._mkdirpathPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.LongLong)>>
-      get int2str => _library._int2strPtr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function()>> get fpconv_check =>
-      _library._fpconv_checkPtr;
-  ffi.Pointer<ffi.Pointer<ffi.Pointer<ffi.Char>>> get precision_fmts =>
-      _library._precision_fmts;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>, ffi.Size)>>
-      get utf8_check_printable => _library._utf8_check_printablePtr;
-  ffi.Pointer<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Void> Function(
-              ffi.Pointer<ffi.Void>, ffi.Int, ffi.Size)>> get memrchr =>
-      _library._memrchrPtr;
-  ffi.Pointer<
           ffi.NativeFunction<
               ffi.Int Function(ffi.Pointer<timeval>, ffi.Pointer<ffi.Void>)>>
       get gettimeofday => _library._gettimeofdayPtr;
@@ -15390,24 +15020,6 @@ class _SymbolAddresses {
   ffi.Pointer<
           ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<timeval>)>>
       get futimes => _library._futimesPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<ffi.Char>)>>
-      get json_escape => _library._json_escapePtr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Double, ffi.Uint64, ffi.Int)>>
-      get double_compare_uint64 => _library._double_compare_uint64Ptr;
-  ffi.Pointer<
-          ffi.NativeFunction<ffi.Int Function(ffi.Double, ffi.Int64, ffi.Int)>>
-      get double_compare_nint64 => _library._double_compare_nint64Ptr;
-  ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>
-      get thread_sleep => _library._thread_sleepPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Pointer<ffi.Char> Function(
-                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>, ffi.Size)>>
-      get getenv_safe => _library._getenv_safePtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Int Function(
@@ -19513,10 +19125,6 @@ const int IPPORT_RESERVED = 1024;
 
 const int IPPORT_USERRESERVED = 5000;
 
-const int FPCONV_G_FMT_BUFSIZE = 32;
-
-const int FPCONV_G_FMT_MAX_PRECISION = 14;
-
 const int FP_NAN = 0;
 
 const int FP_INFINITE = 1;
@@ -22886,46 +22494,6 @@ const int FILENAME_MAX = 4096;
 const int L_ctermid = 9;
 
 const int FOPEN_MAX = 16;
-
-const String PACKAGE_VERSION = '';
-
-const String PACKAGE = '';
-
-const String TRANSPORT_LIBEXT = 'so';
-
-const int WAL_SYNC_FLAG = 1052672;
-
-const int HAVE_CLOCK_GETTIME_DECL = 1;
-
-const String SYSCONF_DIR = '';
-
-const String INSTALL_PREFIX = '/usr/local';
-
-const String BUILD_TYPE = 'Debug';
-
-const String BUILD_INFO = '';
-
-const String BUILD_OPTIONS = 'cmake . ';
-
-const String COMPILER_INFO = 'GNU-13.2.1';
-
-const String TRANSPORT_C_FLAGS = '';
-
-const String TRANSPORT_CXX_FLAGS = '';
-
-const String MODULE_LIBDIR = '';
-
-const String MODULE_LUADIR = '';
-
-const String MODULE_INCLUDEDIR = '';
-
-const String MODULE_LUAPATH = '';
-
-const String MODULE_LIBPATH = '';
-
-const String MODULE_LIBSUFFIX = '';
-
-const int CACHELINE_SIZE = 64;
 
 const int WNOHANG = 1;
 
