@@ -1,5 +1,5 @@
-#ifndef INTERACTOR_COMMON_H_INCLUDED
-#define INTERACTOR_COMMON_H_INCLUDED
+#ifndef TRANSPORT_COMMON_H_INCLUDED
+#define TRANSPORT_COMMON_H_INCLUDED
 
 #if defined(__cplusplus)
 extern "C"
