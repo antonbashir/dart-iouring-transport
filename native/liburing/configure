@@ -5,22 +5,6 @@ set -e
 cc=${CC:-gcc}
 cxx=${CXX:-g++}
 
-#
-# TODO(ammarfaizi2): Remove this notice and `--nolibc` option.
-#
-nolibc_deprecated() {
-  echo "";
-  echo "=================================================================";
-  echo "";
-  echo "  --nolibc option is deprecated and has no effect.";
-  echo "  It will be removed in a future liburing release.";
-  echo "";
-  echo "  liburing on x86-64, x86 (32-bit) and aarch64 always use CONFIG_NOLIBC.";
-  echo "";
-  echo "=================================================================";
-  echo "";
-}
-
 for opt do
   optarg=$(expr "x$opt" : 'x[^=]*=\(.*\)' || true)
   case "$opt" in
@@ -42,7 +26,7 @@ for opt do
   ;;
   --cxx=*) cxx="$optarg"
   ;;
-  --nolibc) nolibc_deprecated
+  --use-libc) use_libc=yes
   ;;
   *)
     echo "ERROR: unknown option $opt"
@@ -91,7 +75,7 @@ Options: [defaults in brackets after descriptions]
   --datadir=PATH           install shared data in PATH [$datadir]
   --cc=CMD                 use CMD as the C compiler
   --cxx=CMD                use CMD as the C++ compiler
-  --nolibc                 build liburing without libc
+  --use-libc               use libc for liburing (useful for hardening)
 EOF
 exit 0
 fi
@@ -400,23 +384,50 @@ if compile_prog "" "" "nvme uring cmd"; then
 fi
 print_config "NVMe uring command support" "$nvme_uring_cmd"
 
-#############################################################################
-#
-# Currently, CONFIG_NOLIBC is only enabled on x86-64, x86 (32-bit) and aarch64.
-#
+##########################################
+# Check futexv support
+futexv="no"
 cat > $TMPC << EOF
+#include <linux/futex.h>
+#include <unistd.h>
+#include <string.h>
+int main(void)
+{
+  struct futex_waitv fw;
+
+  memset(&fw, FUTEX_32, sizeof(fw));
+
+  return sizeof(struct futex_waitv);
+}
+EOF
+if compile_prog "" "" "futexv"; then
+  futexv="yes"
+fi
+print_config "futex waitv support" "$futexv"
+
+#############################################################################
+liburing_nolibc="no"
+if test "$use_libc" != "yes"; then
+
+  #
+  # Currently, CONFIG_NOLIBC only supports x86-64, x86 (32-bit), aarch64 and riscv64.
+  #
+  cat > $TMPC << EOF
 int main(void){
-#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)
   return 0;
 #else
 #error libc is needed
 #endif
 }
 EOF
-if compile_prog "" "" "nolibc support"; then
-  liburing_nolibc="yes"
+
+  if compile_prog "" "" "nolibc"; then
+    liburing_nolibc="yes"
+  fi
 fi
-print_config "nolibc support" "$liburing_nolibc";
+
+print_config "nolibc" "$liburing_nolibc";
 #############################################################################
 
 ####################################################
@@ -471,6 +482,9 @@ fi
 if test "$has_fanotify" = "yes"; then
   output_sym "CONFIG_HAVE_FANOTIFY"
 fi
+if test "$futexv" = "yes"; then
+  output_sym "CONFIG_HAVE_FUTEXV"
+fi
 
 echo "CC=$cc" >> $config_host_mak
 print_config "CC" "$cc"
@@ -478,6 +492,8 @@ echo "CXX=$cxx" >> $config_host_mak
 print_config "CXX" "$cxx"
 
 # generate io_uring_version.h
+# Reset MAKEFLAGS
+MAKEFLAGS=
 MAKE_PRINT_VARS="include Makefile.common\nprint-%: ; @echo \$(\$*)\n"
 VERSION_MAJOR=$(env echo -e "$MAKE_PRINT_VARS" | make -s --no-print-directory -f - print-VERSION_MAJOR)
 VERSION_MINOR=$(env echo -e "$MAKE_PRINT_VARS" | make -s --no-print-directory -f - print-VERSION_MINOR)
@@ -551,7 +567,22 @@ cat >> $compat_h << EOF
 
 EOF
 fi
+if test "$futexv" != "yes"; then
+cat >> $compat_h << EOF
+#include <inttypes.h>
 
+#define FUTEX_32	2
+#define FUTEX_WAITV_MAX	128
+
+struct futex_waitv {
+	uint64_t	val;
+	uint64_t	uaddr;
+	uint32_t	flags;
+	uint32_t	__reserved;
+};
+
+EOF
+fi
 cat >> $compat_h << EOF
 #endif
 EOF

@@ -1,16 +1,12 @@
 #include "transport_socket.h"
 #include <arpa/inet.h>
-#include <errno.h>
+#include <fcntl.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include "liburing.h"
 #include "transport_constants.h"
 
 int64_t transport_socket_create_tcp(uint64_t flags,

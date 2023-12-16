@@ -8,10 +8,6 @@ extern "C"
 {
 #endif
 
-#if !MH_SOURCE
-#define MH_UNDEF
-#endif
-
 #define mh_name _events
 #define mh_key_t uint64_t
   struct mh_events_node_t
@@ -28,7 +24,10 @@ extern "C"
 #define mh_hash_key(a, arg) (a)
 #define mh_cmp(a, b, arg) ((a->data) != (b->data))
 #define mh_cmp_key(a, b, arg) ((a) != (b->data))
+#define MH_SOURCE 1
+
 #include "collections/mhash.h"
+
 #undef mh_node_t
 #undef mh_arg_t
 #undef mh_hash

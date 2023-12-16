@@ -8,7 +8,6 @@ extern "C"
 
 #include "liburing.h"
 #include "common/common.h"
-#include "pthread.h"
 
   static inline struct io_uring_sqe *transport_provide_sqe(struct io_uring *ring)
   {

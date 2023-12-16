@@ -1242,6 +1242,22 @@ for details on how to setup a context for fixed buffer I/O.
 .in
 .PP
 
+.TP
+.B IORING_OP_WAITID
+Issue the equivalent of a
+.BR waitid(2)
+system call.
+.I len
+must contain the idtype being queried/waited for and
+.I fd
+must contain the 'pid' (or id) being waited for.
+.I file_index
+is the 'options' being set (the child state changes to wait for).
+.I addr2
+is a pointer to siginfo_t, if any, being filled in. See also
+.BR waitid(2)
+for the general description of the related system call. Available since 6.5.
+
 .PP
 The
 .I flags
@@ -1330,7 +1346,7 @@ linked timeout has the flag set, it's guaranteed to not post a CQE.
 
 The semantics are chosen to accommodate several use cases. First, when all but
 the last request of a normal link without linked timeouts are marked with the
-flag, only one CQE per lin is posted. Additionally, it enables suppression of
+flag, only one CQE per link is posted. Additionally, it enables suppression of
 CQEs in cases where the side effects of a successfully executed operation is
 enough for userspace to know the state of the system. One such example would
 be writing to a synchronisation file.
@@ -1540,6 +1556,9 @@ pending. The application should wait for some completions and try again. May
 occur if the application tries to queue more requests than we have room for in
 the CQ ring, or if the application attempts to wait for more events without
 having reaped the ones already present in the CQ ring.
+.TP
+.B EEXIST
+The thread submitting the work is invalid.
 .TP
 .B EINVAL
 Some bits in the

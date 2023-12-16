@@ -6,7 +6,6 @@
 #include "transport_buffers_pool.h"
 #include "transport_client.h"
 #include "transport_collections.h"
-#include "transport_common.h"
 #include "transport_server.h"
 
 #if defined(__cplusplus)

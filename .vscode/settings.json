@@ -108,6 +108,9 @@
     "time_types.h": "c",
     "transport_buffers_pool.h": "c",
     "typeinfo": "c",
-    "regex": "c"
+    "regex": "c",
+    "unistd.h": "c",
+    "fcntl-linux.h": "c",
+    "tcp.h": "c"
   },
 }

@@ -1,8 +1,6 @@
 #ifndef TRANSPORT_CONSTANTS_H
 #define TRANSPORT_CONSTANTS_H
 
-#include <stdint.h>
-
 #if defined(__cplusplus)
 extern "C"
 {

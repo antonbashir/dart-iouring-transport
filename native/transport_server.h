@@ -3,9 +3,7 @@
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <sys/un.h>
-#include "liburing.h"
 #include "transport_constants.h"
 
 #if defined(__cplusplus)

@@ -52,10 +52,12 @@ test_srcs := \
 	b19062a56726.c \
 	b5837bd5311d.c \
 	buf-ring.c \
+	buf-ring-nommap.c \
 	ce593a6c480a.c \
 	close-opath.c \
 	connect.c \
 	connect-rep.c \
+	coredump.c \
 	cq-full.c \
 	cq-overflow.c \
 	cq-peek-batch.c \
@@ -80,6 +82,7 @@ test_srcs := \
 	fadvise.c \
 	fallocate.c \
 	fc2a85cb02ef.c \
+	fd-install.c \
 	fd-pass.c \
 	file-register.c \
 	files-exit-hang-poll.c \
@@ -87,11 +90,13 @@ test_srcs := \
 	file-update.c \
 	file-verify.c \
 	fixed-buf-iter.c \
+	fixed-buf-merge.c \
 	fixed-link.c \
 	fixed-reuse.c \
 	fpos.c \
 	fsnotify.c \
 	fsync.c \
+	futex.c \
 	hardlink.c \
 	io-cancel.c \
 	iopoll.c \
@@ -112,6 +117,7 @@ test_srcs := \
 	msg-ring-flags.c \
 	msg-ring-overflow.c \
 	multicqes_drain.c \
+	no-mmap-inval.c \
 	nolibc.c \
 	nop-all-sizes.c \
 	nop.c \
@@ -135,13 +141,14 @@ test_srcs := \
 	poll-race-mshot.c \
 	poll-ring.c \
 	poll-v-poll.c \
-	pollfree.c \
 	probe.c \
 	read-before-exit.c \
+	read-mshot.c \
 	read-write.c \
 	recv-msgall.c \
 	recv-msgall-stream.c \
 	recv-multishot.c \
+	reg-fd-only.c \
 	reg-hint.c \
 	reg-reg-ring.c \
 	regbuf-merge.c \
@@ -153,7 +160,6 @@ test_srcs := \
 	rsrc_tags.c \
 	rw_merge_test.c \
 	self.c \
-	sendmsg_fs_cve.c \
 	send_recv.c \
 	send_recvmsg.c \
 	send-zerocopy.c \
@@ -164,6 +170,8 @@ test_srcs := \
 	single-issuer.c \
 	skip-cqe.c \
 	socket.c \
+	socket-io-cmd.c \
+	socket-getsetsock-cmd.c \
 	socket-rw.c \
 	socket-rw-eagain.c \
 	socket-rw-offset.c \
@@ -191,7 +199,9 @@ test_srcs := \
 	tty-write-dpoll.c \
 	unlink.c \
 	version.c \
+	waitid.c \
 	wakeup-hang.c \
+	wq-aff.c \
 	xattr.c \
 	# EOL
 
@@ -223,7 +233,9 @@ all: $(test_targets)
 helpers.o: helpers.c
 	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
-%.t: %.c $(helpers) helpers.h ../src/liburing.a
+LIBURING := $(shell if [ -e ../src/liburing.a ]; then echo ../src/liburing.a; fi)
+
+%.t: %.c $(helpers) helpers.h $(LIBURING)
 	$(QUIET_CC)$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(helpers) $(LDFLAGS)
 
 #
@@ -232,7 +244,7 @@ helpers.o: helpers.c
 #   cc1plus: warning: command-line option '-Wmissing-prototypes' \
 #   is valid for C/ObjC but not for C++
 #
-%.t: %.cc $(helpers) helpers.h ../src/liburing.a
+%.t: %.cc $(helpers) helpers.h $(LIBURING)
 	$(QUIET_CXX)$(CXX) \
 	$(patsubst -Wmissing-prototypes,,$(CPPFLAGS)) \
 	$(patsubst -Wmissing-prototypes,,$(CXXFLAGS)) \

@@ -43,6 +43,10 @@ struct io_uring_sqe {
 	union {
 		__u64	addr;	/* pointer to buffer or iovecs */
 		__u64	splice_off_in;
+		struct {
+			__u32	level;
+			__u32	optname;
+		};
 	};
 	__u32	len;		/* buffer size or number of iovecs */
 	union {
@@ -65,6 +69,9 @@ struct io_uring_sqe {
 		__u32		xattr_flags;
 		__u32		msg_ring_flags;
 		__u32		uring_cmd_flags;
+		__u32		waitid_flags;
+		__u32		futex_flags;
+		__u32		install_fd_flags;
 	};
 	__u64	user_data;	/* data to be passed back at completion time */
 	/* pack this to avoid bogus arm OABI complaints */
@@ -79,6 +86,7 @@ struct io_uring_sqe {
 	union {
 		__s32	splice_fd_in;
 		__u32	file_index;
+		__u32	optlen;
 		struct {
 			__u16	addr_len;
 			__u16	__pad3[1];
@@ -89,6 +97,7 @@ struct io_uring_sqe {
 			__u64	addr3;
 			__u64	__pad2[1];
 		};
+		__u64	optval;
 		/*
 		 * If the ring is initialized with IORING_SETUP_SQE128, then
 		 * this field is used for 80 bytes of arbitrary command data
@@ -173,6 +182,23 @@ enum {
  */
 #define IORING_SETUP_DEFER_TASKRUN	(1U << 13)
 
+/*
+ * Application provides ring memory
+ */
+#define IORING_SETUP_NO_MMAP		(1U << 14)
+
+/*
+ * Register the ring fd in itself for use with
+ * IORING_REGISTER_USE_REGISTERED_RING; return a registered fd index rather
+ * than an fd.
+ */
+#define IORING_SETUP_REGISTERED_FD_ONLY	(1U << 15)
+
+/*
+ * Removes indirection through the SQ index array.
+ */
+#define IORING_SETUP_NO_SQARRAY		(1U << 16)
+
 enum io_uring_op {
 	IORING_OP_NOP,
 	IORING_OP_READV,
@@ -223,6 +249,12 @@ enum io_uring_op {
 	IORING_OP_URING_CMD,
 	IORING_OP_SEND_ZC,
 	IORING_OP_SENDMSG_ZC,
+	IORING_OP_READ_MULTISHOT,
+	IORING_OP_WAITID,
+	IORING_OP_FUTEX_WAIT,
+	IORING_OP_FUTEX_WAKE,
+	IORING_OP_FUTEX_WAITV,
+	IORING_OP_FIXED_FD_INSTALL,
 
 	/* this goes last, obviously */
 	IORING_OP_LAST,
@@ -352,6 +384,13 @@ enum {
 #define IORING_MSG_RING_FLAGS_PASS	(1U << 1)
 
 /*
+ * IORING_OP_FIXED_FD_INSTALL flags (sqe->install_fd_flags)
+ *
+ * IORING_FIXED_FD_NO_CLOEXEC	Don't mark the fd as O_CLOEXEC
+ */
+#define IORING_FIXED_FD_NO_CLOEXEC	(1U << 0)
+
+/*
  * IO completion data structure (Completion Queue Entry)
  */
 struct io_uring_cqe {
@@ -406,7 +445,7 @@ struct io_sqring_offsets {
 	__u32 dropped;
 	__u32 array;
 	__u32 resv1;
-	__u64 resv2;
+	__u64 user_addr;
 };
 
 /*
@@ -425,7 +464,7 @@ struct io_cqring_offsets {
 	__u32 cqes;
 	__u32 flags;
 	__u32 resv1;
-	__u64 resv2;
+	__u64 user_addr;
 };
 
 /*
@@ -701,6 +740,16 @@ struct io_uring_recvmsg_out {
 	__u32 controllen;
 	__u32 payloadlen;
 	__u32 flags;
+};
+
+/*
+ * Argument for IORING_OP_URING_CMD when file is a socket
+ */
+enum {
+	SOCKET_URING_OP_SIOCINQ		= 0,
+	SOCKET_URING_OP_SIOCOUTQ,
+	SOCKET_URING_OP_GETSOCKOPT,
+	SOCKET_URING_OP_SETSOCKOPT,
 };
 
 #ifdef __cplusplus
