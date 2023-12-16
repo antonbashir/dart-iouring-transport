@@ -111,6 +111,8 @@
     "regex": "c",
     "unistd.h": "c",
     "fcntl-linux.h": "c",
-    "tcp.h": "c"
+    "tcp.h": "c",
+    "forward_list": "c",
+    "list": "c"
   },
 }

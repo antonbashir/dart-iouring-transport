@@ -22,12 +22,6 @@ FetchContent_MakeAvailable(liburing)
 include_directories(${liburing_SOURCE_DIR}/src/include)
 add_custom_target(liburing COMMAND ./configure --prefix=${liburing_SOURCE_DIR}/build && make && make install WORKING_DIRECTORY ${liburing_SOURCE_DIR})
 
-configure_file(
-  "${PROJECT_SOURCE_DIR}/common/configuration.h.cmake"
-  "${PROJECT_SOURCE_DIR}/common/configuration.h"
-)
-message(STATUS "")
-
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 
