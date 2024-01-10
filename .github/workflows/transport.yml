@@ -23,4 +23,8 @@ jobs:
         run: cd dart && dart pub get && dart compile exe test/test.dart
 
       - name: Dart Test
-        run: cd dart && test/test.exe
+        run: |
+          sudo prlimit --pid $$ --nofile=1048576:1048576
+          sudo sysctl fs.inotify.max_user_instances=1280
+          sudo sysctl fs.inotify.max_user_watches=655360
+          cd dart && test/test.exe
