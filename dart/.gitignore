@@ -1,3 +1,4 @@
-!native/libtransport.so
+!/native/libtransport_debug_linux_x64.so 
+!/native/libtransport_release_linux_x64.so
 .dart
 output.txt
