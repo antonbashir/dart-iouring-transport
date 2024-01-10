@@ -23,6 +23,4 @@ jobs:
         run: cd dart && dart pub get && dart compile exe test/test.dart
 
       - name: Dart Test
-        run: |
-          sudo prlimit --pid $$ --nofile=1048576:1048576
-          cd dart && test/test.exe
+        run: cd dart && test/test.exe
