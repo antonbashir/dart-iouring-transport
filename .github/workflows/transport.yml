@@ -25,6 +25,4 @@ jobs:
       - name: Dart Test
         run: |
           sudo prlimit --pid $$ --nofile=1048576:1048576
-          sudo sysctl fs.inotify.max_user_instances=1280
-          sudo sysctl fs.inotify.max_user_watches=655360
           cd dart && test/test.exe
