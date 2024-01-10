@@ -89,13 +89,4 @@ class TransportDefaults {
         socketNonblock: true,
         socketClockexec: true,
       );
-
-  static TransportUnixDatagramServerConfiguration unixDatagramServer() => TransportUnixDatagramServerConfiguration(
-        socketReceiveBufferSize: 4 * 1024 * 1024,
-        socketSendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(days: 1),
-        writeTimeout: Duration(days: 1),
-        socketNonblock: true,
-        socketClockexec: true,
-      );
 }
