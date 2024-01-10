@@ -24,4 +24,4 @@ jobs:
 
       - name: Dart Test
         run: |
-          sudo env "PATH=$PATH" bash -c "ulimit -l 65536 && ulimit -a && cd dart && test/test.exe"
+          env "PATH=$PATH" bash -c "ulimit -l 65536 && ulimit -a && cd dart && test/test.exe"
