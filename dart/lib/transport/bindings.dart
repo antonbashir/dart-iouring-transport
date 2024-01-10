@@ -9913,36 +9913,6 @@ class TransportBindings {
               ffi.Pointer<transport_client_configuration_t>,
               ffi.Pointer<ffi.Char>)>();
 
-  int transport_client_initialize_unix_dgram(
-    ffi.Pointer<transport_client_t> client,
-    ffi.Pointer<transport_client_configuration_t> configuration,
-    ffi.Pointer<ffi.Char> destination_path,
-    ffi.Pointer<ffi.Char> source_path,
-  ) {
-    return _transport_client_initialize_unix_dgram(
-      client,
-      configuration,
-      destination_path,
-      source_path,
-    );
-  }
-
-  late final _transport_client_initialize_unix_dgramPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_client_t>,
-                  ffi.Pointer<transport_client_configuration_t>,
-                  ffi.Pointer<ffi.Char>,
-                  ffi.Pointer<ffi.Char>)>>(
-      'transport_client_initialize_unix_dgram');
-  late final _transport_client_initialize_unix_dgram =
-      _transport_client_initialize_unix_dgramPtr.asFunction<
-          int Function(
-              ffi.Pointer<transport_client_t>,
-              ffi.Pointer<transport_client_configuration_t>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>)>();
-
   ffi.Pointer<sockaddr> transport_client_get_destination_address(
     ffi.Pointer<transport_client_t> client,
   ) {
@@ -12053,32 +12023,6 @@ class TransportBindings {
               ffi.Pointer<transport_server_configuration_t>,
               ffi.Pointer<ffi.Char>)>();
 
-  int transport_server_initialize_unix_dgram(
-    ffi.Pointer<transport_server_t> server,
-    ffi.Pointer<transport_server_configuration_t> configuration,
-    ffi.Pointer<ffi.Char> path,
-  ) {
-    return _transport_server_initialize_unix_dgram(
-      server,
-      configuration,
-      path,
-    );
-  }
-
-  late final _transport_server_initialize_unix_dgramPtr = _lookup<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_server_t>,
-                  ffi.Pointer<transport_server_configuration_t>,
-                  ffi.Pointer<ffi.Char>)>>(
-      'transport_server_initialize_unix_dgram');
-  late final _transport_server_initialize_unix_dgram =
-      _transport_server_initialize_unix_dgramPtr.asFunction<
-          int Function(
-              ffi.Pointer<transport_server_t>,
-              ffi.Pointer<transport_server_configuration_t>,
-              ffi.Pointer<ffi.Char>)>();
-
   void transport_server_destroy(
     ffi.Pointer<transport_server_t> server,
   ) {
@@ -12605,30 +12549,6 @@ class TransportBindings {
               ffi.Uint32)>>('transport_socket_create_unix_stream');
   late final _transport_socket_create_unix_stream =
       _transport_socket_create_unix_streamPtr
-          .asFunction<int Function(int, int, int, int, int)>();
-
-  int transport_socket_create_unix_dgram(
-    int flags,
-    int socket_receive_buffer_size,
-    int socket_send_buffer_size,
-    int socket_receive_low_at,
-    int socket_send_low_at,
-  ) {
-    return _transport_socket_create_unix_dgram(
-      flags,
-      socket_receive_buffer_size,
-      socket_send_buffer_size,
-      socket_receive_low_at,
-      socket_send_low_at,
-    );
-  }
-
-  late final _transport_socket_create_unix_dgramPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int64 Function(ffi.Uint64, ffi.Uint32, ffi.Uint32, ffi.Uint32,
-              ffi.Uint32)>>('transport_socket_create_unix_dgram');
-  late final _transport_socket_create_unix_dgram =
-      _transport_socket_create_unix_dgramPtr
           .asFunction<int Function(int, int, int, int, int)>();
 
   void transport_socket_initialize_multicast_request(
@@ -15048,15 +14968,6 @@ class _SymbolAddresses {
           _library._transport_client_initialize_unix_streamPtr;
   ffi.Pointer<
           ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_client_t>,
-                  ffi.Pointer<transport_client_configuration_t>,
-                  ffi.Pointer<ffi.Char>,
-                  ffi.Pointer<ffi.Char>)>>
-      get transport_client_initialize_unix_dgram =>
-          _library._transport_client_initialize_unix_dgramPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
               ffi.Pointer<sockaddr> Function(ffi.Pointer<transport_client_t>)>>
       get transport_client_get_destination_address =>
           _library._transport_client_get_destination_addressPtr;
@@ -15419,14 +15330,6 @@ class _SymbolAddresses {
       get transport_server_initialize_unix_stream =>
           _library._transport_server_initialize_unix_streamPtr;
   ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int Function(
-                  ffi.Pointer<transport_server_t>,
-                  ffi.Pointer<transport_server_configuration_t>,
-                  ffi.Pointer<ffi.Char>)>>
-      get transport_server_initialize_unix_dgram =>
-          _library._transport_server_initialize_unix_dgramPtr;
-  ffi.Pointer<
           ffi
           .NativeFunction<ffi.Void Function(ffi.Pointer<transport_server_t>)>>
       get transport_server_destroy => _library._transport_server_destroyPtr;
@@ -15582,12 +15485,6 @@ class _SymbolAddresses {
                   ffi.Uint64, ffi.Uint32, ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
       get transport_socket_create_unix_stream =>
           _library._transport_socket_create_unix_streamPtr;
-  ffi.Pointer<
-          ffi.NativeFunction<
-              ffi.Int64 Function(
-                  ffi.Uint64, ffi.Uint32, ffi.Uint32, ffi.Uint32, ffi.Uint32)>>
-      get transport_socket_create_unix_dgram =>
-          _library._transport_socket_create_unix_dgramPtr;
   ffi.Pointer<
       ffi.NativeFunction<
           ffi.Void Function(

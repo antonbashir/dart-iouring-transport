@@ -105,42 +105,6 @@ int transport_client_initialize_unix_stream(transport_client_t* client,
     return 0;
 }
 
-int transport_client_initialize_unix_dgram(transport_client_t* client,
-                                           transport_client_configuration_t* configuration,
-                                           const char* destination_path,
-                                           const char* source_path)
-
-{
-    client->family = UNIX;
-    client->client_address_length = sizeof(struct sockaddr_un);
-
-    memset(&client->unix_destination_address, 0, sizeof(client->unix_destination_address));
-    client->unix_destination_address.sun_family = AF_UNIX;
-    strcpy(client->unix_destination_address.sun_path, destination_path);
-
-    memset(&client->unix_source_address, 0, sizeof(client->unix_source_address));
-    client->unix_source_address.sun_family = AF_UNIX;
-    strcpy(client->unix_source_address.sun_path, source_path);
-
-    int64_t result = transport_socket_create_unix_dgram(
-        configuration->socket_configuration_flags,
-        configuration->socket_receive_buffer_size,
-        configuration->socket_send_buffer_size,
-        configuration->socket_receive_low_at,
-        configuration->socket_send_low_at);
-    if (result < 0)
-    {
-        return result;
-    }
-    client->fd = result;
-    result = bind(client->fd, (struct sockaddr*)&client->unix_source_address, client->client_address_length);
-    if (result < 0)
-    {
-        return result;
-    }
-    return 0;
-}
-
 struct sockaddr* transport_client_get_destination_address(transport_client_t* client)
 {
     return client->family == INET ? (struct sockaddr*)&client->inet_destination_address : (struct sockaddr*)&client->unix_destination_address;

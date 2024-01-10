@@ -19,7 +19,6 @@ void main() {
   final tcp = true;
   final udp = true;
   final unixStream = true;
-  final unixDgram = true;
   final file = true;
   final timeout = true;
   final buffers = true;
@@ -62,17 +61,6 @@ void main() {
       testUdpMany(index: index, clients: 1, count: 64);
       testUdpMany(index: index, clients: 128, count: 8);
       testUdpMany(index: index, clients: 512, count: 4);
-    }
-  });
-  group("[unix dgram]", timeout: Timeout(Duration(hours: 1)), skip: !unixDgram, () {
-    final testsCount = 5;
-    for (var index = 0; index < testsCount; index++) {
-      testUnixDgramSingle(index: index, clients: 1);
-      testUnixDgramSingle(index: index, clients: 128);
-      testUnixDgramSingle(index: index, clients: 512);
-      testUnixDgramMany(index: index, clients: 1, count: 64);
-      testUnixDgramMany(index: index, clients: 128, count: 8);
-      testUnixDgramMany(index: index, clients: 512, count: 4);
     }
   });
   group("[file]", timeout: Timeout(Duration(hours: 1)), skip: !file, () {

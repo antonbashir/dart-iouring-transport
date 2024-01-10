@@ -55,15 +55,6 @@ class TransportDefaults {
         socketClockexec: true,
       );
 
-  static TransportUnixDatagramClientConfiguration unixDatagramClient() => TransportUnixDatagramClientConfiguration(
-        socketReceiveBufferSize: 4 * 1024 * 1024,
-        socketSendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(seconds: 60),
-        writeTimeout: Duration(seconds: 60),
-        socketNonblock: true,
-        socketClockexec: true,
-      );
-
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
         socketMaxConnections: 4096,
         socketReceiveBufferSize: 4 * 1024 * 1024,

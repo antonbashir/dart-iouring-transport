@@ -56,11 +56,6 @@ extern "C"
                                                 transport_client_configuration_t* configuration,
                                                 const char* path);
 
-    int transport_client_initialize_unix_dgram(transport_client_t* client,
-                                               transport_client_configuration_t* configuration,
-                                               const char* destination_path,
-                                               const char* source_path);
-
     struct sockaddr* transport_client_get_destination_address(transport_client_t* client);
 
     void transport_client_destroy(transport_client_t* client);

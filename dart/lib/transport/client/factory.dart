@@ -224,53 +224,6 @@ class TransportClientsFactory {
     return TransportClientConnectionPool(await Future.wait(clients));
   }
 
-  TransportDatagramClient unixDatagram(
-    String sourcePath,
-    String destinationPath, {
-    TransportUnixDatagramClientConfiguration? configuration,
-  }) {
-    configuration = configuration ?? TransportDefaults.unixDatagramClient();
-    final clientPointer = calloc<transport_client_t>();
-    if (clientPointer == nullptr) {
-      throw TransportInitializationException(TransportMessages.clientMemoryError);
-    }
-    final result = using(
-      (arena) => _bindings.transport_client_initialize_unix_dgram(
-        clientPointer,
-        _unixDatagramConfiguration(configuration!, arena),
-        destinationPath.toNativeUtf8(allocator: arena).cast(),
-        sourcePath.toNativeUtf8(allocator: arena).cast(),
-      ),
-    );
-    if (result < 0) {
-      if (clientPointer.ref.fd > 0) {
-        _bindings.transport_close_descriptor(clientPointer.ref.fd);
-        calloc.free(clientPointer);
-        throw TransportInitializationException(TransportMessages.clientError(result, _bindings));
-      }
-      calloc.free(clientPointer);
-      throw TransportInitializationException(TransportMessages.clientSocketError(result));
-    }
-    final client = TransportClientChannel(
-      TransportChannel(
-        _workerPointer,
-        clientPointer.ref.fd,
-        _bindings,
-        _buffers,
-      ),
-      clientPointer,
-      _workerPointer,
-      _bindings,
-      configuration.readTimeout.inSeconds,
-      configuration.writeTimeout.inSeconds,
-      _buffers,
-      _registry,
-      _payloadPool,
-    );
-    _registry.add(clientPointer.ref.fd, client);
-    return TransportDatagramClient(client);
-  }
-
   Pointer<transport_client_configuration_t> _tcpConfiguration(TransportTcpClientConfiguration clientConfiguration, Allocator allocator) {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     var flags = 0;
@@ -383,31 +336,6 @@ class TransportClientsFactory {
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
     if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (clientConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
-    if (clientConfiguration.socketReceiveBufferSize != null) {
-      flags |= transportSocketOptionSocketRcvbuf;
-      nativeClientConfiguration.ref.socket_receive_buffer_size = clientConfiguration.socketReceiveBufferSize!;
-    }
-    if (clientConfiguration.socketSendBufferSize != null) {
-      flags |= transportSocketOptionSocketSndbuf;
-      nativeClientConfiguration.ref.socket_send_buffer_size = clientConfiguration.socketSendBufferSize!;
-    }
-    if (clientConfiguration.socketReceiveLowAt != null) {
-      flags |= transportSocketOptionSocketRcvlowat;
-      nativeClientConfiguration.ref.socket_receive_low_at = clientConfiguration.socketReceiveLowAt!;
-    }
-    if (clientConfiguration.socketSendLowAt != null) {
-      flags |= transportSocketOptionSocketSndlowat;
-      nativeClientConfiguration.ref.socket_send_low_at = clientConfiguration.socketSendLowAt!;
-    }
-    nativeClientConfiguration.ref.socket_configuration_flags = flags;
-    return nativeClientConfiguration;
-  }
-
-  Pointer<transport_client_configuration_t> _unixDatagramConfiguration(TransportUnixDatagramClientConfiguration clientConfiguration, Allocator allocator) {
-    final nativeClientConfiguration = allocator<transport_client_configuration_t>();
-    var flags = 0;
-    if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (clientConfiguration.socketReceiveBufferSize != null) {
       flags |= transportSocketOptionSocketRcvbuf;
       nativeClientConfiguration.ref.socket_receive_buffer_size = clientConfiguration.socketReceiveBufferSize!;

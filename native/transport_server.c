@@ -113,33 +113,6 @@ int transport_server_initialize_unix_stream(transport_server_t* server, transpor
     return 0;
 }
 
-int transport_server_initialize_unix_dgram(transport_server_t* server, transport_server_configuration_t* configuration,
-                                           const char* path)
-{
-    server->family = UNIX;
-    memset(&server->unix_server_address, 0, sizeof(server->unix_server_address));
-    server->unix_server_address.sun_family = AF_UNIX;
-    strcpy(server->unix_server_address.sun_path, path);
-    server->server_address_length = sizeof(server->unix_server_address);
-    int64_t result = transport_socket_create_unix_dgram(
-        configuration->socket_configuration_flags,
-        configuration->socket_receive_buffer_size,
-        configuration->socket_send_buffer_size,
-        configuration->socket_receive_low_at,
-        configuration->socket_send_low_at);
-    if (result < 0)
-    {
-        return result;
-    }
-    server->fd = result;
-    result = bind(server->fd, (struct sockaddr*)&server->unix_server_address, server->server_address_length);
-    if (result < 0)
-    {
-        return result;
-    }
-    return 0;
-}
-
 void transport_server_destroy(transport_server_t* server)
 {
     if (server->family == UNIX)

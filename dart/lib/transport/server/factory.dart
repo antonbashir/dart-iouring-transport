@@ -209,54 +209,6 @@ class TransportServersFactory {
     return server..accept(onAccept);
   }
 
-  TransportServerDatagramReceiver unixDatagram(
-    String path, {
-    TransportUnixDatagramServerConfiguration? configuration,
-  }) {
-    configuration = configuration ?? TransportDefaults.unixDatagramServer();
-    final server = using(
-      (Arena arena) {
-        final pointer = calloc<transport_server_t>();
-        if (pointer == nullptr) {
-          throw TransportInitializationException(TransportMessages.serverMemoryError);
-        }
-        final result = _bindings.transport_server_initialize_unix_dgram(
-          pointer,
-          _unixDatagramConfiguration(configuration!, arena),
-          path.toNativeUtf8(allocator: arena).cast(),
-        );
-        if (result < 0) {
-          if (pointer.ref.fd > 0) {
-            _bindings.transport_close_descriptor(pointer.ref.fd);
-            calloc.free(pointer);
-            throw TransportInitializationException(TransportMessages.serverError(result, _bindings));
-          }
-          calloc.free(pointer);
-          throw TransportInitializationException(TransportMessages.serverSocketError(result));
-        }
-        return TransportServerChannel(
-          pointer,
-          _workerPointer,
-          _bindings,
-          configuration.readTimeout.inSeconds,
-          configuration.writeTimeout.inSeconds,
-          _buffers,
-          _registry,
-          _payloadPool,
-          _datagramResponderPool,
-          datagramChannel: TransportChannel(
-            _workerPointer,
-            pointer.ref.fd,
-            _bindings,
-            _buffers,
-          ),
-        );
-      },
-    );
-    _registry.addServer(server.pointer.ref.fd, server);
-    return TransportServerDatagramReceiver(server);
-  }
-
   Pointer<transport_server_configuration_t> _tcpConfiguration(TransportTcpServerConfiguration serverConfiguration, Allocator allocator) {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     var flags = 0;
@@ -376,31 +328,6 @@ class TransportServersFactory {
     if (serverConfiguration.socketMaxConnections != null) {
       nativeServerConfiguration.ref.socket_max_connections = serverConfiguration.socketMaxConnections!;
     }
-    if (serverConfiguration.socketReceiveBufferSize != null) {
-      flags |= transportSocketOptionSocketRcvbuf;
-      nativeServerConfiguration.ref.socket_receive_buffer_size = serverConfiguration.socketReceiveBufferSize!;
-    }
-    if (serverConfiguration.socketSendBufferSize != null) {
-      flags |= transportSocketOptionSocketSndbuf;
-      nativeServerConfiguration.ref.socket_send_buffer_size = serverConfiguration.socketSendBufferSize!;
-    }
-    if (serverConfiguration.socketReceiveLowAt != null) {
-      flags |= transportSocketOptionSocketRcvlowat;
-      nativeServerConfiguration.ref.socket_receive_low_at = serverConfiguration.socketReceiveLowAt!;
-    }
-    if (serverConfiguration.socketSendLowAt != null) {
-      flags |= transportSocketOptionSocketSndlowat;
-      nativeServerConfiguration.ref.socket_send_low_at = serverConfiguration.socketSendLowAt!;
-    }
-    nativeServerConfiguration.ref.socket_configuration_flags = flags;
-    return nativeServerConfiguration;
-  }
-
-  Pointer<transport_server_configuration_t> _unixDatagramConfiguration(TransportUnixDatagramServerConfiguration serverConfiguration, Allocator allocator) {
-    final nativeServerConfiguration = allocator<transport_server_configuration_t>();
-    var flags = 0;
-    if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
     if (serverConfiguration.socketReceiveBufferSize != null) {
       flags |= transportSocketOptionSocketRcvbuf;
       nativeServerConfiguration.ref.socket_receive_buffer_size = serverConfiguration.socketReceiveBufferSize!;

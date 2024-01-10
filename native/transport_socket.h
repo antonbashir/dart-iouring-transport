@@ -33,11 +33,6 @@ extern "C"
                                                 uint32_t socket_send_buffer_size,
                                                 uint32_t socket_receive_low_at,
                                                 uint32_t socket_send_low_at);
-    int64_t transport_socket_create_unix_dgram(uint64_t flags,
-                                               uint32_t socket_receive_buffer_size,
-                                               uint32_t socket_send_buffer_size,
-                                               uint32_t socket_receive_low_at,
-                                               uint32_t socket_send_low_at);
 
     void transport_socket_initialize_multicast_request(struct ip_mreqn* request, const char* group_address, const char* local_address, int interface_index);
 

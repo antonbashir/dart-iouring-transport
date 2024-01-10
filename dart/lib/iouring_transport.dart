@@ -2,7 +2,7 @@ library iouring_transport;
 
 export 'package:iouring_transport/transport/client/client.dart' show TransportClientConnectionPool;
 export 'package:iouring_transport/transport/client/configuration.dart'
-    show TransportTcpClientConfiguration, TransportUdpClientConfiguration, TransportUnixDatagramClientConfiguration, TransportUnixStreamClientConfiguration;
+    show TransportTcpClientConfiguration, TransportUdpClientConfiguration, TransportUnixStreamClientConfiguration;
 export 'package:iouring_transport/transport/client/factory.dart' show TransportClientsFactory;
 export 'package:iouring_transport/transport/client/provider.dart' show TransportDatagramClient, TransportClientConnection;
 export 'package:iouring_transport/transport/configuration.dart'

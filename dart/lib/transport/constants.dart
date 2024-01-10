@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:ffi/ffi.dart';
 
 import 'bindings.dart';
@@ -17,7 +19,7 @@ const comma = ",";
 const parentDirectorySymbol = '..';
 const currentDirectorySymbol = './';
 
-const transportLibraryName = "libtransport.so";
+final transportLibraryName = bool.fromEnvironment("DEBUG") ? "libtransport_debug_${Abi.current()}.so" : "libtransport_release_${Abi.current()}.so";
 const transportPackageName = "iouring_transport";
 
 const packageConfigJsonFile = "package_config.json";

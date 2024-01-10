@@ -48,9 +48,6 @@ extern "C"
     int transport_server_initialize_unix_stream(transport_server_t* server,
                                                 transport_server_configuration_t* configuration,
                                                 const char* path);
-    int transport_server_initialize_unix_dgram(transport_server_t* server,
-                                               transport_server_configuration_t* configuration,
-                                               const char* path);
     void transport_server_destroy(transport_server_t* server);
 
 #if defined(__cplusplus)
