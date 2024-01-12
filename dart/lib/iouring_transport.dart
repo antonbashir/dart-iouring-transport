@@ -12,7 +12,7 @@ export 'package:iouring_transport/transport/file/factory.dart' show TransportFil
 export 'package:iouring_transport/transport/file/provider.dart' show TransportFile;
 export 'package:iouring_transport/transport/payload.dart' show TransportPayload;
 export 'package:iouring_transport/transport/server/configuration.dart'
-    show TransportTcpServerConfiguration, TransportUdpServerConfiguration, TransportUnixDatagramServerConfiguration, TransportUnixStreamServerConfiguration;
+    show TransportTcpServerConfiguration, TransportUdpServerConfiguration, TransportUnixStreamServerConfiguration;
 export 'package:iouring_transport/transport/server/factory.dart' show TransportServersFactory;
 export 'package:iouring_transport/transport/server/provider.dart' show TransportServerConnection, TransportServerDatagramReceiver;
 export 'package:iouring_transport/transport/server/responder.dart' show TransportServerDatagramResponder;
