@@ -12,6 +12,22 @@ The main purpose of this project is the implementation of different kinds of tra
 
 # 🧠 Reasoning
 
+I need a transport. I need to communicate over the network and with the file system. 
+
+Also, I want to use Dart. 
+
+Current Dart IO implementation is based on Linux sockets, files, and EPOLL. 
+
+The implementation is hidden inside Dart SDK and if I want to improve it, there will be complications.
+
+So, I've decided to take the most performant and modern Linux IO - `io_uring` and implement my own IO with Dart.
+
+Implemented features:
+* TCP
+* UDP
+* UNIX socket streams
+* Files
+* Asynchronous execution (leveraging Dart streams and futures)
 
 # 🔨 Usage
 
@@ -25,7 +41,7 @@ There are requirements for Linux configuration to launch DIOT-based projects:
 *     soft      memlock     unlimited
 ```
 
-And some optimal configuration (`rmem` and `wmem` are very important values):
+And some optimal configurations (`rmem` and `wmem` are very important values):
 ```title="sysctl.conf"
 fs.file-max = 2097152
 vm.swappiness = 10
