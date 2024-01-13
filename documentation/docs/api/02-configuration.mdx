@@ -4,6 +4,37 @@ title: Configuration
 
 # API
 
+## TransportTcpServerConfiguration
+
+### Parameters
+
+| Name                        | Type     | Description | Defaults |
+| --------------------------- | -------- | ----------- | -------- |
+| readTimeout                 | Duration |             |          |
+| writeTimeout                | Duration |             |          |
+| socketMaxConnections        | int?     |             |          |
+| socketReceiveBufferSize     | int?     |             |          |
+| socketSendBufferSize        | int?     |             |          |
+| socketNonblock              | bool?    |             |          |
+| socketClockexec             | bool?    |             |          |
+| socketReuseAddress          | bool?    |             |          |
+| socketReusePort             | bool?    |             |          |
+| socketKeepalive             | bool?    |             |          |
+| socketReceiveLowAt          | int?     |             |          |
+| socketSendLowAt             | int?     |             |          |
+| ipTtl                       | int?     |             |          |
+| ipFreebind                  | bool?    |             |          |
+| tcpQuickack                 | bool?    |             |          |
+| tcpDeferAccept              | bool?    |             |          |
+| tcpFastopen                 | bool?    |             |          |
+| tcpKeepAliveIdle            | int?     |             |          |
+| tcpKeepAliveMaxCount        | int?     |             |          |
+| tcpKeepAliveIndividualCount | int?     |             |          |
+| tcpMaxSegmentSize           | int?     |             |          |
+| tcpNoDelay                  | bool?    |             |          |
+| tcpSynCount                 | int?     |             |          |
+
+
 ## TransportTcpClientConfiguration
 
 ### Parameters
@@ -34,6 +65,30 @@ title: Configuration
 | tcpKeepAliveIndividualCount | int?     |             |                       |
 | tcpMaxSegmentSize           | int?     |             |                       |
 | tcpSynCount                 | int?     |             |                       |
+
+## TransportUdpServerConfiguration
+
+### Parameters
+| Name                    | Type                                | Description | Defaults |
+| ----------------------- | ----------------------------------- | ----------- | -------- |
+| readTimeout             | Duration                            |             |          |
+| writeTimeout            | Duration                            |             |          |
+| socketReceiveBufferSize | int?                                |             |          |
+| socketSendBufferSize    | int?                                |             |          |
+| socketNonblock          | bool?                               |             |          |
+| socketClockexec         | bool?                               |             |          |
+| socketReuseAddress      | bool?                               |             |          |
+| socketReusePort         | bool?                               |             |          |
+| socketBroadcast         | bool?                               |             |          |
+| socketReceiveLowAt      | int?                                |             |          |
+| socketSendLowAt         | int?                                |             |          |
+| ipTtl                   | int?                                |             |          |
+| ipFreebind              | bool?                               |             |          |
+| ipMulticastAll          | bool?                               |             |          |
+| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |          |
+| ipMulticastLoop         | int?                                |             |          |
+| ipMulticastTtl          | int?                                |             |          |
+| multicastManager        | TransportUdpMulticastManager?       |             |          |
 
 ## TransportUdpClientConfiguration
 
@@ -123,10 +178,38 @@ class TransportUdpMulticastManager {
 | socketSendLowAt         | int?     |             |                       |
 
 
+## TransportUnixStreamServerConfiguration
+
+### Parameters
+
+| Name                    | Type     | Description | Defaults |
+| ----------------------- | -------- | ----------- | -------- |
+| readTimeout             | Duration |             |          |
+| writeTimeout            | Duration |             |          |
+| socketMaxConnections    | int?     |             |          |
+| socketReceiveBufferSize | int?     |             |          |
+| socketSendBufferSize    | int?     |             |          |
+| socketNonblock          | bool?    |             |          |
+| socketClockexec         | bool?    |             |          |
+| socketKeepalive         | bool?    |             |          |
+| socketReceiveLowAt      | int?     |             |          |
+| socketSendLowAt         | int?     |             |          |
+
 ## TransportWorkerConfiguration
 
-## TransportTcpServerConfiguration
+### Parameters
 
-## TransportUdpServerConfiguration
-
-## TransportUnixStreamServerConfiguration
+| Name                     | Type     | Description | Defaults |
+| ------------------------ | -------- | ----------- | -------- |
+| buffersCount             | int      |             |          |
+| bufferSize               | int      |             |          |
+| ringSize                 | int      |             |          |
+| ringFlags                | int      |             |          |
+| timeoutCheckerPeriod     | Duration |             |          |
+| delayRandomizationFactor | double   |             |          |
+| cqePeekCount             | int      |             |          |
+| cqeWaitCount             | int      |             |          |
+| cqeWaitTimeout           | Duration |             |          |
+| baseDelay                | Duration |             |          |
+| maxDelay                 | Duration |             |          |
+| trace                    | bool     |             |          |
