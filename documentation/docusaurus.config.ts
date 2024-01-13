@@ -99,6 +99,10 @@ const config: Config = {
           href: 'https://dart.dev/',
         },
         {
+          label: 'Flutter',
+          href: 'https://flutter.dev/',
+        },
+        {
           label: 'io_uring',
           href: 'https://github.com/espoal/awesome-iouring',
         },
