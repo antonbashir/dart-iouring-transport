@@ -5,3 +5,38 @@ title: Worker
 # API
 
 ## TransportWorker
+
+```dart title="Declaration"
+  bool get active 
+  int get id
+  int get descriptor
+  TransportServersFactory get servers 
+  TransportClientsFactory get clients 
+  TransportFilesFactory get files 
+  TransportWorker(SendPort toTransport)
+  Future<void> initialize() async
+```
+
+### Properties
+
+#### active
+
+#### id
+
+#### descriptor
+
+#### servers
+
+#### clients
+
+#### files
+
+### Methods
+
+#### initialize
+
+## References
+
+* See [TransportServersFactory](server#TransportServersFactory)
+* See [TransportClientsFactory](client#TransportClientsFactory)
+* See [TransportFilesFactory](file#TransportFilesFactory)
