@@ -7,6 +7,7 @@ title: Worker
 ## TransportWorker
 
 ```dart title="Declaration"
+class TransportWorker {
   bool get active 
   int get id
   int get descriptor
@@ -15,6 +16,7 @@ title: Worker
   TransportFilesFactory get files 
   TransportWorker(SendPort toTransport)
   Future<void> initialize() async
+}
 ```
 
 ### Properties

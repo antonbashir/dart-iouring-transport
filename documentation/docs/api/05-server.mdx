@@ -64,5 +64,6 @@ class TransportServerDatagramResponder {
   void respondMany(List<Uint8List> bytes, {int? flags, bool linked = true, void Function(Exception error)? onError, void Function()? onDone})
   void release()
   Uint8List takeBytes({bool release = true})
-  List<int> toBytes({bool release = true})}
+  List<int> toBytes({bool release = true})
+}
 ```
