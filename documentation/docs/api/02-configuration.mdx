@@ -6,15 +6,122 @@ title: Configuration
 
 ## TransportTcpClientConfiguration
 
+### Parameters
+
+| Name                        | Type     | Description | Defaults              |
+| --------------------------- | -------- | ----------- | --------------------- |
+| pool                        | int      |             | 1                     |
+| connectTimeout              | Duration |             | Duration(seconds: 60) |
+| readTimeout                 | Duration |             | Duration(seconds: 60) |
+| writeTimeout                | Duration |             | Duration(seconds: 60) |
+| socketReceiveBufferSize     | int?     |             | 4 * 1024 * 1024       |
+| socketSendBufferSize        | int?     |             | 4 * 1024 * 1024       |
+| socketNonblock              | bool?    |             | true                  |
+| socketClockexec             | bool?    |             | true                  |
+| tcpQuickack                 | bool?    |             | true                  |
+| tcpDeferAccept              | bool?    |             | true                  |
+| tcpFastopen                 | bool?    |             | true                  |
+| tcpNoDelay                  | bool?    |             | true                  |
+| socketReuseAddress          | bool?    |             |                       |
+| socketReusePort             | bool?    |             |                       |
+| socketKeepalive             | bool?    |             |                       |
+| socketReceiveLowAt          | int?     |             |                       |
+| socketSendLowAt             | int?     |             |                       |
+| ipTtl                       | int?     |             |                       |
+| ipFreebind                  | bool?    |             |                       |
+| tcpKeepAliveIdle            | int?     |             |                       |
+| tcpKeepAliveMaxCount        | int?     |             |                       |
+| tcpKeepAliveIndividualCount | int?     |             |                       |
+| tcpMaxSegmentSize           | int?     |             |                       |
+| tcpSynCount                 | int?     |             |                       |
+
 ## TransportUdpClientConfiguration
 
-## TransportUnixStreamClientConfiguration
+### Parameters
+
+| Name                    | Type                                | Description | Defaults              |
+| ----------------------- | ----------------------------------- | ----------- | --------------------- |
+| readTimeout             | Duration                            |             | Duration(seconds: 60) |
+| writeTimeout            | Duration                            |             | Duration(seconds: 60) |
+| socketReceiveBufferSize | int?                                |             | 4 * 1024 * 1024       |
+| socketSendBufferSize    | int?                                |             | 4 * 1024 * 1024       |
+| socketNonblock          | bool?                               |             | true                  |
+| socketClockexec         | bool?                               |             | true                  |
+| socketReuseAddress      | bool?                               |             |                       |
+| socketReusePort         | bool?                               |             |                       |
+| socketBroadcast         | bool?                               |             |                       |
+| socketReceiveLowAt      | int?                                |             |                       |
+| socketSendLowAt         | int?                                |             |                       |
+| ipTtl                   | int?                                |             |                       |
+| ipFreebind              | bool?                               |             |                       |
+| ipMulticastAll          | bool?                               |             |                       |
+| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |                       |
+| ipMulticastLoop         | int?                                |             |                       |
+| ipMulticastTtl          | int?                                |             |                       |
+| multicastManager        | TransportUdpMulticastManager?       |             |                       |
 
 ## TransportUdpMulticastConfiguration
 
+### Parameters
+
+| Name                    | Type    | Description |
+| ----------------------- | ------- | ----------- |
+| groupAddress            | String  |             |
+| localAddress            | String  |             |
+| localInterface          | String? |             |
+| interfaceIndex          | int?    |             |
+| calculateInterfaceIndex | bool    |             |
+
 ## TransportUdpMulticastManager
 
+```dart title="Declaration"
+class TransportUdpMulticastManager {
+  void addMembership(TransportUdpMulticastConfiguration configuration)
+  void dropMembership(TransportUdpMulticastConfiguration configuration)
+  void addSourceMembership(TransportUdpMulticastSourceConfiguration configuration)
+  void dropSourceMembership(TransportUdpMulticastSourceConfiguration configuration)
+}
+```
+
+### Methods
+
+#### addMembership
+
+#### dropMembership
+
+#### addSourceMembership
+
+#### dropSourceMembership
+
+
 ## TransportUdpMulticastSourceConfiguration
+
+### Parameters
+
+| Name         | Type   | Description |
+| ------------ | ------ | ----------- |
+| groupAddress | String |             |
+| localAddress | String |             |
+| localAddress | String |             |
+
+
+## TransportUnixStreamClientConfiguration
+
+### Parameters
+
+| Name                    | Type     | Description | Defaults              |
+| ----------------------- | -------- | ----------- | --------------------- |
+| pool                    | int      |             | 1                     |
+| connectTimeout          | Duration |             | Duration(seconds: 60) |
+| readTimeout             | Duration |             | Duration(seconds: 60) |
+| writeTimeout            | Duration |             | Duration(seconds: 60) |
+| socketReceiveBufferSize | int?     |             | 4 * 1024 * 1024       |
+| socketSendBufferSize    | int?     |             | 4 * 1024 * 1024       |
+| socketNonblock          | bool?    |             | true                  |
+| socketClockexec         | bool?    |             | true                  |
+| socketReceiveLowAt      | int?     |             |                       |
+| socketSendLowAt         | int?     |             |                       |
+
 
 ## TransportWorkerConfiguration
 
