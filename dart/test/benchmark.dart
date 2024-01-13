@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:iouring_transport/transport/constants.dart';
+import 'package:iouring_transport/transport/configuration.dart';
 import 'package:iouring_transport/transport/defaults.dart';
 import 'package:iouring_transport/transport/transport.dart';
 import 'package:iouring_transport/transport/worker.dart';

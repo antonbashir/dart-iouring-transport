@@ -1,3 +1,18 @@
+const ringSetupIopoll = 1 << 0;
+const ringSetupSqpoll = 1 << 1;
+const ringSetupSqAff = 1 << 2;
+const ringSetupCqsize = 1 << 3;
+const ringSetupClamp = 1 << 4;
+const ringSetupAttachWq = 1 << 5;
+const ringSetupRDisabled = 1 << 6;
+const ringSetupSubmitAll = 1 << 7;
+const ringSetupCoopTaskrun = 1 << 8;
+const ringSetupTaskrunFlag = 1 << 9;
+const ringSetupSqe128 = 1 << 10;
+const ringSetupCqe32 = 1 << 11;
+const ringSetupSingleIssuer = 1 << 12;
+const ringSetupDeferTaskrun = 1 << 13;
+
 class TransportWorkerConfiguration {
   final int buffersCount;
   final int bufferSize;
