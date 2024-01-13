@@ -8,6 +8,8 @@ export 'package:iouring_transport/transport/configuration.dart'
 export 'package:iouring_transport/transport/server/configuration.dart' show TransportTcpServerConfiguration, TransportUdpServerConfiguration, TransportUnixStreamServerConfiguration;
 export 'package:iouring_transport/transport/defaults.dart' show TransportDefaults;
 
+export 'package:iouring_transport/transport/worker.dart' show TransportWorker;
+
 export 'package:iouring_transport/transport/client/client.dart' show TransportClientConnectionPool;
 export 'package:iouring_transport/transport/client/factory.dart' show TransportClientsFactory;
 export 'package:iouring_transport/transport/client/provider.dart' show TransportDatagramClient, TransportClientConnection;
@@ -20,5 +22,3 @@ export 'package:iouring_transport/transport/file/factory.dart' show TransportFil
 export 'package:iouring_transport/transport/file/provider.dart' show TransportFile;
 
 export 'package:iouring_transport/transport/payload.dart' show TransportPayload;
-
-export 'package:iouring_transport/transport/worker.dart' show TransportWorker;
