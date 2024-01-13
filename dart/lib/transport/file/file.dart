@@ -47,7 +47,7 @@ class TransportFileChannel {
   Future<void> readSingle({int offset = 0}) async {
     final bufferId = buffers.get() ?? await buffers.allocate();
     if (_closing) return Future.error(TransportClosedException.forFile());
-    _channel.read(bufferId, transportTimeoutInfinity, transportEventRead | transportEventFile, offset: offset);
+    _channel.read(bufferId, transportEventRead | transportEventFile, offset: offset);
     _pending++;
   }
 
@@ -61,7 +61,7 @@ class TransportFileChannel {
     if (_closing) return Future.error(TransportClosedException.forFile());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
-    _channel.write(bytes, bufferId, transportTimeoutInfinity, transportEventWrite | transportEventFile, offset: offset);
+    _channel.write(bytes, bufferId, transportEventWrite | transportEventFile, offset: offset);
     _pending++;
   }
 
@@ -73,7 +73,6 @@ class TransportFileChannel {
       final bufferId = bufferIds[index];
       _channel.read(
         bufferId,
-        transportTimeoutInfinity,
         transportEventRead | transportEventFile,
         sqeFlags: transportIosqeIoLink,
         offset: offset,
@@ -82,7 +81,6 @@ class TransportFileChannel {
     }
     _channel.read(
       lastBufferId,
-      transportTimeoutInfinity,
       transportEventRead | transportEventFile,
       offset: offset,
     );
@@ -103,7 +101,6 @@ class TransportFileChannel {
       _channel.write(
         bytes[index],
         bufferId,
-        transportTimeoutInfinity,
         transportEventWrite | transportEventFile,
         sqeFlags: transportIosqeIoLink,
         offset: offset,
@@ -115,7 +112,6 @@ class TransportFileChannel {
     _channel.write(
       bytes.last,
       lastBufferId,
-      transportTimeoutInfinity,
       transportEventWrite | transportEventFile,
       offset: offset,
     );

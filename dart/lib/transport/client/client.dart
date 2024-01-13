@@ -22,8 +22,8 @@ class TransportClientChannel {
   final TransportChannel _channel;
   final TransportBindings _bindings;
   final int? _connectTimeout;
-  final int _readTimeout;
-  final int _writeTimeout;
+  final int? _readTimeout;
+  final int? _writeTimeout;
   final TransportBuffers _buffers;
   final TransportClientRegistry _registry;
   final TransportPayloadPool _payloadPool;
@@ -57,7 +57,7 @@ class TransportClientChannel {
   Future<void> read() async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) return Future.error(TransportClosedException.forClient());
-    _channel.read(bufferId, _readTimeout, transportEventRead | transportEventClient);
+    _channel.read(bufferId, transportEventRead | transportEventClient, timeout: _readTimeout);
     _pending++;
   }
 
@@ -66,7 +66,7 @@ class TransportClientChannel {
     if (_closing) return Future.error(TransportClosedException.forClient());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
-    _channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventClient);
+    _channel.write(bytes, bufferId, transportEventWrite | transportEventClient, timeout: _writeTimeout);
     _pending++;
   }
 
@@ -79,9 +79,9 @@ class TransportClientChannel {
       _channel.write(
         bytes[index],
         bufferId,
-        _writeTimeout,
         transportEventWrite | transportEventClient,
         sqeFlags: linked ? transportIosqeIoLink : 0,
+        timeout: _writeTimeout,
       );
       if (onError != null) _outboundErrorHandlers[bufferId] = onError;
       if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
@@ -89,8 +89,8 @@ class TransportClientChannel {
     _channel.write(
       bytes.last,
       lastBufferId,
-      _writeTimeout,
       transportEventWrite | transportEventClient,
+      timeout: _writeTimeout,
     );
     if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;
@@ -101,7 +101,13 @@ class TransportClientChannel {
     flags = flags ?? TransportDatagramMessageFlag.trunc.flag;
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing) return Future.error(TransportClosedException.forClient());
-    _channel.receiveMessage(bufferId, _pointer.ref.family, _readTimeout, flags, transportEventReceiveMessage | transportEventClient);
+    _channel.receiveMessage(
+      bufferId,
+      _pointer.ref.family,
+      flags,
+      transportEventReceiveMessage | transportEventClient,
+      timeout: _readTimeout,
+    );
     _pending++;
   }
 
@@ -121,9 +127,9 @@ class TransportClientChannel {
       bufferId,
       _pointer.ref.family,
       _destination,
-      _writeTimeout,
       flags,
       transportEventSendMessage | transportEventClient,
+      timeout: _writeTimeout,
     );
     _pending++;
   }
@@ -146,10 +152,10 @@ class TransportClientChannel {
         bufferId,
         _pointer.ref.family,
         _destination,
-        _writeTimeout,
         flags,
         transportEventSendMessage | transportEventClient,
         sqeFlags: linked ? transportIosqeIoLink : 0,
+        timeout: _writeTimeout,
       );
       if (onError != null) _outboundErrorHandlers[bufferId] = onError;
       if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
@@ -159,10 +165,10 @@ class TransportClientChannel {
       lastBufferId,
       _pointer.ref.family,
       _destination,
-      _writeTimeout,
       flags,
       transportEventSendMessage | transportEventClient,
       sqeFlags: linked ? transportIosqeIoLink : 0,
+      timeout: _writeTimeout,
     );
     if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;

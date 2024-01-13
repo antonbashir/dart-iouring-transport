@@ -59,8 +59,6 @@ class TransportDefaults {
         socketMaxConnections: 4096,
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(days: 1),
-        writeTimeout: Duration(days: 1),
         socketReusePort: true,
         socketNonblock: true,
         socketClockexec: true,
@@ -73,8 +71,6 @@ class TransportDefaults {
   static TransportUdpServerConfiguration udpServer() => TransportUdpServerConfiguration(
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(days: 1),
-        writeTimeout: Duration(days: 1),
         socketReusePort: true,
         socketNonblock: true,
         socketClockexec: true,
@@ -84,8 +80,6 @@ class TransportDefaults {
         socketMaxConnections: 4096,
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
-        readTimeout: Duration(days: 1),
-        writeTimeout: Duration(days: 1),
         socketNonblock: true,
         socketClockexec: true,
       );

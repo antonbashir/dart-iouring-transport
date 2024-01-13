@@ -2,9 +2,9 @@ import '../configuration.dart';
 
 class TransportTcpClientConfiguration {
   final int pool;
-  final Duration connectTimeout;
-  final Duration readTimeout;
-  final Duration writeTimeout;
+  final Duration? connectTimeout;
+  final Duration? readTimeout;
+  final Duration? writeTimeout;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
@@ -28,9 +28,9 @@ class TransportTcpClientConfiguration {
 
   TransportTcpClientConfiguration({
     required this.pool,
-    required this.connectTimeout,
-    required this.readTimeout,
-    required this.writeTimeout,
+    this.connectTimeout,
+    this.readTimeout,
+    this.writeTimeout,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
@@ -108,8 +108,8 @@ class TransportTcpClientConfiguration {
 }
 
 class TransportUdpClientConfiguration {
-  final Duration readTimeout;
-  final Duration writeTimeout;
+  final Duration? readTimeout;
+  final Duration? writeTimeout;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
@@ -128,8 +128,8 @@ class TransportUdpClientConfiguration {
   final TransportUdpMulticastManager? multicastManager;
 
   TransportUdpClientConfiguration({
-    required this.readTimeout,
-    required this.writeTimeout,
+    this.readTimeout,
+    this.writeTimeout,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
@@ -192,9 +192,9 @@ class TransportUdpClientConfiguration {
 
 class TransportUnixStreamClientConfiguration {
   final int pool;
-  final Duration connectTimeout;
-  final Duration readTimeout;
-  final Duration writeTimeout;
+  final Duration? connectTimeout;
+  final Duration? readTimeout;
+  final Duration? writeTimeout;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
@@ -205,9 +205,9 @@ class TransportUnixStreamClientConfiguration {
 
   TransportUnixStreamClientConfiguration({
     required this.pool,
-    required this.connectTimeout,
-    required this.readTimeout,
-    required this.writeTimeout,
+    this.connectTimeout,
+    this.readTimeout,
+    this.writeTimeout,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,

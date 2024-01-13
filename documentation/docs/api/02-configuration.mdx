@@ -69,26 +69,26 @@ title: Configuration
 ## TransportUdpServerConfiguration
 
 ### Parameters
-| Name                    | Type                                | Description | Defaults |
-| ----------------------- | ----------------------------------- | ----------- | -------- |
-| readTimeout             | Duration                            |             |          |
-| writeTimeout            | Duration                            |             |          |
-| socketReceiveBufferSize | int?                                |             |          |
-| socketSendBufferSize    | int?                                |             |          |
-| socketNonblock          | bool?                               |             |          |
-| socketClockexec         | bool?                               |             |          |
-| socketReuseAddress      | bool?                               |             |          |
-| socketReusePort         | bool?                               |             |          |
-| socketBroadcast         | bool?                               |             |          |
-| socketReceiveLowAt      | int?                                |             |          |
-| socketSendLowAt         | int?                                |             |          |
-| ipTtl                   | int?                                |             |          |
-| ipFreebind              | bool?                               |             |          |
-| ipMulticastAll          | bool?                               |             |          |
-| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |          |
-| ipMulticastLoop         | int?                                |             |          |
-| ipMulticastTtl          | int?                                |             |          |
-| multicastManager        | TransportUdpMulticastManager?       |             |          |
+| Name                    | Type                                | Description | Defaults          |
+| ----------------------- | ----------------------------------- | ----------- | ----------------- |
+| readTimeout             | Duration                            |             | Duration(days: 1) |
+| writeTimeout            | Duration                            |             | Duration(days: 1) |
+| socketReceiveBufferSize | int?                                |             | 4 * 1024 * 1024   |
+| socketSendBufferSize    | int?                                |             | 4 * 1024 * 1024   |
+| socketNonblock          | bool?                               |             | true              |
+| socketClockexec         | bool?                               |             | true              |
+| socketReusePort         | bool?                               |             | true              |
+| socketReuseAddress      | bool?                               |             |                   |
+| socketBroadcast         | bool?                               |             |                   |
+| socketReceiveLowAt      | int?                                |             |                   |
+| socketSendLowAt         | int?                                |             |                   |
+| ipTtl                   | int?                                |             |                   |
+| ipFreebind              | bool?                               |             |                   |
+| ipMulticastAll          | bool?                               |             |                   |
+| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |                   |
+| ipMulticastLoop         | int?                                |             |                   |
+| ipMulticastTtl          | int?                                |             |                   |
+| multicastManager        | TransportUdpMulticastManager?       |             |                   |
 
 ## TransportUdpClientConfiguration
 

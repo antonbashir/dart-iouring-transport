@@ -22,8 +22,8 @@ class TransportServerConnectionChannel {
   final _outboundDoneHandlers = <int, void Function()>{};
   final _outboundErrorHandlers = <int, void Function(Exception error)>{};
 
-  final int _readTimeout;
-  final int _writeTimeout;
+  final int? _readTimeout;
+  final int? _writeTimeout;
   final TransportChannel channel;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
@@ -54,7 +54,7 @@ class TransportServerConnectionChannel {
   Future<void> read() async {
     final bufferId = _buffers.get() ?? await _buffers.allocate();
     if (_closing || _server._closing) return Future.error(TransportClosedException.forServer());
-    channel.read(bufferId, _readTimeout, transportEventRead | transportEventServer);
+    channel.read(bufferId, transportEventRead | transportEventServer, timeout: _readTimeout);
     _pending++;
   }
 
@@ -63,7 +63,7 @@ class TransportServerConnectionChannel {
     if (_closing || _server._closing) return Future.error(TransportClosedException.forServer());
     if (onError != null) _outboundErrorHandlers[bufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
-    channel.write(bytes, bufferId, _writeTimeout, transportEventWrite | transportEventServer);
+    channel.write(bytes, bufferId, transportEventWrite | transportEventServer, timeout: _writeTimeout);
     _pending++;
   }
 
@@ -76,9 +76,9 @@ class TransportServerConnectionChannel {
       channel.write(
         bytes[index],
         bufferId,
-        _writeTimeout,
         transportEventWrite | transportEventServer,
         sqeFlags: linked ? transportIosqeIoLink : 0,
+        timeout: _writeTimeout,
       );
       if (onError != null) _outboundErrorHandlers[bufferId] = onError;
       if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
@@ -86,8 +86,8 @@ class TransportServerConnectionChannel {
     channel.write(
       bytes.last,
       lastBufferId,
-      _writeTimeout,
       transportEventWrite | transportEventServer,
+      timeout: _writeTimeout,
     );
     if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;
@@ -176,8 +176,8 @@ class TransportServerChannel implements TransportServer {
   final Pointer<transport_server_t> pointer;
   final Pointer<transport_worker_t> _workerPointer;
   final TransportBindings _bindings;
-  final int _readTimeout;
-  final int _writeTimeout;
+  final int? _readTimeout;
+  final int? _writeTimeout;
   final TransportBuffers _buffers;
   final TransportServerRegistry _registry;
   final TransportPayloadPool _payloadPool;
@@ -219,9 +219,9 @@ class TransportServerChannel implements TransportServer {
     _datagramChannel!.receiveMessage(
       bufferId,
       pointer.ref.family,
-      _readTimeout,
       flags,
       transportEventReceiveMessage | transportEventServer,
+      timeout: _readTimeout,
     );
     _pending++;
   }
@@ -244,9 +244,9 @@ class TransportServerChannel implements TransportServer {
       bufferId,
       pointer.ref.family,
       destination,
-      _writeTimeout,
       flags,
       transportEventSendMessage | transportEventServer,
+      timeout: _writeTimeout,
     );
     _pending++;
   }
@@ -271,10 +271,10 @@ class TransportServerChannel implements TransportServer {
         bufferId,
         pointer.ref.family,
         destination,
-        _writeTimeout,
         flags,
         transportEventSendMessage | transportEventServer,
         sqeFlags: linked ? transportIosqeIoLink : 0,
+        timeout: _writeTimeout,
       );
       if (onError != null) _outboundErrorHandlers[bufferId] = onError;
       if (onDone != null) _outboundDoneHandlers[bufferId] = onDone;
@@ -284,10 +284,10 @@ class TransportServerChannel implements TransportServer {
       lastBufferId,
       pointer.ref.family,
       destination,
-      _writeTimeout,
       flags,
       transportEventSendMessage | transportEventServer,
       sqeFlags: linked ? transportIosqeIoLink : 0,
+      timeout: _writeTimeout,
     );
     if (onError != null) _outboundErrorHandlers[lastBufferId] = onError;
     if (onDone != null) _outboundDoneHandlers[lastBufferId] = onDone;

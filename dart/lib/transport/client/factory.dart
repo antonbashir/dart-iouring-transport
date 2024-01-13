@@ -67,12 +67,12 @@ class TransportClientsFactory {
         clientPointer,
         _workerPointer,
         _bindings,
-        configuration.readTimeout.inSeconds,
-        configuration.writeTimeout.inSeconds,
+        configuration.readTimeout?.inSeconds,
+        configuration.writeTimeout?.inSeconds,
         _buffers,
         _registry,
         _payloadPool,
-        connectTimeout: configuration.connectTimeout.inSeconds,
+        connectTimeout: configuration.connectTimeout?.inSeconds,
       );
       _registry.add(clientPointer.ref.fd, client);
       clients.add(client.connect().then(TransportClientConnection.new));
@@ -158,8 +158,8 @@ class TransportClientsFactory {
       clientPointer,
       _workerPointer,
       _bindings,
-      configuration.readTimeout.inSeconds,
-      configuration.writeTimeout.inSeconds,
+      configuration.readTimeout?.inSeconds,
+      configuration.writeTimeout?.inSeconds,
       _buffers,
       _registry,
       _payloadPool,
@@ -206,12 +206,12 @@ class TransportClientsFactory {
         clientPointer,
         _workerPointer,
         _bindings,
-        configuration.readTimeout.inSeconds,
-        configuration.writeTimeout.inSeconds,
+        configuration.readTimeout?.inSeconds,
+        configuration.writeTimeout?.inSeconds,
         _buffers,
         _registry,
         _payloadPool,
-        connectTimeout: configuration.connectTimeout.inSeconds,
+        connectTimeout: configuration.connectTimeout?.inSeconds,
       );
       _registry.add(clientPointer.ref.fd, client);
       clients.add(client.connect().then(TransportClientConnection.new, onError: (error, stackTrace) {

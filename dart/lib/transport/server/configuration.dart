@@ -1,8 +1,8 @@
 import '../configuration.dart';
 
 class TransportTcpServerConfiguration {
-  final Duration readTimeout;
-  final Duration writeTimeout;
+  final Duration? readTimeout;
+  final Duration? writeTimeout;
   final int? socketMaxConnections;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
@@ -26,8 +26,8 @@ class TransportTcpServerConfiguration {
   final int? tcpSynCount;
 
   TransportTcpServerConfiguration({
-    required this.readTimeout,
-    required this.writeTimeout,
+    this.readTimeout,
+    this.writeTimeout,
     this.socketMaxConnections,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
@@ -104,8 +104,8 @@ class TransportTcpServerConfiguration {
 }
 
 class TransportUdpServerConfiguration {
-  final Duration readTimeout;
-  final Duration writeTimeout;
+  final Duration? readTimeout;
+  final Duration? writeTimeout;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
@@ -124,8 +124,8 @@ class TransportUdpServerConfiguration {
   final TransportUdpMulticastManager? multicastManager;
 
   TransportUdpServerConfiguration({
-    required this.readTimeout,
-    required this.writeTimeout,
+    this.readTimeout,
+    this.writeTimeout,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
@@ -187,8 +187,8 @@ class TransportUdpServerConfiguration {
 }
 
 class TransportUnixStreamServerConfiguration {
-  final Duration readTimeout;
-  final Duration writeTimeout;
+  final Duration? readTimeout;
+  final Duration? writeTimeout;
   final int? socketMaxConnections;
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
@@ -199,8 +199,8 @@ class TransportUnixStreamServerConfiguration {
   final int? socketSendLowAt;
 
   TransportUnixStreamServerConfiguration({
-    required this.readTimeout,
-    required this.writeTimeout,
+    this.readTimeout,
+    this.writeTimeout,
     this.socketMaxConnections,
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
