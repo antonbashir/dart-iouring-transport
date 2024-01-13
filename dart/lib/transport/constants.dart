@@ -197,8 +197,6 @@ enum TransportEvent {
   String toString() => name;
 }
 
-const transportRetryableErrorCodes = {EINTR, EAGAIN, ECANCELED};
-
 enum TransportFileMode {
   readOnly(1 << 0),
   writeOnly(1 << 1),
