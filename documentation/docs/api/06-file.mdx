@@ -17,6 +17,10 @@ class TransportFilesFactory {
 }
 ```
 
+### Methods
+
+#### open
+
 ## TransportFile
 
 ```dart title="Declaration"
@@ -31,3 +35,23 @@ class TransportFile {
   Future<void> close({Duration? gracefulTimeout}) => _file.close(gracefulTimeout: gracefulTimeout)
 }
 ```
+
+### Properties
+
+#### delegate
+
+#### inbound
+
+#### active
+
+### Methods
+
+#### read
+
+#### writeSingle
+
+#### writeMany
+
+#### load
+
+#### close
