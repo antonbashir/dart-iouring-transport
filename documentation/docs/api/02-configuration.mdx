@@ -10,8 +10,8 @@ title: Configuration
 
 | Name                        | Type     | Description | Defaults        |
 | --------------------------- | -------- | ----------- | --------------- |
-| readTimeout                 | Duration |             |                 |
-| writeTimeout                | Duration |             |                 |
+| readTimeout                 | Duration |             | ∞               |
+| writeTimeout                | Duration |             | ∞               |
 | socketMaxConnections        | int?     |             | 4096            |
 | socketReceiveBufferSize     | int?     |             | 4 * 1024 * 1024 |
 | socketSendBufferSize        | int?     |             | 4 * 1024 * 1024 |
@@ -70,6 +70,8 @@ title: Configuration
 ### Parameters
 | Name                    | Type                                | Description | Defaults        |
 | ----------------------- | ----------------------------------- | ----------- | --------------- |
+| readTimeout             | Duration                            |             | ∞               |
+| writeTimeout            | Duration                            |             | ∞               |
 | socketReceiveBufferSize | int?                                |             | 4 * 1024 * 1024 |
 | socketSendBufferSize    | int?                                |             | 4 * 1024 * 1024 |
 | socketNonblock          | bool?                               |             | true            |
@@ -86,8 +88,6 @@ title: Configuration
 | ipMulticastLoop         | int?                                |             |                 |
 | ipMulticastTtl          | int?                                |             |                 |
 | multicastManager        | TransportUdpMulticastManager?       |             |                 |
-| readTimeout             | Duration                            |             |                 |
-| writeTimeout            | Duration                            |             |                 |
 
 ## TransportUdpClientConfiguration
 
@@ -188,8 +188,8 @@ class TransportUdpMulticastManager {
 | socketSendBufferSize    | int?     |             | 4 * 1024 * 1024 |
 | socketNonblock          | bool?    |             | true            |
 | socketClockexec         | bool?    |             | true            |
-| readTimeout             | Duration |             |                 |
-| writeTimeout            | Duration |             |                 |
+| readTimeout             | Duration |             | ∞               |
+| writeTimeout            | Duration |             | ∞               |
 | socketKeepalive         | bool?    |             |                 |
 | socketReceiveLowAt      | int?     |             |                 |
 | socketSendLowAt         | int?     |             |                 |
