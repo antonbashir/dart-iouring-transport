@@ -48,15 +48,15 @@ title: Configuration
 | socketSendBufferSize        | int?     |             | 4 * 1024 * 1024       |
 | socketNonblock              | bool?    |             | true                  |
 | socketClockexec             | bool?    |             | true                  |
-| tcpQuickack                 | bool?    |             | true                  |
-| tcpDeferAccept              | bool?    |             | true                  |
-| tcpFastopen                 | bool?    |             | true                  |
-| tcpNoDelay                  | bool?    |             | true                  |
 | socketReuseAddress          | bool?    |             |                       |
 | socketReusePort             | bool?    |             |                       |
 | socketKeepalive             | bool?    |             |                       |
 | socketReceiveLowAt          | int?     |             |                       |
 | socketSendLowAt             | int?     |             |                       |
+| tcpQuickack                 | bool?    |             | true                  |
+| tcpDeferAccept              | bool?    |             | true                  |
+| tcpFastopen                 | bool?    |             | true                  |
+| tcpNoDelay                  | bool?    |             | true                  |
 | ipTtl                       | int?     |             |                       |
 | ipFreebind                  | bool?    |             |                       |
 | tcpKeepAliveIdle            | int?     |             |                       |
@@ -183,13 +183,13 @@ class TransportUdpMulticastManager {
 
 | Name                    | Type     | Description | Defaults        |
 | ----------------------- | -------- | ----------- | --------------- |
+| readTimeout             | Duration |             | ∞               |
+| writeTimeout            | Duration |             | ∞               |
 | socketMaxConnections    | int?     |             | 4096            |
 | socketReceiveBufferSize | int?     |             | 4 * 1024 * 1024 |
 | socketSendBufferSize    | int?     |             | 4 * 1024 * 1024 |
 | socketNonblock          | bool?    |             | true            |
 | socketClockexec         | bool?    |             | true            |
-| readTimeout             | Duration |             | ∞               |
-| writeTimeout            | Duration |             | ∞               |
 | socketKeepalive         | bool?    |             |                 |
 | socketReceiveLowAt      | int?     |             |                 |
 | socketSendLowAt         | int?     |             |                 |
