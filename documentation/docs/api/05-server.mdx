@@ -27,6 +27,14 @@ class TransportServersFactory {
 }
 ```
 
+### Methods
+
+#### tcp
+
+#### udp
+
+#### unixStream
+
 ## TransportServerConnection
 
 ```dart title="Declaration"
@@ -42,6 +50,26 @@ class TransportServerConnection {
 }
 ```
 
+### Properties
+
+#### active
+
+#### inbound
+
+### Methods
+
+#### read
+
+#### stream
+
+#### writeSingle
+
+#### writeMany
+
+#### close
+
+#### closeServer
+
 ## TransportServerDatagramReceiver
 
 ```dart title="Declaration"
@@ -53,6 +81,17 @@ class TransportServerDatagramReceiver {
 }
 ```
 
+### Properties
+
+#### inbound
+
+#### active
+
+### Methods
+
+#### receive
+
+#### close
 
 ## TransportServerDatagramResponder
 
@@ -67,3 +106,20 @@ class TransportServerDatagramResponder {
   List<int> toBytes({bool release = true})
 }
 ```
+### Properties
+
+#### receivedBytes
+
+#### active
+
+### Methods
+
+#### respondSingle
+
+#### respondMany
+
+#### release
+
+#### takeBytes
+
+#### toBytes
