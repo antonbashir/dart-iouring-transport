@@ -5,3 +5,44 @@ title: Transport
 # API
 
 ## Transport
+
+Transport is the main entry point to configure IO.
+
+:::tip
+You could call the `shutdown` method if you want to close all IO workers
+:::
+
+```dart title="Declaration"
+class Transport {
+  Transport({String? libraryPath})
+  Future<void> shutdown({Duration? gracefulTimeout}) async
+  SendPort worker(TransportWorkerConfiguration configuration)
+```
+
+```dart title="Example"
+final transport = Transport();
+final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
+await worker.initialize();
+
+/* Do some work */
+
+/* Handle stop on your own */
+
+await transport.shutdown();
+```
+
+### Methods
+
+#### shutdown
+
+Stops all workers and destroys transport objects.
+
+#### worker
+
+Creates a new SendPort which could be used to create a new `TransportWorker`.
+
+
+## References
+
+* See [TransportWorker](worker#TransportWorker)
+* See [TransportWorkerConfiguration](configuration#TransportWorkerConfiguration)
