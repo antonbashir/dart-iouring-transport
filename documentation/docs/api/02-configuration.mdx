@@ -8,32 +8,31 @@ title: Configuration
 
 ### Parameters
 
-| Name                        | Type     | Description | Defaults |
-| --------------------------- | -------- | ----------- | -------- |
-| readTimeout                 | Duration |             |          |
-| writeTimeout                | Duration |             |          |
-| socketMaxConnections        | int?     |             |          |
-| socketReceiveBufferSize     | int?     |             |          |
-| socketSendBufferSize        | int?     |             |          |
-| socketNonblock              | bool?    |             |          |
-| socketClockexec             | bool?    |             |          |
-| socketReuseAddress          | bool?    |             |          |
-| socketReusePort             | bool?    |             |          |
-| socketKeepalive             | bool?    |             |          |
-| socketReceiveLowAt          | int?     |             |          |
-| socketSendLowAt             | int?     |             |          |
-| ipTtl                       | int?     |             |          |
-| ipFreebind                  | bool?    |             |          |
-| tcpQuickack                 | bool?    |             |          |
-| tcpDeferAccept              | bool?    |             |          |
-| tcpFastopen                 | bool?    |             |          |
-| tcpKeepAliveIdle            | int?     |             |          |
-| tcpKeepAliveMaxCount        | int?     |             |          |
-| tcpKeepAliveIndividualCount | int?     |             |          |
-| tcpMaxSegmentSize           | int?     |             |          |
-| tcpNoDelay                  | bool?    |             |          |
-| tcpSynCount                 | int?     |             |          |
-
+| Name                        | Type     | Description | Defaults        |
+| --------------------------- | -------- | ----------- | --------------- |
+| readTimeout                 | Duration |             |                 |
+| writeTimeout                | Duration |             |                 |
+| socketMaxConnections        | int?     |             | 4096            |
+| socketReceiveBufferSize     | int?     |             | 4 * 1024 * 1024 |
+| socketSendBufferSize        | int?     |             | 4 * 1024 * 1024 |
+| socketNonblock              | bool?    |             | true            |
+| socketClockexec             | bool?    |             | true            |
+| socketReusePort             | bool?    |             | true            |
+| socketReuseAddress          | bool?    |             |                 |
+| socketKeepalive             | bool?    |             |                 |
+| socketReceiveLowAt          | int?     |             |                 |
+| socketSendLowAt             | int?     |             |                 |
+| tcpQuickack                 | bool?    |             | true            |
+| tcpDeferAccept              | bool?    |             | true            |
+| tcpNoDelay                  | bool?    |             | true            |
+| tcpFastopen                 | bool?    |             | true            |
+| ipTtl                       | int?     |             |                 |
+| ipFreebind                  | bool?    |             |                 |
+| tcpKeepAliveIdle            | int?     |             |                 |
+| tcpKeepAliveMaxCount        | int?     |             |                 |
+| tcpKeepAliveIndividualCount | int?     |             |                 |
+| tcpMaxSegmentSize           | int?     |             |                 |
+| tcpSynCount                 | int?     |             |                 |
 
 ## TransportTcpClientConfiguration
 
@@ -69,26 +68,26 @@ title: Configuration
 ## TransportUdpServerConfiguration
 
 ### Parameters
-| Name                    | Type                                | Description | Defaults          |
-| ----------------------- | ----------------------------------- | ----------- | ----------------- |
-| readTimeout             | Duration                            |             | Duration(days: 1) |
-| writeTimeout            | Duration                            |             | Duration(days: 1) |
-| socketReceiveBufferSize | int?                                |             | 4 * 1024 * 1024   |
-| socketSendBufferSize    | int?                                |             | 4 * 1024 * 1024   |
-| socketNonblock          | bool?                               |             | true              |
-| socketClockexec         | bool?                               |             | true              |
-| socketReusePort         | bool?                               |             | true              |
-| socketReuseAddress      | bool?                               |             |                   |
-| socketBroadcast         | bool?                               |             |                   |
-| socketReceiveLowAt      | int?                                |             |                   |
-| socketSendLowAt         | int?                                |             |                   |
-| ipTtl                   | int?                                |             |                   |
-| ipFreebind              | bool?                               |             |                   |
-| ipMulticastAll          | bool?                               |             |                   |
-| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |                   |
-| ipMulticastLoop         | int?                                |             |                   |
-| ipMulticastTtl          | int?                                |             |                   |
-| multicastManager        | TransportUdpMulticastManager?       |             |                   |
+| Name                    | Type                                | Description | Defaults        |
+| ----------------------- | ----------------------------------- | ----------- | --------------- |
+| socketReceiveBufferSize | int?                                |             | 4 * 1024 * 1024 |
+| socketSendBufferSize    | int?                                |             | 4 * 1024 * 1024 |
+| socketNonblock          | bool?                               |             | true            |
+| socketClockexec         | bool?                               |             | true            |
+| socketReusePort         | bool?                               |             | true            |
+| socketReuseAddress      | bool?                               |             |                 |
+| socketBroadcast         | bool?                               |             |                 |
+| socketReceiveLowAt      | int?                                |             |                 |
+| socketSendLowAt         | int?                                |             |                 |
+| ipTtl                   | int?                                |             |                 |
+| ipFreebind              | bool?                               |             |                 |
+| ipMulticastAll          | bool?                               |             |                 |
+| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |                 |
+| ipMulticastLoop         | int?                                |             |                 |
+| ipMulticastTtl          | int?                                |             |                 |
+| multicastManager        | TransportUdpMulticastManager?       |             |                 |
+| readTimeout             | Duration                            |             |                 |
+| writeTimeout            | Duration                            |             |                 |
 
 ## TransportUdpClientConfiguration
 
@@ -182,34 +181,34 @@ class TransportUdpMulticastManager {
 
 ### Parameters
 
-| Name                    | Type     | Description | Defaults |
-| ----------------------- | -------- | ----------- | -------- |
-| readTimeout             | Duration |             |          |
-| writeTimeout            | Duration |             |          |
-| socketMaxConnections    | int?     |             |          |
-| socketReceiveBufferSize | int?     |             |          |
-| socketSendBufferSize    | int?     |             |          |
-| socketNonblock          | bool?    |             |          |
-| socketClockexec         | bool?    |             |          |
-| socketKeepalive         | bool?    |             |          |
-| socketReceiveLowAt      | int?     |             |          |
-| socketSendLowAt         | int?     |             |          |
+| Name                    | Type     | Description | Defaults        |
+| ----------------------- | -------- | ----------- | --------------- |
+| socketMaxConnections    | int?     |             | 4096            |
+| socketReceiveBufferSize | int?     |             | 4 * 1024 * 1024 |
+| socketSendBufferSize    | int?     |             | 4 * 1024 * 1024 |
+| socketNonblock          | bool?    |             | true            |
+| socketClockexec         | bool?    |             | true            |
+| readTimeout             | Duration |             |                 |
+| writeTimeout            | Duration |             |                 |
+| socketKeepalive         | bool?    |             |                 |
+| socketReceiveLowAt      | int?     |             |                 |
+| socketSendLowAt         | int?     |             |                 |
 
 ## TransportWorkerConfiguration
 
 ### Parameters
 
-| Name                     | Type     | Description | Defaults |
-| ------------------------ | -------- | ----------- | -------- |
-| buffersCount             | int      |             |          |
-| bufferSize               | int      |             |          |
-| ringSize                 | int      |             |          |
-| ringFlags                | int      |             |          |
-| timeoutCheckerPeriod     | Duration |             |          |
-| delayRandomizationFactor | double   |             |          |
-| cqePeekCount             | int      |             |          |
-| cqeWaitCount             | int      |             |          |
-| cqeWaitTimeout           | Duration |             |          |
-| baseDelay                | Duration |             |          |
-| maxDelay                 | Duration |             |          |
-| trace                    | bool     |             |          |
+| Name                     | Type     | Description | Defaults                    |
+| ------------------------ | -------- | ----------- | --------------------------- |
+| buffersCount             | int      |             | 4096                        |
+| bufferSize               | int      |             | 4096                        |
+| ringSize                 | int      |             | 16384                       |
+| ringFlags                | int      |             | 0                           |
+| timeoutCheckerPeriod     | Duration |             | Duration(milliseconds: 500) |
+| delayRandomizationFactor | double   |             | 0.25                        |
+| cqePeekCount             | int      |             | 1024                        |
+| cqeWaitCount             | int      |             | 1                           |
+| cqeWaitTimeout           | Duration |             | Duration(milliseconds: 1)   |
+| baseDelay                | Duration |             | Duration(microseconds: 10)  |
+| maxDelay                 | Duration |             | Duration(seconds: 5)        |
+| trace                    | bool     |             | false                       |
