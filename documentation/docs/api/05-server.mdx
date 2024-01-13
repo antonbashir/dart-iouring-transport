@@ -6,8 +6,63 @@ title: Server
 
 ## TransportServersFactory
 
+```dart title="Declaration"
+class TransportServersFactory {
+  TransportServer tcp(
+    InternetAddress address,
+    int port,
+    void Function(TransportServerConnection connection) onAccept, {
+    TransportTcpServerConfiguration? configuration,
+  })
+  TransportServerDatagramReceiver udp(
+    InternetAddress address,
+    int port, {
+    TransportUdpServerConfiguration? configuration,
+  })
+  TransportServer unixStream(
+    String path,
+    void Function(TransportServerConnection connection) onAccept, {
+    TransportUnixStreamServerConfiguration? configuration,
+  })
+}
+```
+
 ## TransportServerConnection
+
+```dart title="Declaration"
+class TransportServerConnection {
+  Stream<TransportPayload> get inbound
+  bool get active
+  Future<void> read()
+  Stream<TransportPayload> stream()
+  void writeSingle(Uint8List bytes, {void Function(Exception error)? onError, void Function()? onDone})
+  void writeMany(List<Uint8List> bytes, {bool linked = true, void Function(Exception error)? onError, void Function()? onDone})
+  Future<void> close({Duration? gracefulTimeout})
+  Future<void> closeServer({Duration? gracefulTimeout})
+}
+```
 
 ## TransportServerDatagramReceiver
 
+```dart title="Declaration"
+class TransportServerDatagramReceiver {
+  Stream<TransportServerDatagramResponder> get inbound
+  bool get active
+  Stream<TransportServerDatagramResponder> receive({int? flags})
+  Future<void> close({Duration? gracefulTimeout})
+}
+```
+
+
 ## TransportServerDatagramResponder
+
+```dart title="Declaration"
+class TransportServerDatagramResponder {
+  Uint8List get receivedBytes
+  bool get active
+  void respondSingle(Uint8List bytes, {int? flags, void Function(Exception error)? onError, void Function()? onDone})
+  void respondMany(List<Uint8List> bytes, {int? flags, bool linked = true, void Function(Exception error)? onError, void Function()? onDone})
+  void release()
+  Uint8List takeBytes({bool release = true})
+  List<int> toBytes({bool release = true})}
+```
