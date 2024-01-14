@@ -28,7 +28,7 @@ class TransportDefaults {
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
         socketNonblock: true,
-        socketClockexec: true,
+        socketCloexec: true,
         tcpFastopen: true,
         tcpNoDelay: true,
         tcpQuickack: true,
@@ -41,7 +41,7 @@ class TransportDefaults {
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
         socketNonblock: true,
-        socketClockexec: true,
+        socketCloexec: true,
       );
 
   static TransportUnixStreamClientConfiguration unixStreamClient() => TransportUnixStreamClientConfiguration(
@@ -52,7 +52,7 @@ class TransportDefaults {
         readTimeout: Duration(seconds: 60),
         writeTimeout: Duration(seconds: 60),
         socketNonblock: true,
-        socketClockexec: true,
+        socketCloexec: true,
       );
 
   static TransportTcpServerConfiguration tcpServer() => TransportTcpServerConfiguration(
@@ -61,7 +61,7 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         socketReusePort: true,
         socketNonblock: true,
-        socketClockexec: true,
+        socketCloexec: true,
         tcpFastopen: true,
         tcpNoDelay: true,
         tcpQuickack: true,
@@ -73,7 +73,7 @@ class TransportDefaults {
         socketSendBufferSize: 4 * 1024 * 1024,
         socketReusePort: true,
         socketNonblock: true,
-        socketClockexec: true,
+        socketCloexec: true,
       );
 
   static TransportUnixStreamServerConfiguration unixStreamServer() => TransportUnixStreamServerConfiguration(
@@ -81,6 +81,6 @@ class TransportDefaults {
         socketReceiveBufferSize: 4 * 1024 * 1024,
         socketSendBufferSize: 4 * 1024 * 1024,
         socketNonblock: true,
-        socketClockexec: true,
+        socketCloexec: true,
       );
 }

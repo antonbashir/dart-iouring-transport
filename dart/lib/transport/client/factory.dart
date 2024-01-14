@@ -228,7 +228,7 @@ class TransportClientsFactory {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     var flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (clientConfiguration.socketCloexec == true) flags |= transportSocketOptionSocketCloexec;
     if (clientConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
     if (clientConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (clientConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
@@ -284,7 +284,7 @@ class TransportClientsFactory {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     var flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (clientConfiguration.socketCloexec == true) flags |= transportSocketOptionSocketCloexec;
     if (clientConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
     if (clientConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (clientConfiguration.socketBroadcast == true) flags |= transportSocketOptionSocketBroadcast;
@@ -334,7 +334,7 @@ class TransportClientsFactory {
     final nativeClientConfiguration = allocator<transport_client_configuration_t>();
     var flags = 0;
     if (clientConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (clientConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (clientConfiguration.socketCloexec == true) flags |= transportSocketOptionSocketCloexec;
     if (clientConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
     if (clientConfiguration.socketReceiveBufferSize != null) {
       flags |= transportSocketOptionSocketRcvbuf;

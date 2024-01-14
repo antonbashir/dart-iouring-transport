@@ -213,7 +213,7 @@ class TransportServersFactory {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     var flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (serverConfiguration.socketCloexec == true) flags |= transportSocketOptionSocketCloexec;
     if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
     if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (serverConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
@@ -273,7 +273,7 @@ class TransportServersFactory {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     var flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (serverConfiguration.socketCloexec == true) flags |= transportSocketOptionSocketCloexec;
     if (serverConfiguration.socketReuseAddress == true) flags |= transportSocketOptionSocketReuseaddr;
     if (serverConfiguration.socketReusePort == true) flags |= transportSocketOptionSocketReuseport;
     if (serverConfiguration.socketBroadcast == true) flags |= transportSocketOptionSocketBroadcast;
@@ -323,7 +323,7 @@ class TransportServersFactory {
     final nativeServerConfiguration = allocator<transport_server_configuration_t>();
     var flags = 0;
     if (serverConfiguration.socketNonblock == true) flags |= transportSocketOptionSocketNonblock;
-    if (serverConfiguration.socketClockexec == true) flags |= transportSocketOptionSocketClockexec;
+    if (serverConfiguration.socketCloexec == true) flags |= transportSocketOptionSocketCloexec;
     if (serverConfiguration.socketKeepalive == true) flags |= transportSocketOptionSocketKeepalive;
     if (serverConfiguration.socketMaxConnections != null) {
       nativeServerConfiguration.ref.socket_max_connections = serverConfiguration.socketMaxConnections!;

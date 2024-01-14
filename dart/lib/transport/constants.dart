@@ -70,7 +70,7 @@ const transportEventAll = transportEventRead |
     transportEventServer;
 
 const transportSocketOptionSocketNonblock = 1 << 1;
-const transportSocketOptionSocketClockexec = 1 << 2;
+const transportSocketOptionSocketCloexec = 1 << 2;
 const transportSocketOptionSocketReuseaddr = 1 << 3;
 const transportSocketOptionSocketReuseport = 1 << 4;
 const transportSocketOptionSocketRcvbuf = 1 << 5;

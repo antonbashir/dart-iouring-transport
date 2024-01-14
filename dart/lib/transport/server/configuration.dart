@@ -7,7 +7,7 @@ class TransportTcpServerConfiguration {
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
-  final bool? socketClockexec;
+  final bool? socketCloexec;
   final bool? socketReuseAddress;
   final bool? socketReusePort;
   final bool? socketKeepalive;
@@ -32,7 +32,7 @@ class TransportTcpServerConfiguration {
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
-    this.socketClockexec,
+    this.socketCloexec,
     this.socketReuseAddress,
     this.socketReusePort,
     this.socketKeepalive,
@@ -58,7 +58,7 @@ class TransportTcpServerConfiguration {
     int? socketReceiveBufferSize,
     int? socketSendBufferSize,
     bool? socketNonblock,
-    bool? socketClockexec,
+    bool? socketCloexec,
     bool? socketReuseAddress,
     bool? socketReusePort,
     bool? socketKeepalive,
@@ -83,7 +83,7 @@ class TransportTcpServerConfiguration {
         socketReceiveBufferSize: socketReceiveBufferSize ?? this.socketReceiveBufferSize,
         socketSendBufferSize: socketSendBufferSize ?? this.socketSendBufferSize,
         socketNonblock: socketNonblock ?? this.socketNonblock,
-        socketClockexec: socketClockexec ?? this.socketClockexec,
+        socketCloexec: socketCloexec ?? this.socketCloexec,
         socketReuseAddress: socketReuseAddress ?? this.socketReuseAddress,
         socketReusePort: socketReusePort ?? this.socketReusePort,
         socketKeepalive: socketKeepalive ?? this.socketKeepalive,
@@ -109,7 +109,7 @@ class TransportUdpServerConfiguration {
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
-  final bool? socketClockexec;
+  final bool? socketCloexec;
   final bool? socketReuseAddress;
   final bool? socketReusePort;
   final bool? socketBroadcast;
@@ -129,7 +129,7 @@ class TransportUdpServerConfiguration {
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
-    this.socketClockexec,
+    this.socketCloexec,
     this.socketReuseAddress,
     this.socketReusePort,
     this.socketBroadcast,
@@ -150,7 +150,7 @@ class TransportUdpServerConfiguration {
     int? socketReceiveBufferSize,
     int? socketSendBufferSize,
     bool? socketNonblock,
-    bool? socketClockexec,
+    bool? socketCloexec,
     bool? socketReuseAddress,
     bool? socketReusePort,
     bool? socketBroadcast,
@@ -170,7 +170,7 @@ class TransportUdpServerConfiguration {
         socketReceiveBufferSize: socketReceiveBufferSize ?? this.socketReceiveBufferSize,
         socketSendBufferSize: socketSendBufferSize ?? this.socketSendBufferSize,
         socketNonblock: socketNonblock ?? this.socketNonblock,
-        socketClockexec: socketClockexec ?? this.socketClockexec,
+        socketCloexec: socketCloexec ?? this.socketCloexec,
         socketReuseAddress: socketReuseAddress ?? this.socketReuseAddress,
         socketReusePort: socketReusePort ?? this.socketReusePort,
         socketBroadcast: socketBroadcast ?? this.socketBroadcast,
@@ -193,7 +193,7 @@ class TransportUnixStreamServerConfiguration {
   final int? socketReceiveBufferSize;
   final int? socketSendBufferSize;
   final bool? socketNonblock;
-  final bool? socketClockexec;
+  final bool? socketCloexec;
   final bool? socketKeepalive;
   final int? socketReceiveLowAt;
   final int? socketSendLowAt;
@@ -205,7 +205,7 @@ class TransportUnixStreamServerConfiguration {
     this.socketReceiveBufferSize,
     this.socketSendBufferSize,
     this.socketNonblock,
-    this.socketClockexec,
+    this.socketCloexec,
     this.socketKeepalive,
     this.socketReceiveLowAt,
     this.socketSendLowAt,
@@ -218,7 +218,7 @@ class TransportUnixStreamServerConfiguration {
     int? socketReceiveBufferSize,
     int? socketSendBufferSize,
     bool? socketNonblock,
-    bool? socketClockexec,
+    bool? socketCloexec,
     bool? socketKeepalive,
     int? socketReceiveLowAt,
     int? socketSendLowAt,
@@ -230,7 +230,7 @@ class TransportUnixStreamServerConfiguration {
         socketReceiveBufferSize: socketReceiveBufferSize ?? this.socketReceiveBufferSize,
         socketSendBufferSize: socketSendBufferSize ?? this.socketSendBufferSize,
         socketNonblock: socketNonblock ?? this.socketNonblock,
-        socketClockexec: socketClockexec ?? this.socketClockexec,
+        socketCloexec: socketCloexec ?? this.socketCloexec,
         socketKeepalive: socketKeepalive ?? this.socketKeepalive,
         socketReceiveLowAt: socketReceiveLowAt ?? this.socketReceiveLowAt,
         socketSendLowAt: socketSendLowAt ?? this.socketSendLowAt,

@@ -113,6 +113,7 @@
     "fcntl-linux.h": "c",
     "tcp.h": "c",
     "forward_list": "c",
-    "list": "c"
+    "list": "c",
+    "time.h": "c"
   },
 }

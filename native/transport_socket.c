@@ -42,16 +42,16 @@ int64_t transport_socket_create_tcp(uint64_t flags,
             return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
         }
     }
-    if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC)
+    if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC)
     {
         int fcntl_flags = fcntl(fd, F_GETFL);
         if (fcntl_flags < 0)
         {
-            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC;
         }
         if (fcntl(fd, F_SETFL, fcntl_flags | O_CLOEXEC) < 0)
         {
-            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC;
         }
     }
     if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_REUSEADDR)
@@ -215,16 +215,16 @@ int64_t transport_socket_create_udp(uint64_t flags,
             return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
         }
     }
-    if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC)
+    if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC)
     {
         int fcntl_flags = fcntl(fd, F_GETFL);
         if (fcntl_flags < 0)
         {
-            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC;
         }
         if (fcntl(fd, F_SETFL, fcntl_flags | O_CLOEXEC) < 0)
         {
-            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC;
         }
     }
     {
@@ -348,16 +348,16 @@ int64_t transport_socket_create_unix_stream(uint64_t flags,
             return -TRANSPORT_SOCKET_OPTION_SOCKET_NONBLOCK;
         }
     }
-    if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC)
+    if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC)
     {
         int fcntl_flags = fcntl(fd, F_GETFL);
         if (fcntl_flags < 0)
         {
-            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC;
         }
         if (fcntl(fd, F_SETFL, fcntl_flags | O_CLOEXEC) < 0)
         {
-            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCKEXEC;
+            return -TRANSPORT_SOCKET_OPTION_SOCKET_CLOCEXEC;
         }
     }
     if (flags & TRANSPORT_SOCKET_OPTION_SOCKET_RCVBUF)
