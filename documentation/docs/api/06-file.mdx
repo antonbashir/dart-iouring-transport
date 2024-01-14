@@ -21,6 +21,8 @@ class TransportFilesFactory {
 
 #### open
 
+Opens a new file for manipulations.
+
 ## TransportFile
 
 ```dart title="Declaration"
@@ -40,18 +42,34 @@ class TransportFile {
 
 #### delegate
 
+Dart file object.
+
 #### inbound
 
+Stream for inbound (read) payloads.
+
 #### active
+
+Is the file open?
 
 ### Methods
 
 #### read
 
+Sends a read operation to the file.
+
 #### writeSingle
+
+Writes a single buffer to the file.
 
 #### writeMany
 
+Writes many buffers to the file.
+
 #### load
 
+Reads all the file content.
+
 #### close
+
+Closes the file. 
