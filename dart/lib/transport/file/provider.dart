@@ -43,81 +43,83 @@ class TransportFile {
   }
 
   @pragma(preferInlinePragma)
-  Future<Uint8List> load({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) {
-        final bytes = BytesBuilder();
-        final completer = Completer<Uint8List>();
-        if (blocksCount == 1) {
-          final subscription = _file.inbound.listen(
-            (payload) {
-              final payloadBytes = payload.takeBytes();
-              if (payloadBytes.isEmpty) {
-                completer.complete(bytes.takeBytes());
-                return;
-              }
-              bytes.add(payloadBytes);
-              final left = stat.size - bytes.length;
-              if (left == 0) {
-                completer.complete(bytes.takeBytes());
-                return;
-              }
-              unawaited(_file.readSingle(offset: offset + bytes.length).onError((error, stackTrace) {
-                if (!completer.isCompleted) completer.completeError(error!);
-              }));
-            },
-            onError: (error) {
-              if (!completer.isCompleted) {
-                if (error is TransportCanceledException) {
-                  completer.complete(bytes.takeBytes());
-                  return;
-                }
-                completer.completeError(error);
-              }
-            },
-          );
-          unawaited(_file.readSingle(offset: offset).onError((error, stackTrace) {
-            if (!completer.isCompleted) completer.completeError(error!);
-          }));
-          return completer.future.whenComplete(subscription.cancel);
-        }
-
-        var counter = 0;
-        final subscription = _file.inbound.listen(
-          (payload) {
-            final payloadBytes = payload.takeBytes();
-            if (payloadBytes.isEmpty) {
-              completer.complete(bytes.takeBytes());
-              return;
-            }
-            bytes.add(payloadBytes);
-            final left = stat.size - bytes.length;
-            if (left == 0) {
-              completer.complete(bytes.takeBytes());
-              return;
-            }
-            if (++counter == blocksCount) {
-              counter = 0;
-              blocksCount = min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1));
-              unawaited(_file.readMany(blocksCount, offset: offset + bytes.length).onError((error, stackTrace) {
-                if (!completer.isCompleted) completer.completeError(error!);
-              }));
-            }
-          },
-          onError: (error) {
-            if (!completer.isCompleted) {
-              if (error is TransportCanceledException) {
-                completer.complete(bytes.takeBytes());
-                return;
-              }
-              completer.completeError(error);
-            }
-          },
-        );
-        unawaited(_file.readMany(blocksCount, offset: offset).onError((error, stackTrace) {
-          if (!completer.isCompleted) completer.completeError(error!);
-        }));
-        return completer.future.whenComplete(subscription.cancel);
-      });
+  Future<Uint8List> load({int blocksCount = 1, int offset = 0}) => delegate.stat().then((stat) => _loadFile(blocksCount, offset, stat));
 
   @pragma(preferInlinePragma)
   Future<void> close({Duration? gracefulTimeout}) => _file.close(gracefulTimeout: gracefulTimeout);
+
+  Future<Uint8List> _loadFile(int blocksCount, int offset, FileStat stat) {
+    final bytes = BytesBuilder();
+    final completer = Completer<Uint8List>();
+    if (blocksCount == 1) {
+      final subscription = _file.inbound.listen(
+        (payload) {
+          final payloadBytes = payload.takeBytes();
+          if (payloadBytes.isEmpty) {
+            completer.complete(bytes.takeBytes());
+            return;
+          }
+          bytes.add(payloadBytes);
+          final left = stat.size - bytes.length;
+          if (left == 0) {
+            completer.complete(bytes.takeBytes());
+            return;
+          }
+          unawaited(_file.readSingle(offset: offset + bytes.length).onError((error, stackTrace) {
+            if (!completer.isCompleted) completer.completeError(error!);
+          }));
+        },
+        onError: (error) {
+          if (!completer.isCompleted) {
+            if (error is TransportCanceledException) {
+              completer.complete(bytes.takeBytes());
+              return;
+            }
+            completer.completeError(error);
+          }
+        },
+      );
+      unawaited(_file.readSingle(offset: offset).onError((error, stackTrace) {
+        if (!completer.isCompleted) completer.completeError(error!);
+      }));
+      return completer.future.whenComplete(subscription.cancel);
+    }
+
+    var counter = 0;
+    final subscription = _file.inbound.listen(
+      (payload) {
+        final payloadBytes = payload.takeBytes();
+        if (payloadBytes.isEmpty) {
+          completer.complete(bytes.takeBytes());
+          return;
+        }
+        bytes.add(payloadBytes);
+        final left = stat.size - bytes.length;
+        if (left == 0) {
+          completer.complete(bytes.takeBytes());
+          return;
+        }
+        if (++counter == blocksCount) {
+          counter = 0;
+          blocksCount = min(blocksCount, max(left ~/ _file.buffers.bufferSize, 1));
+          unawaited(_file.readMany(blocksCount, offset: offset + bytes.length).onError((error, stackTrace) {
+            if (!completer.isCompleted) completer.completeError(error!);
+          }));
+        }
+      },
+      onError: (error) {
+        if (!completer.isCompleted) {
+          if (error is TransportCanceledException) {
+            completer.complete(bytes.takeBytes());
+            return;
+          }
+          completer.completeError(error);
+        }
+      },
+    );
+    unawaited(_file.readMany(blocksCount, offset: offset).onError((error, stackTrace) {
+      if (!completer.isCompleted) completer.completeError(error!);
+    }));
+    return completer.future.whenComplete(subscription.cancel);
+  }
 }
