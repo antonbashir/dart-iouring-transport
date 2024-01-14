@@ -31,9 +31,15 @@ class TransportServersFactory {
 
 #### tcp
 
+Creates TCP server.
+
 #### udp
 
+Creates UDP server.
+
 #### unixStream
+
+Creates UNIX Socket server.
 
 ## TransportServerConnection
 
@@ -54,21 +60,37 @@ class TransportServerConnection {
 
 #### active
 
+Server connection live status.
+
 #### inbound
+
+Stream for inbound (read) payloads.
 
 ### Methods
 
 #### read
 
+Initiates a read event for new data from the connection.
+
 #### stream
+
+Automatically reads a stream of inbound data from the connection.
 
 #### writeSingle
 
+Writes a single buffer to the connection.
+
 #### writeMany
+
+Writes many buffers to the connection.
 
 #### close
 
+Closes the connection.
+
 #### closeServer
+
+Closes the server. It will close all TCP connections and also will stop UDP processing.
 
 ## TransportServerDatagramReceiver
 
@@ -85,13 +107,21 @@ class TransportServerDatagramReceiver {
 
 #### inbound
 
+Stream for inbound (read) payloads.
+
 #### active
+
+Server live status.
 
 ### Methods
 
-#### receive
+#### stream
 
-#### close
+Automatically reads a stream of inbound data from the sender.
+
+#### closeServer
+
+Closes the server. It will close all TCP connections and also will stop UDP processing.
 
 ## TransportServerDatagramResponder
 

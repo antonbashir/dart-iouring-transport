@@ -16,7 +16,7 @@ void testUdpSingle({required int index, required int clients}) {
     final transport = Transport();
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
-    worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345).receive().listen(
+    worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345).stream().listen(
       (event) {
         Validators.request(event.takeBytes());
         event.respondSingle(Generators.response());
@@ -42,7 +42,7 @@ void testUdpMany({required int index, required int clients, required int count})
     final worker = TransportWorker(transport.worker(TransportDefaults.worker()));
     await worker.initialize();
     final serverRequests = BytesBuilder();
-    worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345).receive().listen(
+    worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345).stream().listen(
       (responder) {
         serverRequests.add(responder.takeBytes());
         if (serverRequests.length == Generators.requestsSumUnordered(count).length) {

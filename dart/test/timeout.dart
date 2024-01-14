@@ -68,14 +68,14 @@ void testUdpTimeout({required Duration serverRead, required Duration clientRead}
         .stream()
         .listen((_) {}, onError: _handleTimeout(time, clientRead, completer));
     await completer.future.whenComplete(clientSubscription.cancel);
-    await server.close();
+    await server.closeServer();
 
     server = worker.servers.udp(InternetAddress("0.0.0.0"), 12345, configuration: TransportDefaults.udpServer().copyWith(readTimeout: serverRead));
     time.reset();
     completer = Completer();
-    final serverSubscription = server.receive().listen((_) {}, onError: _handleTimeout(time, serverRead, completer));
+    final serverSubscription = server.stream().listen((_) {}, onError: _handleTimeout(time, serverRead, completer));
     await completer.future.whenComplete(serverSubscription.cancel);
-    await server.close();
+    await server.closeServer();
 
     await transport.shutdown(gracefulTimeout: Duration(milliseconds: 100));
   });

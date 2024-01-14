@@ -64,7 +64,7 @@ class TransportServerDatagramReceiver {
   bool get active => _server.active;
 
   @pragma(preferInlinePragma)
-  Stream<TransportServerDatagramResponder> receive({int? flags}) {
+  Stream<TransportServerDatagramResponder> stream({int? flags}) {
     final out = StreamController<TransportServerDatagramResponder>(sync: true);
     out.onListen = () => unawaited(_server.receive(flags: flags).onError((error, stackTrace) => out.addError(error!)));
     _server.inbound.listen(
@@ -82,5 +82,5 @@ class TransportServerDatagramReceiver {
   }
 
   @pragma(preferInlinePragma)
-  Future<void> close({Duration? gracefulTimeout}) => _server.close(gracefulTimeout: gracefulTimeout);
+  Future<void> closeServer({Duration? gracefulTimeout}) => _server.close(gracefulTimeout: gracefulTimeout);
 }

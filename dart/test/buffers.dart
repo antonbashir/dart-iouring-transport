@@ -79,7 +79,7 @@ void testUdpBuffers() {
     var serverCompleter = Completer();
     var clientCompleter = Completer();
     var server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
-    server.receive().listen((value) {
+    server.stream().listen((value) {
       value.release();
       value.respondSingle(Generators.request());
       serverCompleter.complete();
@@ -95,7 +95,7 @@ void testUdpBuffers() {
 
     if (worker.buffers.used() != 2) throw TestFailure("actual: ${worker.buffers.used()}");
 
-    await server.close();
+    await server.closeServer();
     await clients.close();
 
     if (worker.servers.registry.serverConnections.isNotEmpty) throw TestFailure("serverConnections isNotEmpty");
@@ -105,7 +105,7 @@ void testUdpBuffers() {
     serverCompleter = Completer();
     final clientLatch = Latch(8);
     server = worker.servers.udp(io.InternetAddress("0.0.0.0"), 12345);
-    server.receive().listen((value) {
+    server.stream().listen((value) {
       value.release();
       for (var i = 0; i < 8; i++) value.respondSingle(Generators.request());
       serverCompleter.complete();
@@ -121,7 +121,7 @@ void testUdpBuffers() {
 
     if (worker.buffers.used() != 2) throw TestFailure("actual: ${worker.buffers.used()}");
 
-    await server.close();
+    await server.closeServer();
     await clients.close();
 
     if (worker.servers.registry.serverConnections.isNotEmpty) throw TestFailure("serverConnections isNotEmpty");
