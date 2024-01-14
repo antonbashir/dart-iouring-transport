@@ -68,9 +68,15 @@ class TransportClientsFactory {
 
 #### tcp
 
+Creates TCP clients (pooled).
+
 #### udp
 
+Creates UDP single client.
+
 #### unixStream
+
+Creates UNIX Socket clients.
 
 ## TransportDatagramClient
 
@@ -101,19 +107,33 @@ class TransportDatagramClient {
 
 #### active
 
+Client live status.
+
 #### inbound
+
+Stream for inbound (read) payloads.
 
 ### Methods
 
 #### receive
 
+Initiates a receive event for new data from the client.
+
 #### stream
+
+Automatically reads a stream of inbound data from the client.
 
 #### sendSingle
 
+Sends a single message to the client.
+
 #### sendMany
 
+Sends multiple messages to the client.
+
 #### close
+
+Closes the client.
 
 ## TransportClientConnection
 
