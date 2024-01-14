@@ -8,37 +8,37 @@ sidebarPosition: 2
 * TCP client connects -> close on error, throw an exception
 
 * TCP client reads:
-  * `result < 0` -> close, throw exception
+  * `result < 0` -> close, throw an exception
   * `result == 0` -> close
 
 * TCP client writes:
-  * `result <= 0` -> throw exception
+  * `result <= 0` -> throw an exception
 
 * UDP client receives:
-  * `result <= 0` -> throw exception
+  * `result <= 0` -> throw an exception
 
 * UDP client sends:
-  * `result <= 0` -> throw exception
+  * `result <= 0` -> throw an exception
 
 # Server
 
 * TCP server reads:
-  * result < 0 -> close, throw exception
+  * result < 0 -> close, throw an exception
   * result == 0 -> close
 
 * TCP server writes:
-  * `result <= 0` -> close, throw exception
+  * `result <= 0` -> close, throw an exception
 
 * UDP server receives:
-  * `result <= 0` -> throw exception
+  * `result <= 0` -> throw an exception
 
 * UDP server sends:
-  * `result <= 0` -> throw exception
+  * `result <= 0` -> throw an exception
 
 # File
 
 * File reads:
-  * `result < 0` -> throw exception
+  * `result < 0` -> throw an exception
 
 * File writes:
-  * `result < 0` -> throw exception
+  * `result < 0` -> throw an exception
