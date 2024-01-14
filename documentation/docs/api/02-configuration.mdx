@@ -205,17 +205,17 @@ See [IP_DROP_SOURCE_MEMBERSHIP](https://man7.org/linux/man-pages/man7/ip.7.html)
 
 ### Parameters
 
-| Name                     | Type     | Description                                                  | Defaults                    |
-| ------------------------ | -------- | ------------------------------------------------------------ | --------------------------- |
-| buffersCount             | int      | io_uring mapped buffers count                                | 4096                        |
-| bufferSize               | int      | io_uring single buffer size                                  | 4096                        |
-| ringSize                 | int      | io_uring setup size                                          | 16384                       |
-| ringFlags                | int      | io_uring setup flags                                         | 0                           |
-| timeoutCheckerPeriod     | Duration | How often to check for the timed out events                  | Duration(milliseconds: 500) |
-| delayRandomizationFactor | double   | Multiplier to a random value used for idle delay calculation | 0.25                        |
-| cqePeekCount             | int      | How long CQEs to peek on each loop iteration?                | 1024                        |
-| cqeWaitCount             | int      | How long CQEs wait on each loop iteration?                   | 1                           |
-| cqeWaitTimeout           | Duration | How long to wait for new CQEs?                               | Duration(milliseconds: 1)   |
-| baseDelay                | Duration | Default (mandatory) idle delay between loop operations       | Duration(microseconds: 10)  |
-| maxDelay                 | Duration | Maximal idle delay between loop iteration                    | Duration(seconds: 5)        |
-| trace                    | bool     | Enable/Disable event tracing                                 | false                       |
+| Name                     | Type     | Description                                                                     | Defaults                    |
+| ------------------------ | -------- | ------------------------------------------------------------------------------- | --------------------------- |
+| buffersCount             | int      | io_uring mapped buffers count                                                   | 4096                        |
+| bufferSize               | int      | io_uring single buffer size                                                     | 4096                        |
+| ringSize                 | int      | io_uring setup [size](https://unixism.net/loti/ref-iouring/io_uring_setup.html) | 16384                       |
+| ringFlags                | int      | io_uring setup [size](https://unixism.net/loti/ref-iouring/io_uring_setup.html) | 0                           |
+| timeoutCheckerPeriod     | Duration | How often to check for the timed out events                                     | Duration(milliseconds: 500) |
+| delayRandomizationFactor | double   | Multiplier to a random value used for idle delay calculation                    | 0.25                        |
+| cqePeekCount             | int      | How long CQEs to peek on each loop iteration?                                   | 1024                        |
+| cqeWaitCount             | int      | How long CQEs wait on each loop iteration?                                      | 1                           |
+| cqeWaitTimeout           | Duration | How long to wait for new CQEs?                                                  | Duration(milliseconds: 1)   |
+| baseDelay                | Duration | Default (mandatory) idle delay between loop operations                          | Duration(microseconds: 10)  |
+| maxDelay                 | Duration | Maximal idle delay between loop iteration                                       | Duration(seconds: 5)        |
+| trace                    | bool     | Enable/Disable event tracing                                                    | false                       |
