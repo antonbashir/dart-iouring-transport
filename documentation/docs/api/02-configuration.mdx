@@ -68,51 +68,51 @@ title: Configuration
 ## TransportUdpServerConfiguration
 
 ### Parameters
-| Name                    | Type                                | Description | Defaults        |
-| ----------------------- | ----------------------------------- | ----------- | --------------- |
-| readTimeout             | Duration                            |             | ∞               |
-| writeTimeout            | Duration                            |             | ∞               |
-| socketReceiveBufferSize | int?                                |             | 4 * 1024 * 1024 |
-| socketSendBufferSize    | int?                                |             | 4 * 1024 * 1024 |
-| socketNonblock          | bool?                               |             | true            |
-| socketCloexec           | bool?                               |             | true            |
-| socketReusePort         | bool?                               |             | true            |
-| socketReuseAddress      | bool?                               |             |                 |
-| socketBroadcast         | bool?                               |             |                 |
-| socketReceiveLowAt      | int?                                |             |                 |
-| socketSendLowAt         | int?                                |             |                 |
-| ipTtl                   | int?                                |             |                 |
-| ipFreebind              | bool?                               |             |                 |
-| ipMulticastAll          | bool?                               |             |                 |
-| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |                 |
-| ipMulticastLoop         | int?                                |             |                 |
-| ipMulticastTtl          | int?                                |             |                 |
-| multicastManager        | TransportUdpMulticastManager?       |             |                 |
+| Name                    | Type                                | Description                                                          | Defaults        |
+| ----------------------- | ----------------------------------- | -------------------------------------------------------------------- | --------------- |
+| readTimeout             | Duration                            | Timeout for socket read operations                                   | ∞               |
+| writeTimeout            | Duration                            | Timeout for socket write operations                                  | ∞               |
+| socketReceiveBufferSize | int?                                | [SO_RCVBUF](https://man7.org/linux/man-pages/man7/socket.7.html)     | 4 * 1024 * 1024 |
+| socketSendBufferSize    | int?                                | [SO_SNDBUF](https://man7.org/linux/man-pages/man7/socket.7.html)     | 4 * 1024 * 1024 |
+| socketNonblock          | bool?                               | [O_NONBLOCK](https://man7.org/linux/man-pages/man2/open.2.html)      | true            |
+| socketCloexec           | bool?                               | [O_CLOEXEC](https://man7.org/linux/man-pages/man2/open.2.html)       | true            |
+| socketReusePort         | bool?                               | [SO_REUSEPORT](https://man7.org/linux/man-pages/man7/socket.7.html)  | true            |
+| socketReuseAddress      | bool?                               | [SO_REUSEADDR](https://man7.org/linux/man-pages/man7/socket.7.html)  |                 |
+| socketBroadcast         | bool?                               | [SO_KEEPALIVE](https://man7.org/linux/man-pages/man7/socket.7.html)  |                 |
+| socketReceiveLowAt      | int?                                | [SO_RCVLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)   |                 |
+| socketSendLowAt         | int?                                | [SO_SNDLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)   |                 |
+| ipTtl                   | int?                                | [IP_TTL](https://man7.org/linux/man-pages/man7/ip.7.html)            |                 |
+| ipFreebind              | bool?                               | [IP_FREEBIND](https://man7.org/linux/man-pages/man7/ip.7.html)       |                 |
+| ipMulticastAll          | bool?                               | [IP_MULTICAST_ALL](https://man7.org/linux/man-pages/man7/ip.7.html)  |                 |
+| ipMulticastInterface    | TransportUdpMulticastConfiguration? | IP UDP Multicast Interface parameters                                |                 |
+| ipMulticastLoop         | int?                                | [IP_MULTICAST_LOOP](https://man7.org/linux/man-pages/man7/ip.7.html) |                 |
+| ipMulticastTtl          | int?                                | [IP_MULTICAST_TTL](https://man7.org/linux/man-pages/man7/ip.7.html)  |                 |
+| multicastManager        | TransportUdpMulticastManager?       | Manager for controlling multicast interfaces                         |                 |
 
 ## TransportUdpClientConfiguration
 
 ### Parameters
 
-| Name                    | Type                                | Description | Defaults              |
-| ----------------------- | ----------------------------------- | ----------- | --------------------- |
-| readTimeout             | Duration                            |             | Duration(seconds: 60) |
-| writeTimeout            | Duration                            |             | Duration(seconds: 60) |
-| socketReceiveBufferSize | int?                                |             | 4 * 1024 * 1024       |
-| socketSendBufferSize    | int?                                |             | 4 * 1024 * 1024       |
-| socketNonblock          | bool?                               |             | true                  |
-| socketCloexec           | bool?                               |             | true                  |
-| socketReuseAddress      | bool?                               |             |                       |
-| socketReusePort         | bool?                               |             |                       |
-| socketBroadcast         | bool?                               |             |                       |
-| socketReceiveLowAt      | int?                                |             |                       |
-| socketSendLowAt         | int?                                |             |                       |
-| ipTtl                   | int?                                |             |                       |
-| ipFreebind              | bool?                               |             |                       |
-| ipMulticastAll          | bool?                               |             |                       |
-| ipMulticastInterface    | TransportUdpMulticastConfiguration? |             |                       |
-| ipMulticastLoop         | int?                                |             |                       |
-| ipMulticastTtl          | int?                                |             |                       |
-| multicastManager        | TransportUdpMulticastManager?       |             |                       |
+| Name                    | Type                                | Description                                                          | Defaults              |
+| ----------------------- | ----------------------------------- | -------------------------------------------------------------------- | --------------------- |
+| readTimeout             | Duration                            | Timeout for socket read operations                                   | Duration(seconds: 60) |
+| writeTimeout            | Duration                            | Timeout for socket write operations                                  | Duration(seconds: 60) |
+| socketReceiveBufferSize | int?                                | [SO_RCVBUF](https://man7.org/linux/man-pages/man7/socket.7.html)     | 4 * 1024 * 1024       |
+| socketSendBufferSize    | int?                                | [SO_SNDBUF](https://man7.org/linux/man-pages/man7/socket.7.html)     | 4 * 1024 * 1024       |
+| socketNonblock          | bool?                               | [O_NONBLOCK](https://man7.org/linux/man-pages/man2/open.2.html)      | true                  |
+| socketCloexec           | bool?                               | [O_CLOEXEC](https://man7.org/linux/man-pages/man2/open.2.html)       | true                  |
+| socketReuseAddress      | bool?                               | [SO_REUSEPORT](https://man7.org/linux/man-pages/man7/socket.7.html)  |                       |
+| socketReusePort         | bool?                               | [SO_REUSEADDR](https://man7.org/linux/man-pages/man7/socket.7.html)  |                       |
+| socketBroadcast         | bool?                               | [SO_KEEPALIVE](https://man7.org/linux/man-pages/man7/socket.7.html)  |                       |
+| socketReceiveLowAt      | int?                                | [SO_RCVLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)   |                       |
+| socketSendLowAt         | int?                                | [SO_SNDLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)   |                       |
+| ipTtl                   | int?                                | [IP_TTL](https://man7.org/linux/man-pages/man7/ip.7.html)            |                       |
+| ipFreebind              | bool?                               | [IP_FREEBIND](https://man7.org/linux/man-pages/man7/ip.7.html)       |                       |
+| ipMulticastAll          | bool?                               | [IP_MULTICAST_ALL](https://man7.org/linux/man-pages/man7/ip.7.html)  |                       |
+| ipMulticastInterface    | TransportUdpMulticastConfiguration? | IP UDP Multicast Interface parameters                                |                       |
+| ipMulticastLoop         | int?                                | [IP_MULTICAST_LOOP](https://man7.org/linux/man-pages/man7/ip.7.html) |                       |
+| ipMulticastTtl          | int?                                | [IP_MULTICAST_TTL](https://man7.org/linux/man-pages/man7/ip.7.html)  |                       |
+| multicastManager        | TransportUdpMulticastManager?       | Manager for controlling multicast interfaces                         |                       |
 
 ## TransportUdpMulticastConfiguration
 
