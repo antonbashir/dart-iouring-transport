@@ -23,19 +23,35 @@ class TransportWorker {
 
 #### active
 
+Worker alive status.
+
 #### id
+
+Worker number (incremented by Transport).
 
 #### descriptor
 
+io_uring fd.
+
 #### servers
+
+Factory for a server creation.
 
 #### clients
 
+Factory for a client creation.
+
 #### files
+
+Factory for file creation.
 
 ### Methods
 
 #### initialize
+
+1. Creates native memory-mapped objects 
+2. Creates and sets up io_uring buffers and io_uring structures
+3. Runs event loop
 
 ## References
 
