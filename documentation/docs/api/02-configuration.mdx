@@ -118,13 +118,13 @@ title: Configuration
 
 ### Parameters
 
-| Name                    | Type    | Description                                                 |
-| ----------------------- | ------- | ----------------------------------------------------------- |
-| groupAddress            | String  | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
-| localAddress            | String  | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
-| localInterface          | String? | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
-| interfaceIndex          | int?    | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
-| calculateInterfaceIndex | bool    | Take the local interface index from the local interface name    |
+| Name                    | Type    | Description                                                  |
+| ----------------------- | ------- | ------------------------------------------------------------ |
+| groupAddress            | String  | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html)  |
+| localAddress            | String  | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html)  |
+| localInterface          | String? | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html)  |
+| interfaceIndex          | int?    | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html)  |
+| calculateInterfaceIndex | bool    | Take the local interface index from the local interface name |
 
 ## TransportUdpMulticastManager
 
@@ -159,63 +159,63 @@ See [IP_DROP_SOURCE_MEMBERSHIP](https://man7.org/linux/man-pages/man7/ip.7.html)
 
 ### Parameters
 
-| Name         | Type   | Description |
-| ------------ | ------ | ----------- |
-| groupAddress | String |             |
-| localAddress | String |             |
-| localAddress | String |             |
+| Name          | Type   | Description                                                       |
+| ------------- | ------ | ----------------------------------------------------------------- |
+| groupAddress  | String | [ip_mreq_source](https://man7.org/linux/man-pages/man7/ip.7.html) |
+| localAddress  | String | [ip_mreq_source](https://man7.org/linux/man-pages/man7/ip.7.html) |
+| sourceAddress | String | [ip_mreq_source](https://man7.org/linux/man-pages/man7/ip.7.html) |
 
 
 ## TransportUnixStreamClientConfiguration
 
 ### Parameters
 
-| Name                    | Type     | Description | Defaults              |
-| ----------------------- | -------- | ----------- | --------------------- |
-| pool                    | int      |             | 1                     |
-| connectTimeout          | Duration |             | Duration(seconds: 60) |
-| readTimeout             | Duration |             | Duration(seconds: 60) |
-| writeTimeout            | Duration |             | Duration(seconds: 60) |
-| socketReceiveBufferSize | int?     |             | 4 * 1024 * 1024       |
-| socketSendBufferSize    | int?     |             | 4 * 1024 * 1024       |
-| socketNonblock          | bool?    |             | true                  |
-| socketCloexec           | bool?    |             | true                  |
-| socketReceiveLowAt      | int?     |             |                       |
-| socketSendLowAt         | int?     |             |                       |
+| Name                    | Type     | Description                                                         | Defaults              |
+| ----------------------- | -------- | ------------------------------------------------------------------- | --------------------- |
+| pool                    | int      | Connections in the pool                                             | 1                     |
+| connectTimeout          | Duration | Timeout for connect operations                                      | Duration(seconds: 60) |
+| readTimeout             | Duration | Timeout for socket read operations                                  | Duration(seconds: 60) |
+| writeTimeout            | Duration | Timeout for socket write operations                                 | Duration(seconds: 60) |
+| socketReceiveBufferSize | int?     | [SO_RCVBUF](https://man7.org/linux/man-pages/man7/socket.7.html)    | 4 * 1024 * 1024       |
+| socketSendBufferSize    | int?     | [SO_SNDBUF](https://man7.org/linux/man-pages/man7/socket.7.html)    | 4 * 1024 * 1024       |
+| socketNonblock          | bool?    | [O_NONBLOCK](https://man7.org/linux/man-pages/man2/open.2.html)     | true                  |
+| socketCloexec           | bool?    | [O_CLOEXEC](https://man7.org/linux/man-pages/man2/open.2.html)      | true                  |
+| socketKeepalive         | bool?    | [SO_KEEPALIVE](https://man7.org/linux/man-pages/man7/socket.7.html) |                       |
+| socketReceiveLowAt      | int?     | [SO_RCVLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)  |                       |
+| socketSendLowAt         | int?     | [SO_SNDLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)  |                       |
 
 
 ## TransportUnixStreamServerConfiguration
 
 ### Parameters
 
-| Name                    | Type     | Description | Defaults        |
-| ----------------------- | -------- | ----------- | --------------- |
-| readTimeout             | Duration |             | ∞               |
-| writeTimeout            | Duration |             | ∞               |
-| socketMaxConnections    | int?     |             | 4096            |
-| socketReceiveBufferSize | int?     |             | 4 * 1024 * 1024 |
-| socketSendBufferSize    | int?     |             | 4 * 1024 * 1024 |
-| socketNonblock          | bool?    |             | true            |
-| socketCloexec           | bool?    |             | true            |
-| socketKeepalive         | bool?    |             |                 |
-| socketReceiveLowAt      | int?     |             |                 |
-| socketSendLowAt         | int?     |             |                 |
+| Name                    | Type     | Description                                                         | Defaults        |
+| ----------------------- | -------- | ------------------------------------------------------------------- | --------------- |
+| readTimeout             | Duration | Timeout for socket read operations                                  | ∞               |
+| writeTimeout            | Duration | Timeout for socket write operations                                 | ∞               |
+| socketReceiveBufferSize | int?     | [SO_RCVBUF](https://man7.org/linux/man-pages/man7/socket.7.html)    | 4 * 1024 * 1024 |
+| socketSendBufferSize    | int?     | [SO_SNDBUF](https://man7.org/linux/man-pages/man7/socket.7.html)    | 4 * 1024 * 1024 |
+| socketNonblock          | bool?    | [O_NONBLOCK](https://man7.org/linux/man-pages/man2/open.2.html)     | true            |
+| socketCloexec           | bool?    | [O_CLOEXEC](https://man7.org/linux/man-pages/man2/open.2.html)      | true            |
+| socketKeepalive         | bool?    | [SO_KEEPALIVE](https://man7.org/linux/man-pages/man7/socket.7.html) |                 |
+| socketReceiveLowAt      | int?     | [SO_RCVLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)  |                 |
+| socketSendLowAt         | int?     | [SO_SNDLOWAT](https://man7.org/linux/man-pages/man7/socket.7.html)  |                 |
 
 ## TransportWorkerConfiguration
 
 ### Parameters
 
-| Name                     | Type     | Description | Defaults                    |
-| ------------------------ | -------- | ----------- | --------------------------- |
-| buffersCount             | int      |             | 4096                        |
-| bufferSize               | int      |             | 4096                        |
-| ringSize                 | int      |             | 16384                       |
-| ringFlags                | int      |             | 0                           |
-| timeoutCheckerPeriod     | Duration |             | Duration(milliseconds: 500) |
-| delayRandomizationFactor | double   |             | 0.25                        |
-| cqePeekCount             | int      |             | 1024                        |
-| cqeWaitCount             | int      |             | 1                           |
-| cqeWaitTimeout           | Duration |             | Duration(milliseconds: 1)   |
-| baseDelay                | Duration |             | Duration(microseconds: 10)  |
-| maxDelay                 | Duration |             | Duration(seconds: 5)        |
-| trace                    | bool     |             | false                       |
+| Name                     | Type     | Description                                                  | Defaults                    |
+| ------------------------ | -------- | ------------------------------------------------------------ | --------------------------- |
+| buffersCount             | int      | io_uring mapped buffers count                                | 4096                        |
+| bufferSize               | int      | io_uring single buffer size                                  | 4096                        |
+| ringSize                 | int      | io_uring setup size                                          | 16384                       |
+| ringFlags                | int      | io_uring setup flags                                         | 0                           |
+| timeoutCheckerPeriod     | Duration | How often to check for the timed out events                  | Duration(milliseconds: 500) |
+| delayRandomizationFactor | double   | Multiplier to a random value used for idle delay calculation | 0.25                        |
+| cqePeekCount             | int      | How long CQEs to peek on each loop iteration?                | 1024                        |
+| cqeWaitCount             | int      | How long CQEs wait on each loop iteration?                   | 1                           |
+| cqeWaitTimeout           | Duration | How long to wait for new CQEs?                               | Duration(milliseconds: 1)   |
+| baseDelay                | Duration | Default (mandatory) idle delay between loop operations       | Duration(microseconds: 10)  |
+| maxDelay                 | Duration | Maximal idle delay between loop iteration                    | Duration(seconds: 5)        |
+| trace                    | bool     | Enable/Disable event tracing                                 | false                       |
