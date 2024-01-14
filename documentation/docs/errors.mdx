@@ -1,0 +1,44 @@
+---
+title: 🚨 Error handling
+sidebarPosition: 2
+---
+
+# Client
+
+* TCP client connects -> close on error, throw an exception
+
+* TCP client reads:
+  * `result < 0` -> close, throw exception
+  * `result == 0` -> close
+
+* TCP client writes:
+  * `result <= 0` -> throw exception
+
+* UDP client receives:
+  * `result <= 0` -> throw exception
+
+* UDP client sends:
+  * `result <= 0` -> throw exception
+
+# Server
+
+* TCP server reads:
+  * result < 0 -> close, throw exception
+  * result == 0 -> close
+
+* TCP server writes:
+  * `result <= 0` -> close, throw exception
+
+* UDP server receives:
+  * `result <= 0` -> throw exception
+
+* UDP server sends:
+  * `result <= 0` -> throw exception
+
+# File
+
+* File reads:
+  * `result < 0` -> throw exception
+
+* File writes:
+  * `result < 0` -> throw exception
