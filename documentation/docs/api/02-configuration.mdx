@@ -118,13 +118,13 @@ title: Configuration
 
 ### Parameters
 
-| Name                    | Type    | Description |
-| ----------------------- | ------- | ----------- |
-| groupAddress            | String  |             |
-| localAddress            | String  |             |
-| localInterface          | String? |             |
-| interfaceIndex          | int?    |             |
-| calculateInterfaceIndex | bool    |             |
+| Name                    | Type    | Description                                                 |
+| ----------------------- | ------- | ----------------------------------------------------------- |
+| groupAddress            | String  | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
+| localAddress            | String  | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
+| localInterface          | String? | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
+| interfaceIndex          | int?    | [ip_mreqn](https://man7.org/linux/man-pages/man7/ip.7.html) |
+| calculateInterfaceIndex | bool    | Take local interface index from the local interface name    |
 
 ## TransportUdpMulticastManager
 
@@ -141,12 +141,19 @@ class TransportUdpMulticastManager {
 
 #### addMembership
 
+See [IP_ADD_MEMBERSHIP](https://man7.org/linux/man-pages/man7/ip.7.html).
+
 #### dropMembership
+
+See [IP_DROP_MEMBERSHIP](https://man7.org/linux/man-pages/man7/ip.7.html).
 
 #### addSourceMembership
 
+See [IP_ADD_SOURCE_MEMBERSHIP](https://man7.org/linux/man-pages/man7/ip.7.html).
+
 #### dropSourceMembership
 
+See [IP_DROP_SOURCE_MEMBERSHIP](https://man7.org/linux/man-pages/man7/ip.7.html).
 
 ## TransportUdpMulticastSourceConfiguration
 
