@@ -123,16 +123,30 @@ class TransportClientConnection {
 
 #### active
 
+Client live status.
+
 #### inbound
+
+Stream for inbound (read) payloads.
 
 ### Methods
 
 #### read
 
+Initiates a read event for new data from the connection.
+
 #### stream
+
+Automatically reads a stream of inbound data from the connection.
 
 #### writeSingle
 
+Writes a single buffer to the connection.
+
 #### writeMany
 
+Writes many buffers to the connection.
+
 #### close
+
+Closes the connection.
