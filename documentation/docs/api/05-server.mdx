@@ -140,16 +140,30 @@ class TransportServerDatagramResponder {
 
 #### receivedBytes
 
+Current datagram bytes from the sender.
+
 #### active
+
+Responder live status.
 
 ### Methods
 
 #### respondSingle
 
+Responds with a single message to the sender.
+
 #### respondMany
+
+Responds with many messages to the sender.
 
 #### release
 
+Returns responder to a pool and clears it.
+
 #### takeBytes
 
+Takes `Uint8List` from the payload and releases the responder.
+
 #### toBytes
+
+Takes `List<int>` from the payload and releases the responder.
