@@ -19,10 +19,18 @@ class TransportPayload {
 
 #### bytes
 
+The memory-mapped buffer of the data.
+
 ### Methods
 
 #### release
 
+Frees the buffer and returns it to the pool.
+
 #### takeBytes
 
+Takes `Uint8List` from the `bytes` and releases the buffer.
+
 #### toBytes
+
+Takes `List<int>` from the `bytes` and releases the buffer.
