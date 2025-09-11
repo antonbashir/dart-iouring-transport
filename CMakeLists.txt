@@ -15,8 +15,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIC -O0 -g -fno-stack-prot
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -O2 -fno-stack-protector")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O2 -fno-stack-protector")
 
-set(LIBURING_REPOSITORY "developer@git.local:dependencies/liburing.git")
-set(LIBURING_VERSION evolution)
+set(LIBURING_REPOSITORY "https://github.com/axboe/liburing")
+set(LIBURING_VERSION master)
 
 include(FetchContent)
 
